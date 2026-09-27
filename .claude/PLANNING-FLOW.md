@@ -3,11 +3,12 @@
 Sequência lógica da **fase de planejamento** do pipeline — da ideia inicial até um
 `TASK.md` + `GUARDRAILS.md` prontos para a fase de execução (`EXECUTION-FLOW.md`).
 
-Este documento não redefine nenhum dos 4 agentes consolidados
-(`.claude/agents/gestor.md`, `coordenador.md`, `executor.md`, `validador.md`) nem a
+Este documento não redefine nenhum dos 5 agentes consolidados
+(`.claude/agents/dono.md`, `gestor.md`, `coordenador.md`, `executor.md`,
+`validador.md`) nem a
 convenção de artefatos (`PIPELINE-CONVENTIONS.md`) — só ordena o que cada um já
-declara, na forma de **dois comandos que o usuário aciona manualmente**: `/planejar`
-e `/definir_organizar`. Não existe mais um único fluxo encadeado com pausa a cada
+declara, na forma de **três comandos que o usuário aciona manualmente**:
+`/avaliar_ideia`, `/planejar` e `/definir_organizar`. Não existe mais um único fluxo encadeado com pausa a cada
 sub-etapa — **o usuário é o orquestrador**: cada comando roda um ou mais **loops
 de refinamento** (ver seção abaixo) até o usuário aprovar explicitamente cada
 artefato ou pacote de artefatos, e então para. O usuário decide quando pedir
@@ -71,11 +72,39 @@ uma vez aqui para não repetir em cada um.
 
 ---
 
+## Comando 0: `/avaliar_ideia` — Dono, Loop 0
+
+| Dispara quando | Agente | Produz | O que o usuário faz depois |
+|---|---|---|---|
+| Ideia bruta do stakeholder (ou revisão de um `PLANO-COMERCIAL.md` já existente) | `dono` (uma instância viva ao longo do Loop 0) | `PLANO-COMERCIAL.md` com veredito comercial explícito | Aprova e segue (o plano vira a entrada do `/planejar`), aprova e **não** segue (a conta não fecha — avaliação encerrada, com registro), pede ajuste (mais uma rodada do mesmo loop), ou descarta e recomeça |
+
+O propósito deste comando é responder, antes de qualquer definição de produto:
+**vale ou não investir tempo na construção desta ideia?** Rodada 1 é um dispatch
+novo do `dono` com a ideia bruta, produzindo o rascunho do `PLANO-COMERCIAL.md`
+— como vender (modelo de receita, preço), pra quem vender (ICP), onde publicar
+(canais), principais concorrentes, percentual de viabilidade (com as premissas
+que o sustentam) e break-even (total de vendas até pagar os custos) — com o
+veredito no topo. Rodada 2 em diante: `SendMessage` para a mesma instância, até
+o usuário aprovar. Um plano desfavorável ("a conta não fecha") não bloqueia
+sozinho — a decisão de seguir, ajustar a ideia ou abandonar é do usuário, e
+"aprovar o plano e não seguir" é um encerramento válido (a ideia foi avaliada e
+descartada/adiada com registro).
+
+**Handoff**: o comando não dispara `/planejar` sozinho. Quando o usuário aprova
+e decide seguir, o `/planejar` lê o `PLANO-COMERCIAL.md` do disco como insumo do
+Gate 1 — entre os dois comandos é sempre dispatch novo (handoff por artefato,
+PIPELINE-CONVENTIONS.md §2).
+
 ## Comando 1: `/planejar` — Gestor (CTO + PM + BA), Loop A
 
 | Dispara quando | Agente | Produz | O que o usuário faz depois |
 |---|---|---|---|
-| Ideia inicial (briefing) ou retomada de um `PRD.md`/`PRD-TECNICO.md` já existente | `gestor` (uma instância viva ao longo do Loop A) | Gate 1 em `CTO-REVIEW.md` + `PRD.md` + `PRD-TECNICO.md` | Aprova (segue para `/definir_organizar`), pede ajuste (mais uma rodada do mesmo loop), ou descarta e recomeça |
+| `PLANO-COMERCIAL.md` aprovado no `/avaliar_ideia` (ou decisão explícita do usuário de seguir sem ele), ou retomada de um `PRD.md`/`PRD-TECNICO.md` já existente | `gestor` (uma instância viva ao longo do Loop A) | Gate 1 em `CTO-REVIEW.md` + `PRD.md` + `PRD-TECNICO.md` | Aprova (segue para `/definir_organizar`), pede ajuste (mais uma rodada do mesmo loop), ou descarta e recomeça |
+
+**Pré-requisito comercial**: se `PLANO-COMERCIAL.md` não existir, o comando para
+e recomenda rodar `/avaliar_ideia` primeiro. Seguir sem o plano é decisão
+explícita do usuário — nesse caso o Gestor registra a ausência como ressalva no
+Gate 1 (ver Inputs Esperados de `gestor.md`), nunca segue em silêncio.
 
 **Gate 1 é a "rodada 0" do Loop A**: o chapéu CTO valida o alinhamento estratégico
 sobre o briefing antes de qualquer rascunho de PRD existir. Se reprovar dentro do

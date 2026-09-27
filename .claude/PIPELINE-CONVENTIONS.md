@@ -5,10 +5,12 @@ define a estrutura de **cada** agente, este documento define como eles **convers
 artefatos, handoff, nomenclatura, governança de inconsistência e o papel do
 GUARDRAILS.md.
 
-> **Modelo ativo: 4 agentes consolidados.** Desde a consolidação registrada aqui, os
-> fluxos ativos (`PLANNING-FLOW.md`, `EXECUTION-FLOW.md` e os comandos `/planejar`,
-> `/definir_organizar`, `/listar`, `/executar`, `/validar`, `/deploy`) usam só 4
-> agentes: `gestor` (CTO + PM + Business Analyst), `coordenador` (Software Architect
+> **Modelo ativo: 5 agentes consolidados.** Desde a consolidação registrada aqui, os
+> fluxos ativos (`PLANNING-FLOW.md`, `EXECUTION-FLOW.md` e os comandos
+> `/avaliar_ideia`, `/planejar`,
+> `/definir_organizar`, `/listar`, `/executar`, `/validar`, `/deploy`) usam só 5
+> agentes: `dono` (Business Owner / planejamento comercial), `gestor` (CTO + PM +
+> Business Analyst), `coordenador` (Software Architect
 > + Tech Lead + UX/UI), `executor` (Backend + Frontend + Mobile) e `validador` (QA +
 > DevSecOps + DevOps). O usuário é o orquestrador — decide quando cada comando roda;
 > nenhum fluxo encadeia fases automaticamente sem o usuário acionar o próximo
@@ -18,15 +20,26 @@ GUARDRAILS.md.
 > `.claude/agents/`, para não aparecerem mais como tipo de agente invocável) e
 > não são mais referenciados por nenhum fluxo ou comando ativo — a ordem de 12 papéis
 > abaixo fica documentada só como referência histórica de onde cada responsabilidade
-> dos 4 agentes consolidados veio.
+> dos agentes consolidados veio (o `dono` é papel novo, sem origem no pipeline de
+> 12 — planejamento comercial não existia como papel lá).
 
-## Ordem de atuação (modelo ativo — 4 agentes)
+## Ordem de atuação (modelo ativo — 5 agentes)
 
 ```
-1. Gestor (CTO/PM/BA) → 2. Coordenador (Arquitetura/UX/Decomposição)
+0. Dono (Planejamento Comercial) → 1. Gestor (CTO/PM/BA)
+→ 2. Coordenador (Arquitetura/UX/Decomposição)
 → 3. Executor (Backend/Frontend/Mobile, em paralelo por tarefa)
 → 4. Validador (QA/DevSecOps/DevOps)
 ```
+
+O Dono entra **antes** do Gestor: no comando `/avaliar_ideia` (etapa anterior ao
+`/planejar`) recebe a ideia bruta e produz o `PLANO-COMERCIAL.md` (como
+vender, pra quem, onde publicar, concorrentes, hipótese de viabilidade,
+break-even) com veredito comercial explícito — o plano aprovado é a entrada do
+`/planejar`, consumido pelo Gestor como insumo do Gate 1; no `/planejar_tarefa`,
+entra via triagem comercial da demanda. Não é um gate com veto:
+um plano comercial desfavorável informa a decisão do usuário, que decide se
+segue.
 
 O Gestor não é só a etapa 1: também é a camada de governança que reabre em pontos
 específicos mais adiante (Gate 1 no início, Gate 4 no fechamento pós-deploy — ver
@@ -56,6 +69,7 @@ ativo o referencia mais.
 
 | # | Artefato | Dono (cria) | Consumidores (leem) | Formato |
 |---|---|---|---|---|
+| 0 | `PLANO-COMERCIAL.md` | Dono | Gestor (insumo do Gate 1 e do PRD.md), Coordenador/Executor/Validador (contexto) | 7 seções fixas: Proposta de Valor e Modelo de Venda, Público-Alvo Comercial, Canais de Publicação e Distribuição, Concorrentes e Diferenciação, Hipótese de Viabilidade (% + premissas), Break-even, Premissas e Riscos Comerciais em Aberto |
 | 1 | `CTO-REVIEW.md` | Gestor | Todos | Log datado por gate, cada seção termina em veredito (Aprovado / Aprovado com ressalvas / Reprovado) |
 | 2 | `PRD.md` | Gestor | Coordenador, Executor (contexto), Validador (contexto) | Requisitos funcionais e não-funcionais, regras de negócio, critérios de aceite |
 | 3 | `PRD-TECNICO.md` | Gestor | Coordenador, Executor (contexto), Validador (contexto) | Tradução dos requisitos em restrições/contratos técnicos |
@@ -107,7 +121,9 @@ exceções:
 
 - **Gate 1 — Pré-descoberta** (antes do chapéu PM iniciar o levantamento, dentro do
   `/planejar`): valida alinhamento estratégico direto sobre o briefing de negócio
-  recebido do stakeholder — `PRD.md` ainda não existe neste ponto. Libera ou não o
+  recebido do stakeholder **e sobre o `PLANO-COMERCIAL.md` já aprovado pelo
+  usuário no `/avaliar_ideia` (Loop 0, Dono)** — `PRD.md` ainda não existe neste
+  ponto. Libera ou não o
   próprio Gestor para seguir com os chapéus PM/BA na mesma chamada.
 - **Gate 4 — Fechamento** (dentro do `/deploy`, após o Validador reportar o
   resultado final): o Validador reporta o resultado do deploy (sucesso, rollback,

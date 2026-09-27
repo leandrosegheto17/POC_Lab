@@ -1,5 +1,5 @@
 ---
-description: Aciona o agente Gestor (CTO + PM + Business Analyst) num loop de refinamento (Loop A) para produzir Gate 1 + PRD.md + PRD-TECNICO.md a partir de uma ideia inicial — rodada 1 é dispatch novo, rodadas seguintes continuam a mesma instância via SendMessage até você aprovar. Não encadeia para /definir_organizar sozinho.
+description: Aciona o agente Gestor (CTO + PM + Business Analyst) num loop de refinamento (Loop A) para produzir Gate 1 + PRD.md + PRD-TECNICO.md — rodada 1 é dispatch novo, rodadas seguintes continuam a mesma instância via SendMessage até você aprovar. Consome como entrada o PLANO-COMERCIAL.md aprovado no /avaliar_ideia (Loop 0, Dono); se ele não existir, recomenda rodar /avaliar_ideia primeiro (seguir sem é decisão explícita do usuário, com ressalva registrada no Gate 1). Não encadeia para /definir_organizar sozinho.
 argument-hint: [ideia inicial em linguagem natural, opcional se já houver PRD.md/PRD-TECNICO.md em .md/ para retomar/ajustar]
 ---
 
@@ -14,8 +14,10 @@ vez assume o que está declarado em `.claude/agents/gestor.md` e em
 Você não está entrando em um modo de orquestração autônoma — **o usuário é o
 orquestrador**. Este comando roda um **loop de refinamento** (Loop A) com o
 Gestor: dispatch inicial, depois rodadas de ajuste continuando a mesma instância
-via `SendMessage`, até você aprovar. Não dispara `/definir_organizar` nem qualquer
-outro comando por conta própria.
+via `SendMessage`, até você aprovar. A avaliação comercial da ideia é etapa
+anterior a este comando: o `/avaliar_ideia` (Loop 0, Dono) produz o
+`PLANO-COMERCIAL.md` que este comando consome como entrada do Gate 1. Não dispara
+`/definir_organizar` nem qualquer outro comando por conta própria.
 
 Ideia inicial recebida (pode estar vazia): $ARGUMENTS
 
@@ -23,20 +25,30 @@ Ideia inicial recebida (pode estar vazia): $ARGUMENTS
 
 Nunca presuma que está começando do zero:
 
-1. Verifique o que já existe em `.md/`: `PRD.md`, `PRD-TECNICO.md`,
-   `CTO-REVIEW.md`.
+1. Verifique o que já existe em `.md/`: `PLANO-COMERCIAL.md`, `PRD.md`,
+   `PRD-TECNICO.md`, `CTO-REVIEW.md`.
 2. **Loop A desta mesma sessão ainda aberto** (você tem a instância do Gestor
    viva, sem aprovação registrada ainda): continue via `SendMessage` — vá direto
    para a Seção 2b, não dispare um agente novo.
-3. Se `PRD.md`/`PRD-TECNICO.md` já existem, o Loop A já fechou (aprovado
+3. **`PLANO-COMERCIAL.md` não existe** (e o Loop A ainda não começou): **pare** e
+   recomende rodar `/avaliar_ideia` primeiro — a avaliação comercial da ideia
+   (Loop 0, Dono) é a etapa anterior a este comando. Se o usuário disser
+   explicitamente que quer seguir sem o plano comercial, prossiga para a Seção 2
+   informando que o Gestor registrará a ausência como ressalva no Gate 1 (ver
+   Inputs Esperados de `gestor.md`) — seguir sem é decisão do usuário, nunca o
+   padrão silencioso. Atenção também ao veredito: se o plano existe mas diz que
+   **a conta não fecha**, destaque isso antes de acionar o Gestor e confirme se o
+   usuário quer mesmo seguir.
+4. Se `PRD.md`/`PRD-TECNICO.md` já existem, o Loop A já fechou (aprovado
    anteriormente) e `$ARGUMENTS` está vazio: interprete como pedido de
    revisão/status do que já foi produzido, não como reinício.
-4. Se `$ARGUMENTS` tem conteúdo e já existe `PRD.md`/`PRD-TECNICO.md` aprovado:
+5. Se `$ARGUMENTS` tem conteúdo e já existe `PRD.md`/`PRD-TECNICO.md` aprovado:
    interprete como reabertura pontual (sempre dispatch novo, lendo o que existe do
    disco) — a menos que o texto deixe claro que é uma ideia nova/diferente, caso
    em que confirme com o usuário antes de sobrescrever.
-5. Se nada existe em `.md/` e `$ARGUMENTS` está vazio: pare e peça a ideia inicial
-   em linguagem natural antes de prosseguir.
+6. Se nada existe em `.md/` e `$ARGUMENTS` está vazio: pare e peça a ideia inicial
+   em linguagem natural (e recomende `/avaliar_ideia` como primeiro passo) antes
+   de prosseguir.
 
 ## 2. Loop com o Gestor
 
@@ -45,9 +57,12 @@ Nunca presuma que está começando do zero:
 1. **Anuncie** que vai acionar o Gestor para produzir Gate 1 + um rascunho de
    PRD.md + PRD-TECNICO.md.
 2. **Dispare o agente** via `Agent` (`subagent_type: gestor`,
-   `run_in_background: false`). O prompt de dispatch: a ideia inicial e o que já
-   existe em `.md/` como contexto — não repita a definição do agente, ele já a
-   tem.
+   `run_in_background: false`). O prompt de dispatch: a ideia inicial, o
+   `PLANO-COMERCIAL.md` aprovado no `/avaliar_ideia` (aponte o caminho
+   `.md/PLANO-COMERCIAL.md` como insumo do Gate 1 — ou informe explicitamente
+   que o usuário decidiu seguir sem ele, para o Gestor registrar a ressalva) e o
+   que mais já existe em `.md/` como contexto — não repita a definição do
+   agente, ele já a tem.
 3. Se o Gate 1 (chapéu CTO, dentro do próprio dispatch) reprovar: o Gestor não
    produz PRD.md/PRD-TECNICO.md nesta chamada — só o veredito do Gate 1 e o
    motivo. Não há loop para continuar ainda; o usuário ajusta o briefing e a

@@ -1,9 +1,9 @@
 ---
-description: Ciclo pontual completo para uma única demanda (funcionalidade, ajuste ou correção) — não o projeto inteiro. Pergunta a demanda quando não vier como argumento, refina com o Gestor (loop), detalha e anexa as tarefas correspondentes ao TASK.md com o Coordenador (loop, sem redecompor o pacote inteiro), e então segue para a execução (Executor) e a validação (Validador) só do recorte criado, até fechar esse lote — sem acionar /deploy. Pausa em toda aprovação de loop, a cada troca de agente (confirmação explícita do usuário antes de prosseguir) e em todo ponto de parada obrigatório de execução/validação.
+description: Ciclo pontual completo para uma única demanda (funcionalidade, ajuste ou correção) — não o projeto inteiro. Pergunta a demanda quando não vier como argumento, avalia o impacto comercial com o Dono (loop, atualização pontual do PLANO-COMERCIAL.md — pulado quando a demanda não tem impacto comercial), refina com o Gestor (loop), detalha e anexa as tarefas correspondentes ao TASK.md com o Coordenador (loop, sem redecompor o pacote inteiro), e então segue para a execução (Executor) e a validação (Validador) só do recorte criado, até fechar esse lote — sem acionar /deploy. Pausa em toda aprovação de loop, a cada troca de agente (confirmação explícita do usuário antes de prosseguir) e em todo ponto de parada obrigatório de execução/validação.
 argument-hint: [descrição da demanda pontual em linguagem natural; vazio = pergunta antes de prosseguir]
 ---
 
-# Comando `/planejar_tarefa` — ciclo pontual completo (Gestor → Coordenador → Executor → Validador)
+# Comando `/planejar_tarefa` — ciclo pontual completo (Dono → Gestor → Coordenador → Executor → Validador)
 
 Este comando é uma **variação deliberada** da regra geral de que cada fase do
 pipeline é um comando separado que o usuário aciona manualmente
@@ -16,13 +16,14 @@ sair do planejamento até implementada e validada sem precisar digitar
 Ele reaproveita a mecânica já definida em `.claude/PLANNING-FLOW.md` (loops de
 refinamento com Gestor/Coordenador) e `.claude/EXECUTION-FLOW.md` (rodada paralela
 do Executor, validação do Validador) — leia os dois agora, junto com
-`.claude/agents/gestor.md`, `.claude/agents/coordenador.md`,
+`.claude/agents/dono.md`, `.claude/agents/gestor.md`, `.claude/agents/coordenador.md`,
 `.claude/agents/executor.md`, `.claude/agents/validador.md` e
 `PIPELINE-CONVENTIONS.md`, se ainda não os tiver em contexto.
 
 **Nada aqui encadeia sozinho.** Além das paradas de sempre (cada rodada de loop,
 cada ponto de parada obrigatório de execução/validação), este comando para
-**também a cada troca de agente** — Gestor → Coordenador, Coordenador → Executor,
+**também a cada troca de agente** — Dono → Gestor, Gestor → Coordenador,
+Coordenador → Executor,
 Executor → Validador — e pergunta explicitamente ao usuário se pode prosseguir
 para o próximo. É sempre uma pergunta explícita, nunca uma suposição, e a decisão
 é sempre do usuário: seguir agora, seguir mais tarde (numa nova chamada deste
@@ -61,25 +62,64 @@ comando nunca adivinha a demanda a partir do estado do projeto.
 Antes de disparar qualquer agente, cheque se algum estágio deste mesmo ciclo já
 está em andamento nesta sessão de trabalho:
 
-1. **Loop do Gestor (Seção 3) já aberto** (instância viva, sem aprovação
+1. **Loop do Dono (Seção 2b) já aberto** (instância viva, sem aprovação da
+   atualização do `PLANO-COMERCIAL.md`): continue via `SendMessage` na Seção 2b.
+2. **Loop do Dono fechado (ou pulado), aguardando confirmação para acionar o
+   Gestor**: se o usuário confirmou, vá para a rodada inicial da Seção 3.
+3. **Loop do Gestor (Seção 3) já aberto** (instância viva, sem aprovação
    registrada): continue via `SendMessage`, direto na rodada seguinte da Seção 3.
-2. **Loop do Gestor fechado, aguardando confirmação para acionar o Coordenador**:
+4. **Loop do Gestor fechado, aguardando confirmação para acionar o Coordenador**:
    é essa confirmação que esta chamada está respondendo — se o usuário confirmou,
    vá para a rodada inicial da Seção 4.
-3. **Loop do Coordenador (Seção 4) aberto**: continue via `SendMessage` na Seção 4.
-4. **Loop do Coordenador fechado, aguardando confirmação para acionar a
+5. **Loop do Coordenador (Seção 4) aberto**: continue via `SendMessage` na Seção 4.
+6. **Loop do Coordenador fechado, aguardando confirmação para acionar a
    execução**: se o usuário confirmou, vá para a Seção 5.
-5. **Execução (Seção 5) em andamento, ainda não concluída**: retome a fila de
+7. **Execução (Seção 5) em andamento, ainda não concluída**: retome a fila de
    tarefas do lote criado na Seção 4, a partir de onde parou.
-6. **Execução concluída, aguardando confirmação para acionar a validação**: se o
+8. **Execução concluída, aguardando confirmação para acionar a validação**: se o
    usuário confirmou, vá para a Seção 6.
-7. **Nada em andamento**: comece do zero pela Seção 3.
+9. **Nada em andamento**: comece do zero pela Seção 2b.
 
 Se a sessão anterior se perdeu (limitação técnica de `SendMessage` entre
 sessões — ver `PLANNING-FLOW.md`), releia do disco o que já existe
 (`PRD.md`/`PRD-TECNICO.md`/`SDD.md`/`UX-SPEC.md`/`TASK.md`) e identifique o ponto
 de retomada pelo estado desses artefatos em vez de depender de memória de
 conversa.
+
+## 2b. Loop com o Dono — impacto comercial da demanda
+
+Roda **antes** do Gestor, mas escopado à demanda, não ao projeto inteiro:
+
+1. **Triagem** (skill `commercial-impact-triage`, aplicada pelo orquestrador —
+   sem dispatch): se a demanda claramente **não tem impacto comercial** (correção
+   de bug, refatoração, ajuste interno sem efeito em preço/público/canal/custo
+   relevante), informe isso ao usuário em uma frase e **pule direto para a
+   pergunta de troca de agente** ("Sem impacto comercial — posso acionar o Gestor
+   direto?"). Não dispare o Dono à toa. Na dúvida, dispare — com o recorte de
+   seções que a triagem apontou.
+2. Se há (ou pode haver) impacto comercial — nova funcionalidade vendável, nova
+   cobrança, novo canal, novo público, mudança de custo estrutural: **anuncie**
+   que vai acionar o Dono para avaliar o impacto no `PLANO-COMERCIAL.md`.
+3. **Dispatch novo** (`Agent`, `subagent_type: dono`, `run_in_background: false`).
+   Prompt: a descrição da demanda + o `PLANO-COMERCIAL.md` existente (se houver)
+   como contexto, deixando claro que é uma **atualização/adição pontual** ao
+   plano (a seção afetada — preço, canal, break-even, premissa), não uma
+   reescrita do zero — a menos que nada exista ainda, caso em que o Dono produz
+   uma versão enxuta, escopada só ao que esta demanda toca.
+4. **Rodadas seguintes**: `SendMessage` para a mesma instância, sem teto, até
+   aprovação explícita. "Descartar e recomeçar" → dispatch novo.
+5. **Pare ao final de cada rodada** com o resumo objetivo do que mudou no plano
+   comercial (e o checklist "Critérios de Pronto" do `dono.md` restrito às seções
+   tocadas) e as três opções (aprovar / ajustar / descartar e recomeçar). Se o
+   Dono apontar que a demanda **piora a conta** (quebra o break-even, canibaliza
+   preço), destaque — a decisão de seguir é do usuário.
+6. **Bloqueio**: ver Seção 8.
+
+**Troca de agente**: quando o usuário aprovar a atualização (ou a triagem do
+passo 1 dispensar o Dono), **não dispare o Gestor na mesma resposta** — pergunte
+explicitamente se pode prosseguir para a Seção 3 (ex.: "Plano comercial
+atualizado. Posso acionar o Gestor para refinar a demanda?"). Só dispare o
+dispatch da Seção 3 depois que o usuário confirmar.
 
 ## 3. Loop com o Gestor — refinar a demanda
 
@@ -89,7 +129,8 @@ escopada à demanda, não ao projeto inteiro:
 1. **Anuncie** que vai acionar o Gestor para refinar esta demanda pontual.
 2. **Dispatch novo** (`Agent`, `subagent_type: gestor`, `run_in_background: false`)
    na rodada inicial. Prompt: a descrição da demanda + o que já existe em `.md/`
-   (`PRD.md`, `PRD-TECNICO.md`, `GUARDRAILS.md`) como contexto, deixando claro que
+   (`PLANO-COMERCIAL.md` — incluindo a atualização da Seção 2b, se houve —,
+   `PRD.md`, `PRD-TECNICO.md`, `GUARDRAILS.md`) como contexto, deixando claro que
    é uma **atualização/adição pontual** a esses documentos (uma seção nova ou um
    requisito adicional), não uma reescrita do zero — a menos que nada exista
    ainda, caso em que o Gestor produz uma versão enxuta, escopada só a esta
@@ -220,6 +261,8 @@ Comando 2 (`/validar`) em `EXECUTION-FLOW.md`, escopada só a este lote:
 
 Apresente o resumo fim a fim desta demanda, do início ao fim:
 
+- O que foi atualizado no `PLANO-COMERCIAL.md` (ou que a triagem da Seção 2b
+  dispensou o Dono, e por quê).
 - O que foi refinado em `PRD.md`/`PRD-TECNICO.md`.
 - O que foi atualizado em `SDD.md`/`UX-SPEC.md` (e ADRs novos, se houver).
 - O lote novo criado no `TASK.md`: nome/identificador, quantas tarefas, quantas
