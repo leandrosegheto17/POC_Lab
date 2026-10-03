@@ -71,7 +71,7 @@ exemplo de cada e **pare**.
 
 ## 2. Escolher a tarefa
 
-**Regra de ouro: não leia o `.md/TASK.md` nem o `.md/BLOCKERS.md` inteiros.** A fila,
+**Regra de ouro: não leia o `.md/TASK.md` nem o `.md/BLOCKERS.md` (legado).** A fila,
 as dependências e o estado de cada tarefa estão no `.md/TASKPLAN.md`; o detalhe de
 cada uma, em `.md/.taskplan/<ID>.md`. Tudo é consultado e gravado pelo script
 `python .claude/scripts/taskplan.py` (as escritas no `TASK.md` mexem só na linha afetada, dentro do script). Se
@@ -87,8 +87,12 @@ o `TASKPLAN.md` não existir, **pare** e sugira `/organizar`.
    antes). `T-001` e `TP-0001` são a mesma tarefa.
 2. Em `--tarefa <ID>`, use `python .claude/scripts/taskplan.py tarefa <ID>` (estado, dependências, plano,
    reserva) em vez de procurar no `TASK.md`.
-3. Não use `BLOCKERS.md` para decidir elegibilidade: o bloqueio de uma tarefa é o
-   estado `Bloqueada` dela. Só **acrescente** entradas nele (Seção 6).
+3. **A fila é a ordem do `TASKPLAN.md`, a mesma do `/listar`**: o `proxima` devolve a primeira elegível dela. O
+   bloqueio de uma tarefa é o estado `Bloqueada` + um `BK-nnnn` em aberto na Dep dela (arquivo
+   `.md/.taskplan/BK-nnnn.md`); o `BLOCKERS.md` é só histórico, **não receba entradas novas nele** (Seção 6).
+   O `TASKPLAN.md` se reordena sozinho a cada bloqueio/desbloqueio (bloqueada que ninguém espera vai para o
+   fim da fila; a que tem dependentes fica no lugar, com o BK logo antes), então a primeira elegível é sempre a
+   que **pode rodar agora** e o `--continuar` não para numa tarefa travada.
 4. Nenhuma elegível (`NENHUMA`): informe o motivo que o script deu (sem plano →
    `/organizar`; só restam bloqueadas ou dependentes de bloqueadas; dependência
    aberta; reservadas; tudo pronto) e encerre (no modo contínuo, com o resumo da
@@ -275,21 +279,20 @@ faltar de novo, pare e avise o usuário. A tarefa de origem de uma refatoração
 **Bloqueio crítico** = o que impede a tarefa de avançar sem decisão ou ajuste fora
 do escopo dela: lacuna/inconsistência no `SDD.md`/`UX-SPEC.md`/`TASK.md`, 3ª
 devolução (Seção 3d), divisão que exija redesenho, dúvida de produto/escopo,
-dependência externa indisponível, `BLOCKERS.md` `Aberto` que afete a tarefa. (Achado
+dependência externa indisponível, `BK-` em aberto na Dep da tarefa. (Achado
 crítico que ainda cabe nas 2 devoluções **não** é bloqueio: é o ciclo normal.)
 
 Ao detectar um bloqueio crítico, em qualquer etapa:
 
 1. **Escreva no `.md/.taskplan/<ID>.md`**, na seção `## Bloqueio`: quem reportou
    (Executor/QA/DevSecOps), etapa em que parou, o quê, o que já foi feito (estado do
-   código/worktree), o que é necessário para destravar e o campo "Escala para".
-2. **Atualize o Status**: `python .claude/scripts/taskplan.py status <ID> "Bloqueada (<motivo em uma linha>)"` e
-   `python .claude/scripts/taskplan.py liberar <ID> Bloqueada` (o script grava só a linha no `TASK.md` e o estado
-   `Bloqueada` no `TASKPLAN.md`).
-3. **Acrescente uma entrada `Aberto` em `.md/BLOCKERS.md`** (só acrescentar ao fim,
-   sem ler o arquivo inteiro; um `tail` basta para ver o último número).
-4. **Sinalize ao usuário** — no resumo: ID, motivo, "Escala para" e o caminho do
-   arquivo.
+   código/worktree) e o que é necessário para destravar.
+2. **Abra o bloqueio com um único comando**:
+   `python .claude/scripts/taskplan.py bloquear <ID> --por "<Executor|QA|DevSecOps>" --escala "<quem decide>" --motivo "<uma linha>" [--impacto "..."] [--sugestao "..."]`.
+   O script cria o **`BK-nnnn`** (arquivo `.md/.taskplan/BK-nnnn.md`, tarefa do **Coordenador** com o usuário),
+   põe o BK na Dep da tarefa, grava `Bloqueada (BK-nnnn: …)` só na linha dela no `TASK.md`, libera a reserva e
+   **reordena o `TASKPLAN.md`** na hora. Não use mais o `BLOCKERS.md` nem `status`/`liberar` à mão para isso.
+3. **Sinalize ao usuário** — no resumo: ID da tarefa, `BK-nnnn`, motivo, "Escala para" e o caminho do arquivo.
 
 Depois:
 
@@ -302,6 +305,7 @@ Depois:
   geral). Nesses casos pare, diga o motivo e liste o que já foi feito e o que ficou
   bloqueado.
 
-Para retomar uma tarefa bloqueada: o usuário a trata (decide, ajusta o plano ou o
-`TASK.md`), registra a decisão na seção `## Bloqueio` (ou responde no chat) e roda
-`/executar --tarefa <ID>`.
+Para retomar uma tarefa bloqueada: o usuário (com o Coordenador) trata o `BK`, registra a decisão e roda
+`python .claude/scripts/taskplan.py desbloquear BK-nnnn "<resolução>"` — o BK fecha, a tarefa volta à fila
+(Status `Pendente (desbloqueada: …)`) e o `TASKPLAN.md` se reordena. Depois basta `/executar` (ela entra na
+ordem) ou `/executar --tarefa <ID>`.

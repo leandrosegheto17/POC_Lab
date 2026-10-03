@@ -1,5 +1,5 @@
 ---
-description: Traz todas as tarefas ainda em aberto no projeto, na ordem e com a numeração do .md/TASKPLAN.md (dependências antes dos dependentes), com as colunas Exe/QA/Sec derivadas do estado; a tarefa só sai da lista quando está Aprovada (as três etapas ✔). Somente leitura, não dispara agente, não avança tarefa.
+description: Traz, numa única tabela, todas as tarefas ainda em aberto na ordem do .md/TASKPLAN.md — a mesma fila que o /executar segue (dependências antes dos dependentes; bloqueada que ninguém espera no fim da fila, e a bloqueada com dependentes logo depois do seu BK) —, com as colunas Exe/QA/Sec; a tarefa só sai da lista quando está Aprovada. Somente leitura, não dispara agente, não avança tarefa.
 argument-hint: [opcional, sem uso hoje — reservado para filtrar por lote no futuro]
 ---
 
@@ -28,9 +28,9 @@ arquivos de `.md/.taskplan/`, como no `/executar`.
    `TASK.md` antigo); `Plano` = `✔` quando existe `.md/.taskplan/<ID>.md`.
 3. Para cada tarefa **não `Aprovada`**, leia **só a linha `Reserva:`** do cabeçalho
    do `.md/.taskplan/<ID>.md` (nunca o arquivo inteiro).
-4. Para cada tarefa `Bloqueada`, leia a seção `## Bloqueio` do seu arquivo
-   `.taskplan` e, se existir, a entrada `Aberto` correspondente em
-   `.md/BLOCKERS.md` (campo `Escala para`).
+4. Para cada `BK-` em aberto, leia só o cabeçalho do `.md/.taskplan/BK-nnnn.md` (linhas `Agente:` com
+   `Escalado para`, `Status:` e `Afeta:`); para cada tarefa `Bloqueada` sem `BK`, a seção `## Bloqueio` do arquivo
+   dela. Não leia o `.md/BLOCKERS.md` (os bloqueios vivem nos arquivos `BK-`).
 
 ## 2. Montar a lista
 
@@ -54,7 +54,13 @@ da lista as `Aprovada` e as `Dividida` cujas partes estejam todas `Aprovada`; um
 Tarefa `Bloqueada` mostra `—` nas três colunas: o `TASKPLAN.md` não guarda até que
 etapa ela chegou; o motivo está no arquivo `.taskplan`.
 
-**Ordem**: exatamente a do `TASKPLAN.md` (coluna `#`). Não reordene nem renumere.
+**Ordem**: **exatamente a do `TASKPLAN.md`** (coluna `#`) — não reordene nem renumere. A fila já é mantida na ordem
+possível de execução pelo `taskplan.py` (`gerar`, `bloquear`, `desbloquear`, `status`) e é a mesma que o
+`/executar` segue: dependências antes dos dependentes; **bloqueada que nenhuma tarefa em aberto espera** vai
+para o **fim** da fila, com o seu `BK-` imediatamente antes; **bloqueada da qual outras dependem** fica no lugar,
+com o `BK-` logo antes dela (BK primeiro, bloqueada depois). Este comando é somente leitura e **não reescreve** o
+`TASKPLAN.md`; se a fila estiver desatualizada (ex.: `TASK.md` editado à mão), diga isso numa linha e sugira
+`python .claude/scripts/taskplan.py gerar`.
 
 **Classificação** de cada tarefa (mesma regra do `taskplan.py proxima`):
 
@@ -86,28 +92,17 @@ pendências e pare.
 
 ## 3. Apresentar o relatório
 
-1. **Resumo no topo**: total de tarefas em aberto, quantas elegíveis, quantas
-   aguardando dependência, quantas aguardando QA, quantas aguardando Sec, quantas
-   bloqueadas, quantas sem plano.
-2. **Tarefas bloqueadas**: logo após o resumo, uma tabela só com as `Bloqueada`
-   (`Tarefa`, `Lote`, `Motivo` — o resumo da seção `## Bloqueio` do arquivo da
-   tarefa, `Escala para` da entrada `Aberto` do `BLOCKERS.md`, `Dependentes` — IDs
-   que ficam esperando por ela — e o caminho `.md/.taskplan/<ID>.md`). É a lista de
-   trabalho para tratar os bloqueios um a um. Sem bloqueadas, omita a tabela.
-3. **Bloqueio na frente da fila**: se a 1ª tarefa elegível tem bloqueio `Aberto`
-   afetando ela (quem reportou, o quê, "Escala para"), destaque isso aqui.
-4. **Lista na ordem do TASKPLAN, obrigatoriamente em formato de TABELA markdown** —
-   nunca lista com marcadores, texto corrido ou blocos por tarefa. Uma linha por
-   tarefa, com as colunas fixas: `#` (a numeração do `TASKPLAN.md`, sem
-   renumerar), `Tarefa` (ID como está no `TASKPLAN.md`), `Agente` (`executor` ou `coordenador`), `Título`, `Lote`, `Exe`,
-   `QA`, `Sec`, `Estado` (o do `TASKPLAN.md`) e `Classificação` (elegível / em
-   execução / sem plano / aguardando `<dependência>` / aguardando QA / aguardando
-   Sec / bloqueada). Critério de aceite fica de fora — está no arquivo da tarefa.
-5. **Indeterminadas**, só se houver: também em tabela, com as colunas `Tarefa` e
-   `Motivo`.
+**Uma única tabela markdown, nada mais** — sem tabela separada de bloqueadas, sem tabela de indeterminadas,
+sem lista com marcadores. Uma linha por tarefa, **na ordem do `TASKPLAN.md`** (Seção 2), com as colunas
+fixas: `#` (a numeração do `TASKPLAN.md`, sem renumerar), `Tarefa` (ID como está no `TASKPLAN.md`),
+`Agente` (`executor` ou `coordenador`), `Título`, `Lote`, `Exe`, `QA`, `Sec`, `Estado` (o do `TASKPLAN.md`),
+`Classificação` (elegível / em execução / sem plano / aguardando `<dependência>` / aguardando QA / aguardando
+Sec / bloqueada / do coordenador / indeterminada) e `Observação` (curta: para `BK`, quem decide ("Escala para") e
+o que ele destrava; para bloqueada, `aguarda BK-nnnn` e, se foi para o fim, "movida para o fim: nada depende
+dela"; para "dep. em validação" ou reserva velha, o aviso; para indeterminada, o motivo). Critério de aceite fica
+de fora — está no arquivo da tarefa.
 
-Ao fim da tabela acrescente uma linha de legenda: `✔` aprovada · `…` em andamento ·
-`—` ainda não passou.
+Antes da tabela, **uma única frase** de resumo (ex.: `3 em aberto: 1 elegível, 1 do coordenador, 1 bloqueada`).
+Depois da tabela, a legenda numa linha: `✔` aprovada · `…` em andamento · `—` ainda não passou.
 
-Termine a resposta no relatório — não sugira rodar `/executar` ou qualquer outro
-comando; a decisão de agir é do usuário.
+Termine a resposta aí — não sugira rodar `/executar` ou qualquer outro comando; a decisão de agir é do usuário.

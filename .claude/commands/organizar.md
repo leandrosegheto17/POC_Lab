@@ -1,6 +1,6 @@
 ---
-description: Aciona o agente Executor para quebrar o TASK.md em arquivos individuais na pasta .md/.taskplan — um arquivo TP-0000.md por tarefa, com o plano de execução, o plano de teste e o plano de validação de segurança. Também gera o `.md/TASKPLAN.md` (ordem de execução e estado de cada tarefa). Só planeja, não implementa nada. Por padrão cobre as tarefas em aberto que ainda não têm arquivo; --lote N e --tarefa TP-0000 (ou T-xxx) restringem o alvo. Com --migrar, reorganiza um projeto em andamento do zero: padroniza os IDs (TP/RTP/SPK), converte o BLOCKERS.md em BK, apaga e regera o TASKPLAN.md e todos os arquivos de .md/.taskplan.
-argument-hint: [vazio = todas as tarefas em aberto sem arquivo | --lote N | --tarefa TP-0000 (ou T-xxx, em TASK.md antigo) | --migrar]
+description: Aciona o agente Executor para quebrar o TASK.md em arquivos individuais na pasta .md/.taskplan — um arquivo TP-0000.md por tarefa, com o plano de execução, o plano de teste e o plano de validação de segurança. Também gera o `.md/TASKPLAN.md` (ordem de execução e estado de cada tarefa). Só planeja, não implementa nada. Por padrão cobre as tarefas em aberto que ainda não têm arquivo; --lote N e --tarefa TP-0000 (ou T-xxx) restringem o alvo. Com --ordenar, só reordena o TASKPLAN.md (fila final: dependências antes dos dependentes, bloqueadas no fim ou depois do seu BK), sem tocar em mais nada. Com --migrar, reorganiza um projeto em andamento do zero: padroniza os IDs (TP/RTP/SPK), converte o BLOCKERS.md em BK, apaga e regera o TASKPLAN.md e todos os arquivos de .md/.taskplan.
+argument-hint: [vazio = todas as tarefas em aberto sem arquivo | --lote N | --tarefa TP-0000 (ou T-xxx, em TASK.md antigo) | --ordenar | --migrar]
 ---
 
 # Comando `/organizar` — Executor, plano por tarefa
@@ -24,7 +24,7 @@ Argumento recebido (pode estar vazio): $ARGUMENTS
    existirem). Se faltar algum dos três primeiros, pare e informe — rode
    `/definir` antes.
 2. **Argumento válido**: vazio, `--lote N`, `--tarefa <ID>` (com o valor; aceita `T-001` ou `TP-0001`) ou
-   `--migrar` (modo próprio, Seção 6). Qualquer outra coisa: mostre as opções com um exemplo de cada e **pare**.
+   `--ordenar` (modo próprio, Seção 7) ou `--migrar` (modo próprio, Seção 6). Qualquer outra coisa: mostre as opções com um exemplo de cada e **pare**.
 3. **TASK.md fora do padrão de IDs** (ex.: `T-001`, `BF-01`, `SP-01`, `RFT-L02-04`): fora do `--migrar`, o
    `taskplan.py` recusa e pede a migração. Se o `TASK.md` tiver IDs fora do padrão `TP-/RTP-/SPK-`, **pare** e
    recomende `/organizar --migrar` (T-nnn legado ainda é aceito pelos demais modos).
@@ -190,6 +190,28 @@ em aberto.
    Seção 4 (`gerar`). Apresente o resumo: IDs renomeados, aprovadas sem planejamento, planos gerados, BK criados
    e a linha `Resumo:` do `TASKPLAN.md`. Lembre que **nada foi commitado** e que o projeto passa a usar só
    `TP-/RTP-/SPK-/BK-`. **Pare aqui.**
+
+## 7. Modo `--ordenar` — só reordenar a fila
+
+Para projetos já existentes que só precisam **voltar a um ponto inicial de ordenação**: nada de renomear, nada de
+planejar. Serve, por exemplo, depois de editar o `TASK.md` à mão, de resolver bloqueios fora do `/executar` ou de
+trazer o `.claude` novo para um projeto que já tem `TASKPLAN.md`. **Não aciona agente.**
+
+1. Rode `python .claude/scripts/taskplan.py ordenar`. O script reconstrói **apenas** o `.md/TASKPLAN.md` (ele é
+   derivado do `TASK.md`, do `Reserva:` e dos `BK-`) na **ordem final da fila**, a mesma que o `/executar` segue
+   e o `/listar` mostra:
+   - dependências antes dos dependentes (ordem do `TASK.md`, adiantando só o necessário);
+   - tarefa **bloqueada que nenhuma tarefa em aberto espera** vai para o **fim**, com o seu `BK-` imediatamente
+     antes;
+   - tarefa **bloqueada da qual outras dependem** fica no lugar, com o `BK-` logo antes dela (BK primeiro,
+     bloqueada depois);
+   - `BK-`/`SPK-` são do Coordenador: aparecem na fila, mas o `/executar` nunca os entrega ao Executor.
+2. **Não altera** o `TASK.md`, os arquivos de `.md/.taskplan/`, os IDs nem o `BLOCKERS.md`, e não cria `BK`.
+   Se o `TASK.md` tiver IDs fora do padrão (`BF-01`, `SP-01`…), o script **recusa** e pede `/organizar --migrar`.
+   Tarefas `Concluída` sem marcadores (legado) contam como aprovadas, como no `gerar`.
+3. Apresente o resumo que o script imprime: quantas posições mudaram, a fila em aberto na ordem, as tarefas sem
+   arquivo em `.taskplan` (sugira `/organizar`, sem `--ordenar`) e a **primeira elegível** (a que o `/executar`
+   pegará). Lembre que **nada foi commitado**. **Pare aqui.**
 
 ## 5. Bloqueio
 

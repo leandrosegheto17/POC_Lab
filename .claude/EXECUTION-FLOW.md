@@ -357,17 +357,19 @@ se fosse apontada.
    `Sec` são derivados do Estado (ex.: `Executada (aguarda teste)` = ✔ — —;
    `Testada (aguarda segurança)` = ✔ ✔ —; `Em teste` = ✔ … —). Inclui as
    `RTP-0000` (`Refatoração Lote-X`).
-2. **Ordem e numeração são as do `TASKPLAN.md`** (coluna `#` e ID como lá,
-   `TP-0000`/`RTP-0000`); o comando não reordena nem renumera. As dependências já
-   vêm antes dos dependentes.
+2. **Ordem e numeração são as do `TASKPLAN.md`** (IDs como lá, `TP-0000`/`RTP-0000`/`SPK-`/`BK-`), que **já é a
+   fila final**: dependências antes dos dependentes e, para as bloqueadas, a que nenhuma tarefa em aberto espera
+   vai para o fim com o seu `BK` imediatamente antes, e a que tem dependentes fica no lugar com o `BK` logo antes
+   (BK primeiro, bloqueada depois). O comando não reordena nem renumera. É a **mesma fila do `/executar`**
+   (`taskplan.py proxima` devolve a primeira elegível dela); o próprio `taskplan.py` reordena a cada
+   `bloquear`/`desbloquear`/`status`, para o `/executar --continuar` não parar.
 3. Classifique cada uma: elegível (mesma regra do `taskplan.py proxima`), sem
    plano, em execução, aguardando dependência, aguardando QA/Sec ou bloqueada.
    Dependência inexistente ou ciclo vai para "Indeterminadas", sem forçar ordem.
 4. Apresente: resumo de contagens, destaque de bloqueio `Aberto` que afete a 1ª
-   tarefa elegível, a lista **sempre em formato de tabela markdown** (colunas: #,
-   tarefa, título, lote, Exe, QA, Sec, estado, classificação — nunca lista com
-   marcadores ou texto corrido) e as indeterminadas, se houver (também em
-   tabela).
+   tarefa elegível, **uma única tabela markdown** (colunas: #, tarefa, agente, título, lote,
+   Exe, QA, Sec, estado, classificação, observação — nunca lista com marcadores, texto corrido ou tabelas
+   extras; bloqueadas e indeterminadas entram na mesma tabela).
 
 Não dispara nenhum agente, não avança tarefa, não sugere próximo comando.
 

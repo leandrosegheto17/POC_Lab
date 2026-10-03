@@ -16,7 +16,17 @@ Uso (a partir da raiz do projeto):
         --chapeu ... --reqs ... --aceite ... --est ... --dep ... --par ... --arquivos ... --testes ... [--apos ID] [--status Pendente]
   python .claude/scripts/taskplan.py deps-substituir ID-ANTIGO ID1,ID2   # reaponta dependências no TASK.md
   python .claude/scripts/taskplan.py tarefa ID                       # cabeçalho e estado da tarefa (sem ler o TASK.md)
+  python .claude/scripts/taskplan.py bloquear ID --por QUEM --escala QUEM-DECIDE --motivo "..." [--impacto "..."] [--sugestao "..."]
+        # abre um BK-nnnn, põe o BK na Dep da tarefa, marca a tarefa Bloqueada e reordena o TASKPLAN.md
+  python .claude/scripts/taskplan.py desbloquear BK-nnnn "<resolução>"   # fecha o BK, devolve as tarefas à fila e reordena
+  python .claude/scripts/taskplan.py ordenar                          # /organizar --ordenar: só reordena o TASKPLAN.md (fila final) e relata
   python .claude/scripts/taskplan.py migrar [--confirmar] [--sem-git]  # /organizar --migrar (ver abaixo). Sem --confirmar é só relatório.
+
+A FILA É A ORDEM DO TASKPLAN.md: /executar (`proxima`) e /listar leem a mesma ordem. `gerar` já a entrega final:
+dependências antes dos dependentes e, para as tarefas bloqueadas, (a) bloqueada que nenhuma tarefa em aberto espera
+vai para o fim da fila, com o BK imediatamente antes; (b) bloqueada da qual outras dependem fica no lugar, com o BK
+logo antes dela. `bloquear`, `desbloquear` e `status` (quando mexe em Bloqueada) reordenam sozinhos, para o
+/executar --continuar nunca parar numa tarefa que não pode rodar.
 
 IDs padrão: TP-0000 (tarefa), RTP-0000 (refatoração), SPK-0000 (spike), BK-0000 (bloqueio).
 TP/RTP são do Executor; SPK/BK são do Coordenador (agente registrado na coluna Agente).
@@ -325,12 +335,52 @@ def ordenar(tasks):
     return out
 
 
+def reordenar_bloqueios(tasks):
+    """Ajusta a fila para as tarefas bloqueadas (ver docstring do módulo)."""
+    est = {t['key']: estado(t) for t in tasks}
+    abertas = {t['key'] for t in tasks if est[t['key']] != 'Aprovada'}
+    dependentes = {}
+    for t in tasks:
+        if t['key'] in abertas:
+            for d in t['dep']:
+                if d in abertas and not d.startswith('BK-'):
+                    dependentes.setdefault(d, set()).add(t['key'])
+    bloq = [t for t in tasks if est[t['key']] == 'Bloqueada' and not t['key'].startswith(COORD)]
+    fim = [t for t in bloq if not dependentes.get(t['key'])]
+    fim_keys = {t['key'] for t in fim}
+    bks_de = {t['key']: [d for d in t['dep'] if d.startswith('BK-') and d in abertas] for t in bloq}
+    todos_bk = {b for lst in bks_de.values() for b in lst}
+    mover = {b for b in todos_bk if all(k in fim_keys for k, lst in bks_de.items() if b in lst)}
+    ficam = todos_bk - mover  # BK que bloqueia alguma tarefa que não vai para o fim: fica antes da primeira dela
+    by = {t['key']: t for t in tasks}
+    base = [t for t in tasks if t['key'] not in fim_keys and t['key'] not in mover and t['key'] not in ficam]
+    out, emitidos = [], set()
+    for t in base:
+        for b in bks_de.get(t['key'], []):
+            if b in ficam and b not in emitidos and b in by:
+                out.append(by[b])
+                emitidos.add(b)
+        out.append(t)
+    for t in fim:
+        for b in bks_de.get(t['key'], []):
+            if b in mover and b not in emitidos and b in by:
+                out.append(by[b])
+                emitidos.add(b)
+        out.append(t)
+    # BK em aberto sem tarefa bloqueada associada (ou tarefa cujo BK não entrou): mantém a posição original
+    pos = {t['key']: i for i, t in enumerate(tasks)}
+    for r in [t for t in tasks if t not in out]:
+        i = next((n for n, t in enumerate(out) if pos[t['key']] > pos[r['key']]), len(out))
+        out.insert(i, r)
+    return out
+
+
 def agora():
     return datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
 
 
 def gerar():
-    tasks = ordenar(read_tasks())
+    tasks = reordenar_bloqueios(ordenar(read_tasks()))
     rows, cont = [], {e: 0 for e in ESTADOS}
     for n, t in enumerate(tasks, 1):
         e = estado(t)
@@ -656,6 +706,7 @@ def cmd_liberar(args):
 def cmd_status(args):
     i, texto = args[0], args[1]
     key = norm(i)
+    hit = {'status': ''}
     if key.startswith('BK-'):  # bloqueio: o Status vive no arquivo dele
         p = plan_path(key)
         if not os.path.exists(p):
@@ -684,16 +735,20 @@ def cmd_status(args):
         lines[hit['line']] = pre + ' ' + texto.replace('|', '/').replace('\n', ' ') + ' |'
         write_lines(TASK, lines, task_crlf())
     t = {'id': i, 'key': key, 'status': texto, 'dep': []}
+    mexe_em_bloqueio = key.startswith('BK-') or estado(t) == 'Bloqueada' or \
+        re.sub(r'^[*_`\s]+', '', hit['status']).startswith('Bloqueada')
     if os.path.exists(OUT):
-        try:
-            set_estado(key, estado(t))
-        except SystemExit:
-            pass
+        if mexe_em_bloqueio:
+            gerar()  # reordena a fila (bloqueada vai para o fim ou fica depois do BK)
+        else:
+            try:
+                set_estado(key, estado(t))
+            except SystemExit:
+                pass
     print('Status de %s gravado' % i)
 
 
-def cmd_proximo_id(args):
-    pref = args[0] if args else 'RTP'
+def proximo_id(pref):
     nums = [0]
     if os.path.exists(TASK):
         for l in read_lines(TASK):
@@ -704,7 +759,11 @@ def cmd_proximo_id(args):
             m = re.match(r'%s-(\d+)' % pref, f)
             if m:
                 nums.append(int(m.group(1)))
-    print('%s-%04d' % (pref, max(nums) + 1))
+    return '%s-%04d' % (pref, max(nums) + 1)
+
+
+def cmd_proximo_id(args):
+    print(proximo_id(args[0] if args else 'RTP'))
 
 
 def parse_opts(args):
@@ -784,6 +843,110 @@ def cmd_deps_substituir(args):
                 n_alt += 1
     write_lines(TASK, lines, task_crlf())
     print('%d linha(s) reapontada(s): %s -> %s' % (n_alt, args[0], ', '.join(novos)))
+
+
+def _linha_tarefa(key):
+    for tb in tabelas():
+        for r in tb['rows']:
+            if norm(r['id']) == key:
+                return r
+    return None
+
+
+def _add_dep(lines, row, bid):
+    if 'dep' not in row['tab']['cols']:
+        return
+    di = row['tab']['cols'].index('dep')
+    c = list(row['cells'])
+    atual = c[di].strip()
+    if bid in atual:
+        return
+    c[di] = bid if atual in ('', '-', '—') else atual + ', ' + bid
+    lines[row['line']] = '| ' + ' | '.join(c) + ' |'
+
+
+def cmd_bloquear(args):
+    key = norm(args[0])
+    o = parse_opts(args[1:])
+    for k in ('por', 'escala', 'motivo'):
+        if k not in o:
+            sys.exit('falta --%s' % k)
+    row = _linha_tarefa(key)
+    if row is None:
+        sys.exit('tarefa %s não encontrada na Seção 3 do TASK.md' % args[0])
+    bid = proximo_id('BK')
+    motivo = re.sub(r'\s+', ' ', o['motivo']).strip()
+    texto = '\n'.join(['## Bloqueio %s — %s' % (bid, datetime.date.today().isoformat()),
+                       '- Reportado por: %s' % o['por'], '- Escalado para: %s' % o['escala'],
+                       '- Artefato/trecho afetado: %s' % key, '- Descrição: %s' % motivo,
+                       '- Impacto se não resolvido: %s' % o.get('impacto', '—'),
+                       '- Sugestão: %s' % o.get('sugestao', '—'), '- Status: Em aberto']) + '\n'
+    e = {'cab': bid, 'titulo': motivo[:90], 'texto': texto,
+         'campos': {'reportado por': o['por'], 'escalado para': o['escala']}}
+    os.makedirs(PLANDIR, exist_ok=True)
+    gravar_raw(plan_path(bid), arquivo_bk(bid, e, [key], 'Pendente — em aberto'))
+    lines = read_lines(TASK)
+    _add_dep(lines, row, bid)
+    pre, _ = split_status(lines[row['line']])
+    lines[row['line']] = pre + ' Bloqueada (%s: %s) |' % (bid, motivo[:120].replace('|', '/'))
+    write_lines(TASK, lines, task_crlf())
+    if os.path.exists(plan_path(key)):
+        with Lock(key):
+            set_reserva(key, 'Bloqueada')
+    gerar()
+    print('%s\t%s\tbloqueia %s\tescala para %s' % (bid, plan_path(bid), key, o['escala']))
+
+
+def cmd_desbloquear(args):
+    bid = norm(args[0])
+    texto = args[1] if len(args) > 1 else 'resolvido'
+    if not os.path.exists(plan_path(bid)):
+        sys.exit('bloqueio %s sem arquivo em .md/.taskplan' % args[0])
+    lines_bk = read_lines(plan_path(bid))
+    for n, l in enumerate(lines_bk[:15]):
+        if l.startswith('Status:'):
+            lines_bk[n] = 'Status: Concluída — ' + texto.replace('\n', ' ')
+            break
+    write_lines(plan_path(bid), lines_bk)
+    lines = read_lines(TASK)
+    liberadas = []
+    for tb in tabelas():
+        for r in tb['rows']:
+            if bid in ID_RE.findall(r['dep']) and re.sub(r'^[*_`\s]+', '', r['status']).startswith('Bloqueada'):
+                pre, _ = split_status(lines[r['line']])
+                lines[r['line']] = pre + ' Pendente (desbloqueada: %s resolvido) |' % bid
+                liberadas.append(norm(r['id']))
+    write_lines(TASK, lines, task_crlf())
+    for k in liberadas:
+        if os.path.exists(plan_path(k)):
+            with Lock(k):
+                set_reserva(k, 'Livre')
+    gerar()
+    print('%s resolvido; voltam à fila: %s' % (bid, ', '.join(liberadas) or 'nenhuma'))
+
+
+def cmd_ordenar(args):
+    """Reconstrói só o TASKPLAN.md na ordem final da fila. Não toca no TASK.md, em .md/.taskplan/ nem nos IDs."""
+    existia = os.path.exists(OUT)
+    antes = [r['key'] for r in taskplan_rows()] if existia else []
+    gerar()
+    rows = taskplan_rows()
+    depois = [r['key'] for r in rows]
+    mudaram = sum(1 for i, k in enumerate(depois) if i >= len(antes) or antes[i] != k) if existia else len(depois)
+    abertas = [r for r in rows if r['estado'] != 'Aprovada']
+    sem_plano = [r['key'] for r in abertas if not r['plano'] and not r['key'].startswith(COORD)]
+    print('ORDENAR: %d posições mudaram (de %d); em aberto: %d' % (mudaram, len(depois), len(abertas)))
+    if not existia:
+        print('TASKPLAN.md não existia: foi criado agora.')
+    print('Fila em aberto (na ordem):')
+    for r in abertas[:15]:
+        print('  #%d\t%s\t%s\t%s' % (r['n'], r['id'], r['estado'], 'dep ' + ', '.join(r['dep']) if r['dep'] else ''))
+    if len(abertas) > 15:
+        print('  … e mais %d' % (len(abertas) - 15))
+    if sem_plano:
+        print('Sem arquivo em .md/.taskplan (rode /organizar): ' + ', '.join(sem_plano[:10]))
+    print('Primeira elegível para o /executar:')
+    cmd_proxima(['--n', '1'])
 
 
 def cmd_tarefa(args):
@@ -1087,6 +1250,12 @@ if __name__ == '__main__':
         cmd_nova(a[1:])
     elif cmd == 'deps-substituir' and len(a) == 3:
         cmd_deps_substituir(a[1:])
+    elif cmd == 'ordenar':
+        cmd_ordenar(a[1:])
+    elif cmd == 'bloquear' and len(a) >= 2:
+        cmd_bloquear(a[1:])
+    elif cmd == 'desbloquear' and len(a) >= 2:
+        cmd_desbloquear(a[1:])
     elif cmd == 'tarefa' and len(a) == 2:
         cmd_tarefa(a[1:])
     else:
