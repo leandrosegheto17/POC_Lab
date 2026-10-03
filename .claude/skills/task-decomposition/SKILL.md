@@ -60,6 +60,7 @@ Do NOT use for:
 
 ## Output Esperado
 
+- **ID**: `TP-` + 4 dígitos sequenciais (`TP-0001`, `TP-0002`…) — nunca `T-nnn`.
 - **Formato**: Seção 3 do `TASK.md` — tabela `| ID | Tarefa | Time | Origem
   (componente/tela) | Critério de Aceite | Estimativa | Status |` (colunas de
   estimativa e dependência preenchidas depois por outras skills; Status inicia como

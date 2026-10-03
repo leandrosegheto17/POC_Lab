@@ -17,7 +17,7 @@ um mercado que não se consegue alcançar.
 
 - Logo após `value-proposition-and-pricing`, dentro do Loop 0 de `/avaliar_ideia` — o
   ICP refina (ou derruba) a hipótese de preço recém-formulada.
-- Em atualização pontual (`/planejar_tarefa`), quando a demanda mira um público
+- Em atualização pontual (`/planejar --tarefa`), quando a demanda mira um público
   novo ou muda o segmento atendido.
 
 Do NOT use for:

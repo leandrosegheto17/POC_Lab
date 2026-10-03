@@ -17,7 +17,7 @@ não existe conta de viabilidade sem um preço com justificativa.
 
 - Primeiro passo do Dono sobre uma ideia bruta, dentro do Loop 0 de `/avaliar_ideia` —
   antes de `icp-and-market-sizing` e das demais skills do plano.
-- Em atualização pontual (`/planejar_tarefa`), quando a demanda mexe em
+- Em atualização pontual (`/planejar --tarefa`), quando a demanda mexe em
   preço/modelo de cobrança.
 
 Do NOT use for:

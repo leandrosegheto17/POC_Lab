@@ -18,7 +18,7 @@ chutado contamina a âncora de preço, a viabilidade e o break-even de uma vez.
 - Dentro do Loop 0 de `/avaliar_ideia`, idealmente cedo — a Seção 1
   (`value-proposition-and-pricing`) usa o preço de concorrente como âncora e é
   revisada depois desta skill quando a âncora era provisória.
-- Em atualização pontual (`/planejar_tarefa`), quando surge concorrente novo
+- Em atualização pontual (`/planejar --tarefa`), quando surge concorrente novo
   relevante ou a demanda entra num mercado adjacente.
 
 Do NOT use for:

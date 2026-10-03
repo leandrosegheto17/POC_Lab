@@ -5,10 +5,9 @@ Sequência lógica da **fase de planejamento** do pipeline — da ideia inicial 
 
 Este documento não redefine nenhum dos 5 agentes consolidados
 (`.claude/agents/dono.md`, `gestor.md`, `coordenador.md`, `executor.md`,
-`validador.md`) nem a
-convenção de artefatos (`PIPELINE-CONVENTIONS.md`) — só ordena o que cada um já
-declara, na forma de **três comandos que o usuário aciona manualmente**:
-`/avaliar_ideia`, `/planejar` e `/definir_organizar`. Não existe mais um único fluxo encadeado com pausa a cada
+`validador.md`) nem a convenção de artefatos (`PIPELINE-CONVENTIONS.md`) — só
+ordena o que cada um já declara, na forma de **três comandos que o usuário aciona
+manualmente**: `/avaliar_ideia`, `/planejar` e `/definir`. Não existe mais um único fluxo encadeado com pausa a cada
 sub-etapa — **o usuário é o orquestrador**: cada comando roda um ou mais **loops
 de refinamento** (ver seção abaixo) até o usuário aprovar explicitamente cada
 artefato ou pacote de artefatos, e então para. O usuário decide quando pedir
@@ -99,7 +98,7 @@ PIPELINE-CONVENTIONS.md §2).
 
 | Dispara quando | Agente | Produz | O que o usuário faz depois |
 |---|---|---|---|
-| `PLANO-COMERCIAL.md` aprovado no `/avaliar_ideia` (ou decisão explícita do usuário de seguir sem ele), ou retomada de um `PRD.md`/`PRD-TECNICO.md` já existente | `gestor` (uma instância viva ao longo do Loop A) | Gate 1 em `CTO-REVIEW.md` + `PRD.md` + `PRD-TECNICO.md` | Aprova (segue para `/definir_organizar`), pede ajuste (mais uma rodada do mesmo loop), ou descarta e recomeça |
+| `PLANO-COMERCIAL.md` aprovado no `/avaliar_ideia` (ou decisão explícita do usuário de seguir sem ele), ou retomada de um `PRD.md`/`PRD-TECNICO.md` já existente | `gestor` (uma instância viva ao longo do Loop A) | Gate 1 em `CTO-REVIEW.md` + `PRD.md` + `PRD-TECNICO.md` | Aprova (segue para `/definir`), pede ajuste (mais uma rodada do mesmo loop), ou descarta e recomeça |
 
 **Pré-requisito comercial**: se `PLANO-COMERCIAL.md` não existir, o comando para
 e recomenda rodar `/avaliar_ideia` primeiro. Seguir sem o plano é decisão
@@ -107,7 +106,7 @@ explícita do usuário — nesse caso o Gestor registra a ausência como ressalv
 Gate 1 (ver Inputs Esperados de `gestor.md`), nunca segue em silêncio.
 
 **Gate 1 é a "rodada 0" do Loop A**: o chapéu CTO valida o alinhamento estratégico
-sobre o briefing antes de qualquer rascunho de PRD existir. Se reprovar dentro do
+sobre o briefing e o `PLANO-COMERCIAL.md` antes de qualquer rascunho de PRD existir. Se reprovar dentro do
 próprio dispatch, não há rascunho para iterar — o Gestor devolve só o veredito e o
 motivo, sem PRD.md/PRD-TECNICO.md; o usuário ajusta o briefing e a próxima chamada
 é sempre um dispatch novo (não há loop para continuar ainda).
@@ -128,7 +127,14 @@ existe mais (ver limitação técnica do `SendMessage` acima) — dispatch novo 
 `PRD.md`/`PRD-TECNICO.md`/`CTO-REVIEW.md` do disco, retomando do ponto em que
 ficou.
 
-## Comando 2: `/definir_organizar` — Coordenador, dois loops sequenciais (Loop B +
+> **`/planejar --tarefa <demanda>`**: variação deliberada para uma única demanda
+> pontual (funcionalidade, ajuste ou correção). Roda, num só comando, o loop do
+> Gestor, o loop do Coordenador (só anexa um lote novo ao `TASK.md`), a execução
+> e a validação do recorte criado — com pausa e confirmação a cada troca de agente
+> e sem acionar `/deploy`. A mecânica detalhada está em
+> `.claude/commands/planejar.md`, seção "Modo `--tarefa`".
+
+## Comando 2: `/definir` — Coordenador, dois loops sequenciais (Loop B +
 Loop C) + aprovação de GUARDRAILS.md pelo Gestor
 
 | Dispara quando | Agente(s) | Produz | O que o usuário faz depois |
@@ -206,11 +212,11 @@ do Loop C podem precisar de revisão).
   marcação de paralelismo (Seção 4). Essa tabela é a spec individual de
   implementação; não existe arquivo separado por chapéu.
 - **UX/UI**: incorporado ao Coordenador — o `UX-SPEC.md` é produzido antes do
-  `TASK.md`, na mesma chamada de `/definir_organizar`, não incrementalmente ao
+  `TASK.md`, na mesma chamada de `/definir`, não incrementalmente ao
   longo da execução como no pipeline de 12 agentes.
 - **DevSecOps e DevOps** (chapéus do Validador): não recebem tarefa individual no
   `TASK.md` — o chapéu DevSecOps consome o `SDD.md` inteiro (Seção 7) dentro do
-  `/validar`; o chapéu DevOps consome as Seções 3 e 6 dentro do `/deploy`. Ver
+  `/executar`; o chapéu DevOps consome as Seções 3 e 6 dentro do `/deploy`. Ver
   `EXECUTION-FLOW.md`.
 
 ---
@@ -219,8 +225,8 @@ do Loop C podem precisar de revisão).
 
 - **CLAUDE.md**: não existe como arquivo separado — consolidado na Seção 1 do
   `TASK.md` ("Diretrizes de Implementação"), produzida pelo Coordenador dentro de
-  `/definir_organizar`.
-- **GUARDRAILS.md**: o Coordenador propõe o rascunho no mesmo `/definir_organizar`
+  `/definir`.
+- **GUARDRAILS.md**: o Coordenador propõe o rascunho no mesmo `/definir`
   que produz o `TASK.md`; o Gestor aprova (skill `guardrails-governance`), como
   último passo do mesmo comando, automaticamente — o usuário não precisa acionar
   nada à parte para isso.

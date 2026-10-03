@@ -18,7 +18,7 @@ veredito comercial está dito com todas as letras logo no topo.
 - Passo final de **cada rodada** do Loop 0 de `/avaliar_ideia` (o artefato é escrito a
   cada rodada, não só na aprovação — PLANNING-FLOW.md), depois que as skills de
   seção rodaram ou foram atualizadas.
-- Em atualização pontual (`/planejar_tarefa`), depois que as seções tocadas pela
+- Em atualização pontual (`/planejar --tarefa`), depois que as seções tocadas pela
   demanda foram revisadas.
 
 Do NOT use for:

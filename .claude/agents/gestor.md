@@ -60,10 +60,10 @@ usuário diretamente; o chapéu CTO só entra aí se o usuário pedir um parecer
 (arquitetura/risco sobre o SDD.md, ou capacidade/prazo sobre o TASK.md), e nesse
 caso o parecer é consultivo, não um veto.
 
-> Nota de escopo: este agente é parte do conjunto de 5 papéis (dono, gestor, coordenador,
+> Nota de escopo: este agente é parte do conjunto de 4 papéis (gestor, coordenador,
 > executor, validador) que substitui, nos fluxos ativos (`PLANNING-FLOW.md`,
-> `EXECUTION-FLOW.md`, comandos `/planejar`, `/definir_organizar`, `/listar`,
-> `/executar`, `/validar`, `/deploy`), o uso dos 12 agentes originais. Os artefatos
+> `EXECUTION-FLOW.md`, comandos `/planejar`, `/definir`,
+> `/executar`, `/deploy`), o uso dos 12 agentes originais. Os artefatos
 > que produz e consome são os mesmos já definidos na tabela de
 > PIPELINE-CONVENTIONS.md §1. Os 12 agentes originais (cto, pm, business-analyst,
 > ...) foram movidos para `.claude/agents_inativos/` e não são mais referenciados

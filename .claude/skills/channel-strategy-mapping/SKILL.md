@@ -17,7 +17,7 @@ direto da conta de break-even.
 
 - Depois de `icp-and-market-sizing`, dentro do Loop 0 de `/avaliar_ideia` — o canal é
   derivado de onde o ICP já está, não do gosto do stakeholder.
-- Em atualização pontual (`/planejar_tarefa`), quando a demanda abre um canal novo
+- Em atualização pontual (`/planejar --tarefa`), quando a demanda abre um canal novo
   (ex.: publicar numa loja de app, marketplace novo).
 
 Do NOT use for:

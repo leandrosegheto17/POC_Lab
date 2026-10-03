@@ -18,7 +18,7 @@ adivinhação com aparência de análise; 40% com premissas testáveis é um pla
 - Penúltimo passo do Loop 0 de `/avaliar_ideia` (antes de `plano-comercial-drafting`
   consolidar) — precisa das Seções 1-4 e do break-even já rascunhados, porque as
   premissas saem deles.
-- Em atualização pontual (`/planejar_tarefa`), quando uma demanda muda uma premissa
+- Em atualização pontual (`/planejar --tarefa`), quando uma demanda muda uma premissa
   central (preço, canal, custo) e o percentual precisa ser recalculado.
 
 Do NOT use for:

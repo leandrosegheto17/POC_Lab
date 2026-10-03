@@ -7,10 +7,9 @@ GUARDRAILS.md.
 
 > **Modelo ativo: 5 agentes consolidados.** Desde a consolidação registrada aqui, os
 > fluxos ativos (`PLANNING-FLOW.md`, `EXECUTION-FLOW.md` e os comandos
-> `/avaliar_ideia`, `/planejar`,
-> `/definir_organizar`, `/listar`, `/executar`, `/validar`, `/deploy`) usam só 5
-> agentes: `dono` (Business Owner / planejamento comercial), `gestor` (CTO + PM +
-> Business Analyst), `coordenador` (Software Architect
+> `/avaliar_ideia`, `/planejar`, `/definir`, `/organizar`, `/executar`, `/listar`,
+> `/limpar`, `/deploy`) usam só 5
+> agentes: `dono` (Business Owner / planejamento comercial), `gestor` (CTO + PM + Business Analyst), `coordenador` (Software Architect
 > + Tech Lead + UX/UI), `executor` (Backend + Frontend + Mobile) e `validador` (QA +
 > DevSecOps + DevOps). O usuário é o orquestrador — decide quando cada comando roda;
 > nenhum fluxo encadeia fases automaticamente sem o usuário acionar o próximo
@@ -36,7 +35,7 @@ O Dono entra **antes** do Gestor: no comando `/avaliar_ideia` (etapa anterior ao
 `/planejar`) recebe a ideia bruta e produz o `PLANO-COMERCIAL.md` (como
 vender, pra quem, onde publicar, concorrentes, hipótese de viabilidade,
 break-even) com veredito comercial explícito — o plano aprovado é a entrada do
-`/planejar`, consumido pelo Gestor como insumo do Gate 1; no `/planejar_tarefa`,
+`/planejar`, consumido pelo Gestor como insumo do Gate 1; no `/planejar --tarefa`,
 entra via triagem comercial da demanda. Não é um gate com veto:
 um plano comercial desfavorável informa a decisão do usuário, que decide se
 segue.
@@ -135,7 +134,7 @@ exceções:
   toda alteração estrutural em `GUARDRAILS.md` também passa por ele (seção 5).
 
 **O que substituiu os antigos Gates 2 e 3 do CTO** (revisão pós-SDD.md e
-pré-TASK.md): não existem mais como aprovação de agente. O `/definir_organizar`
+pré-TASK.md): não existem mais como aprovação de agente. O `/definir`
 entrega SDD.md + UX-SPEC.md + TASK.md numa única sequência do Coordenador, e é o
 **usuário** quem aprova, pede ajuste pontual ou reprova diretamente — sem um agente
 Gestor intermediário. As skills que faziam essa análise
@@ -231,7 +230,7 @@ de frontend neste MVP", "toda migration precisa de rollback", limites de stack).
 de governança:
 
 - **Quem propõe**: Coordenador, ao gerar/atualizar o documento (dentro do
-  `/definir_organizar`), ou qualquer agente que precise de uma exceção pontual a uma
+  `/definir`), ou qualquer agente que precise de uma exceção pontual a uma
   regra existente.
 - **Quem aprova mudança estrutural ou exceção**: só o Gestor. Uma "mudança
   estrutural" é qualquer alteração que adiciona, remove ou reescreve uma regra — não

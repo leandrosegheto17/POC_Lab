@@ -18,7 +18,7 @@ que o Gestor herda no Gate 1.
 
 - **Continuamente**, durante todas as outras skills do Dono, dentro do Loop 0 —
   não é um passo final, é um registro que cresce a cada seção escrita.
-- Em atualização pontual (`/planejar_tarefa`), quando a demanda cria premissa
+- Em atualização pontual (`/planejar --tarefa`), quando a demanda cria premissa
   comercial nova ou resolve/derruba uma existente.
 
 Do NOT use for:

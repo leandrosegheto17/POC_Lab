@@ -1,6 +1,6 @@
 ---
 name: commercial-impact-triage
-description: Classifica uma demanda pontual como com/sem impacto comercial e, quando tem, aponta exatamente quais seções do PLANO-COMERCIAL.md ela toca (preço, canal, break-even, premissa) — a triagem da Seção 2b do /planejar_tarefa, que decide se o Dono é acionado ou dispensado. Use no início de toda demanda pontual, antes de disparar o Dono. Do NOT use for o planejamento comercial em si (são as demais skills do dono) ou para triagem de impacto técnico/arquitetural (isso é do coordenador).
+description: Classifica uma demanda pontual como com/sem impacto comercial e, quando tem, aponta exatamente quais seções do PLANO-COMERCIAL.md ela toca (preço, canal, break-even, premissa) — a triagem da Seção T2b do /planejar --tarefa, que decide se o Dono é acionado ou dispensado. Use no início de toda demanda pontual, antes de disparar o Dono. Do NOT use for o planejamento comercial em si (são as demais skills do dono) ou para triagem de impacto técnico/arquitetural (isso é do coordenador).
 metadata:
   author: dono
   version: '1.0.0'
@@ -16,7 +16,7 @@ a conta, e não burocratizar correção de bug com análise comercial.
 
 ## Quando é Acionada
 
-- Seção 2b do `/planejar_tarefa`, sobre a descrição da demanda, **antes** de
+- Seção T2b do `/planejar --tarefa`, sobre a descrição da demanda, **antes** de
   qualquer dispatch do Dono.
 - Também serve quando o usuário pergunta avulso "isso muda o plano comercial?".
 
@@ -62,8 +62,8 @@ curta. Na dúvida, aciona.
 ## Output Esperado
 
 - **Formato**: veredito de triagem em 2-4 frases — "sem impacto + porquê" ou "com
-  impacto + eixos + seções a revisar" — apresentado ao usuário na Seção 2b do
-  `/planejar_tarefa`. Não escreve artefato; o `PLANO-COMERCIAL.md` só muda se o
+  impacto + eixos + seções a revisar" — apresentado ao usuário na Seção T2b do
+  `/planejar --tarefa`. Não escreve artefato; o `PLANO-COMERCIAL.md` só muda se o
   Dono for acionado.
 
 ## Critério de Aceite

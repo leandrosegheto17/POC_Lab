@@ -1,6 +1,6 @@
 ---
 description: Aciona o agente Validador (chapéu DevOps) para provisionar infra/CI-CD (1ª vez), confirmar a validação final dos lotes prontos e publicar em staging; pausa sempre antes de produção. Fecha com um registro do Gestor (Gate 4).
-argument-hint: [vazio = todos os lotes Validado ainda não publicados | nome do lote = publica só esse lote]
+argument-hint: [vazio = todos os lotes prontos (tarefas QA ✔ · Sec ✔) ainda não publicados | nome do lote = publica só esse lote]
 ---
 
 # Comando `/deploy` — Validador (confirmação final + DevOps) + Gestor (Gate 4)
@@ -26,24 +26,24 @@ preparação de projeto, feita uma vez.
 
 ## 2. Determinar o que vai ser publicado
 
-O lote nomeado em `$ARGUMENTS`, ou — se vazio — todos os lotes com status
-`Validado` (produzido por `/validar`) que ainda não aparecem como publicados em
-`.md/DEPLOY.md`.
+O lote nomeado em `$ARGUMENTS`, ou — se vazio — todos os lotes
+com todas as tarefas `QA ✔ · Sec ✔` (produzido pelo `/executar`) que ainda não
+aparecem como publicados em `.md/DEPLOY.md`.
 
-Se não houver nenhum lote `Validado` pendente de publicação: informe isso e pare —
-rode `/validar` primeiro sobre o(s) lote(s) desejado(s).
+Se não houver nenhum lote pronto pendente de publicação: informe isso e pare —
+rode `/executar` primeiro sobre o(s) lote(s) desejado(s).
 
 ## 3. Validação final de confirmação
 
 Para o conjunto de lotes desta chamada: **dispare** `validador` de novo, focado em
 confirmar que nada mudou desde o veredito já registrado em `QA-REPORT.md`/
-`SECURITY-REVIEW.md` (ou rodar a validação de fato, se algum lote nunca passou por
-`/validar`), e checar integração **entre os lotes** que serão publicados juntos —
+`SECURITY-REVIEW.md` (ou rodar a validação de fato, se alguma tarefa do lote nunca passou pelo
+comando `/executar`), e checar integração **entre os lotes** que serão publicados juntos —
 regressão cruzada que a validação por lote isolado não cobre.
 
 - **Achado bloqueante nesta confirmação**: **pare**, explique, e informe que a
-  correção volta para `/executar` — o lote precisará passar por `/validar` de novo
-  antes de tentar `/deploy` outra vez.
+  correção volta para `/executar` — a tarefa afetada refaz o ciclo completo do
+  `/executar` antes de tentar `/deploy` outra vez.
 
 ## 4. Deploy em staging
 

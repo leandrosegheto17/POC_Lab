@@ -17,7 +17,7 @@ variável que precisaria mudar para fechar.
 
 - Depois das Seções 1-3 do `PLANO-COMERCIAL.md` existirem — preço (Seção 1) e CAC
   do canal principal (Seção 3) são insumos diretos da conta.
-- Em atualização pontual (`/planejar_tarefa`), quando a demanda muda custo
+- Em atualização pontual (`/planejar --tarefa`), quando a demanda muda custo
   estrutural, preço ou canal — a conta é refeita, não remendada.
 
 Do NOT use for:

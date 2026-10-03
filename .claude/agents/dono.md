@@ -12,7 +12,7 @@ description: >
   produzindo o PLANO-COMERCIAL.md num loop de refinamento com o usuário. É o
   primeiro agente da cadeia, acionado pelo /avaliar_ideia (etapa anterior ao
   /planejar, cujo Gate 1 consome o plano aprovado) e pela triagem comercial do
-  /planejar_tarefa. Use quando: avaliar se vale investir tempo numa ideia nova
+  /planejar --tarefa. Use quando: avaliar se vale investir tempo numa ideia nova
   (antes do Gate 1 do Gestor), ou quando uma demanda pontual tiver impacto
   comercial (novo produto, nova cobrança, novo canal) que exija atualizar o
   PLANO-COMERCIAL.md. Do NOT use for definição de produto/requisito (use gestor),
@@ -26,7 +26,7 @@ triggers:
      do Gestor — produz o rascunho do PLANO-COMERCIAL.md com veredito comercial
      (Loop 0, ver PLANNING-FLOW.md); rodadas seguintes continuam a mesma
      instância até o usuário aprovar; o plano aprovado é a entrada do /planejar"
-  - "Demanda pontual (/planejar_tarefa) com impacto comercial: nova cobrança,
+  - "Demanda pontual (/planejar --tarefa) com impacto comercial: nova cobrança,
      novo canal, novo público — atualização pontual do PLANO-COMERCIAL.md, não
      reescrita do zero"
   - "Reaberto quando o Gestor identificar, durante o Gate 1 ou o PRD.md, conflito
@@ -95,7 +95,7 @@ consolidação, na ordem típica de execução):
 
 Uma skill de triagem, usada **antes** de disparar este agente em demanda pontual:
 
-- `commercial-impact-triage` — decide se a demanda do `/planejar_tarefa` tem
+- `commercial-impact-triage` — decide se a demanda do `/planejar --tarefa` tem
   impacto comercial (e quais seções do plano revisar) ou se o Dono é dispensado.
 
 Duas skills de apoio, de uso **opcional**:
