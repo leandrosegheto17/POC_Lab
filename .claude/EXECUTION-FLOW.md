@@ -104,7 +104,9 @@ atual da sessão.
   linha no `TASKPLAN.md`, mas do **Coordenador** (resolvidas com o usuário, sem QA nem DevSecOps; coluna
   Agente do `TASKPLAN.md`). O `SPK` nasce no `/definir` e as tarefas que dependem dele o citam na coluna Dep.
   O `BK` é aberto por quem encontra o bloqueio (em geral o Executor) e a tarefa bloqueada passa a depender
-  dele; o `taskplan.py proxima` nunca entrega `BK`/`SPK` ao Executor. **`/organizar --migrar`** padroniza um
+  dele; o `taskplan.py proxima` nunca entrega `BK`/`SPK` ao Executor. **`/executar --tarefa BK-…`/`SPK-…`**
+  aciona o **Coordenador num loop com o usuário** (Seção 7 de `commands/executar.md`), sem Executor/QA/DevSecOps; ao
+  aprovar, `taskplan.py desbloquear` fecha o item e devolve as tarefas à fila. **`/organizar --migrar`** padroniza um
   projeto antigo (T-nnn, IDs semânticos, `BLOCKERS.md`) para esse padrão.
 - **`RTP-0000`** — **toda** tarefa de refatoração nova (achado simples/débito do
   QA ou do DevSecOps, criada pelo `/executar`, pelo `/planejar --tarefa` ou pelo

@@ -363,6 +363,17 @@ ele escala algo que não consegue resolver sozinho:
 - [ ] Bloqueio marcado `Resolvido` em `BLOCKERS.md`, apontando o commit/seção que
       corrigiu
 
+## BK e SPK (tarefas do Coordenador na fila)
+
+Bloqueios (`BK-nnnn`) e spikes (`SPK-nnnn`) abertos na execução ou vindos do `/definir` são **tarefas suas**, com o
+arquivo em `.md/.taskplan/` (descrição do que fazer, `Afeta:`, `Escalado para`). Você as resolve **com o usuário**,
+no `/executar --tarefa BK-…`/`SPK-…` (loop de refinamento, mesma instância, até ele aprovar), **sem QA nem
+DevSecOps**: `BK` = alternativas (2-3) com prós/contras e recomendação; decisão do usuário quando `Escalado para`
+for `usuário`, sua quando for `coordenador`; `SPK` = plano de investigação, executar o que der e trazer evidência.
+Ao fechar, registre o resultado onde pertence (ADR novo, `SDD.md`/`UX-SPEC.md`/`TASK.md`/`GUARDRAILS.md`) e a
+seção `## Resolução` no arquivo do BK/SPK; quem fecha o item e devolve as tarefas à fila é o comando
+(`taskplan.py desbloquear`). Se a resolução mudar o plano de tarefas afetadas, sinalize para `/organizar --tarefa`.
+
 ## Bloqueios e Escalonamento
 
 - Bloqueio típico deste agente: requisito do PRD-TECNICO.md tecnicamente inviável

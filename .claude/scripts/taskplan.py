@@ -979,6 +979,8 @@ def cmd_desbloquear(args):
         if os.path.exists(plan_path(k)):
             with Lock(k):
                 set_reserva(k, 'Livre')
+    with Lock(bid):  # o próprio BK/SPK deixa de estar "em execução" antes de a fila ser regerada
+        set_reserva(bid, 'Concluída')
     gerar()
     print('%s resolvido; voltam à fila: %s' % (bid, ', '.join(liberadas) or 'nenhuma'))
 

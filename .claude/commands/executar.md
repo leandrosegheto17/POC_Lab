@@ -1,6 +1,6 @@
 ---
 description: Executa tarefas de ponta a ponta, uma por vez, a partir de .md/.taskplan/<ID>.md — o Executor implementa, o QA testa (aprova ou reprova) e o DevSecOps dá o OK de segurança, tudo no mesmo fluxo. Achado crítico volta para a execução; achado não crítico vira nova tarefa de refatoração. Cada agente lê e escreve no arquivo da tarefa (.taskplan). Sem argumento pega a próxima tarefa elegível; --tarefa <ID> executa só essa (ou retoma uma bloqueada); --lote N e --continuar [N] encadeiam as tarefas e, em bloqueio, registram e seguem para a próxima elegível. Não dispara /deploy sozinho.
-argument-hint: [vazio = próxima tarefa | --tarefa <ID> | --lote N | --continuar [N]]
+argument-hint: [vazio = próxima tarefa | --tarefa <ID, inclusive BK-/SPK- do Coordenador> | --lote N | --continuar [N]]
 ---
 
 # Comando `/executar` — Executor → QA → DevSecOps, por tarefa
@@ -52,7 +52,8 @@ Interprete `$ARGUMENTS`:
   dependência aberta ou **reservada por outra sessão** (informe sessão e desde
   quando; se a reserva tem mais de 2 h sem atualização, pergunte se você quer
   assumi-la): explique e **pare** (não executa as dependências por conta
-  própria). **`Bloqueada`**: é a **retomada** de uma tarefa que o usuário já tratou
+  própria). **`BK-nnnn` / `SPK-nnnn`**: tarefa do **Coordenador com o usuário** — siga a **Seção 7** (sem
+  Executor, QA nem DevSecOps). **`Bloqueada`**: é a **retomada** de uma tarefa que o usuário já tratou
   — leia a seção `## Bloqueio` do arquivo (e a decisão que o usuário registrou ou
   acabou de dar), limpe o bloqueio e continue da etapa em que parou.
 - **`--lote N`** (ex.: `/executar --lote 4`): as tarefas elegíveis do lote `N`, uma
@@ -216,7 +217,8 @@ DevSecOps, tarefas de refatoração criadas (se houver). Depois, conforme o modo
   elegível (rodando `/context` de novo, item 0 da Seção 0), até esvaziar a fila,
   atingir o teto N ou não restar elegível.
 
-**Resumo final do modo contínuo**: quantas tarefas fecharam com `QA ✔ · Sec ✔`,
+**Resumo final do modo contínuo**: **os `BK`/`SPK` em aberto que esperam você** (ID + o que fazer, em uma linha
+cada; o modo contínuo nunca os executa), quantas tarefas fecharam com `QA ✔ · Sec ✔`,
 quantas ficaram **bloqueadas** (ID + motivo em uma linha cada), quantas foram
 puladas por depender de bloqueada ou por não ter plano, quantas tarefas de
 refatoração e divisões foram abertas, e se algum lote ficou todo pronto para
@@ -313,3 +315,40 @@ Para retomar uma tarefa bloqueada: o usuário (com o Coordenador) trata o `BK`, 
 `BLOCKERS.md` vira `Resolvido`), a tarefa volta à fila
 (Status `Pendente (desbloqueada: …)`) e o `TASKPLAN.md` se reordena. Depois basta `/executar` (ela entra na
 ordem) ou `/executar --tarefa <ID>`.
+
+## 7. `BK` e `SPK` — tarefas do Coordenador (`/executar --tarefa BK-nnnn` ou `SPK-nnnn`)
+
+`BK-` (bloqueio) e `SPK-` (spike) estão na fila do `TASKPLAN.md` com `Agente: coordenador`. **Só `--tarefa <ID>` as
+executa** (o modo vazio, `--lote` e `--continuar` nunca as pegam). **Quem executa é o Coordenador, junto com o
+usuário**: um loop de conversa, **sem Executor, sem QA e sem DevSecOps**.
+
+1. **Conferir**: `python .claude/scripts/taskplan.py tarefa <ID>`. Pare se já estiver `Aprovada`, com dependência
+   aberta (SPK vindo do `/definir`) ou reservada por outra sessão (mesma regra da Seção 1). Reserve como numa
+   tarefa normal (Seção 3-0; o arquivo `BK-`/`SPK-` já existe em `.md/.taskplan/`). Se o spike exigir código de prova,
+   use a worktree da sessão (Seção 0/EXECUTION-FLOW); decisão e documentação ficam em `.md/`.
+2. **Rodada inicial (dispatch novo)**: dispare `coordenador` (`subagent_type: coordenador`,
+   `run_in_background: false`). O prompt aponta: o arquivo `.md/.taskplan/<ID>.md` (descrição do que fazer, quem
+   reportou, `Escalado para`, `Afeta:`), a entrada correspondente do `.md/BLOCKERS.md` (campo `Origem:`), os
+   arquivos `.taskplan` das tarefas afetadas, e o `SDD.md`, `UX-SPEC.md`, `GUARDRAILS.md` e `PRD-TECNICO.md` só no
+   trecho relevante. Pedido:
+   - **`BK`**: entender o bloqueio, apresentar **2-3 alternativas com prós/contras e a recomendação**, o que é
+     decisão do usuário e o que o Coordenador resolve sozinho (ajuste de `SDD`/`UX-SPEC`/`TASK`/ADR novo);
+   - **`SPK`**: transformar a pergunta em plano de investigação (critério de saída, time-box, o que o agente
+     consegue levantar por leitura ou protótipo e o que depende do usuário/ambiente) e **executar o que for
+     possível**, trazendo evidência.
+   Se `Escalado para` for `usuário`, o Coordenador **não decide**: prepara as opções; a decisão é sua.
+3. **Pause e converse**: apresente o retorno (resumo objetivo, alternativas, recomendação, perguntas) e as opções
+   **resolvido / ajustar / deixar em aberto**. Rodadas seguintes: `SendMessage` para a **mesma instância** com a sua
+   resposta, sem teto, até você dizer que está resolvido. "Descartar e recomeçar" → dispatch novo.
+4. **Fechamento (você aprovou a resolução)**: o Coordenador grava o resultado onde ele pertence (ADR novo, ajuste
+   em `SDD.md`/`UX-SPEC.md`/`TASK.md`/`GUARDRAILS.md`, ou nota do spike) e acrescenta ao `.md/.taskplan/<ID>.md` a
+   seção `## Resolução` (decisão, motivo, o que mudou, evidência do spike, tarefas afetadas que precisam de ajuste
+   de plano). Depois o comando roda
+   `python .claude/scripts/taskplan.py desbloquear <ID> "<resolução em uma linha>"`: fecha o `BK`/`SPK`, marca a
+   entrada do `BLOCKERS.md` como `Resolvido` e devolve as tarefas bloqueadas à fila (`Pendente`), com o
+   `TASKPLAN.md` reordenado. O próprio `desbloquear` já encerra a reserva do `BK`/`SPK`. Se a resolução mudar o plano de uma
+   tarefa afetada, avise para rodar `/organizar --tarefa <ID>`.
+5. **Sem fechar agora**: registre em `## Andamento` do arquivo o que já foi decidido e o que falta, libere a reserva
+   (`liberar <ID> Livre`) e **pare**; o `BK`/`SPK` continua aberto e uma nova chamada retoma lendo o arquivo.
+6. **Resumo curto** ao fim: ID, resolução (ou o que falta), tarefas que voltaram à fila e a primeira elegível
+   agora (`taskplan.py proxima`). **Pare.** Nunca dispare `/deploy` nem outro agente sozinho.
