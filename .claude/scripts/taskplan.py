@@ -16,9 +16,11 @@ Uso (a partir da raiz do projeto):
         --chapeu ... --reqs ... --aceite ... --est ... --dep ... --par ... --arquivos ... --testes ... [--apos ID] [--status Pendente]
   python .claude/scripts/taskplan.py deps-substituir ID-ANTIGO ID1,ID2   # reaponta dependências no TASK.md
   python .claude/scripts/taskplan.py tarefa ID                       # cabeçalho e estado da tarefa (sem ler o TASK.md)
-  python .claude/scripts/taskplan.py bloquear ID --por QUEM --escala QUEM-DECIDE --motivo "..." [--impacto "..."] [--sugestao "..."]
-        # abre um BK-nnnn, põe o BK na Dep da tarefa, marca a tarefa Bloqueada e reordena o TASKPLAN.md
-  python .claude/scripts/taskplan.py desbloquear BK-nnnn "<resolução>"   # fecha o BK, devolve as tarefas à fila e reordena
+  python .claude/scripts/taskplan.py bloquear ID|- --por QUEM --escala QUEM-DECIDE --motivo "..." [--impacto "..."] [--sugestao "..."]
+        [--tipo bk|spk] [--pergunta "..."] [--timebox "1 d"]
+        # registra a entrada em .md/BLOCKERS.md E abre um BK-nnnn (ou SPK-nnnn, spike) em .md/.taskplan com a descrição do que
+        # fazer; põe o BK/SPK na Dep da tarefa ID, marca a tarefa Bloqueada e reordena o TASKPLAN.md. ID "-" = sem tarefa afetada.
+  python .claude/scripts/taskplan.py desbloquear BK-nnnn|SPK-nnnn "<resolução>"   # fecha o BK/SPK e a entrada do BLOCKERS.md, devolve as tarefas à fila e reordena
   python .claude/scripts/taskplan.py ordenar                          # /organizar --ordenar: só reordena o TASKPLAN.md (fila final) e relata
   python .claude/scripts/taskplan.py migrar [--confirmar] [--sem-git]  # /organizar --migrar (ver abaixo). Sem --confirmar é só relatório.
 
@@ -39,7 +41,7 @@ Objetivo: o /executar não lê o TASK.md inteiro. Toda leitura passa pelo TASKPL
 .md/.taskplan/<ID>.md; toda escrita no TASK.md é feita aqui, só na linha afetada.
 
 O TASK.md continua sendo a fonte de verdade do Status das tarefas; o TASKPLAN.md é a visão ordenada.
-Bloqueios (BK) vivem só em .md/.taskplan/BK-0000.md. `gerar` deriva o estado do Status e da linha
+Bloqueios (BK) e spikes abertos durante a execução (SPK) vivem em .md/.taskplan/BK-0000.md / SPK-0000.md e também têm entrada em .md/BLOCKERS.md (que continua sendo escrito). `gerar` deriva o estado do Status e da linha
 `Reserva:` do arquivo da tarefa (a reserva, quando ativa, tem prioridade).
 
 `migrar` (projetos em andamento): renomeia os IDs do TASK.md e dos demais .md (TP/RTP/SPK, mapa antigo->novo
@@ -244,7 +246,8 @@ def read_tasks():
             ', '.join(ruins[:6]), '…' if len(ruins) > 6 else ''))
     tasks = [{'id': r['id'], 'key': norm(r['id']), 'lote': r['lote'], 'titulo': r['titulo'],
               'dep': [norm(x) for x in ID_RE.findall(r['dep'])], 'status': r['status']} for r in rows]
-    tasks += read_bks()
+    ja = {x['key'] for x in tasks}
+    tasks += [b for b in read_bks() if b['key'] not in ja]
     return tasks
 
 
@@ -254,13 +257,13 @@ def read_bks():
     if not os.path.isdir(PLANDIR):
         return out
     for f in sorted(os.listdir(PLANDIR)):
-        if not re.fullmatch(r'BK-\d+\.md', f):
+        if not re.fullmatch(r'(?:BK|SPK)-\d+\.md', f):
             continue
         key = f[:-3]
         titulo, status = key, 'Pendente'
         for n, l in enumerate(read_lines(os.path.join(PLANDIR, f))):
             if n == 0:
-                titulo = re.sub(r'^#\s*BK-\d+\s*[—-]\s*', '', l).strip() or key
+                titulo = re.sub(r'^#\s*(?:BK|SPK)-\d+\s*[—-]\s*', '', l).strip() or key
             if l.startswith('Status:'):
                 status = l.split(':', 1)[1].strip()
                 break
@@ -343,12 +346,12 @@ def reordenar_bloqueios(tasks):
     for t in tasks:
         if t['key'] in abertas:
             for d in t['dep']:
-                if d in abertas and not d.startswith('BK-'):
+                if d in abertas and not d.startswith(COORD):
                     dependentes.setdefault(d, set()).add(t['key'])
     bloq = [t for t in tasks if est[t['key']] == 'Bloqueada' and not t['key'].startswith(COORD)]
     fim = [t for t in bloq if not dependentes.get(t['key'])]
     fim_keys = {t['key'] for t in fim}
-    bks_de = {t['key']: [d for d in t['dep'] if d.startswith('BK-') and d in abertas] for t in bloq}
+    bks_de = {t['key']: [d for d in t['dep'] if d.startswith(COORD) and d in abertas] for t in bloq}
     todos_bk = {b for lst in bks_de.values() for b in lst}
     mover = {b for b in todos_bk if all(k in fim_keys for k, lst in bks_de.items() if b in lst)}
     ficam = todos_bk - mover  # BK que bloqueia alguma tarefa que não vai para o fim: fica antes da primeira dela
@@ -707,7 +710,8 @@ def cmd_status(args):
     i, texto = args[0], args[1]
     key = norm(i)
     hit = {'status': ''}
-    if key.startswith('BK-'):  # bloqueio: o Status vive no arquivo dele
+    so_arquivo = key.startswith('BK-') or (key.startswith('SPK-') and _linha_tarefa(key) is None)
+    if so_arquivo:  # bloqueio/spike aberto na execução: o Status vive no arquivo dele
         p = plan_path(key)
         if not os.path.exists(p):
             sys.exit('bloqueio %s sem arquivo em .md/.taskplan' % i)
@@ -735,7 +739,7 @@ def cmd_status(args):
         lines[hit['line']] = pre + ' ' + texto.replace('|', '/').replace('\n', ' ') + ' |'
         write_lines(TASK, lines, task_crlf())
     t = {'id': i, 'key': key, 'status': texto, 'dep': []}
-    mexe_em_bloqueio = key.startswith('BK-') or estado(t) == 'Bloqueada' or \
+    mexe_em_bloqueio = so_arquivo or estado(t) == 'Bloqueada' or \
         re.sub(r'^[*_`\s]+', '', hit['status']).startswith('Bloqueada')
     if os.path.exists(OUT):
         if mexe_em_bloqueio:
@@ -865,54 +869,108 @@ def _add_dep(lines, row, bid):
     lines[row['line']] = '| ' + ' | '.join(c) + ' |'
 
 
+def _blockers_proximo_numero():
+    nums = [0]
+    if os.path.exists(BLOCKERS):
+        for l in read_lines(BLOCKERS):
+            m = re.match(r'^## Bloqueio (\d+)', l)
+            if m:
+                nums.append(int(m.group(1)))
+    return max(nums) + 1
+
+
+def _blockers_acrescentar(texto):
+    bruto = ler_raw(BLOCKERS) if os.path.exists(BLOCKERS) else '# BLOCKERS\n'
+    nl = '\r\n' if '\r\n' in bruto else '\n'
+    base = bruto.rstrip('\r\n') + nl + nl
+    gravar_raw(BLOCKERS, base + texto.replace('\n', nl))
+
+
+def _blockers_status(cab, texto):
+    """Troca o `- Status:` da entrada do BLOCKERS.md cujo título começa por `cab`."""
+    if not os.path.exists(BLOCKERS) or not cab:
+        return False
+    bruto = ler_raw(BLOCKERS)
+    nl = '\r\n' if '\r\n' in bruto else '\n'
+    linhas = bruto.replace('\r\n', '\n').split('\n')
+    dentro = False
+    for n, l in enumerate(linhas):
+        if l.startswith('## '):
+            dentro = l[3:].strip().startswith(cab.strip())
+        elif dentro and l.startswith('- Status:'):
+            linhas[n] = '- Status: ' + texto
+            gravar_raw(BLOCKERS, nl.join(linhas))
+            return True
+    return False
+
+
 def cmd_bloquear(args):
-    key = norm(args[0])
+    alvo = args[0]
+    key = norm(alvo) if alvo != '-' else None
     o = parse_opts(args[1:])
     for k in ('por', 'escala', 'motivo'):
         if k not in o:
             sys.exit('falta --%s' % k)
-    row = _linha_tarefa(key)
-    if row is None:
-        sys.exit('tarefa %s não encontrada na Seção 3 do TASK.md' % args[0])
-    bid = proximo_id('BK')
+    tipo = o.get('tipo', 'bk').lower()
+    if tipo not in ('bk', 'spk'):
+        sys.exit('--tipo deve ser bk ou spk')
+    row = _linha_tarefa(key) if key else None
+    if key and row is None:
+        sys.exit('tarefa %s não encontrada na Seção 3 do TASK.md' % alvo)
+    bid = proximo_id(tipo.upper())
     motivo = re.sub(r'\s+', ' ', o['motivo']).strip()
-    texto = '\n'.join(['## Bloqueio %s — %s' % (bid, datetime.date.today().isoformat()),
-                       '- Reportado por: %s' % o['por'], '- Escalado para: %s' % o['escala'],
-                       '- Artefato/trecho afetado: %s' % key, '- Descrição: %s' % motivo,
-                       '- Impacto se não resolvido: %s' % o.get('impacto', '—'),
-                       '- Sugestão: %s' % o.get('sugestao', '—'), '- Status: Em aberto']) + '\n'
-    e = {'cab': bid, 'titulo': motivo[:90], 'texto': texto,
+    hoje = datetime.date.today().isoformat()
+    cab = 'Bloqueio %03d — %s (%s)' % (_blockers_proximo_numero(), hoje, bid)
+    campos = ['- Reportado por: %s' % o['por'], '- Escalado para: %s' % o['escala'],
+              '- Artefato/trecho afetado: %s' % (key or '—'), '- Descrição: %s' % motivo,
+              '- Impacto se não resolvido: %s' % o.get('impacto', '—'), '- Sugestão: %s' % o.get('sugestao', '—')]
+    if tipo == 'spk':
+        campos += ['- Pergunta a responder: %s' % o.get('pergunta', motivo), '- Time-box: %s' % o.get('timebox', '1 d')]
+    campos.append('- Status: Em aberto')
+    texto = '## ' + cab + '\n' + '\n'.join(campos) + '\n'
+    _blockers_acrescentar(texto)  # os agentes continuam registrando no BLOCKERS.md
+    e = {'cab': cab, 'titulo': motivo[:90], 'texto': texto,
          'campos': {'reportado por': o['por'], 'escalado para': o['escala']}}
     os.makedirs(PLANDIR, exist_ok=True)
-    gravar_raw(plan_path(bid), arquivo_bk(bid, e, [key], 'Pendente — em aberto'))
-    lines = read_lines(TASK)
-    _add_dep(lines, row, bid)
-    pre, _ = split_status(lines[row['line']])
-    lines[row['line']] = pre + ' Bloqueada (%s: %s) |' % (bid, motivo[:120].replace('|', '/'))
-    write_lines(TASK, lines, task_crlf())
-    if os.path.exists(plan_path(key)):
-        with Lock(key):
-            set_reserva(key, 'Bloqueada')
+    gravar_raw(plan_path(bid), arquivo_bk(bid, e, [key] if key else [], 'Pendente — em aberto'))
+    if row:
+        lines = read_lines(TASK)
+        _add_dep(lines, row, bid)
+        pre, _ = split_status(lines[row['line']])
+        lines[row['line']] = pre + ' Bloqueada (%s: %s) |' % (bid, motivo[:120].replace('|', '/'))
+        write_lines(TASK, lines, task_crlf())
+        if os.path.exists(plan_path(key)):
+            with Lock(key):
+                set_reserva(key, 'Bloqueada')
     gerar()
-    print('%s\t%s\tbloqueia %s\tescala para %s' % (bid, plan_path(bid), key, o['escala']))
+    print('%s\t%s\t%s\tescala para %s\tBLOCKERS.md: %s' % (bid, plan_path(bid), ('bloqueia ' + key) if key else 'sem tarefa afetada',
+                                                         o['escala'], cab.split(' (')[0]))
 
 
 def cmd_desbloquear(args):
     bid = norm(args[0])
     texto = args[1] if len(args) > 1 else 'resolvido'
     if not os.path.exists(plan_path(bid)):
-        sys.exit('bloqueio %s sem arquivo em .md/.taskplan' % args[0])
+        sys.exit('bloqueio/spike %s sem arquivo em .md/.taskplan' % args[0])
     lines_bk = read_lines(plan_path(bid))
+    origem = ''
     for n, l in enumerate(lines_bk[:15]):
+        if 'Origem:' in l:
+            m = re.search(r'Origem:\s*(.*?)\s*(?:·|$)', l)
+            origem = m.group(1) if m else ''
         if l.startswith('Status:'):
             lines_bk[n] = 'Status: Concluída — ' + texto.replace('\n', ' ')
-            break
     write_lines(plan_path(bid), lines_bk)
+    resolvido = 'Resolvido (%s): %s' % (datetime.date.today().isoformat(), texto.replace('\n', ' '))
+    _blockers_status(origem, resolvido)
     lines = read_lines(TASK)
     liberadas = []
     for tb in tabelas():
         for r in tb['rows']:
-            if bid in ID_RE.findall(r['dep']) and re.sub(r'^[*_`\s]+', '', r['status']).startswith('Bloqueada'):
+            if norm(r['id']) == bid:  # SPK/BK que também é linha do TASK.md
+                pre, _ = split_status(lines[r['line']])
+                lines[r['line']] = pre + ' Concluída — %s |' % texto.replace('|', '/').replace('\n', ' ')
+            elif bid in ID_RE.findall(r['dep']) and re.sub(r'^[*_`\s]+', '', r['status']).startswith('Bloqueada'):
                 pre, _ = split_status(lines[r['line']])
                 lines[r['line']] = pre + ' Pendente (desbloqueada: %s resolvido) |' % bid
                 liberadas.append(norm(r['id']))

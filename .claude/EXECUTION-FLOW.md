@@ -378,7 +378,13 @@ Não dispara nenhum agente, não avança tarefa, não sugere próximo comando.
 ## Bloqueio e escalonamento (comum a todos os comandos)
 
 Sempre que um agente sinalizar bloqueio (relatório próprio ou nova entrada
-`Aberto` em `.md/BLOCKERS.md`):
+`Aberto` em `.md/BLOCKERS.md`), o registro é **duplo e feito por um único comando**, para a entrada e a tarefa
+nascerem ligadas: `python .claude/scripts/taskplan.py bloquear <ID da tarefa | -> --por "<quem>" --escala "<quem decide>" --motivo "<o que fazer, em uma linha>" [--impacto "..."] [--sugestao "..."] [--tipo bk|spk --pergunta "..." --timebox "1 d"]`.
+Ele (a) acrescenta a entrada `Em aberto` ao `.md/BLOCKERS.md` (que continua sendo o log de bloqueios), (b) abre o
+**`BK-nnnn`** (bloqueio) ou **`SPK-nnnn`** (spike, `--tipo spk`) em `.md/.taskplan/` com a descrição do que fazer
+e `Agente: coordenador`, (c) põe o BK/SPK na Dep da tarefa afetada e marca a tarefa `Bloqueada` e (d) reordena o
+`TASKPLAN.md`. `-` no lugar do ID abre um BK sem tarefa afetada. Ao resolver: `taskplan.py desbloquear <BK|SPK>
+"<resolução>"` (fecha o BK/SPK e a entrada do `BLOCKERS.md`, e devolve a tarefa à fila). Depois do registro:
 
 1. **Pare** e explique ao usuário: quem reportou, o que está bloqueado, e para
    qual agente foi escalado (campo "Escala para" do agente que reportou).

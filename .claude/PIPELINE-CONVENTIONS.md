@@ -209,18 +209,24 @@ ambiguidade no `UX-SPEC.md` do Coordenador):
    - Status: Aberto / Em resolução / Resolvido em <artefato + data>
    ```
 
-3. **O comando em execução pausa** e apresenta a entrada ao usuário (orquestrador) —
+3. **Abre o BK/SPK no `TASKPLAN.md`**: o mesmo comando que escreve a entrada
+   (`python .claude/scripts/taskplan.py bloquear <ID|-> --por … --escala … --motivo "<o que fazer>"
+   [--tipo spk --pergunta … --timebox …]`) cria o `BK-nnnn` (bloqueio) ou `SPK-nnnn` (spike) em
+   `.md/.taskplan/`, com a descrição do que fazer, tarefa do Coordenador com o usuário; a tarefa afetada passa a
+   depender dele e a fila do `TASKPLAN.md` se reordena. `BLOCKERS.md` e `TASKPLAN.md` ficam ligados pelo título da
+   entrada (`Bloqueio NNN — data (BK-nnnn)`).
+4. **O comando em execução pausa** e apresenta a entrada ao usuário (orquestrador) —
    nenhum agente dispara sozinho o agente de destino para resolver; isso é decisão do
    usuário, que decide se/quando rodar o comando correspondente para resolver.
-4. **O dono do artefato original resolve** (quando o usuário decidir acionar o
+5. **O dono do artefato original resolve** (quando o usuário decidir acionar o
    comando correspondente), atualiza o artefato afetado e marca o bloqueio como
    `Resolvido`, referenciando o commit/seção que corrigiu.
-5. **Conflito entre pares sem dono claro** (ex.: Executor e Validador discordam de um
+6. **Conflito entre pares sem dono claro** (ex.: Executor e Validador discordam de um
    contrato que o SDD.md deixou subespecificado): registrado com "Escalado para:
    usuário" — é o usuário quem arbitra, não mais um agente CTO. Se a arbitragem
    envolver decisão de negócio/estratégia, o usuário pode optar por pedir um parecer
    ao Gestor antes de decidir.
-6. Nenhum trabalho novo começa sobre um artefato com bloqueio `Aberto` que o afete
+7. Nenhum trabalho novo começa sobre um artefato com bloqueio `Aberto` que o afete
    diretamente — trabalho não-relacionado ao bloqueio pode continuar em paralelo.
 
 ## 5. GUARDRAILS.md como documento vivo
