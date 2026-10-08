@@ -60,6 +60,11 @@ describe("calcularQuitacao (RN-02)", () => {
     expect(calcularQuitacao(100, [100.02]).situacao).toBe("excedente");
   });
 
+  it("saldo sub-centavo de R$ 0,011 não é absorvido pela tolerância (RTP-0040)", () => {
+    expect(calcularQuitacao(100, [99.989]).situacao).toBe("parcial");
+    expect(calcularQuitacao(100, [100.011]).situacao).toBe("excedente");
+  });
+
   it("pagamento acima do devido retorna saldo negativo e situação excedente", () => {
     const resultado = calcularQuitacao(100, [80, 80]);
 

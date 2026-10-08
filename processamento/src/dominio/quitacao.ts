@@ -37,16 +37,18 @@ export function calcularQuitacao(
 ): { pago: number; saldo: number; situacao: SituacaoPagamento } {
   const pagoBruto = pagamentos.reduce((acumulado, valor) => acumulado + valor, 0);
   const saldoBruto = valorDevido - pagoBruto;
-  // Comparação em centavos inteiros: evita que ruído de ponto flutuante
-  // (ex.: 100 − 99.99 = 0.01000000000000512) quebre a tolerância.
-  const saldoCentavos = Math.round(saldoBruto * 100);
+  // Remove só o ruído de ponto flutuante (ex.: 100 − 99.99 = 0.01000000000000512)
+  // sem arredondar a centavos: saldos sub-centavo como 0,011 continuam fora
+  // da tolerância (RTP-0040).
+  const saldoComparavel = Number(saldoBruto.toPrecision(12));
+  const tolerancia = TOLERANCIA_QUITACAO_CENTAVOS / 100;
 
   let situacao: SituacaoPagamento;
   if (pagoBruto === 0) {
     situacao = 'sem_pagamento';
-  } else if (Math.abs(saldoCentavos) <= TOLERANCIA_QUITACAO_CENTAVOS) {
+  } else if (Math.abs(saldoComparavel) <= tolerancia) {
     situacao = 'quitado';
-  } else if (saldoCentavos > TOLERANCIA_QUITACAO_CENTAVOS) {
+  } else if (saldoComparavel > tolerancia) {
     situacao = 'parcial';
   } else {
     situacao = 'excedente';
