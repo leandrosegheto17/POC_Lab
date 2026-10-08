@@ -88,7 +88,7 @@ describe("união discriminada de evento", () => {
           break;
         }
         case "pagamento": {
-          const payload: PayloadPagamentoV1 = evento;
+          const payload: PayloadPagamentoV1 | PayloadPagamentoV2 = evento;
           expect(typeof payload.valor).toBe("number");
           expect(typeof payload.referencia_original).toBe("string");
           break;
@@ -139,10 +139,10 @@ describe("união discriminada de evento", () => {
   });
 
   it("não aceita campo de outra variante na variante errada (discriminação funciona)", () => {
-    // @ts-expect-error `valor_devido` é campo de venda, não de pagamento.
     const pagamentoInvalido: PayloadPagamentoV1 = {
       tipo: "pagamento",
       versao_schema: 1,
+      // @ts-expect-error `valor_devido` é campo de venda, não de pagamento.
       valor_devido: 10,
       referencia_original: "ref",
     };
@@ -177,17 +177,17 @@ describe("união discriminada de evento — pagamento v2 (TP-0074, aditivo)", ()
         break;
       }
       default:
-        throw new Error(`tipo de evento inesperado: ${String(eventoPagamentoV2.tipo)}`);
+        throw new Error(`tipo de evento inesperado: ${String(eventoPagamentoV2)}`);
     }
   });
 
   it("não aceita meio_pagamento num payload de pagamento v1 (tipo errado)", () => {
-    // @ts-expect-error `meio_pagamento` só existe em PayloadPagamentoV2, não em PayloadPagamentoV1.
     const pagamentoV1ComMeioPagamento: PayloadPagamentoV1 = {
       tipo: "pagamento",
       versao_schema: 1,
       valor: 10,
       referencia_original: "ref",
+      // @ts-expect-error `meio_pagamento` só existe em PayloadPagamentoV2, não em PayloadPagamentoV1.
       meio_pagamento: "pix",
     };
     expect(pagamentoV1ComMeioPagamento).toBeDefined();
