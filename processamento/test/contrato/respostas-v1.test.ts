@@ -4,6 +4,7 @@ import { EsquemaBlocoIndicador } from "../../src/contrato/indicadores.js";
 import { EsquemaEventoV1, EsquemaLinhaDoTempoV1 } from "../../src/contrato/linha-do-tempo-v1.js";
 import { EsquemaRespostaQualidade } from "../../src/contrato/qualidade.js";
 import { EsquemaResumo } from "../../src/contrato/resumo.js";
+import { obrigatorio } from "../apoio/obrigatorio.js";
 
 /**
  * TP-0030: esquemas de resposta v1 (resumo, divergências e linha do tempo).
@@ -160,7 +161,8 @@ describe("resumo/divergencias/linha-do-tempo-v1", () => {
     });
 
     it("evento com 'chegouForaDeOrdem' ausente rejeita", () => {
-      const { chegouForaDeOrdem, ...eventoSemCampo } = eventoPagamentoV1;
+      const eventoSemCampo: Record<string, unknown> = { ...eventoPagamentoV1 };
+      delete eventoSemCampo.chegouForaDeOrdem;
 
       expect(() => EsquemaEventoV1.parse(eventoSemCampo)).toThrow();
     });
@@ -318,7 +320,7 @@ describe("indicadores/qualidade", () => {
 
     it("tipo fora do enum falha", () => {
       const achados: unknown[] = achadosValidos();
-      achados[0] = { ...achadosValidos()[0]!, tipo: "tipo_inexistente" };
+      achados[0] = { ...obrigatorio(achadosValidos()[0]), tipo: "tipo_inexistente" };
 
       expect(() =>
         EsquemaRespostaQualidade.parse({
@@ -331,7 +333,7 @@ describe("indicadores/qualidade", () => {
     it("'exemplos' com 11 itens falha ('.max(10)')", () => {
       const achados: unknown[] = achadosValidos();
       achados[0] = {
-        ...achadosValidos()[0]!,
+        ...obrigatorio(achadosValidos()[0]),
         exemplos: Array.from({ length: 11 }, () => exemploValido),
       };
 

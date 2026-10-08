@@ -23,7 +23,7 @@ function eventoVenda(overrides: Partial<EventoV1 & { tipo: "venda" }> = {}): Eve
     transportadora: "Transportadora X",
     chegouForaDeOrdem: false,
     ...overrides,
-  } as EventoV1;
+  };
 }
 
 function eventoPagamento(
@@ -38,7 +38,7 @@ function eventoPagamento(
     referencia_original: "10248",
     chegouForaDeOrdem: false,
     ...overrides,
-  } as EventoV1;
+  };
 }
 
 function eventoColeta(overrides: Partial<EventoV1 & { tipo: "coleta" }> = {}): EventoV1 {
@@ -51,7 +51,7 @@ function eventoColeta(overrides: Partial<EventoV1 & { tipo: "coleta" }> = {}): E
     codigo_rastreio: "RS-5521",
     chegouForaDeOrdem: false,
     ...overrides,
-  } as EventoV1;
+  };
 }
 
 function eventoTransporte(
@@ -66,7 +66,7 @@ function eventoTransporte(
     codigo_rastreio: "RS-5521",
     chegouForaDeOrdem: false,
     ...overrides,
-  } as EventoV1;
+  };
 }
 
 function eventoEntrega(overrides: Partial<EventoV1 & { tipo: "entrega" }> = {}): EventoV1 {
@@ -79,7 +79,7 @@ function eventoEntrega(overrides: Partial<EventoV1 & { tipo: "entrega" }> = {}):
     codigo_rastreio: "RS-5521",
     chegouForaDeOrdem: false,
     ...overrides,
-  } as EventoV1;
+  };
 }
 
 function todosOsTipos(): EventoV1[] {

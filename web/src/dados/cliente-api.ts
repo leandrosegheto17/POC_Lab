@@ -52,15 +52,17 @@ export async function consultarApi<T>(
   const controller = new AbortController();
   // Flag própria para distinguir o motivo do abort — não depender do nome
   // do erro do DOM (`AbortError`), que varia entre ambientes/mocks.
-  let abortadoPorTempoLimite = false;
+  // (Objeto em vez de `let`: o TypeScript não enxerga a escrita feita dentro
+  // do callback do temporizador e estreitaria a flag para `false`.)
+  const motivoAbort = { tempoLimite: false };
 
   const temporizador = setTimeout(() => {
-    abortadoPorTempoLimite = true;
+    motivoAbort.tempoLimite = true;
     controller.abort();
   }, TEMPO_LIMITE_MS);
 
   const signalExterno = opcoes?.signal;
-  const aoAbortarExterno = () => controller.abort();
+  const aoAbortarExterno = () => { controller.abort(); };
   if (signalExterno) {
     if (signalExterno.aborted) {
       controller.abort();
@@ -120,7 +122,7 @@ export async function consultarApi<T>(
     return { tipo: "erro", mensagem: MENSAGEM_CONSULTA_INVALIDA, codigo };
   } catch {
     if (controller.signal.aborted) {
-      if (abortadoPorTempoLimite) {
+      if (motivoAbort.tempoLimite) {
         return { tipo: "erro", mensagem: MENSAGEM_TEMPO_ESGOTADO };
       }
       // Cancelada pelo `signal` externo (ou já abortada antes de chamar) —

@@ -38,31 +38,31 @@ export function verificarItemPedido(
 
   if (!Number.isFinite(item.precoUnitario)) {
     violacoes.push(
-      `preço unitário deveria ser um número finito, mas é ${item.precoUnitario}`,
+      `preço unitário deveria ser um número finito, mas é ${String(item.precoUnitario)}`,
     );
   } else if (item.precoUnitario <= 0) {
     violacoes.push(
-      `preço unitário deveria ser maior que zero, mas é ${item.precoUnitario}`,
+      `preço unitário deveria ser maior que zero, mas é ${String(item.precoUnitario)}`,
     );
   }
 
   if (!Number.isFinite(item.quantidade)) {
     violacoes.push(
-      `quantidade deveria ser um número finito, mas é ${item.quantidade}`,
+      `quantidade deveria ser um número finito, mas é ${String(item.quantidade)}`,
     );
   } else if (item.quantidade <= 0) {
     violacoes.push(
-      `quantidade deveria ser maior que zero, mas é ${item.quantidade}`,
+      `quantidade deveria ser maior que zero, mas é ${String(item.quantidade)}`,
     );
   }
 
   if (!Number.isFinite(item.desconto)) {
     violacoes.push(
-      `desconto deveria ser um número finito, mas é ${item.desconto}`,
+      `desconto deveria ser um número finito, mas é ${String(item.desconto)}`,
     );
   } else if (item.desconto < 0 || item.desconto > 1) {
     violacoes.push(
-      `desconto deveria estar entre 0 e 1, mas é ${item.desconto}`,
+      `desconto deveria estar entre 0 e 1, mas é ${String(item.desconto)}`,
     );
   }
 
@@ -93,24 +93,24 @@ export function verificarPagamento(
 
   if (!pagamentoFinito) {
     violacoes.push(
-      `valor de pagamento deveria ser um número finito, mas é ${valorPagamento}`,
+      `valor de pagamento deveria ser um número finito, mas é ${String(valorPagamento)}`,
     );
   } else if (valorPagamento <= 0) {
     violacoes.push(
-      `valor de pagamento deveria ser maior que zero, mas é ${valorPagamento}`,
+      `valor de pagamento deveria ser maior que zero, mas é ${String(valorPagamento)}`,
     );
   }
 
   if (!devidoFinito) {
     violacoes.push(
-      `valor devido deveria ser um número finito, mas é ${valorDevido}`,
+      `valor devido deveria ser um número finito, mas é ${String(valorDevido)}`,
     );
   }
 
   const limiteMaximo = 2 * valorDevido;
   if (pagamentoFinito && devidoFinito && valorPagamento > limiteMaximo) {
     violacoes.push(
-      `valor de pagamento (${valorPagamento}) excede o dobro do valor devido (${valorDevido}, limite ${limiteMaximo})`,
+      `valor de pagamento (${String(valorPagamento)}) excede o dobro do valor devido (${String(valorDevido)}, limite ${String(limiteMaximo)})`,
     );
   }
 

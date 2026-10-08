@@ -2,7 +2,7 @@
  * TP-0028 — Teste de integração ponta a ponta: gerar (semente padrão) →
  * importar → `calcularDivergencias` por pedido → comparar com o gabarito.
  *
- * ÚNICO arquivo do projeto autorizado a ler/usar o `gabarito.json` (aqui, o
+ * ÚNICO arquivo do projeto autorizado a ler/usar o `problemas-plantados.json` (aqui, o
  * `gabarito` devolvido em memória por `gerarConteudo`, sem nenhuma leitura de
  * disco) fora de teste.
  *

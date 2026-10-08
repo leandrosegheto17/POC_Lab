@@ -18,12 +18,12 @@ export function criarProvedorFalso(
 ): ProvedorSugestao & { chamadas: number } {
   const provedor = {
     chamadas: 0,
-    async sugerir(texto: string, _candidatos: string[], _modelo: string): Promise<string | null> {
+    sugerir(texto: string): Promise<string | null> {
       provedor.chamadas += 1;
       if (Object.prototype.hasOwnProperty.call(mapa, texto)) {
-        return mapa[texto] ?? null;
+        return Promise.resolve(mapa[texto] ?? null);
       }
-      return null;
+      return Promise.resolve(null);
     },
   };
   return provedor;

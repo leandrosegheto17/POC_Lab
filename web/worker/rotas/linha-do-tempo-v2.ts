@@ -63,7 +63,7 @@ rotaLinhaDoTempoV2.get(
       listarDivergenciasDoPedido(c.env.DB, pedidoResumo.id_pedido),
     ]);
 
-    const fontes: FontesPedido = JSON.parse(pedidoResumo.fontes);
+    const fontes = JSON.parse(pedidoResumo.fontes) as FontesPedido;
     const fontesResposta = CHAVES_FONTE.filter((chave) => fontes[chave] !== undefined).map(
       (chave) => ({ fonte: chave, codigo: fontes[chave] as string }),
     );

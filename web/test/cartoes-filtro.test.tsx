@@ -59,13 +59,13 @@ function respostaFake(opcoes: {
   return {
     ok: opcoes.ok,
     status: opcoes.status ?? (opcoes.ok ? 200 : 500),
-    json: opcoes.json ?? (async () => ({})),
+    json: opcoes.json ?? (() => Promise.resolve({})),
   } as unknown as Response;
 }
 
 function mockarSucesso() {
-  global.fetch = vi.fn(async () =>
-    respostaFake({ ok: true, json: async () => resumoValido() }),
+  global.fetch = vi.fn(() =>
+    Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(resumoValido()) })),
   );
 }
 
@@ -153,9 +153,7 @@ describe("CartoesResumo — sem resumo (carregando)", () => {
 
 describe("CartoesResumo — sem resumo (erro)", () => {
   it("falha de rede → '—' e 'indisponível agora' nos 4 cartões", async () => {
-    global.fetch = vi.fn(async () => {
-      throw new TypeError("Failed to fetch");
-    });
+    global.fetch = vi.fn(() => Promise.reject(new TypeError("Failed to fetch")));
 
     render(
       <ProvedorResumo>

@@ -38,7 +38,7 @@ function respostaFake(opcoes: {
   return {
     ok: opcoes.ok,
     status: opcoes.status ?? (opcoes.ok ? 200 : 500),
-    json: opcoes.json ?? (async () => ({})),
+    json: opcoes.json ?? (() => Promise.resolve({})),
   } as unknown as Response;
 }
 
@@ -53,8 +53,8 @@ describe("consultarApi", () => {
   });
 
   it("200 com corpo válido → sucesso com os dados certos", async () => {
-    global.fetch = vi.fn(async () =>
-      respostaFake({ ok: true, json: async () => ({ nome: "pedido-1" }) }),
+    global.fetch = vi.fn(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve({ nome: "pedido-1" }) })),
     );
 
     const resultado = await consultarApi("/api/x", EsquemaTeste);
@@ -63,8 +63,8 @@ describe("consultarApi", () => {
   });
 
   it("200 com corpo que falha no esquema zod → erro de formato inesperado", async () => {
-    global.fetch = vi.fn(async () =>
-      respostaFake({ ok: true, json: async () => ({ outraCoisa: 1 }) }),
+    global.fetch = vi.fn(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve({ outraCoisa: 1 }) })),
     );
 
     const resultado = await consultarApi("/api/x", EsquemaTeste);
@@ -76,13 +76,11 @@ describe("consultarApi", () => {
   });
 
   it("200 com corpo não-JSON → mesmo erro de formato inesperado", async () => {
-    global.fetch = vi.fn(async () =>
-      respostaFake({
+    global.fetch = vi.fn(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => {
-          throw new SyntaxError("Unexpected token");
-        },
-      }),
+        json: () => Promise.reject(new SyntaxError("Unexpected token")),
+      })),
     );
 
     const resultado = await consultarApi("/api/x", EsquemaTeste);
@@ -94,12 +92,12 @@ describe("consultarApi", () => {
   });
 
   it("400 com corpo RFC 9457 → erro com código, mensagem genérica, sem 'detail'", async () => {
-    global.fetch = vi.fn(async () =>
-      respostaFake({
+    global.fetch = vi.fn(() =>
+      Promise.resolve(respostaFake({
         ok: false,
         status: 400,
-        json: async () => corpoErro("parametro_invalido", 400),
-      }),
+        json: () => Promise.resolve(corpoErro("parametro_invalido", 400)),
+      })),
     );
 
     const resultado = await consultarApi("/api/x", EsquemaTeste);
@@ -115,12 +113,12 @@ describe("consultarApi", () => {
   });
 
   it("404 → erro com código pedido_nao_encontrado", async () => {
-    global.fetch = vi.fn(async () =>
-      respostaFake({
+    global.fetch = vi.fn(() =>
+      Promise.resolve(respostaFake({
         ok: false,
         status: 404,
-        json: async () => corpoErro("pedido_nao_encontrado", 404),
-      }),
+        json: () => Promise.resolve(corpoErro("pedido_nao_encontrado", 404)),
+      })),
     );
 
     const resultado = await consultarApi("/api/x", EsquemaTeste);
@@ -133,12 +131,12 @@ describe("consultarApi", () => {
   });
 
   it("500 → mensagem de indisponibilidade com código erro_interno", async () => {
-    global.fetch = vi.fn(async () =>
-      respostaFake({
+    global.fetch = vi.fn(() =>
+      Promise.resolve(respostaFake({
         ok: false,
         status: 500,
-        json: async () => corpoErro("erro_interno", 500),
-      }),
+        json: () => Promise.resolve(corpoErro("erro_interno", 500)),
+      })),
     );
 
     const resultado = await consultarApi("/api/x", EsquemaTeste);
@@ -151,12 +149,12 @@ describe("consultarApi", () => {
   });
 
   it("502 com corpo fora do esquema → mensagem de indisponível", async () => {
-    global.fetch = vi.fn(async () =>
-      respostaFake({
+    global.fetch = vi.fn(() =>
+      Promise.resolve(respostaFake({
         ok: false,
         status: 502,
-        json: async () => ({ mensagem: "algo quebrou" }),
-      }),
+        json: () => Promise.resolve({ mensagem: "algo quebrou" }),
+      })),
     );
 
     const resultado = await consultarApi("/api/x", EsquemaTeste);
@@ -168,14 +166,12 @@ describe("consultarApi", () => {
   });
 
   it("503 com corpo HTML (não-JSON) → mensagem de indisponível", async () => {
-    global.fetch = vi.fn(async () =>
-      respostaFake({
+    global.fetch = vi.fn(() =>
+      Promise.resolve(respostaFake({
         ok: false,
         status: 503,
-        json: async () => {
-          throw new SyntaxError("Unexpected token <");
-        },
-      }),
+        json: () => Promise.reject(new SyntaxError("Unexpected token <")),
+      })),
     );
 
     const resultado = await consultarApi("/api/x", EsquemaTeste);
@@ -187,12 +183,12 @@ describe("consultarApi", () => {
   });
 
   it("4xx com corpo fora do esquema → formato inesperado", async () => {
-    global.fetch = vi.fn(async () =>
-      respostaFake({
+    global.fetch = vi.fn(() =>
+      Promise.resolve(respostaFake({
         ok: false,
         status: 400,
-        json: async () => ({ mensagem: "algo quebrou" }),
-      }),
+        json: () => Promise.resolve({ mensagem: "algo quebrou" }),
+      })),
     );
 
     const resultado = await consultarApi("/api/x", EsquemaTeste);
@@ -204,9 +200,7 @@ describe("consultarApi", () => {
   });
 
   it("fetch rejeitando com erro de rede (não abort) → mensagem de sem conexão", async () => {
-    global.fetch = vi.fn(async () => {
-      throw new TypeError("Failed to fetch");
-    });
+    global.fetch = vi.fn(() => Promise.reject(new TypeError("Failed to fetch")));
 
     const resultado = await consultarApi("/api/x", EsquemaTeste);
 
@@ -283,12 +277,12 @@ describe("consultarApi", () => {
   });
 
   it("nenhum caso de erro expõe 'detail', status numérico como texto ou corpo bruto", async () => {
-    global.fetch = vi.fn(async () =>
-      respostaFake({
+    global.fetch = vi.fn(() =>
+      Promise.resolve(respostaFake({
         ok: false,
         status: 400,
-        json: async () => corpoErro("parametro_invalido", 400),
-      }),
+        json: () => Promise.resolve(corpoErro("parametro_invalido", 400)),
+      })),
     );
 
     const resultado = await consultarApi("/api/x", EsquemaTeste);

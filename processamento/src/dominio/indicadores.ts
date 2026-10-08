@@ -279,7 +279,7 @@ export function calcularValorPagoVsDevido(
       resultado: totalDevido === 0 ? null : arredondarDuasCasas(totalPago / totalDevido),
     },
     ...ORDEM_SITUACOES_PAGAMENTO.map((situacao) => {
-      const soma = somasPorSituacao.get(situacao)!;
+      const soma = somasPorSituacao.get(situacao) ?? { pago: 0, devido: 0 };
       return {
         rotulos: [situacao],
         numerador: soma.pago,

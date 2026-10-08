@@ -26,6 +26,7 @@ import { DIR_DESTINO_PADRAO, NOME_ARQUIVO_PADRAO } from "../../src/cli/baixar-ba
 import { executarSugerir } from "../../src/cli/sugerir.ts";
 import { criarRepositorio } from "../../src/armazenamento/repositorio.ts";
 import { criarProvedorFalso } from "../../src/ia/provedor-falso.ts";
+import { obrigatorio } from "../apoio/obrigatorio.js";
 
 const CAMINHO_BASE_REAL = path.join(DIR_DESTINO_PADRAO, NOME_ARQUIVO_PADRAO);
 const baseDisponivel = existsSync(CAMINHO_BASE_REAL);
@@ -40,7 +41,7 @@ function criarDiretorioTemporario(prefixo: string): string {
 
 afterEach(() => {
   while (diretoriosTemporarios.length > 0) {
-    const caminho = diretoriosTemporarios.pop()!;
+    const caminho = obrigatorio(diretoriosTemporarios.pop());
     // `maxRetries`/`retryDelay`: no Windows, o SO pode levar um instante
     // para liberar o handle do arquivo do banco mesmo após `db.close()`
     // (visto em execução real deste teste) — tenta novamente em vez de
@@ -89,10 +90,10 @@ describe.skipIf(!baseDisponivel)("executarPreparar (pipeline completo, base real
 
       for (const fonte of ["vendas", "pagamentos", "rastreio"] as const) {
         expect(resumo.resumoImportacao[fonte]).toMatchObject({
-          lidas: expect.any(Number),
-          novas: expect.any(Number),
-          jaExistentes: expect.any(Number),
-          rejeitadas: expect.any(Number),
+          lidas: expect.any(Number) as number,
+          novas: expect.any(Number) as number,
+          jaExistentes: expect.any(Number) as number,
+          rejeitadas: expect.any(Number) as number,
         });
       }
 
@@ -132,22 +133,22 @@ describe.skipIf(!baseDisponivel)("executarPreparar (pipeline completo, base real
 
 describe("decidirSugerir (TP-0045, passo 4 isolado)", () => {
   it("pula o passo com mensagem clara quando OPENAI_API_KEY não está definida", () => {
-    const decisao = decidirSugerir({} as NodeJS.ProcessEnv);
+    const decisao = decidirSugerir({});
 
     expect(decisao.pular).toBe(true);
     expect(decisao.mensagem).toMatch(/sem sugestão/i);
-    expect(() => decidirSugerir({} as NodeJS.ProcessEnv)).not.toThrow();
+    expect(() => decidirSugerir({})).not.toThrow();
   });
 
   it("sem chave, a mensagem não cita 'ainda não existe' (RTP-0027)", () => {
-    const decisao = decidirSugerir({} as NodeJS.ProcessEnv);
+    const decisao = decidirSugerir({});
 
     expect(decisao.mensagem).not.toMatch(/ainda não existe/i);
     expect(decisao.mensagem).toMatch(/OPENAI_API_KEY/);
   });
 
   it("com OPENAI_API_KEY definida, pula sem lançar erro e sem citar 'ainda não existe'", () => {
-    const decisao = decidirSugerir({ OPENAI_API_KEY: "chave-fake" } as NodeJS.ProcessEnv);
+    const decisao = decidirSugerir({ OPENAI_API_KEY: "chave-fake" });
 
     expect(decisao.pular).toBe(true);
     expect(decisao.mensagem).not.toMatch(/ainda não existe/i);
@@ -180,7 +181,7 @@ describe("executarSugerir (TP-0083)", () => {
     );
 
     const resultado = await executarSugerir(caminhoInvalido, {
-      ambiente: {} as NodeJS.ProcessEnv,
+      ambiente: {},
     });
 
     expect(resultado).toEqual([]);
@@ -232,7 +233,7 @@ describe("executarSugerir (TP-0083)", () => {
     const provedorFalso = criarProvedorFalso({ "REF-083": "PED-083" });
 
     const resultado = await executarSugerir(caminhoBanco, {
-      ambiente: { OPENAI_API_KEY: "chave-fake" } as NodeJS.ProcessEnv,
+      ambiente: { OPENAI_API_KEY: "chave-fake" },
       provedor: provedorFalso,
     });
 
@@ -263,7 +264,7 @@ describe("executarPreparar + passo 4 (TP-0083, pipeline completo, base real)", (
 
       const resumo = await executarPreparar({
         ...opcoes,
-        ambiente: { OPENAI_API_KEY: "chave-fake" } as NodeJS.ProcessEnv,
+        ambiente: { OPENAI_API_KEY: "chave-fake" },
         provedorSugestao: criarProvedorFalso({}),
       });
 

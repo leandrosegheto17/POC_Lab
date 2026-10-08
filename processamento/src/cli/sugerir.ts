@@ -66,7 +66,7 @@ export async function executarSugerir(
   }
 
   console.log(
-    `Sugestão concluída: ${resultados.length} pagamento(s) sem identificação avaliado(s).`,
+    `Sugestão concluída: ${String(resultados.length)} pagamento(s) sem identificação avaliado(s).`,
   );
 
   return resultados;

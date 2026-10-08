@@ -327,7 +327,7 @@ export async function sugerir(
         textoReferencia: pagamento.textoReferencia,
         pedidoSugerido: null,
         conferida: false,
-        motivo: `Sem sugestão: teto de chamadas de IA (${tetoChamadas}) atingido nesta execução.`,
+        motivo: `Sem sugestão: teto de chamadas de IA (${String(tetoChamadas)}) atingido nesta execução.`,
       });
       continue;
     } else {

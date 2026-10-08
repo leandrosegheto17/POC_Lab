@@ -38,6 +38,8 @@ import { EsquemaLinhaDoTempoV1 } from "processamento/contrato/linha-do-tempo-v1.
 import { EsquemaLinhaDoTempoV2 } from "processamento/contrato/linha-do-tempo-v2.js";
 
 import { D1Teste } from "../apoio/d1-teste.js";
+import type { CorpoLinhaDoTempoSolto } from "../apoio/corpo-teste.ts";
+import { obrigatorio } from "../apoio/obrigatorio.ts";
 import { rotaLinhaDoTempo } from "../../worker/rotas/linha-do-tempo.ts";
 import { rotaLinhaDoTempoV2 } from "../../worker/rotas/linha-do-tempo-v2.ts";
 
@@ -251,7 +253,7 @@ describe("validação: contrato v1 e v2", () => {
       { DB: DB_A },
     );
     expect(respostaA.status).toBe(200);
-    const corpoA = await respostaA.json();
+    const corpoA = await respostaA.json<CorpoLinhaDoTempoSolto>();
 
     const appB = criarAppDeTeste();
     const DB_B = criarD1TesteLocal(TABELAS_B) as unknown as D1Database;
@@ -261,7 +263,7 @@ describe("validação: contrato v1 e v2", () => {
       { DB: DB_B },
     );
     expect(respostaB.status).toBe(200);
-    const corpoB = await respostaB.json();
+    const corpoB = await respostaB.json<CorpoLinhaDoTempoSolto>();
 
     // Igualdade estrutural profunda — as duas respostas v1 são IDÊNTICAS: o
     // pagamento v2 (fixture B) fica indistinguível do v1 (fixture A) na
@@ -276,9 +278,9 @@ describe("validação: contrato v1 e v2", () => {
 
     // Nenhum dos dois eventos de pagamento expõe versao_schema/meio_pagamento.
     for (const corpo of [corpoA, corpoB]) {
-      const eventoPagamento = corpo.eventos.find(
-        (e: { tipo: string }) => e.tipo === "pagamento",
-      );
+      const eventoPagamento = obrigatorio(corpo.eventos.find(
+        (e) => e.tipo === "pagamento",
+      ))
       expect(eventoPagamento).toBeDefined();
       expect(eventoPagamento).not.toHaveProperty("versao_schema");
       expect(eventoPagamento).not.toHaveProperty("meio_pagamento");
@@ -295,14 +297,14 @@ describe("validação: contrato v1 e v2", () => {
       { DB },
     );
     expect(resposta.status).toBe(200);
-    const corpo = await resposta.json();
+    const corpo = await resposta.json<CorpoLinhaDoTempoSolto>();
 
     const validacao = EsquemaLinhaDoTempoV2.safeParse(corpo);
     expect(validacao.success).toBe(true);
 
-    const eventoPagamento = corpo.eventos.find(
-      (e: { tipo: string }) => e.tipo === "pagamento",
-    );
+    const eventoPagamento = obrigatorio(corpo.eventos.find(
+      (e) => e.tipo === "pagamento",
+    ))
     expect(eventoPagamento).toBeDefined();
     expect(eventoPagamento.versao_schema).toBe(2);
     expect(eventoPagamento.meio_pagamento).toBe("pix");
@@ -317,20 +319,20 @@ describe("validação: contrato v1 e v2", () => {
       { DB: DB_V1 },
     );
     expect(respostaV1.status).toBe(200);
-    const corpoV1 = await respostaV1.json();
+    const corpoV1 = await respostaV1.json<CorpoLinhaDoTempoSolto>();
 
     const validacaoV1 = EsquemaLinhaDoTempoV1.safeParse(corpoV1);
     expect(validacaoV1.success).toBe(true);
 
     const pagamentosV1 = corpoV1.eventos.filter(
-      (e: { tipo: string }) => e.tipo === "pagamento",
+      (e) => e.tipo === "pagamento",
     );
     expect(pagamentosV1).toHaveLength(2);
     for (const evento of pagamentosV1) {
       expect(evento).not.toHaveProperty("versao_schema");
       expect(evento).not.toHaveProperty("meio_pagamento");
     }
-    expect(pagamentosV1.map((e: { valor: number }) => e.valor)).toEqual([100, 150]);
+    expect(pagamentosV1.map((e) => e.valor)).toEqual([100, 150]);
     expect(corpoV1.pedido.pago).toBe(250);
 
     const appV2 = criarAppDeTeste();
@@ -341,19 +343,19 @@ describe("validação: contrato v1 e v2", () => {
       { DB: DB_V2 },
     );
     expect(respostaV2.status).toBe(200);
-    const corpoV2 = await respostaV2.json();
+    const corpoV2 = await respostaV2.json<CorpoLinhaDoTempoSolto>();
 
     const validacaoV2 = EsquemaLinhaDoTempoV2.safeParse(corpoV2);
     expect(validacaoV2.success).toBe(true);
 
     const pagamentosV2 = corpoV2.eventos.filter(
-      (e: { tipo: string }) => e.tipo === "pagamento",
+      (e) => e.tipo === "pagamento",
     );
     expect(pagamentosV2).toHaveLength(2);
-    expect(pagamentosV2.map((e: { versao_schema: number }) => e.versao_schema)).toEqual([
+    expect(pagamentosV2.map((e) => e.versao_schema)).toEqual([
       1, 2,
     ]);
     expect(pagamentosV2[0]).not.toHaveProperty("meio_pagamento");
-    expect(pagamentosV2[1].meio_pagamento).toBe("cartao");
+    expect(obrigatorio(pagamentosV2[1]).meio_pagamento).toBe("cartao");
   });
 });

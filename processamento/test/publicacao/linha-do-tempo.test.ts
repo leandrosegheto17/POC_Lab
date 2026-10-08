@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { criarRepositorio, type Repositorio } from "../../src/armazenamento/repositorio.js";
 import { montarLinhaDoTempo } from "../../src/publicacao/linha-do-tempo.js";
+import { obrigatorio } from "../apoio/obrigatorio.js";
 
 /**
  * TP-0036 — Testes da projeção `linha_do_tempo`.
@@ -104,18 +105,18 @@ describe("montarLinhaDoTempo", () => {
 
     // posicao segue a ordem canônica por momentoFato: venda, coleta, transporte.
     const porCodigo = new Map(linhas.map((linha) => [linha.codigo_evento, linha]));
-    expect(porCodigo.get(`VENDA-${idPedido}`)!.posicao).toBe(0);
-    expect(porCodigo.get("RAST-COL")!.posicao).toBe(1);
-    expect(porCodigo.get("RAST-TRA")!.posicao).toBe(2);
+    expect(obrigatorio(porCodigo.get(`VENDA-${idPedido}`)).posicao).toBe(0);
+    expect(obrigatorio(porCodigo.get("RAST-COL")).posicao).toBe(1);
+    expect(obrigatorio(porCodigo.get("RAST-TRA")).posicao).toBe(2);
 
     // A venda (fonte isolada, grupo de 1) nunca é marcada fora de ordem.
-    expect(porCodigo.get(`VENDA-${idPedido}`)!.fora_de_ordem).toBe(0);
+    expect(obrigatorio(porCodigo.get(`VENDA-${idPedido}`)).fora_de_ordem).toBe(0);
 
     // Dentro da fonte "rastreio", a ordem de chegada (transporte, coleta)
     // diverge da ordem canônica (coleta, transporte) — ambos os eventos de
     // rastreio ficam marcados, já que a divergência de posição é mútua.
-    expect(porCodigo.get("RAST-COL")!.fora_de_ordem).toBe(1);
-    expect(porCodigo.get("RAST-TRA")!.fora_de_ordem).toBe(1);
+    expect(obrigatorio(porCodigo.get("RAST-COL")).fora_de_ordem).toBe(1);
+    expect(obrigatorio(porCodigo.get("RAST-TRA")).fora_de_ordem).toBe(1);
   });
 
   it("pagamento sem id_pedido (sem identificação) não gera linha", () => {
@@ -143,7 +144,7 @@ describe("montarLinhaDoTempo", () => {
     const linhas = montarLinhaDoTempo(repositorio.db);
 
     expect(linhas).toHaveLength(1);
-    expect(linhas[0]!.codigo_evento).toBe(`VENDA-${idPedido}`);
+    expect(obrigatorio(linhas[0]).codigo_evento).toBe(`VENDA-${idPedido}`);
     expect(linhas.some((linha) => linha.codigo_evento === "PAG-SEM-ID")).toBe(false);
   });
 
@@ -169,7 +170,7 @@ describe("montarLinhaDoTempo", () => {
     const linhas = montarLinhaDoTempo(repositorio.db);
 
     expect(linhas).toHaveLength(1);
-    expect(linhas[0]!.dados).toBe(dadosOriginais);
+    expect(obrigatorio(linhas[0]).dados).toBe(dadosOriginais);
   });
 
   it("determinismo: mesma entrada 2x produz as mesmas linhas, na mesma ordem, bytes idênticos", () => {
@@ -194,7 +195,7 @@ describe("montarLinhaDoTempo", () => {
     expect(JSON.stringify(segunda)).toBe(JSON.stringify(primeira));
 
     // E a ordenação final é por (id_pedido, posicao).
-    const chaves = primeira.map((linha) => `${linha.id_pedido}:${linha.posicao}`);
+    const chaves = primeira.map((linha) => `${linha.id_pedido}:${String(linha.posicao)}`);
     const chavesOrdenadas = [...chaves].sort();
     expect(chaves).toEqual(chavesOrdenadas);
   });

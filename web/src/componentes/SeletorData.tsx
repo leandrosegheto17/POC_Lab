@@ -58,7 +58,7 @@ export function SeletorData({
           type="date"
           className="campo seletor-data__input"
           value={valor}
-          onChange={(event) => onMudar(event.target.value)}
+          onChange={(event) => { onMudar(event.target.value); }}
         />
       </div>
       <button

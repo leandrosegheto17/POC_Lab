@@ -5,6 +5,7 @@ import { criarProvedorFalso } from "../../src/ia/provedor-falso.js";
 import { sugerir } from "../../src/ia/sugerir.js";
 import { conferirSugestao } from "../../src/dominio/conferencia-sugestao.js";
 import type { ProvedorSugestao } from "../../src/ia/porta.js";
+import { obrigatorio } from "../apoio/obrigatorio.js";
 
 /**
  * Insere um pedido com um evento de venda (`valor_devido`/`data_limite`) e,
@@ -37,13 +38,13 @@ function inserirPedidoComVenda(
   pagamentosVinculados.forEach((valor, indice) => {
     repositorio.inserirEvento({
       fonte: "pagamentos",
-      codigoEvento: `PAG-${idPedido}-${indice}`,
+      codigoEvento: `PAG-${idPedido}-${String(indice)}`,
       idPedido,
       tipo: "pagamento",
       momentoFato: dataLimite,
       ordemChegada: null,
       versaoSchema: 1,
-      dados: JSON.stringify({ valor, referencia_original: `ref-${idPedido}-${indice}` }),
+      dados: JSON.stringify({ valor, referencia_original: `ref-${idPedido}-${String(indice)}` }),
     });
   });
 }
@@ -88,10 +89,10 @@ function criarProvedorEspiao(resposta: string | null): ProvedorSugestao & {
   const provedor = {
     chamadas: 0,
     argumentos: [] as Array<{ texto: string; candidatos: string[]; modelo: string }>,
-    async sugerir(texto: string, candidatos: string[], modelo: string): Promise<string | null> {
+    sugerir(texto: string, candidatos: string[], modelo: string): Promise<string | null> {
       provedor.chamadas += 1;
       provedor.argumentos.push({ texto, candidatos, modelo });
-      return resposta;
+      return Promise.resolve(resposta);
     },
   };
   return provedor;
@@ -120,7 +121,7 @@ describe("sugerir — montagem de candidatos", () => {
     await sugerir(repositorio, espiao, { modelo: "falso" });
 
     expect(espiao.chamadas).toBe(1);
-    expect(espiao.argumentos[0]!.candidatos).toEqual(["PED-EXATO", "PED-PROXIMO"]);
+    expect(obrigatorio(espiao.argumentos[0]).candidatos).toEqual(["PED-EXATO", "PED-PROXIMO"]);
   });
 
   it("limita a 20 candidatos mesmo havendo mais pedidos elegíveis", async () => {
@@ -142,9 +143,9 @@ describe("sugerir — montagem de candidatos", () => {
     const espiao = criarProvedorEspiao(null);
     await sugerir(repositorio, espiao, { modelo: "falso" });
 
-    expect(espiao.argumentos[0]!.candidatos).toHaveLength(20);
-    expect(espiao.argumentos[0]!.candidatos[0]).toBe("PED-00");
-    expect(espiao.argumentos[0]!.candidatos[19]).toBe("PED-19");
+    expect(obrigatorio(espiao.argumentos[0]).candidatos).toHaveLength(20);
+    expect(obrigatorio(espiao.argumentos[0]).candidatos[0]).toBe("PED-00");
+    expect(obrigatorio(espiao.argumentos[0]).candidatos[19]).toBe("PED-19");
   });
 });
 
@@ -163,7 +164,7 @@ describe("sugerir — cache", () => {
     expect(provedorFalso.chamadas).toBe(1);
 
     expect(segundaExecucao).toEqual(primeiraExecucao);
-    expect(primeiraExecucao[0]!.pedidoSugerido).toBe("PED-A");
+    expect(obrigatorio(primeiraExecucao[0]).pedidoSugerido).toBe("PED-A");
   });
 });
 
@@ -183,7 +184,7 @@ describe("sugerir — teto de chamadas", () => {
     expect(provedorFalso.chamadas).toBe(2);
     expect(resultados).toHaveLength(3);
 
-    const terceiro = resultados.find((resultado) => resultado.pagamento === "TRANS-012")!;
+    const terceiro = obrigatorio(resultados.find((resultado) => resultado.pagamento === "TRANS-012"));
     expect(terceiro.pedidoSugerido).toBeNull();
     expect(terceiro.motivo).toContain("teto de chamadas");
   });
@@ -201,7 +202,7 @@ describe("sugerir — teto de chamadas", () => {
       const resultados = await sugerir(repositorio, provedorFalso, { modelo: "falso" });
 
       expect(provedorFalso.chamadas).toBe(1);
-      const segundo = resultados.find((resultado) => resultado.pagamento === "TRANS-021")!;
+      const segundo = obrigatorio(resultados.find((resultado) => resultado.pagamento === "TRANS-021"));
       expect(segundo.pedidoSugerido).toBeNull();
       expect(segundo.motivo).toContain("teto de chamadas");
     } finally {
@@ -223,8 +224,8 @@ describe("sugerir — sem provedor configurado", () => {
     const resultados = await sugerir(repositorio, undefined);
 
     expect(resultados).toHaveLength(1);
-    expect(resultados[0]!.pedidoSugerido).toBeNull();
-    expect(resultados[0]!.motivo).toContain("nenhum provedor de IA configurado");
+    expect(obrigatorio(resultados[0]).pedidoSugerido).toBeNull();
+    expect(obrigatorio(resultados[0]).motivo).toContain("nenhum provedor de IA configurado");
 
     const linhasCache = repositorio.db
       .prepare(`SELECT COUNT(*) AS total FROM cache_ia`)
@@ -247,9 +248,9 @@ describe("sugerir — resposta do provedor", () => {
       { valor: 100, dataPagamento: DATA_PAGAMENTO },
     );
 
-    expect(resultados[0]!.pedidoSugerido).toBe("PED-A");
-    expect(resultados[0]!.conferida).toBe(esperado.conferida);
-    expect(resultados[0]!.motivo).toBe(esperado.motivo);
+    expect(obrigatorio(resultados[0]).pedidoSugerido).toBe("PED-A");
+    expect(obrigatorio(resultados[0]).conferida).toBe(esperado.conferida);
+    expect(obrigatorio(resultados[0]).motivo).toBe(esperado.motivo);
   });
 
   it("quando o provedor devolve null, o resultado é sem sugestão sem chamar conferirSugestao", async () => {
@@ -260,8 +261,8 @@ describe("sugerir — resposta do provedor", () => {
     const provedorFalso = criarProvedorFalso({ "REF-NULO": null });
     const resultados = await sugerir(repositorio, provedorFalso, { modelo: "falso" });
 
-    expect(resultados[0]!.pedidoSugerido).toBeNull();
-    expect(resultados[0]!.conferida).toBe(false);
-    expect(resultados[0]!.motivo).toContain("não sugeriu nenhum pedido");
+    expect(obrigatorio(resultados[0]).pedidoSugerido).toBeNull();
+    expect(obrigatorio(resultados[0]).conferida).toBe(false);
+    expect(obrigatorio(resultados[0]).motivo).toContain("não sugeriu nenhum pedido");
   });
 });

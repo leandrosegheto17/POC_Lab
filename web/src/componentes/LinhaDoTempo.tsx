@@ -308,7 +308,7 @@ export function LinhaDoTempo({
                       <ul className="linha-do-tempo__eventos">
                         {doSistema.map((evento, indice) => (
                           <CartaoEvento
-                            key={`${evento.codigoEvento}-${indice}`}
+                            key={`${evento.codigoEvento}-${String(indice)}`}
                             evento={evento}
                             dataEscolhida={dataEscolhida}
                             dataLimite={dataLimite}

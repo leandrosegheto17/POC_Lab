@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { criarRepositorio } from "../../src/armazenamento/repositorio.js";
 import { importar } from "../../src/importacao/importar.js";
 import type { PedidoVendas } from "../../src/fontes/leitura-vendas.js";
+import { obrigatorio } from "../apoio/obrigatorio.js";
 
 /** Pedido de vendas mínimo válido (sem achado de qualidade: formato curto, com data de envio). */
 function criarPedidoVendas(idPedido: string, transportadora = "1"): PedidoVendas {
@@ -195,7 +196,7 @@ describe("importar (TP-0027)", () => {
         )
         .get() as { id_pedido: string } | undefined;
       expect(vinculoVendasAntes).toBeDefined();
-      const idPedidoCriadoAntecipadamente = vinculoVendasAntes!.id_pedido;
+      const idPedidoCriadoAntecipadamente = obrigatorio(vinculoVendasAntes).id_pedido;
 
       expect(contarPedidos(repositorio.db)).toBe(1);
 

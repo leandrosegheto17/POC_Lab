@@ -59,8 +59,8 @@ describe("garantirBaseLocal", () => {
   });
 
   it("baixa (mock de fetch) e grava no destino quando o arquivo não existe", async () => {
-    const fetchFn = vi.fn(async () =>
-      new Response(CONTEUDO_VALIDO, { status: 200 }),
+    const fetchFn = vi.fn(() =>
+      Promise.resolve(new Response(CONTEUDO_VALIDO, { status: 200 })),
     ) as unknown as typeof fetch;
 
     const resultado = await garantirBaseLocal({
@@ -80,8 +80,8 @@ describe("garantirBaseLocal", () => {
   });
 
   it("falha e não deixa o arquivo final no destino quando o download tem hash divergente", async () => {
-    const fetchFn = vi.fn(async () =>
-      new Response(CONTEUDO_ADULTERADO, { status: 200 }),
+    const fetchFn = vi.fn(() =>
+      Promise.resolve(new Response(CONTEUDO_ADULTERADO, { status: 200 })),
     ) as unknown as typeof fetch;
 
     await expect(
@@ -98,7 +98,7 @@ describe("garantirBaseLocal", () => {
   });
 
   it("falha com mensagem clara quando a resposta HTTP não é ok", async () => {
-    const fetchFn = vi.fn(async () => new Response(null, { status: 404 })) as unknown as typeof fetch;
+    const fetchFn = vi.fn(() => Promise.resolve(new Response(null, { status: 404 }))) as unknown as typeof fetch;
 
     await expect(
       garantirBaseLocal({

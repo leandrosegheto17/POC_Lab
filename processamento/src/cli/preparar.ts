@@ -99,7 +99,7 @@ async function lerArquivoOuVazioAsync(caminho: string): Promise<string> {
 
 /** Mesma formatação de linha de relatório usada por `importar.ts` (apresentação, não lógica). */
 function formatarLinhaRelatorio(nomeFonte: string, relatorio: RelatorioFonte): string {
-  return `${nomeFonte}: lidas=${relatorio.lidas} novas=${relatorio.novas} ja_existentes=${relatorio.jaExistentes} rejeitadas=${relatorio.rejeitadas}`;
+  return `${nomeFonte}: lidas=${String(relatorio.lidas)} novas=${String(relatorio.novas)} ja_existentes=${String(relatorio.jaExistentes)} rejeitadas=${String(relatorio.rejeitadas)}`;
 }
 
 /**
@@ -146,7 +146,7 @@ export type OpcoesPreparar = {
   semente?: number;
   /** Overrides do passo 1 (baixar-base); por padrão usa as mesmas constantes de `baixar-base.ts`. */
   baixarBase?: Partial<OpcoesGarantirBaseLocal>;
-  /** Diretório dos arquivos gerados (pagamentos.csv/rastreio.csv/gabarito.json). Padrão: `dados/gerado`. */
+  /** Diretório dos arquivos gerados (pagamentos.csv/rastreio.csv/problemas-plantados.json). Padrão: `dados/gerado`. */
   dirGerado?: string;
   /** Caminho do event store SQLite. Padrão: `dados/poc_lab.sqlite`. */
   caminhoBanco?: string;
@@ -215,7 +215,7 @@ export async function executarPreparar(opcoes: OpcoesPreparar = {}): Promise<Res
   await writeFile(path.join(dirGerado, NOME_PAGAMENTOS_CSV), conteudoGerado.pagamentosCsv, "utf-8");
   await writeFile(path.join(dirGerado, NOME_RASTREIO_CSV), conteudoGerado.rastreioCsv, "utf-8");
   await writeFile(path.join(dirGerado, NOME_GABARITO_JSON), conteudoGerado.gabaritoJson, "utf-8");
-  console.log(`[2/5] Dados gerados com semente ${semente} em "${dirGerado}".`);
+  console.log(`[2/5] Dados gerados com semente ${String(semente)} em "${dirGerado}".`);
 
   // --- passo 3: importar ------------------------------------------------------
   const caminhoBanco = opcoes.caminhoBanco ?? CAMINHO_BANCO_PADRAO;
@@ -250,7 +250,7 @@ export async function executarPreparar(opcoes: OpcoesPreparar = {}): Promise<Res
   const decisaoSugerir: DecisaoSugerir = ambienteSugerir.OPENAI_API_KEY
     ? {
         pular: false,
-        mensagem: `Sugestão concluída: ${resultadosSugestao.length} pagamento(s) sem identificação avaliado(s).`,
+        mensagem: `Sugestão concluída: ${String(resultadosSugestao.length)} pagamento(s) sem identificação avaliado(s).`,
       }
     : decidirSugerir(ambienteSugerir);
   console.log(`[4/5] ${decisaoSugerir.mensagem}`);

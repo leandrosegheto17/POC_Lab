@@ -57,7 +57,7 @@ const TIPOS_EM_ORDEM: ReadonlyArray<{ tipo: TipoAchado; titulo: string }> = [
  * em `Divergencias.tsx`, TP-0059).
  */
 function construirUrlConsulta(tentativa: number): string {
-  return `/api/v1/qualidade#${tentativa}`;
+  return `/api/v1/qualidade#${String(tentativa)}`;
 }
 
 /** Mensagem fixa exibida quando a IA não foi utilizada OU foi utilizada mas não sobrou nenhuma sugestão válida (dentro da caixa de regra, sem tabela). */
@@ -106,7 +106,7 @@ function tipoDoHash(hash: string): TipoAchado | null {
 }
 
 export function Qualidade() {
-  const refTitulo = useFocoNoTitulo<HTMLHeadingElement>();
+  const refTitulo = useFocoNoTitulo();
   useTituloDocumento("Qualidade dos dados");
 
   const [tentativa, setTentativa] = useState(0);
@@ -169,7 +169,7 @@ function RelatorioQualidade({ dados }: { dados: RespostaQualidade }) {
 
   // `null` = mostrar a mensagem fixa (IA não utilizada OU sem sugestão válida).
   const sugestoes =
-    dados.ia.utilizada === false
+    !dados.ia.utilizada
       ? null
       : filtrarSugestoesValidas(dados.ia.sugestoes);
   const temSugestoes = sugestoes !== null && sugestoes.length > 0;
@@ -190,7 +190,7 @@ function RelatorioQualidade({ dados }: { dados: RespostaQualidade }) {
                     : "qualidade__tipo"
                 }
                 aria-current={atual ? "true" : undefined}
-                onClick={() => setTipoClicado(tipo)}
+                onClick={() => { setTipoClicado(tipo); }}
               >
                 <span className="qualidade__tipo-nome">{titulo}</span>
                 <span className="qualidade__tipo-contagem">

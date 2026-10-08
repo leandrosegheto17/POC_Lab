@@ -19,6 +19,7 @@ import {
   EsquemaRespostaIndicadores,
   EsquemaBlocoIndicador,
 } from "../../src/contrato/indicadores.js";
+import { obrigatorio } from "../apoio/obrigatorio.js";
 
 /**
  * TP-0039 — Testes de `montarDocumentoResumo`/`montarDocumentoIndicadores`
@@ -137,7 +138,7 @@ describe("montarDocumentoResumo", () => {
 
     expect(resumo.totais.porTipo).toHaveLength(blocoDominio.linhas.length);
     resumo.totais.porTipo.forEach((item, indice) => {
-      const linhaDominio = blocoDominio.linhas[indice]!;
+      const linhaDominio = obrigatorio(blocoDominio.linhas[indice]);
       expect(item.tipo).toBe(linhaDominio.rotulos[0]);
       expect(item.cartao).toEqual({
         titulo: blocoDominio.titulo,
@@ -159,7 +160,7 @@ describe("montarDocumentoResumo", () => {
       conteudoParaHash: { totais },
     });
 
-    const linha = totais.entregasNoPrazoTotal.linhas[0]!;
+    const linha = obrigatorio(totais.entregasNoPrazoTotal.linhas[0]);
     expect(resumo.totais.entregasNoPrazo).toEqual({
       titulo: totais.entregasNoPrazoTotal.titulo,
       formula: totais.entregasNoPrazoTotal.formula,
@@ -208,17 +209,17 @@ describe("montarDocumentoIndicadores", () => {
     const blocoDominio = indicadorEntregasNoPrazo(pedidosEntrega);
     expect(blocoDominio.aParte).toBeDefined();
 
-    const resultado = montarDocumentoIndicadores([blocoDominio])[0]!;
+    const resultado = obrigatorio(montarDocumentoIndicadores([blocoDominio])[0]);
 
     expect(resultado.aParte).toBe(true);
     expect(resultado.linhas).toHaveLength(blocoDominio.linhas.length + 1);
 
     const linhaExtra = resultado.linhas[resultado.linhas.length - 1];
     expect(linhaExtra).toEqual({
-      rotulo: blocoDominio.aParte!.rotulo,
-      numerador: blocoDominio.aParte!.valor,
+      rotulo: obrigatorio(blocoDominio.aParte).rotulo,
+      numerador: obrigatorio(blocoDominio.aParte).valor,
       denominador: 1,
-      resultado: blocoDominio.aParte!.valor,
+      resultado: obrigatorio(blocoDominio.aParte).valor,
     });
   });
 
@@ -229,7 +230,7 @@ describe("montarDocumentoIndicadores", () => {
     const blocoDominio = indicadorDivergenciasPorTipo(divergencias);
     expect(blocoDominio.aParte).toBeUndefined();
 
-    const resultado = montarDocumentoIndicadores([blocoDominio])[0]!;
+    const resultado = obrigatorio(montarDocumentoIndicadores([blocoDominio])[0]);
 
     expect(resultado.aParte).toBe(false);
     expect(resultado.linhas).toHaveLength(blocoDominio.linhas.length);
@@ -245,10 +246,10 @@ describe("montarDocumentoIndicadores", () => {
     ];
     const blocoDominio = indicadorEntregasNoPrazo(pedidosEntrega);
 
-    const resultado = montarDocumentoIndicadores([blocoDominio])[0]!;
+    const resultado = obrigatorio(montarDocumentoIndicadores([blocoDominio])[0]);
 
     blocoDominio.linhas.forEach((linhaDominio, indice) => {
-      expect(resultado.linhas[indice]!.rotulo).toBe(linhaDominio.rotulos.join(" / "));
+      expect(obrigatorio(resultado.linhas[indice]).rotulo).toBe(linhaDominio.rotulos.join(" / "));
     });
   });
 });

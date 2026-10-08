@@ -9,6 +9,7 @@ import {
   type PedidoParaIndicadorValorPagoVsDevido,
 } from "../../src/dominio/indicadores.js";
 import type { TipoDivergencia } from "../../src/dominio/modelo.js";
+import { obrigatorio } from "../apoio/obrigatorio.js";
 
 describe("indicadorEntregasNoPrazo (TP-0033)", () => {
   it("gera resultado 1 por grupo quando todas as entregas estão no prazo, para 2 transportadoras x 2 meses", () => {
@@ -37,7 +38,7 @@ describe("indicadorEntregasNoPrazo (TP-0033)", () => {
     const bloco = indicadorEntregasNoPrazo(pedidos);
 
     expect(bloco.linhas).toHaveLength(1);
-    const linha = bloco.linhas[0]!;
+    const linha = obrigatorio(bloco.linhas[0]);
     expect(linha.rotulos).toEqual(["Transportadora 1", "2026-01"]);
     expect(linha.denominador).toBe(2);
     expect(linha.numerador).toBe(1);
@@ -83,7 +84,7 @@ describe("indicadorEntregasNoPrazo (TP-0033)", () => {
       { transportadora: "Transportadora 1", dataLimite: "2026-02-10", eventoEntrega: { momento_fato: "2026-02-20" } },
       { transportadora: "Transportadora 2", dataLimite: "2026-01-10", eventoEntrega: { momento_fato: "2026-01-09" } },
     ];
-    const embaralhado = [pedidos[2]!, pedidos[0]!, pedidos[3]!, pedidos[1]!];
+    const embaralhado = [obrigatorio(pedidos[2]), obrigatorio(pedidos[0]), obrigatorio(pedidos[3]), obrigatorio(pedidos[1])];
 
     const blocoOriginal = indicadorEntregasNoPrazo(pedidos);
     const blocoEmbaralhado = indicadorEntregasNoPrazo(embaralhado);
@@ -145,7 +146,7 @@ describe("indicadorDivergenciasPorTipo (TP-0033)", () => {
       { tipo: "enviado_nao_pago" },
       { tipo: "duplicado" },
     ];
-    const embaralhado = [divergencias[2]!, divergencias[0]!, divergencias[3]!, divergencias[1]!];
+    const embaralhado = [obrigatorio(divergencias[2]), obrigatorio(divergencias[0]), obrigatorio(divergencias[3]), obrigatorio(divergencias[1])];
 
     const blocoOriginal = indicadorDivergenciasPorTipo(divergencias);
     const blocoEmbaralhado = indicadorDivergenciasPorTipo(embaralhado);
@@ -163,8 +164,8 @@ describe("calcularTempoMedioPedidoEnvioEntrega (TP-0068)", () => {
 
     const bloco = calcularTempoMedioPedidoEnvioEntrega(pedidos);
 
-    const pedidoEnvio = bloco.linhas[0]!;
-    const envioEntrega = bloco.linhas[1]!;
+    const pedidoEnvio = obrigatorio(bloco.linhas[0]);
+    const envioEntrega = obrigatorio(bloco.linhas[1]);
     expect(pedidoEnvio.numerador).toBe(3);
     expect(pedidoEnvio.denominador).toBe(1);
     expect(pedidoEnvio.resultado).toBe(3);
@@ -180,8 +181,8 @@ describe("calcularTempoMedioPedidoEnvioEntrega (TP-0068)", () => {
 
     const bloco = calcularTempoMedioPedidoEnvioEntrega(pedidos);
 
-    const pedidoEnvio = bloco.linhas[0]!;
-    const envioEntrega = bloco.linhas[1]!;
+    const pedidoEnvio = obrigatorio(bloco.linhas[0]);
+    const envioEntrega = obrigatorio(bloco.linhas[1]);
     expect(pedidoEnvio.denominador).toBe(0);
     expect(pedidoEnvio.resultado).toBeNull();
     expect(envioEntrega.denominador).toBe(0);
@@ -195,8 +196,8 @@ describe("calcularTempoMedioPedidoEnvioEntrega (TP-0068)", () => {
 
     const bloco = calcularTempoMedioPedidoEnvioEntrega(pedidos);
 
-    const pedidoEnvio = bloco.linhas[0]!;
-    const envioEntrega = bloco.linhas[1]!;
+    const pedidoEnvio = obrigatorio(bloco.linhas[0]);
+    const envioEntrega = obrigatorio(bloco.linhas[1]);
     expect(pedidoEnvio.denominador).toBe(1);
     expect(pedidoEnvio.resultado).toBe(3);
     expect(envioEntrega.denominador).toBe(0);
@@ -223,7 +224,7 @@ describe("calcularTempoMedioPedidoEnvioEntrega (TP-0068)", () => {
 
     const bloco = calcularTempoMedioPedidoEnvioEntrega(pedidos);
 
-    const pedidoEnvio = bloco.linhas[0]!;
+    const pedidoEnvio = obrigatorio(bloco.linhas[0]);
     expect(pedidoEnvio.numerador).toBe(10);
     expect(pedidoEnvio.denominador).toBe(3);
     expect(pedidoEnvio.resultado).toBe(3.33);
@@ -296,9 +297,9 @@ describe("calcularValorPagoVsDevido (TP-0069)", () => {
 
     const bloco = calcularValorPagoVsDevido(pedidos);
 
-    const semPagamento = bloco.linhas.find((l) => l.rotulos[0] === "sem_pagamento")!;
-    const parcial = bloco.linhas.find((l) => l.rotulos[0] === "parcial")!;
-    const excedente = bloco.linhas.find((l) => l.rotulos[0] === "excedente")!;
+    const semPagamento = obrigatorio(bloco.linhas.find((l) => l.rotulos[0] === "sem_pagamento"));
+    const parcial = obrigatorio(bloco.linhas.find((l) => l.rotulos[0] === "parcial"));
+    const excedente = obrigatorio(bloco.linhas.find((l) => l.rotulos[0] === "excedente"));
 
     for (const linha of [semPagamento, parcial, excedente]) {
       expect(linha.denominador).toBe(0);
@@ -309,7 +310,7 @@ describe("calcularValorPagoVsDevido (TP-0069)", () => {
   it("lista vazia produz Total com denominador 0 e resultado null", () => {
     const bloco = calcularValorPagoVsDevido([]);
 
-    const total = bloco.linhas[0]!;
+    const total = obrigatorio(bloco.linhas[0]);
     expect(total.numerador).toBe(0);
     expect(total.denominador).toBe(0);
     expect(total.resultado).toBeNull();
@@ -324,12 +325,12 @@ describe("calcularValorPagoVsDevido (TP-0069)", () => {
 
     const bloco = calcularValorPagoVsDevido(pedidos);
 
-    const parcial = bloco.linhas.find((l) => l.rotulos[0] === "parcial")!;
+    const parcial = obrigatorio(bloco.linhas.find((l) => l.rotulos[0] === "parcial"));
     expect(parcial.numerador).toBe(3);
     expect(parcial.denominador).toBe(9);
     expect(parcial.resultado).toBe(0.33);
 
-    const total = bloco.linhas[0]!;
+    const total = obrigatorio(bloco.linhas[0]);
     expect(total.resultado).toBe(0.33);
   });
 

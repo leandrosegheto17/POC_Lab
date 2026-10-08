@@ -1,5 +1,5 @@
 import type { PedidoVendas } from "../fontes/leitura-vendas.js";
-import type { EntradaGabarito } from "./gabarito.js";
+import type { EntradaGabarito } from "./problemas-plantados.js";
 
 /**
  * Verificação de 2026-10-08 (TP-0028): a base real tem pedidos cuja própria

@@ -162,23 +162,20 @@ describe("união discriminada de evento — pagamento v2 (TP-0074, aditivo)", ()
     meio_pagamento: "pix",
   };
 
-  it("narrowing por tipo/versao_schema distingue pagamento v2 e expõe meio_pagamento", () => {
-    switch (eventoPagamentoV2.tipo) {
-      case "pagamento": {
-        if (eventoPagamentoV2.versao_schema === 2) {
-          const payload: PayloadPagamentoV2 = eventoPagamentoV2;
-          expect(typeof payload.valor).toBe("number");
-          expect(typeof payload.referencia_original).toBe("string");
-          expect(typeof payload.meio_pagamento).toBe("string");
-          expect(payload.meio_pagamento).toBe("pix");
-        } else {
-          throw new Error("esperava versao_schema 2 neste teste");
-        }
-        break;
-      }
-      default:
-        throw new Error(`tipo de evento inesperado: ${String(eventoPagamentoV2)}`);
+  /** Estreita um `Evento` para o pagamento v2 (tipo + versao_schema), falhando se for outra coisa. */
+  function comoPagamentoV2(evento: Evento): PayloadPagamentoV2 {
+    if (evento.tipo !== "pagamento" || evento.versao_schema !== 2) {
+      throw new Error("esperava pagamento com versao_schema 2 neste teste");
     }
+    return evento;
+  }
+
+  it("narrowing por tipo/versao_schema distingue pagamento v2 e expõe meio_pagamento", () => {
+    const payload = comoPagamentoV2(eventoPagamentoV2);
+    expect(typeof payload.valor).toBe("number");
+    expect(typeof payload.referencia_original).toBe("string");
+    expect(typeof payload.meio_pagamento).toBe("string");
+    expect(payload.meio_pagamento).toBe("pix");
   });
 
   it("não aceita meio_pagamento num payload de pagamento v1 (tipo errado)", () => {

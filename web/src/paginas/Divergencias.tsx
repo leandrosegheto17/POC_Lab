@@ -44,7 +44,7 @@ function rotuloEvento(tipo: string): string {
  */
 function EventosDivergencia({ eventos }: { eventos: EventoDivergencia[] }) {
   const quantidade = eventos.length;
-  const texto = quantidade === 1 ? "1 evento ▸" : `${quantidade} eventos ▸`;
+  const texto = quantidade === 1 ? "1 evento ▸" : `${String(quantidade)} eventos ▸`;
 
   return (
     <details className="divergencias__eventos">
@@ -123,7 +123,7 @@ function construirUrlConsulta(
   }
   parametros.set("pagina", String(pagina));
   parametros.set("tamanho", String(TAMANHO_PAGINA));
-  return `/api/v1/divergencias?${parametros.toString()}#${tentativa}`;
+  return `/api/v1/divergencias?${parametros.toString()}#${String(tentativa)}`;
 }
 
 /**
@@ -135,7 +135,7 @@ function construirUrlConsulta(
 const PADRAO_PAGINA_VALIDA = /^[1-9]\d*$/;
 
 export function Divergencias() {
-  const refTitulo = useFocoNoTitulo<HTMLHeadingElement>();
+  const refTitulo = useFocoNoTitulo();
   const refCaption = useRef<HTMLTableCaptionElement>(null);
   const focoPendente = useRef(false);
 
@@ -154,7 +154,7 @@ export function Divergencias() {
   const tipoInvalidoNaUrl = tipoNaUrl !== null && !ehTipoValido(tipoNaUrl);
   const tipoValido: TipoValido | null = tipoInvalidoNaUrl
     ? null
-    : (tipoNaUrl as TipoValido | null);
+    : (tipoNaUrl);
 
   const paginaNaUrlTexto = searchParams.get("pagina");
   const paginaInvalidaNaUrl =
@@ -243,7 +243,7 @@ export function Divergencias() {
 
   // `<title>` reflete a página pedida na URL (não depende da resposta da
   // API ainda ter chegado) — só menciona "página N" quando N > 1.
-  const tituloDocumento = pagina > 1 ? `Divergências, página ${pagina}` : "Divergências";
+  const tituloDocumento = pagina > 1 ? `Divergências, página ${String(pagina)}` : "Divergências";
   useTituloDocumento(tituloDocumento);
 
   // Link de "Ir para a página 1" mantém o `tipo` (quando válido), nunca
@@ -334,13 +334,13 @@ export function Divergencias() {
             <p className="visualmente-oculto">
               {`${formatarNumero(ultimaResposta.dados.length)} de ${formatarNumero(
                 ultimaResposta.paginacao.total,
-              )} divergências, página ${ultimaResposta.paginacao.pagina} de ${ultimaResposta.paginacao.totalPaginas}`}
+              )} divergências, página ${String(ultimaResposta.paginacao.pagina)} de ${String(ultimaResposta.paginacao.totalPaginas)}`}
             </p>
             {/* PC: tabela. Colunas Devido/Pago do mockup ficam de fora: a
                 API v1 não entrega esses valores (ADR-016). */}
             <div className="divergencias__tabela">
               <TabelaDados
-                caption={`Filtro: ${rotuloFiltroAtual} · página ${ultimaResposta.paginacao.pagina} de ${ultimaResposta.paginacao.totalPaginas}`}
+                caption={`Filtro: ${rotuloFiltroAtual} · página ${String(ultimaResposta.paginacao.pagina)} de ${String(ultimaResposta.paginacao.totalPaginas)}`}
                 refCaption={refCaption}
                 rotuloRegiao="Tabela de divergências"
                 cabecalhos={["Pedido", "Tipo", "Motivo", "Eventos"]}

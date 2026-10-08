@@ -12,6 +12,7 @@ import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { lerBaseDeVendas } from "../../src/fontes/leitura-vendas.ts";
+import { obrigatorio } from "../apoio/obrigatorio.js";
 
 const CAMINHO_BASE = path.join("dados", "origem", "northwind.db");
 const baseDisponivel = existsSync(CAMINHO_BASE);
@@ -46,18 +47,18 @@ describe.skipIf(!baseDisponivel)("lerBaseDeVendas (base real)", () => {
   it("devolve data do pedido, data limite e (quando houver) data de envio em ISO-8601", () => {
     const amostra = pedidos[0];
     expect(amostra).toBeDefined();
-    expect(() => new Date(amostra!.dataPedido.iso).toISOString()).not.toThrow();
-    expect(amostra!.dataPedido.iso.includes("T")).toBe(true);
-    expect(() => new Date(amostra!.dataLimite).toISOString()).not.toThrow();
-    if (amostra!.dataEnvio !== null) {
-      expect(() => new Date(amostra!.dataEnvio!).toISOString()).not.toThrow();
+    expect(() => new Date(obrigatorio(amostra).dataPedido.iso).toISOString()).not.toThrow();
+    expect(obrigatorio(amostra).dataPedido.iso.includes("T")).toBe(true);
+    expect(() => new Date(obrigatorio(amostra).dataLimite).toISOString()).not.toThrow();
+    if (obrigatorio(amostra).dataEnvio !== null) {
+      expect(() => new Date(obrigatorio(obrigatorio(amostra).dataEnvio)).toISOString()).not.toThrow();
     }
   });
 
   it("devolve o código cru da transportadora (ShipVia), sem tradução para nome", () => {
     const comTransportadora = pedidos.find((pedido) => pedido.transportadora !== "");
     expect(comTransportadora).toBeDefined();
-    expect(comTransportadora!.transportadora).toMatch(/^\d+$/);
+    expect(obrigatorio(comTransportadora).transportadora).toMatch(/^\d+$/);
   });
 });
 
@@ -72,7 +73,7 @@ describe("lerBaseDeVendas (garantia de somente leitura)", () => {
       }
       const conexao = new DatabaseSync(CAMINHO_BASE, { readOnly: true });
       try {
-        expect(() => conexao.exec("CREATE TABLE teste_escrita (id INTEGER)")).toThrow(
+        expect(() => { conexao.exec("CREATE TABLE teste_escrita (id INTEGER)"); }).toThrow(
           /readonly/i,
         );
       } finally {

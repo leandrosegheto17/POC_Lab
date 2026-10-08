@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 
 import { criarRepositorio, type EventoParaInserir } from "../../src/armazenamento/repositorio.ts";
 import { montarDivergencias } from "../../src/publicacao/divergencias.ts";
+import { obrigatorio } from "../apoio/obrigatorio.js";
 
 const DATA_CORTE = "2024-06-01T00:00:00Z";
 
@@ -89,10 +90,10 @@ describe("montarDivergencias", () => {
 
     expect(linhas).toHaveLength(1);
     expect(linhas[0]).toMatchObject({ tipo: "duplicado", id_pedido: "PED-000001" });
-    expect(typeof linhas[0]!.motivo).toBe("string");
-    expect(linhas[0]!.motivo.length).toBeGreaterThan(0);
+    expect(typeof obrigatorio(linhas[0]).motivo).toBe("string");
+    expect(obrigatorio(linhas[0]).motivo.length).toBeGreaterThan(0);
 
-    const eventosSustentacao = JSON.parse(linhas[0]!.eventos);
+    const eventosSustentacao = JSON.parse(obrigatorio(linhas[0]).eventos) as unknown;
     expect(eventosSustentacao).toEqual([
       { tipo: "pagamento", data: "2024-01-02T10:00:00Z", fonte: "pagamentos", codigo: "PAG-001" },
       { tipo: "pagamento", data: "2024-01-03T10:00:00Z", fonte: "pagamentos", codigo: "PAG-002" },
@@ -193,6 +194,6 @@ describe("montarDivergencias", () => {
     const segunda = montarDivergencias(repositorio.db, DATA_CORTE);
 
     expect(segunda).toEqual(primeira);
-    expect(segunda[0]!.eventos).toBe(primeira[0]!.eventos);
+    expect(obrigatorio(segunda[0]).eventos).toBe(obrigatorio(primeira[0]).eventos);
   });
 });

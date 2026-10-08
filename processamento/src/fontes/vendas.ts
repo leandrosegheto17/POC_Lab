@@ -54,7 +54,7 @@ export function construirMapaTransportadoras(
   let proximoNumero = 1;
   for (const pedido of pedidos) {
     if (!mapa.has(pedido.transportadora)) {
-      mapa.set(pedido.transportadora, `Transportadora ${proximoNumero}`);
+      mapa.set(pedido.transportadora, `Transportadora ${String(proximoNumero)}`);
       proximoNumero += 1;
     }
   }

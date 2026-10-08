@@ -1,5 +1,5 @@
 import type { PedidoVendas } from "../fontes/leitura-vendas.js";
-import type { EntradaGabarito } from "./gabarito.js";
+import type { EntradaGabarito } from "./problemas-plantados.js";
 
 /**
  * Plantio de casos de problema de rastreio (TP-0026), feito SOMENTE sobre

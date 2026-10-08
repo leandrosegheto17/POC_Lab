@@ -132,9 +132,9 @@ export function lerBaseDeVendas(caminhoArquivo: string): PedidoVendas[] {
       const idPedido = String(linha.OrderID);
       const lista = itensPorPedido.get(idPedido) ?? [];
       lista.push({
-        precoUnitario: Number(linha.UnitPrice),
-        quantidade: Number(linha.Quantity),
-        desconto: Number(linha.Discount),
+        precoUnitario: linha.UnitPrice,
+        quantidade: linha.Quantity,
+        desconto: linha.Discount,
       });
       itensPorPedido.set(idPedido, lista);
     }

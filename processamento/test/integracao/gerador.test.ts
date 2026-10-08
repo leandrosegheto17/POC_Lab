@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PedidoVendas } from "../../src/fontes/leitura-vendas.ts";
-import { escreverGabarito } from "../../src/gerador/gabarito.ts";
+import { escreverGabarito } from "../../src/gerador/problemas-plantados.ts";
 import { pedidosLimpos } from "../../src/gerador/gerar.ts";
 import { gerarPagamentos } from "../../src/gerador/pagamentos.ts";
 import { plantarCasosPagamento } from "../../src/gerador/plantar-pagamentos.ts";

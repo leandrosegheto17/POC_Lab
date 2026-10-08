@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router";
 import { axe } from "vitest-axe";
 import { Rotas } from "../src/Rotas.tsx";
 import { NaoEncontrada } from "../src/paginas/NaoEncontrada.tsx";
+import { obrigatorio } from "./apoio/obrigatorio.ts";
 
 // TP-0055 — casca do app: nav única, rotas T1-T5, <title> por rota, foco no
 // <h1> ao navegar, aria-current no item ativo e página "não encontrada".
@@ -68,7 +69,7 @@ describe("Casca/Rotas — sem <header> de largura cheia; barra única com logo, 
     const barra = container.querySelector(".casca__barra");
     expect(barra).not.toBeNull();
 
-    const filhos = Array.from(barra!.children).map((el) => el.className);
+    const filhos = Array.from(obrigatorio(barra).children).map((el) => el.className);
     const indiceLogo = filhos.findIndex((c) => c.includes("logo-marca"));
     const indiceBusca = filhos.findIndex((c) => c.includes("campo-busca"));
     const indiceNav = filhos.findIndex((c) => c.includes("navegacao-principal"));
@@ -243,7 +244,7 @@ describe("T5 — Página não encontrada", () => {
     // runtime, sem precisar simular nenhuma resposta real.
     const fetchOriginal = global.fetch;
     const fetchMock = vi.fn();
-    global.fetch = fetchMock as unknown as typeof fetch;
+    global.fetch = fetchMock;
 
     render(
       <MemoryRouter initialEntries={["/rota-inexistente"]}>

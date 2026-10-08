@@ -176,14 +176,23 @@ function resolverOuCriarIdPedido(
  * e os campos específicos do payload).
  */
 function serializarDados(evento: Evento): string {
-  const {
-    fonte: _fonte,
-    codigoEvento: _codigoEvento,
-    momentoFato: _momentoFato,
-    ordemChegada: _ordemChegada,
-    ...payload
-  } = evento;
+  const chavesDoEnvelope = new Set(["fonte", "codigoEvento", "momentoFato", "ordemChegada"]);
+  const payload = Object.fromEntries(
+    Object.entries(evento).filter(([chave]) => !chavesDoEnvelope.has(chave)),
+  );
   return JSON.stringify(payload);
+}
+
+/**
+ * `vinculos[i]` e `eventos[i]` sempre andam juntos (invariante dos adaptadores);
+ * se faltar o evento, a invariante foi quebrada e é melhor falhar alto.
+ */
+function eventoDoIndice(eventos: Evento[], indice: number): Evento {
+  const evento = eventos[indice];
+  if (evento === undefined) {
+    throw new Error(`Evento ausente para o vínculo de índice ${String(indice)} (invariante dos adaptadores quebrada).`);
+  }
+  return evento;
 }
 
 function compararCodigoVendasCrescente(a: string, b: string): number {
@@ -227,7 +236,7 @@ export function importar(
     // para a atribuição de `PED-nnnnnn` seguir a ordem exigida (não a ordem
     // da lista recebida).
     const paresVendasOrdenados = resultadoVendas.vinculos
-      .map((vinculo, indice) => ({ vinculo, evento: resultadoVendas.eventos[indice]! }))
+      .map((vinculo, indice) => ({ vinculo, evento: eventoDoIndice(resultadoVendas.eventos, indice) }))
       .sort((a, b) => compararCodigoVendasCrescente(a.vinculo.codigoExterno, b.vinculo.codigoExterno));
 
     for (const { vinculo, evento } of paresVendasOrdenados) {
@@ -277,7 +286,7 @@ export function importar(
     // por linha do CSV (ver `fontes/rastreio.ts`).
     const paresRastreio = resultadoRastreio.vinculos.map((vinculo, indice) => ({
       vinculo,
-      evento: resultadoRastreio.eventos[indice]!,
+      evento: eventoDoIndice(resultadoRastreio.eventos, indice),
     }));
 
     for (const { vinculo, evento } of paresRastreio) {

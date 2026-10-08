@@ -94,7 +94,7 @@ function respostaFake(opcoes: {
   return {
     ok: opcoes.ok,
     status: opcoes.status ?? (opcoes.ok ? 200 : 500),
-    json: opcoes.json ?? (async () => ({})),
+    json: opcoes.json ?? (() => Promise.resolve({})),
   } as unknown as Response;
 }
 
@@ -109,12 +109,12 @@ function instalarFetchMock(
   const mock = vi.fn(async (entrada: string | URL) => {
     const url = String(entrada);
     if (url.startsWith("/api/v1/resumo")) {
-      return respostaFake({ ok: true, json: async () => resumoValido() });
+      return respostaFake({ ok: true, json: () => Promise.resolve(resumoValido()) });
     }
     if (url.startsWith("/api/v1/divergencias")) {
       return aoChamarDivergencias(url);
     }
-    throw new Error(`fetch não mockado para ${url}`);
+    return Promise.reject(new Error(`fetch não mockado para ${url}`));
   });
   global.fetch = mock as unknown as typeof fetch;
   return mock;
@@ -171,7 +171,9 @@ function BotoesDeNavegacaoParaTeste({ destinos }: { destinos: string[] }) {
   return (
     <>
       {destinos.map((destino) => (
-        <button key={destino} type="button" onClick={() => navigate(destino)}>
+        <button key={destino} type="button" onClick={() => {
+            void navigate(destino);
+          }}>
           {`ir para ${destino}`}
         </button>
       ))}
@@ -185,18 +187,18 @@ afterEach(() => {
 
 describe("Divergencias — paginação via URL (?pagina=)", () => {
   it("usa ?pagina= inicial na chamada, no caption e no <title>", async () => {
-    const mock = instalarFetchMock(async (url) => {
+    const mock = instalarFetchMock((url) => {
       const pagina = paginaDaUrl(url);
-      return respostaFake({
+      return Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
             dados: [divergenciaValida("PED-100", "duplicado")],
             pagina,
             total: 120,
             totalPaginas: 3,
-          }),
-      });
+          })),
+      }));
     });
 
     renderizar(["/?pagina=2"]);
@@ -218,18 +220,18 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
   });
 
   it("clicar em 'Próxima' atualiza a URL e chama a página 2", async () => {
-    const mock = instalarFetchMock(async (url) => {
+    const mock = instalarFetchMock((url) => {
       const pagina = paginaDaUrl(url);
-      return respostaFake({
+      return Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
-            dados: [divergenciaValida(`PED-${pagina}`, "duplicado")],
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
+            dados: [divergenciaValida(`PED-${String(pagina)}`, "duplicado")],
             pagina,
             total: 100,
             totalPaginas: 2,
-          }),
-      });
+          })),
+      }));
     });
 
     const { container } = renderizar();
@@ -261,18 +263,18 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
   });
 
   it("trocar o filtro enquanto em ?pagina=3 reseta a página para 1 numa única navegação", async () => {
-    const mock = instalarFetchMock(async (url) => {
+    const mock = instalarFetchMock((url) => {
       const pagina = paginaDaUrl(url);
-      return respostaFake({
+      return Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
             dados: [divergenciaValida("PED-X", "duplicado")],
             pagina,
             total: 150,
             totalPaginas: 3,
-          }),
-      });
+          })),
+      }));
     });
 
     renderizar(["/?pagina=3"]);
@@ -313,13 +315,13 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
       }
       return respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
-            dados: [divergenciaValida(`PED-${pagina}`, "duplicado")],
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
+            dados: [divergenciaValida(`PED-${String(pagina)}`, "duplicado")],
             pagina,
             total: 100,
             totalPaginas: 2,
-          }),
+          })),
       });
     });
 
@@ -362,18 +364,18 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
   });
 
   it("ao trocar de página o foco vai ao caption e a região aria-live anuncia 'página X de Y' (RTP-0015)", async () => {
-    instalarFetchMock(async (url) => {
+    instalarFetchMock((url) => {
       const pagina = paginaDaUrl(url);
-      return respostaFake({
+      return Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
-            dados: [divergenciaValida(`PED-${pagina}`, "duplicado")],
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
+            dados: [divergenciaValida(`PED-${String(pagina)}`, "duplicado")],
             pagina,
             total: 100,
             totalPaginas: 2,
-          }),
-      });
+          })),
+      }));
     });
 
     const { container } = renderizar();
@@ -433,13 +435,13 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
     resolvers.get(1)?.(
       respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
             dados: [divergenciaValida("PED-1", "duplicado")],
             pagina: 1,
             total: 150,
             totalPaginas: 3,
-          }),
+          })),
       }),
     );
 
@@ -463,13 +465,13 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
     resolvers.get(3)?.(
       respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
             dados: [divergenciaValida("PED-3", "duplicado")],
             pagina: 3,
             total: 150,
             totalPaginas: 3,
-          }),
+          })),
       }),
     );
 
@@ -482,13 +484,13 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
     resolvers.get(2)?.(
       respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
             dados: [divergenciaValida("PED-2", "duplicado")],
             pagina: 2,
             total: 150,
             totalPaginas: 3,
-          }),
+          })),
       }),
     );
 
@@ -500,17 +502,17 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
   });
 
   it("página além da última mostra 'Esta página não existe.' com link para a página 1", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
             dados: [],
             pagina: 999,
             total: 42,
             totalPaginas: 3,
-          }),
-      }),
+          })),
+      })),
     );
 
     renderizar(["/?pagina=999&tipo=duplicado"]);
@@ -527,8 +529,8 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
   it.each(["abc", "0", "-5"])(
     "?pagina=%s é tratada como filtro de endereço inválido, sem chamar a API",
     async (valorInvalido) => {
-      const mock = instalarFetchMock(async () =>
-        respostaFake({ ok: true, json: async () => respostaDivergenciasValida() }),
+      const mock = instalarFetchMock(() =>
+        Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaDivergenciasValida()) })),
       );
 
       renderizar([`/?pagina=${valorInvalido}`]);
@@ -550,18 +552,18 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
 
 describe("Divergencias — paginação e acessibilidade (vitest-axe)", () => {
   it("sucesso na página 2 não tem violações", async () => {
-    instalarFetchMock(async (url) => {
+    instalarFetchMock((url) => {
       const pagina = paginaDaUrl(url);
-      return respostaFake({
+      return Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
             dados: [divergenciaValida("PED-200", "duplicado")],
             pagina,
             total: 100,
             totalPaginas: 2,
-          }),
-      });
+          })),
+      }));
     });
 
     const { container } = renderizar(["/?pagina=2"]);
@@ -575,17 +577,17 @@ describe("Divergencias — paginação e acessibilidade (vitest-axe)", () => {
   });
 
   it("'página não existe' não tem violações", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
             dados: [],
             pagina: 999,
             total: 10,
             totalPaginas: 1,
-          }),
-      }),
+          })),
+      })),
     );
 
     const { container } = renderizar(["/?pagina=999"]);
@@ -609,13 +611,13 @@ describe("Divergencias — paginação e acessibilidade (vitest-axe)", () => {
       }
       return respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
-            dados: [divergenciaValida(`PED-${pagina}`, "duplicado")],
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
+            dados: [divergenciaValida(`PED-${String(pagina)}`, "duplicado")],
             pagina,
             total: 100,
             totalPaginas: 2,
-          }),
+          })),
       });
     });
 

@@ -79,7 +79,7 @@ describe("GET /api/v1/resumo", () => {
     const resposta = await app.request("/api/v1/resumo", {}, { DB: db });
 
     expect(resposta.status).toBe(500);
-    const corpo = (await resposta.json()) as CorpoErroTeste;
+    const corpo = await resposta.json<CorpoErroTeste>();
     expect(corpo.codigo).toBe("erro_interno");
 
     const textoCompleto = JSON.stringify(corpo).toLowerCase();

@@ -52,11 +52,11 @@ function renderizarBloco(bloco: BlocoIndicador) {
  * forçar `useConsulta` a refazer a mesma chamada a cada "Tentar de novo".
  */
 function construirUrlConsulta(tentativa: number): string {
-  return `/api/v1/indicadores#${tentativa}`;
+  return `/api/v1/indicadores#${String(tentativa)}`;
 }
 
 export function Indicadores() {
-  const refTitulo = useFocoNoTitulo<HTMLHeadingElement>();
+  const refTitulo = useFocoNoTitulo();
   useTituloDocumento("Indicadores");
 
   const [tentativa, setTentativa] = useState(0);

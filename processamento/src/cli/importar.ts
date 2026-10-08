@@ -45,10 +45,10 @@ export function construirCodigosConhecidos(idsPedidoVendas: string[]): Set<strin
 }
 
 function formatarLinhaRelatorio(nomeFonte: string, relatorio: RelatorioFonte): string {
-  return `${nomeFonte}: lidas=${relatorio.lidas} novas=${relatorio.novas} ja_existentes=${relatorio.jaExistentes} rejeitadas=${relatorio.rejeitadas}`;
+  return `${nomeFonte}: lidas=${String(relatorio.lidas)} novas=${String(relatorio.novas)} ja_existentes=${String(relatorio.jaExistentes)} rejeitadas=${String(relatorio.rejeitadas)}`;
 }
 
-async function main(): Promise<void> {
+function main(): void {
   try {
     const pedidosVendas = lerBaseDeVendas(CAMINHO_BASE_PADRAO);
     const pagamentosCsv = lerArquivoOuVazio(path.join(DIR_GERADO_PADRAO, NOME_PAGAMENTOS_CSV));
@@ -78,5 +78,5 @@ async function main(): Promise<void> {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  void main();
+  main();
 }

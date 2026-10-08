@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Evento } from "../../src/dominio/evento.js";
 import { derivarEstado } from "../../src/dominio/estado.js";
+import { obrigatorio } from "../apoio/obrigatorio.js";
 
 function venda(partial: {
   codigoEvento: string;
@@ -156,7 +157,7 @@ describe("validação: auditoria em data", () => {
       pagamento({ codigoEvento: "evt-pagamento", momentoFato: "2026-01-02T10:00:00Z", valor: 40 }),
       coleta({ codigoEvento: "evt-coleta", momentoFato: "2026-01-03T10:00:00Z" }),
     ];
-    const embaralhada = [ordenada[2]!, ordenada[0]!, ordenada[1]!];
+    const embaralhada = [obrigatorio(ordenada[2]), obrigatorio(ordenada[0]), obrigatorio(ordenada[1])];
 
     const resultadoOrdenado = derivarEstado(ordenada);
     const resultadoEmbaralhado = derivarEstado(embaralhada);

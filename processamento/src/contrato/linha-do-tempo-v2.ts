@@ -1,23 +1,15 @@
 import { z } from "zod";
-import type { Fonte, TipoDivergencia } from "../dominio/modelo.js";
+import type { Fonte } from "../dominio/modelo.js";
 import { EsquemaLinhaDoTempoV1 } from "./linha-do-tempo-v1.js";
 
 /**
- * Literais de `TipoDivergencia`/`Fonte` (../dominio/modelo.ts), repetidos
+ * Literais de `Fonte` (../dominio/modelo.ts), repetidos
  * aqui apenas como lista de valores para `z.enum` — o tipo nunca é
  * redeclarado, só os literais usados para validação em runtime.
  *
  * (Mesmos literais de `linha-do-tempo-v1.ts`; repetidos aqui porque aquele
  * módulo não os exporta e não deve ser alterado — G-21.)
  */
-const TIPOS_DIVERGENCIA = [
-  "duplicado",
-  "parcial",
-  "pago_nao_enviado",
-  "enviado_nao_pago",
-  "entrega_atrasada",
-] as const satisfies readonly TipoDivergencia[];
-
 const FONTES = [
   "vendas",
   "pagamentos",

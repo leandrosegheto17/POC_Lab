@@ -57,7 +57,8 @@ describe("linha-do-tempo-v2", () => {
     });
 
     it("evento 'pagamento' v2 sem 'meio_pagamento' rejeita", () => {
-      const { meio_pagamento, ...eventoSemCampo } = eventoPagamentoV2;
+      const eventoSemCampo: Record<string, unknown> = { ...eventoPagamentoV2 };
+      delete eventoSemCampo.meio_pagamento;
 
       expect(() => EsquemaEventoV2.parse(eventoSemCampo)).toThrow();
     });

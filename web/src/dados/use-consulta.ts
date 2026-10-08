@@ -47,7 +47,7 @@ export function useConsulta<T>(
     const controller = new AbortController();
     let chamadaAtiva = true;
 
-    consultarApi(url, esquema, { signal: controller.signal }).then(
+    void consultarApi(url, esquema, { signal: controller.signal }).then(
       (resultado) => {
         // Chamada superada por uma mais recente, ou componente
         // desmontado — ignora silenciosamente, mesmo que a resposta não

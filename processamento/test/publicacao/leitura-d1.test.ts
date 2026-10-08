@@ -27,7 +27,7 @@ function listarTabelas(db: DatabaseSync): string[] {
 }
 
 function planoDe(db: DatabaseSync, sql: string, parametro: string): string {
-  const linhas = db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all(parametro);
+  const linhas = db.prepare(["EXPLAIN QUERY PLAN", sql].join(" ")).all(parametro);
   return linhas.map((linha) => String((linha as { detail: unknown }).detail)).join("\n");
 }
 
@@ -36,7 +36,7 @@ describe("leitura-d1.sql (DDL das visões de leitura do D1)", () => {
     const db = new DatabaseSync(":memory:");
     const sql = lerSqlLeituraD1();
 
-    expect(() => db.exec(sql)).not.toThrow();
+    expect(() => { db.exec(sql); }).not.toThrow();
 
     expect(listarTabelas(db)).toEqual([
       "divergencia",
@@ -53,7 +53,7 @@ describe("leitura-d1.sql (DDL das visões de leitura do D1)", () => {
 
     db.exec(sql);
 
-    expect(() => db.exec(sql)).not.toThrow();
+    expect(() => { db.exec(sql); }).not.toThrow();
     expect(listarTabelas(db)).toEqual([
       "divergencia",
       "documento",

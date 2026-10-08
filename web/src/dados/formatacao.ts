@@ -28,7 +28,7 @@ const UMA_CASA = new Intl.NumberFormat("pt-BR", {
 
 /** Troca o espaço sem quebra (U+00A0/U+202F) do Intl por espaço comum. */
 function espacoComum(texto: string): string {
-  return texto.replace(/[  ]/g, " ");
+  return texto.replace(/[\u00A0\u202F]/g, " ");
 }
 
 /** "2016-07-21T20:00:15.260Z" → "2016-07-21" (corta, sem converter fuso). */

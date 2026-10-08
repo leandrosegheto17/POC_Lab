@@ -96,11 +96,11 @@ export function detectarForaDeOrdem(eventos: Evento[]): ResultadoForaDeOrdem {
           referencia: evento.codigoEvento,
           regra:
             "ordem de chegada diverge da ordem canônica (momentoFato, tipo, codigoEvento) dentro da mesma fonte",
-          detalhe: `evento recebido na posição ${posicaoNaChegada.get(
+          detalhe: `evento recebido na posição ${String(posicaoNaChegada.get(
             chaveEvento,
-          )} da ordem de chegada, mas sua posição na ordem canônica é ${posicaoNaCanonica.get(
+          ))} da ordem de chegada, mas sua posição na ordem canônica é ${String(posicaoNaCanonica.get(
             chaveEvento,
-          )}`,
+          ))}`,
         });
       }
     }

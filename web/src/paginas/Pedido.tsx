@@ -86,7 +86,7 @@ function idsPagamentosDuplicados(dados: LinhaDoTempoV1): string[] {
  * TP-0059, e `Qualidade.tsx`, TP-0064).
  */
 function construirUrlConsulta(codigo: string, tentativa: number): string {
-  return `/api/v1/pedidos/${encodeURIComponent(codigo)}/linha-do-tempo#${tentativa}`;
+  return `/api/v1/pedidos/${encodeURIComponent(codigo)}/linha-do-tempo#${String(tentativa)}`;
 }
 
 // TP-0073 — `EventoV1` (contrato da API) não tem `versao_schema` (não
@@ -101,7 +101,7 @@ function comoEventosDeDominio(eventos: EventoV1[]): Evento[] {
 
 export function Pedido() {
   const { codigo } = useParams();
-  const refTitulo = useFocoNoTitulo<HTMLHeadingElement>();
+  const refTitulo = useFocoNoTitulo();
 
   const [tentativa, setTentativa] = useState(0);
   const urlConsulta = codigo ? construirUrlConsulta(codigo, tentativa) : null;
@@ -226,9 +226,9 @@ function DetalheLinhaDoTempo({ dados }: { dados: LinhaDoTempoV1 }) {
 
       <SeletorData
         valor={dataEscolhida ?? ""}
-        onMudar={(valor) => setDataEscolhida(valor === "" ? undefined : valor)}
+        onMudar={(valor) => { setDataEscolhida(valor === "" ? undefined : valor); }}
         onVerEstado={() => {}}
-        onLimpar={() => setDataEscolhida(undefined)}
+        onLimpar={() => { setDataEscolhida(undefined); }}
         resultado={resultado}
       />
 
@@ -274,7 +274,7 @@ function EtiquetasDoPedido({ pedido }: { pedido: PedidoV1 }) {
       ) : (
         pedido.divergencias.map((divergencia, indice) => (
           <EtiquetaTipo
-            key={`${divergencia.tipo}-${indice}`}
+            key={`${divergencia.tipo}-${String(indice)}`}
             tipo={divergencia.tipo}
           />
         ))
@@ -295,7 +295,7 @@ function EtiquetasDoPedido({ pedido }: { pedido: PedidoV1 }) {
 /** Subtítulo do PC (oculto no celular, onde a mesma informação vai para a
  * linha das etiquetas). */
 function SubtituloPc({ pedido }: { pedido: PedidoV1 }) {
-  const presenca = `${pedido.fontes.length} de ${TOTAL_SISTEMAS} sistemas`;
+  const presenca = `${String(pedido.fontes.length)} de ${String(TOTAL_SISTEMAS)} sistemas`;
 
   return (
     <p className="so-pc pedido-subtitulo">

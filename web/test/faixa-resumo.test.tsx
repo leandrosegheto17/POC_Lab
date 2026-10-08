@@ -47,7 +47,7 @@ function respostaFake(opcoes: {
   return {
     ok: opcoes.ok,
     status: opcoes.status ?? (opcoes.ok ? 200 : 500),
-    json: opcoes.json ?? (async () => ({})),
+    json: opcoes.json ?? (() => Promise.resolve({})),
   } as unknown as Response;
 }
 
@@ -57,8 +57,8 @@ afterEach(() => {
 
 describe("FaixaResumo — estado de sucesso", () => {
   it("exibe data de corte (AAAA-MM-DD) e total de pedidos formatado", async () => {
-    global.fetch = vi.fn(async () =>
-      respostaFake({ ok: true, json: async () => resumoValido(12345) }),
+    global.fetch = vi.fn(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(resumoValido(12345)) })),
     );
 
     render(
@@ -96,18 +96,18 @@ describe("FaixaResumo — estado de carregamento", () => {
 
 describe("FaixaResumo — estado de erro", () => {
   it("resposta 500 → só 'Dados sintéticos', sem role=alert nem aria-live", async () => {
-    global.fetch = vi.fn(async () =>
-      respostaFake({
+    global.fetch = vi.fn(() =>
+      Promise.resolve(respostaFake({
         ok: false,
         status: 500,
-        json: async () => ({
+        json: () => Promise.resolve({
           type: "https://poc-lab.dev/erros/erro_interno",
           title: "Erro interno",
           status: 500,
           detail: "detalhe que não deve aparecer",
           codigo: "erro_interno",
         }),
-      }),
+      })),
     );
 
     const { container } = render(
@@ -126,9 +126,7 @@ describe("FaixaResumo — estado de erro", () => {
   });
 
   it("falha de rede → só 'Dados sintéticos', sem role=alert nem aria-live", async () => {
-    global.fetch = vi.fn(async () => {
-      throw new TypeError("Failed to fetch");
-    });
+    global.fetch = vi.fn(() => Promise.reject(new TypeError("Failed to fetch")));
 
     const { container } = render(
       <ProvedorResumo>
@@ -147,10 +145,10 @@ describe("FaixaResumo — estado de erro", () => {
 
 describe("ProvedorResumo — uma única chamada por carga do app", () => {
   it("renderizando 2 FaixaResumo dentro do mesmo provedor, fetch é chamado 1 vez", async () => {
-    const fetchMock = vi.fn(async () =>
-      respostaFake({ ok: true, json: async () => resumoValido(5) }),
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(resumoValido(5)) })),
     );
-    global.fetch = fetchMock as unknown as typeof fetch;
+    global.fetch = fetchMock;
 
     render(
       <ProvedorResumo>
@@ -167,10 +165,10 @@ describe("ProvedorResumo — uma única chamada por carga do app", () => {
   });
 
   it("1 FaixaResumo + outro consumidor de useResumo no mesmo provedor: fetch 1 vez", async () => {
-    const fetchMock = vi.fn(async () =>
-      respostaFake({ ok: true, json: async () => resumoValido(7) }),
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(resumoValido(7)) })),
     );
-    global.fetch = fetchMock as unknown as typeof fetch;
+    global.fetch = fetchMock;
 
     function OutroConsumidor() {
       const { estado } = useResumo();
@@ -220,9 +218,7 @@ describe("FaixaResumo — acessibilidade (vitest-axe) nos 3 estados", () => {
   });
 
   it("estado de erro não tem violações", async () => {
-    global.fetch = vi.fn(async () => {
-      throw new TypeError("Failed to fetch");
-    });
+    global.fetch = vi.fn(() => Promise.reject(new TypeError("Failed to fetch")));
 
     const { container } = render(
       <ProvedorResumo>
@@ -239,8 +235,8 @@ describe("FaixaResumo — acessibilidade (vitest-axe) nos 3 estados", () => {
   });
 
   it("estado de sucesso não tem violações", async () => {
-    global.fetch = vi.fn(async () =>
-      respostaFake({ ok: true, json: async () => resumoValido(1) }),
+    global.fetch = vi.fn(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(resumoValido(1)) })),
     );
 
     const { container } = render(

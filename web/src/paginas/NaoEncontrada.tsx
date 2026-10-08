@@ -13,7 +13,7 @@ import "./NaoEncontrada.css";
 // página tem a própria busca (`CampoBusca variante="pagina"`, id próprio) e
 // o link "Ir para Divergências →".
 export function NaoEncontrada() {
-  const refTitulo = useFocoNoTitulo<HTMLHeadingElement>();
+  const refTitulo = useFocoNoTitulo();
   useTituloDocumento("Página não encontrada");
 
   return (

@@ -28,6 +28,7 @@ import { criarRepositorio } from "../../src/armazenamento/repositorio.ts";
 import { importar } from "../../src/importacao/importar.ts";
 import { montarDocumentoQualidade } from "../../src/publicacao/qualidade.ts";
 import { SEMENTE_PADRAO } from "../../src/gerador/prng.ts";
+import { obrigatorio } from "../apoio/obrigatorio.js";
 
 const CAMINHO_BASE = path.join("dados", "origem", "northwind.db");
 const baseDisponivel = existsSync(CAMINHO_BASE);
@@ -71,6 +72,9 @@ describe.skipIf(!baseDisponivel)("montarDocumentoQualidade (pipeline completo, b
 
   it(
     "devolve exatamente os 7 tipos de TipoAchado, cada um uma única vez",
+    // Pipeline completo sobre a base real: bem acima do timeout padrão de 5s
+    // do vitest (mesmo padrão de `test/integracao/preparar.test.ts`).
+    { timeout: 300_000 },
     () => {
       const documento = montarDocumento();
 
@@ -86,13 +90,11 @@ describe.skipIf(!baseDisponivel)("montarDocumentoQualidade (pipeline completo, b
         "pedido_sem_envio",
       ]);
     },
-    // Pipeline completo sobre a base real: bem acima do timeout padrão de 5s
-    // do vitest (mesmo padrão de `test/integracao/preparar.test.ts`).
-    { timeout: 300_000 },
   );
 
   it(
     "formato_data e pedido_sem_envio: contagens reais da base (15.452 e 21)",
+    { timeout: 300_000 },
     () => {
       const documento = montarDocumento();
 
@@ -104,11 +106,11 @@ describe.skipIf(!baseDisponivel)("montarDocumentoQualidade (pipeline completo, b
       expect(pedidoSemEnvio?.contagem).toBe(21);
       expect(pedidoSemEnvio?.exemplos.length).toBeLessThanOrEqual(10);
     },
-    { timeout: 300_000 },
   );
 
   it(
     "linha_invalida não inclui mais os casos de formato_data/pedido_sem_envio (vendas.ts agora grava com os tipos dedicados); reflete só linhas malformadas plantadas por outras fontes (pagamentos/rastreio)",
+    { timeout: 300_000 },
     () => {
       const documento = montarDocumento();
 
@@ -119,24 +121,24 @@ describe.skipIf(!baseDisponivel)("montarDocumentoQualidade (pipeline completo, b
       expect(linhaInvalida?.contagem).toBeGreaterThanOrEqual(0);
       expect(linhaInvalida?.exemplos.length).toBeLessThanOrEqual(10);
     },
-    { timeout: 300_000 },
   );
 
   it(
     "fora_de_ordem é recalculado (não lido de achado_qualidade, que nunca grava esse tipo) e não lança ao validar contra o esquema",
+    { timeout: 300_000 },
     () => {
       const documento = montarDocumento();
 
       const foraDeOrdem = documento.achados.find((a) => a.tipo === "fora_de_ordem");
       expect(foraDeOrdem).toBeDefined();
-      expect(foraDeOrdem!.contagem).toBeGreaterThanOrEqual(0);
-      expect(foraDeOrdem!.exemplos.length).toBeLessThanOrEqual(10);
+      expect(obrigatorio(foraDeOrdem).contagem).toBeGreaterThanOrEqual(0);
+      expect(obrigatorio(foraDeOrdem).exemplos.length).toBeLessThanOrEqual(10);
     },
-    { timeout: 300_000 },
   );
 
   it(
     "nenhum tipo tem mais de 10 exemplos, mesmo quando a contagem é muito maior",
+    { timeout: 300_000 },
     () => {
       const documento = montarDocumento();
 
@@ -144,11 +146,11 @@ describe.skipIf(!baseDisponivel)("montarDocumentoQualidade (pipeline completo, b
         expect(achado.exemplos.length).toBeLessThanOrEqual(10);
       }
     },
-    { timeout: 300_000 },
   );
 
   it(
     "os 830 pedidos de formato curto ficam sem achado: formato_data cobre só os longos (15.452)",
+    { timeout: 300_000 },
     () => {
       const formatoData = montarDocumento().achados.find((a) => a.tipo === "formato_data");
 
@@ -156,11 +158,11 @@ describe.skipIf(!baseDisponivel)("montarDocumentoQualidade (pipeline completo, b
       expect(formatoData?.contagem).toBe(15_452);
       expect(formatoData?.contagem).toBe(totalPedidos - pedidosFormatoCurto);
     },
-    { timeout: 300_000 },
   );
 
   it(
     "banco :memory: sem ocorrências devolve os 7 tipos com contagem 0 e exemplos []",
+    { timeout: 300_000 },
     () => {
       const documento = montarDocumentoQualidade(criarRepositorio(":memory:").db);
 
@@ -170,16 +172,15 @@ describe.skipIf(!baseDisponivel)("montarDocumentoQualidade (pipeline completo, b
         expect(achado.exemplos).toEqual([]);
       }
     },
-    { timeout: 300_000 },
   );
 
   it(
     "ia.utilizada é false e ia.sugestoes é array vazio",
+    { timeout: 300_000 },
     () => {
       const documento = montarDocumento();
 
       expect(documento.ia).toEqual({ utilizada: false, sugestoes: [] });
     },
-    { timeout: 300_000 },
   );
 });

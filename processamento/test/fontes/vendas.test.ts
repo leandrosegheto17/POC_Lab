@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { processarVendas } from "../../src/fontes/vendas.js";
 import type { PedidoVendas } from "../../src/fontes/leitura-vendas.js";
+import { obrigatorio } from "../apoio/obrigatorio.js";
 
 function pedidoBase(sobrescritas: Partial<PedidoVendas> = {}): PedidoVendas {
   return {
@@ -74,7 +75,7 @@ describe("processarVendas (TP-0020)", () => {
         referencia: "2",
       }),
     ]);
-    expect(resultado.achados[0]!.detalhe).toContain("formato longo");
+    expect(obrigatorio(resultado.achados[0]).detalhe).toContain("formato longo");
   });
 
   it("pedido sem data de envio gera achado pedido_sem_envio", () => {
@@ -89,7 +90,7 @@ describe("processarVendas (TP-0020)", () => {
         referencia: "3",
       }),
     ]);
-    expect(resultado.achados[0]!.detalhe).toContain("sem data de envio");
+    expect(obrigatorio(resultado.achados[0]).detalhe).toContain("sem data de envio");
   });
 
   it("item com preço <= 0 ou desconto fora de [0,1] gera achado valor_fora_do_padrao", () => {

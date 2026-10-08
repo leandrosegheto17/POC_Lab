@@ -1,6 +1,6 @@
 import { arredondarMoeda, calcularValorDevido } from "../dominio/valores.js";
 import type { PedidoVendas } from "../fontes/leitura-vendas.js";
-import type { EntradaGabarito } from "./gabarito.js";
+import type { EntradaGabarito } from "./problemas-plantados.js";
 
 /**
  * Plantio de casos de pagamento (TP-0025), feito SOMENTE sobre pedidos

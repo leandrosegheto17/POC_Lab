@@ -19,6 +19,7 @@ import {
   publicarDados,
   type ResultadoExecucaoWrangler,
 } from "../../src/cli/publicar-dados.ts";
+import { obrigatorio } from "../apoio/obrigatorio.js";
 
 function eventoVenda(
   repositorio: Repositorio,
@@ -119,7 +120,7 @@ describe("montarSqlPublicacao", () => {
 
     const correspondencia = sql.match(/\('resumo', '((?:[^']|'')*)'\)/);
     expect(correspondencia).not.toBeNull();
-    const resumo = JSON.parse(correspondencia![1]!.replace(/''/g, "'")) as { dataCorte: string };
+    const resumo = JSON.parse(obrigatorio(obrigatorio(correspondencia)[1]).replace(/''/g, "'")) as { dataCorte: string };
 
     // Na fixture, o maior momento_fato é o do pagamento (2026-01-02), posterior ao da venda.
     expect(resumo.dataCorte).toBe("2026-01-02T10:00:00Z");
@@ -137,7 +138,7 @@ describe("montarSqlPublicacao", () => {
     const correspondencia = sql.match(/\('indicadores', '((?:[^']|'')*)'\)/);
     expect(correspondencia).not.toBeNull();
 
-    const conteudoEscapado = correspondencia![1]!;
+    const conteudoEscapado = obrigatorio(obrigatorio(correspondencia)[1]);
     // `escritor-sql.ts` escapa aspas simples dobrando-as (convenção SQL) —
     // desfaz antes de fazer `JSON.parse`.
     const conteudoJson = conteudoEscapado.replace(/''/g, "'");
@@ -165,7 +166,7 @@ describe("publicarDados / executarWrangler", () => {
 
     expect(resultado.codigo).toBe(0);
     expect(chamadas).toHaveLength(1);
-    const chamada = chamadas[0]!;
+    const chamada = obrigatorio(chamadas[0]);
     expect(chamada.opcoes.shell).toBeUndefined();
     expect(chamada.comando).toBe(process.execPath);
     expect(chamada.args[chamada.args.length - 1]).toBe(path.resolve(caminho));
@@ -183,8 +184,7 @@ describe("publicarDados / executarWrangler", () => {
     const arquivosEscritos: Array<{ caminho: string; conteudo: string }> = [];
     const diretoriosCriados: string[] = [];
 
-    expect(() =>
-      publicarDados(
+    expect(() => { publicarDados(
         {
           semente: 20261007,
           caminhoBanco: ":memory:",
@@ -204,21 +204,20 @@ describe("publicarDados / executarWrangler", () => {
           },
           executarWrangler: () => resultadoFalho,
         },
-      ),
+      ); },
     ).toThrowError(/mensagem de erro do wrangler/);
 
     // Confirma que o arquivo foi escrito e o diretório criado ANTES da
     // tentativa de carga — a falha é só na etapa de execução do wrangler.
     expect(diretoriosCriados).toEqual(["dados/publicacao-teste"]);
     expect(arquivosEscritos).toHaveLength(1);
-    expect(arquivosEscritos[0]!.conteudo).toContain("CREATE TABLE");
+    expect(obrigatorio(arquivosEscritos[0]).conteudo).toContain("CREATE TABLE");
   });
 
   it("não lança quando o wrangler sai com código 0", () => {
     const resultadoOk: ResultadoExecucaoWrangler = { codigo: 0, stdout: "ok", stderr: "" };
 
-    expect(() =>
-      publicarDados(
+    expect(() => { publicarDados(
         {
           semente: 20261007,
           caminhoBanco: ":memory:",
@@ -231,7 +230,7 @@ describe("publicarDados / executarWrangler", () => {
           escreverArquivo: () => {},
           executarWrangler: () => resultadoOk,
         },
-      ),
+      ); },
     ).not.toThrow();
   });
 });

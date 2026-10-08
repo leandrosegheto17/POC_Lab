@@ -6,6 +6,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { MemoryRouter } from "react-router";
 import { axe } from "vitest-axe";
 import { Qualidade } from "../src/paginas/Qualidade.tsx";
+import { obrigatorio } from "./apoio/obrigatorio.ts";
 
 /** Exemplo concreto de achado, contra `EsquemaExemploAchado`. */
 function exemplo(opcoes: {
@@ -138,7 +139,7 @@ function respostaFake(opcoes: {
   return {
     ok: opcoes.ok,
     status: opcoes.status ?? (opcoes.ok ? 200 : 500),
-    json: opcoes.json ?? (async () => ({})),
+    json: opcoes.json ?? (() => Promise.resolve({})),
   } as unknown as Response;
 }
 
@@ -150,7 +151,7 @@ function instalarFetchMock(
     if (url.startsWith("/api/v1/qualidade")) {
       return aoChamarQualidade(url);
     }
-    throw new Error(`fetch não mockado para ${url}`);
+    return Promise.reject(new Error(`fetch não mockado para ${url}`));
   });
   global.fetch = mock as unknown as typeof fetch;
   return mock;
@@ -221,8 +222,8 @@ afterEach(() => {
 
 describe("Qualidade — sucesso", () => {
   it("mostra os 7 BlocoAchado na ORDEM FIXA, não na ordem do array recebido", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaQualidadeValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
     );
 
     renderizar();
@@ -248,8 +249,8 @@ describe("Qualidade — sucesso", () => {
   });
 
   it("topo: rótulo da página (PC) e subtítulo (celular)", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaQualidadeValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
     );
 
     renderizar();
@@ -267,8 +268,8 @@ describe("Qualidade — sucesso", () => {
   });
 
   it("PC: 7 mini-cartões-âncora em 'Tipos de achado', com contagem e o primeiro selecionado", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaQualidadeValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
     );
 
     renderizar();
@@ -311,8 +312,8 @@ describe("Qualidade — sucesso", () => {
   });
 
   it("PC: o fragmento da URL define o mini-cartão selecionado", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaQualidadeValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
     );
 
     render(
@@ -340,9 +341,9 @@ describe("Qualidade — sucesso", () => {
     const resposta = respostaQualidadeValida() as {
       achados: Array<{ tipo: string; contagem: number }>;
     };
-    resposta.achados.find((a) => a.tipo === "formato_data")!.contagem = 15452;
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => resposta }),
+    obrigatorio(resposta.achados.find((a) => a.tipo === "formato_data")).contagem = 15452;
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(resposta) })),
     );
 
     renderizar();
@@ -366,15 +367,15 @@ describe("Qualidade — sucesso", () => {
     const resposta = respostaQualidadeValida() as {
       achados: Array<{ tipo: string; exemplos: unknown[] }>;
     };
-    resposta.achados.find((a) => a.tipo === "linha_invalida")!.exemplos = [
+    obrigatorio(resposta.achados.find((a) => a.tipo === "linha_invalida")).exemplos = [
       exemplo({
         fonte: "vendas",
         referencia: "11078",
         detalhe: "Campo 'valor' ausente",
       }),
     ];
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => resposta }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(resposta) })),
     );
 
     renderizar();
@@ -421,8 +422,8 @@ describe("Qualidade — sucesso", () => {
   });
 
   it("achado com contagem 0 mostra a regra e 'Nenhum caso encontrado.', sem tabela", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaQualidadeValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
     );
 
     renderizar();
@@ -447,8 +448,8 @@ describe("Qualidade — sucesso", () => {
   });
 
   it("celular: um <details> por achado (o primeiro aberto), h2 no summary, contagem, regra e exemplos em linhas", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaQualidadeValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
     );
 
     renderizar();
@@ -463,7 +464,7 @@ describe("Qualidade — sucesso", () => {
     expect(todos[0].open).toBe(true);
     Array.from(todos)
       .slice(1)
-      .forEach((detalhes) => expect(detalhes.open).toBe(false));
+      .forEach((detalhes) => { expect(detalhes.open).toBe(false); });
 
     const datas = detalhesCelular("Datas em dois formatos");
     const resumo = datas.querySelector("summary") as HTMLElement;
@@ -487,11 +488,11 @@ describe("Qualidade — sucesso", () => {
   });
 
   it("ia.utilizada === false mostra a mensagem fixa de IA não utilizada (PC e celular, na caixa de regra)", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => respostaQualidadeValida({ iaUtilizada: false }),
-      }),
+        json: () => Promise.resolve(respostaQualidadeValida({ iaUtilizada: false })),
+      })),
     );
 
     renderizar();
@@ -511,8 +512,8 @@ describe("Qualidade — sucesso", () => {
   });
 
   it("Sugestões da IA (PC): cartão tracejado, aviso 'À parte' e sem selo 'opcional'", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaQualidadeValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
     );
 
     renderizar();
@@ -532,9 +533,7 @@ describe("Qualidade — sucesso", () => {
 
 describe("Qualidade — erro 5xx/rede", () => {
   it("mostra mensagem de erro e 'Tentar de novo' refaz a chamada", async () => {
-    const mock = instalarFetchMock(async () => {
-      throw new TypeError("Failed to fetch");
-    });
+    const mock = instalarFetchMock(() => Promise.reject(new TypeError("Failed to fetch")));
 
     renderizar();
 
@@ -555,18 +554,18 @@ describe("Qualidade — erro 5xx/rede", () => {
   });
 
   it("erro 5xx vindo da API também mostra 'Tentar de novo'", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: false,
         status: 500,
-        json: async () => ({
+        json: () => Promise.resolve({
           type: "about:blank",
           title: "Erro interno",
           status: 500,
           detail: "Falha ao gerar relatório.",
           codigo: "erro_interno",
         }),
-      }),
+      })),
     );
 
     renderizar();
@@ -621,11 +620,11 @@ function respostaComSugestoes(sugestoes: unknown[]): unknown {
 
 describe("Qualidade — Sugestões da IA (TP-0085)", () => {
   it("ia.utilizada === true com 2 sugestões válidas mostra a tabela com as 5 colunas", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaComSugestoes([
+        json: () =>
+          Promise.resolve(respostaComSugestoes([
             sugestaoIa({
               pagamento: "PAG-100",
               textoReferencia: "ref pedido 100",
@@ -640,8 +639,8 @@ describe("Qualidade — Sugestões da IA (TP-0085)", () => {
               conferida: false,
               motivo: "Diferença de valor acima da tolerância.",
             }),
-          ]),
-      }),
+          ])),
+      })),
     );
 
     renderizar();
@@ -732,11 +731,11 @@ describe("Qualidade — Sugestões da IA (TP-0085)", () => {
   });
 
   it("ia.utilizada === true com sugestoes: [] mostra a mensagem de 'sem sugestões'", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => respostaComSugestoes([]),
-      }),
+        json: () => Promise.resolve(respostaComSugestoes([])),
+      })),
     );
 
     renderizar();
@@ -755,11 +754,11 @@ describe("Qualidade — Sugestões da IA (TP-0085)", () => {
   });
 
   it("ia.utilizada === false continua mostrando a mesma mensagem (regressão)", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => respostaQualidadeValida({ iaUtilizada: false }),
-      }),
+        json: () => Promise.resolve(respostaQualidadeValida({ iaUtilizada: false })),
+      })),
     );
 
     renderizar();
@@ -776,11 +775,11 @@ describe("Qualidade — Sugestões da IA (TP-0085)", () => {
   });
 
   it("item malformado (sem 'motivo') é descartado; o item válido continua aparecendo", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaComSugestoes([
+        json: () =>
+          Promise.resolve(respostaComSugestoes([
             {
               pagamento: "PAG-900",
               textoReferencia: "ref malformada",
@@ -795,8 +794,8 @@ describe("Qualidade — Sugestões da IA (TP-0085)", () => {
               conferida: true,
               motivo: "Candidato único com saldo compatível.",
             }),
-          ]),
-      }),
+          ])),
+      })),
     );
 
     renderizar();
@@ -829,9 +828,7 @@ describe("Qualidade — acessibilidade (vitest-axe)", () => {
   });
 
   it("erro não tem violações", async () => {
-    instalarFetchMock(async () => {
-      throw new TypeError("Failed to fetch");
-    });
+    instalarFetchMock(() => Promise.reject(new TypeError("Failed to fetch")));
 
     const { container } = renderizar();
 
@@ -845,8 +842,8 @@ describe("Qualidade — acessibilidade (vitest-axe)", () => {
   });
 
   it("sucesso (achado com contagem 0 e achado com exemplos) não tem violações", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaQualidadeValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
     );
 
     const { container } = renderizar();
@@ -859,11 +856,11 @@ describe("Qualidade — acessibilidade (vitest-axe)", () => {
   });
 
   it("sucesso com tabela de Sugestões da IA preenchida não tem violações (TP-0085)", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaComSugestoes([
+        json: () =>
+          Promise.resolve(respostaComSugestoes([
             sugestaoIa({
               pagamento: "PAG-100",
               textoReferencia: "ref pedido 100",
@@ -878,8 +875,8 @@ describe("Qualidade — acessibilidade (vitest-axe)", () => {
               conferida: false,
               motivo: "Diferença de valor acima da tolerância.",
             }),
-          ]),
-      }),
+          ])),
+      })),
     );
 
     const { container } = renderizar();

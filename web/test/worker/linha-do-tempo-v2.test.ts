@@ -20,6 +20,8 @@ import { escreverSqlPublicacao, type TabelasParaPublicacao } from "processamento
 import { EsquemaLinhaDoTempoV2 } from "processamento/contrato/linha-do-tempo-v2.js";
 
 import { D1Teste } from "../apoio/d1-teste.js";
+import type { CorpoLinhaDoTempoSolto } from "../apoio/corpo-teste.ts";
+import { obrigatorio } from "../apoio/obrigatorio.ts";
 import { rotaLinhaDoTempoV2 } from "../../worker/rotas/linha-do-tempo-v2.ts";
 import appReal from "../../worker/index.ts";
 
@@ -135,7 +137,7 @@ describe("GET /api/v2/pedidos/{codigo}/linha-do-tempo", () => {
     );
 
     expect(resposta.status).toBe(200);
-    const corpo = await resposta.json();
+    const corpo = await resposta.json<CorpoLinhaDoTempoSolto>();
 
     const validacao = EsquemaLinhaDoTempoV2.safeParse(corpo);
     expect(validacao.success).toBe(true);
@@ -144,13 +146,13 @@ describe("GET /api/v2/pedidos/{codigo}/linha-do-tempo", () => {
     expect(corpo.pedido.identidade).toBe(ID_PEDIDO);
 
     // Todo evento inclui `versao_schema` (lido da coluna, não do payload).
-    expect(corpo.eventos.map((e: { versao_schema: number }) => e.versao_schema)).toEqual([
+    expect(corpo.eventos.map((e) => e.versao_schema)).toEqual([
       1, 2,
     ]);
 
-    const eventoPagamento = corpo.eventos.find(
-      (e: { tipo: string }) => e.tipo === "pagamento",
-    );
+    const eventoPagamento = obrigatorio(corpo.eventos.find(
+      (e) => e.tipo === "pagamento",
+    ))
     expect(eventoPagamento).toBeDefined();
     expect(eventoPagamento.versao_schema).toBe(2);
     expect(eventoPagamento.meio_pagamento).toBe("pix");
@@ -166,7 +168,7 @@ describe("GET /api/v2/pedidos/{codigo}/linha-do-tempo", () => {
       { DB },
     );
     expect(respostaAlternativo.status).toBe(200);
-    const corpoAlternativo = await respostaAlternativo.json();
+    const corpoAlternativo = await respostaAlternativo.json<CorpoLinhaDoTempoSolto>();
     expect(corpoAlternativo.pedido.identidade).toBe(ID_PEDIDO);
     expect(corpoAlternativo.pedido.codigoBuscado).toBe("VENDA-2");
 
@@ -177,7 +179,7 @@ describe("GET /api/v2/pedidos/{codigo}/linha-do-tempo", () => {
       { DB },
     );
     expect(respostaVariacao.status).toBe(200);
-    const corpoVariacao = await respostaVariacao.json();
+    const corpoVariacao = await respostaVariacao.json<CorpoLinhaDoTempoSolto>();
     expect(corpoVariacao.pedido.identidade).toBe(ID_PEDIDO);
     expect(corpoVariacao.pedido.codigoBuscado).toBe(codigoComVariacao);
   });
@@ -193,7 +195,7 @@ describe("GET /api/v2/pedidos/{codigo}/linha-do-tempo", () => {
     );
 
     expect(resposta.status).toBe(404);
-    const corpo = (await resposta.json()) as CorpoErroTeste;
+    const corpo = await resposta.json<CorpoErroTeste>();
     expect(corpo.codigo).toBe("pedido_nao_encontrado");
   });
 
@@ -209,7 +211,7 @@ describe("GET /api/v2/pedidos/{codigo}/linha-do-tempo", () => {
     );
 
     expect(resposta.status).toBe(400);
-    const corpo = (await resposta.json()) as CorpoErroTeste;
+    const corpo = await resposta.json<CorpoErroTeste>();
     expect(corpo.codigo).toBe("parametro_invalido");
   });
 
@@ -226,7 +228,7 @@ describe("GET /api/v2/pedidos/{codigo}/linha-do-tempo", () => {
 
     expect(resposta.status).toBe(400);
     expect(resposta.status).not.toBe(200);
-    const corpo = (await resposta.json()) as CorpoErroTeste;
+    const corpo = await resposta.json<CorpoErroTeste>();
     expect(corpo.codigo).toBe("parametro_invalido");
   });
 
@@ -241,7 +243,7 @@ describe("GET /api/v2/pedidos/{codigo}/linha-do-tempo", () => {
     for (const caminho of caminhos) {
       const resposta = await appReal.request(caminho, undefined, { DB });
       expect(resposta.status).toBe(404);
-      const corpo = (await resposta.json()) as CorpoErroTeste;
+      const corpo = await resposta.json<CorpoErroTeste>();
       expect(corpo.codigo).toBe("rota_nao_encontrada");
     }
   });

@@ -58,8 +58,9 @@ export function casarReferencia(
     codigosConhecidos.has(candidato),
   );
 
-  if (candidatosConhecidos.length === 1) {
-    return { idPedido: candidatosConhecidos[0]! };
+  const [candidatoUnico] = candidatosConhecidos;
+  if (candidatosConhecidos.length === 1 && candidatoUnico !== undefined) {
+    return { idPedido: candidatoUnico };
   }
 
   return { semIdentificacao: true };

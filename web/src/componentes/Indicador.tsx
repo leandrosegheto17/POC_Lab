@@ -50,7 +50,7 @@ function BarraProporcao({
 }) {
   return (
     <div className="indicador__barra" aria-hidden="true">
-      <span style={{ width: `${larguraBarra(numerador, denominador)}%` }} />
+      <span style={{ width: `${String(larguraBarra(numerador, denominador))}%` }} />
     </div>
   );
 }
@@ -157,7 +157,7 @@ export function BlocoEntregasNoPrazo({ bloco }: { bloco: BlocoIndicador }) {
               id={idMes}
               className="campo indicador__select"
               value={mes}
-              onChange={(evento) => setMesEscolhido(evento.target.value)}
+              onChange={(evento) => { setMesEscolhido(evento.target.value); }}
             >
               {meses.map((opcao) => (
                 <option key={opcao} value={opcao}>
@@ -554,7 +554,7 @@ export function Indicador({
         ]}
       >
         {linhasTabela.map((linha, indice) => (
-          <tr key={`${bloco.chave}-${indice}`}>
+          <tr key={`${bloco.chave}-${String(indice)}`}>
             <td>{linha.rotulo}</td>
             <td className="num">{formatarNumero(linha.numerador)}</td>
             <td className="num">{formatarNumero(linha.denominador)}</td>

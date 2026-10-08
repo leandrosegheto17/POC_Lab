@@ -27,7 +27,7 @@ import { problema } from "../erros.js";
  * desta tarefa) vai de fato fixar; `c.env.DB` é lido via cast explícito.
  */
 export async function handlerResumo(c: Context): Promise<Response> {
-  const db = c.env.DB as D1Database;
+  const db = (c.env as { DB: D1Database }).DB;
   const conteudo = await buscarDocumento(db, "resumo");
   if (conteudo === null) {
     return problema("erro_interno", 500);

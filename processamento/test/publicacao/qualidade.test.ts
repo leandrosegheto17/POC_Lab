@@ -158,9 +158,9 @@ describe("montarDocumentoQualidade", () => {
       const achado: AchadoQualidade = {
         tipo: "linha_invalida",
         fonte: "rastreio",
-        referencia: `linha-${i}`,
+        referencia: `linha-${String(i)}`,
         regra: "campos_obrigatorios",
-        detalhe: `linha ${i} malformada`,
+        detalhe: `linha ${String(i)} malformada`,
       };
       repositorio.inserirAchadoQualidade(achado);
     }

@@ -76,7 +76,7 @@ export function FiltroTipo({ valor, aoMudar }: FiltroTipoProps) {
                 name="filtro-tipo"
                 value={opcao.valor}
                 checked={selecionada}
-                onChange={() => aoMudar(opcao.valor)}
+                onChange={() => { aoMudar(opcao.valor); }}
               />
               <span className="so-pc">{opcao.rotulo}</span>{" "}
               <span className="so-celular">{opcao.curto}</span>

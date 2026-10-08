@@ -60,11 +60,11 @@ function dataIsoValida(valor: string | undefined): boolean {
 export function processarRastreio(
   conteudoCsv: string,
 ): ResultadoProcessamentoRastreio {
-  const linhas: LinhaRastreioCsv[] = parse(conteudoCsv, {
+  const linhas = parse(conteudoCsv, {
     columns: true,
     skip_empty_lines: true,
     relax_column_count: true,
-  });
+  }) as LinhaRastreioCsv[];
 
   const vinculos: VinculoFonte[] = [];
   const eventos: Evento[] = [];
@@ -82,7 +82,7 @@ export function processarRastreio(
     } = linha;
 
     const referencia =
-      codigoEvento ?? codigoRastreio ?? `linha-${ordemChegada}`;
+      codigoEvento ?? codigoRastreio ?? `linha-${String(ordemChegada)}`;
 
     if (
       !codigoEvento ||
@@ -97,7 +97,7 @@ export function processarRastreio(
         fonte: "rastreio",
         referencia,
         regra: "campos_obrigatorios",
-        detalhe: `Linha ${ordemChegada} de rastreio.csv com campo obrigatório faltando.`,
+        detalhe: `Linha ${String(ordemChegada)} de rastreio.csv com campo obrigatório faltando.`,
       });
       return;
     }
@@ -108,7 +108,7 @@ export function processarRastreio(
         fonte: "rastreio",
         referencia,
         regra: "tipo_valido",
-        detalhe: `Tipo '${tipo}' fora do enum esperado (coleta, transporte, entrega) na linha ${ordemChegada}.`,
+        detalhe: `Tipo '${tipo}' fora do enum esperado (coleta, transporte, entrega) na linha ${String(ordemChegada)}.`,
       });
       return;
     }
@@ -119,7 +119,7 @@ export function processarRastreio(
         fonte: "rastreio",
         referencia,
         regra: "momento_fato_iso",
-        detalhe: `momento_fato '${momentoFato}' não é uma data ISO válida na linha ${ordemChegada}.`,
+        detalhe: `momento_fato '${momentoFato}' não é uma data ISO válida na linha ${String(ordemChegada)}.`,
       });
       return;
     }
@@ -130,7 +130,7 @@ export function processarRastreio(
         fonte: "rastreio",
         referencia: codigoEvento,
         regra: "codigo_evento_unico",
-        detalhe: `codigo_evento '${codigoEvento}' já havia sido processado nesta importação; ocorrência na linha ${ordemChegada} ignorada.`,
+        detalhe: `codigo_evento '${codigoEvento}' já havia sido processado nesta importação; ocorrência na linha ${String(ordemChegada)} ignorada.`,
       });
       return;
     }

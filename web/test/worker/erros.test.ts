@@ -21,7 +21,7 @@ describe("rota desconhecida sob /api/", () => {
       "application/problem+json",
     );
 
-    const corpo = (await resposta.json()) as CorpoErroTeste;
+    const corpo = await resposta.json<CorpoErroTeste>();
     expect(corpo.codigo).toBe("rota_nao_encontrada");
     expect(corpo.status).toBe(404);
     expect(corpo.erros).toBeUndefined();
@@ -40,7 +40,7 @@ describe("método diferente de GET/HEAD sob /api/", () => {
       "application/problem+json",
     );
 
-    const corpo = (await resposta.json()) as CorpoErroTeste;
+    const corpo = await resposta.json<CorpoErroTeste>();
     expect(corpo.codigo).toBe("metodo_nao_permitido");
     expect(corpo.status).toBe(405);
   });
@@ -66,7 +66,7 @@ describe("hookValidacaoZod", () => {
       "application/problem+json",
     );
 
-    const corpo = (await resposta?.json()) as CorpoErroTeste;
+    const corpo = await resposta?.json<CorpoErroTeste>();
     expect(corpo.codigo).toBe("parametro_invalido");
     expect(Array.isArray(corpo.erros)).toBe(true);
     expect(corpo.erros?.length).toBeGreaterThan(0);
@@ -104,7 +104,7 @@ describe("exceção não tratada e cabeçalhos", () => {
       "application/problem+json",
     );
 
-    const corpo = (await resposta.json()) as CorpoErroTeste;
+    const corpo = await resposta.json<CorpoErroTeste>();
     expect(corpo.codigo).toBe("erro_interno");
     const textoCompleto = JSON.stringify(corpo);
     expect(textoCompleto).not.toContain("segredo interno");

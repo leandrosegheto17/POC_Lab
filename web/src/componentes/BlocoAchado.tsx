@@ -75,7 +75,7 @@ export function BlocoAchado({ titulo, achado }: BlocoAchadoProps) {
           rotuloRegiao={`Exemplos: ${titulo}`}
         >
           {achado.exemplos.map((exemplo, indice) => (
-            <tr key={`${exemplo.fonte}-${exemplo.referencia}-${indice}`}>
+            <tr key={`${exemplo.fonte}-${exemplo.referencia}-${String(indice)}`}>
               <td>{rotuloFonte(exemplo.fonte)}</td>
               <td>
                 <Referencia exemplo={exemplo} />
@@ -120,7 +120,7 @@ export function BlocoAchadoCelular({
           <ul className="achado-celular__exemplos">
             {achado.exemplos.map((exemplo, indice) => (
               <li
-                key={`${exemplo.fonte}-${exemplo.referencia}-${indice}`}
+                key={`${exemplo.fonte}-${exemplo.referencia}-${String(indice)}`}
                 className="achado-celular__exemplo"
               >
                 <Referencia exemplo={exemplo} />

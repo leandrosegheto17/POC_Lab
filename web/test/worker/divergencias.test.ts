@@ -126,7 +126,7 @@ describe("GET /api/v1/divergencias", () => {
 
     expect(resposta.status).toBe(200);
 
-    const corpo = (await resposta.json()) as RespostaDivergencias;
+    const corpo = await resposta.json<RespostaDivergencias>();
     const validacao = EsquemaRespostaDivergencias.safeParse(corpo);
     expect(validacao.success).toBe(true);
 
@@ -150,7 +150,7 @@ describe("GET /api/v1/divergencias", () => {
 
     expect(resposta.status).toBe(200);
 
-    const corpo = (await resposta.json()) as RespostaDivergencias;
+    const corpo = await resposta.json<RespostaDivergencias>();
     expect(corpo.dados.length).toBe(1);
     expect(corpo.dados[0]?.tipo).toBe("duplicado");
     expect(corpo.dados[0]?.pedido).toBe("PED-000001");
@@ -168,7 +168,7 @@ describe("GET /api/v1/divergencias", () => {
     );
 
     expect(resposta.status).toBe(400);
-    const corpo = (await resposta.json()) as CorpoErroTeste;
+    const corpo = await resposta.json<CorpoErroTeste>();
     expect(corpo.codigo).toBe("parametro_invalido");
     expect(corpo.erros?.length).toBeGreaterThan(0);
   });
@@ -180,7 +180,7 @@ describe("GET /api/v1/divergencias", () => {
     const resposta = await app.request("/api/v1/divergencias?foo=1", {}, { DB: db });
 
     expect(resposta.status).toBe(400);
-    const corpo = (await resposta.json()) as CorpoErroTeste;
+    const corpo = await resposta.json<CorpoErroTeste>();
     expect(corpo.codigo).toBe("parametro_invalido");
   });
 
@@ -195,7 +195,7 @@ describe("GET /api/v1/divergencias", () => {
     );
 
     expect(resposta.status).toBe(200);
-    const corpo = (await resposta.json()) as RespostaDivergencias;
+    const corpo = await resposta.json<RespostaDivergencias>();
     expect(corpo.dados.length).toBe(1);
     expect(corpo.dados[0]?.pedido).toBe("PED-000001");
     expect(corpo.dados[0]?.tipo).toBe("parcial");
@@ -213,7 +213,7 @@ describe("GET /api/v1/divergencias", () => {
     );
 
     expect(resposta.status).toBe(200);
-    const corpo = (await resposta.json()) as RespostaDivergencias;
+    const corpo = await resposta.json<RespostaDivergencias>();
     expect(corpo.dados).toEqual([]);
     expect(corpo.paginacao.total).toBe(3);
     expect(corpo.paginacao.pagina).toBe(999);

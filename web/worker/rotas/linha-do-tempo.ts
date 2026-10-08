@@ -67,7 +67,7 @@ rotaLinhaDoTempo.get(
       listarDivergenciasDoPedido(c.env.DB, pedidoResumo.id_pedido),
     ]);
 
-    const fontes: FontesPedido = JSON.parse(pedidoResumo.fontes);
+    const fontes = JSON.parse(pedidoResumo.fontes) as FontesPedido;
     const fontesResposta = CHAVES_FONTE.filter((chave) => fontes[chave] !== undefined).map(
       (chave) => ({ fonte: chave, codigo: fontes[chave] as string }),
     );
@@ -93,7 +93,7 @@ rotaLinhaDoTempo.get(
       // ela é descartada pelo `.parse()` de `EsquemaEventoV1` abaixo, que
       // usa `z.object()` simples (sem `.strict()`) de propósito (G-21).
       eventos: linhaDoTempo.map((linha) => ({
-        ...JSON.parse(linha.dados),
+        ...(JSON.parse(linha.dados) as Record<string, unknown>),
         fonte: linha.fonte,
         codigoEvento: linha.codigo_evento,
         momentoFato: linha.momento_fato,

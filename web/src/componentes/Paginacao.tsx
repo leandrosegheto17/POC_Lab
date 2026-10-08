@@ -113,7 +113,7 @@ export function Paginacao({
           {itens.map((item, indice) =>
             item === "reticencias" ? (
               <li
-                key={`reticencias-${indice}`}
+                key={`reticencias-${String(indice)}`}
                 className="paginacao__reticencias"
                 aria-hidden="true"
               >
@@ -126,7 +126,7 @@ export function Paginacao({
                   className="paginacao__botao"
                   aria-current={item === pagina ? "page" : undefined}
                   aria-disabled={carregando || undefined}
-                  onClick={() => irParaPagina(item)}
+                  onClick={() => { irParaPagina(item); }}
                 >
                   {item}
                 </button>

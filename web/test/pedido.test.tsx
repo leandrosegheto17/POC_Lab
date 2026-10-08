@@ -94,7 +94,7 @@ function respostaFake(opcoes: {
   return {
     ok: opcoes.ok,
     status: opcoes.status ?? (opcoes.ok ? 200 : 500),
-    json: opcoes.json ?? (async () => ({})),
+    json: opcoes.json ?? (() => Promise.resolve({})),
   } as unknown as Response;
 }
 
@@ -106,7 +106,7 @@ function instalarFetchMock(
     if (url.startsWith("/api/v1/pedidos/")) {
       return aoChamarPedido(url);
     }
-    throw new Error(`fetch não mockado para ${url}`);
+    return Promise.reject(new Error(`fetch não mockado para ${url}`));
   });
   global.fetch = mock as unknown as typeof fetch;
   return mock;
@@ -144,8 +144,8 @@ function eventoPagamentoCom(codigoEvento: string, valor: number): unknown {
 
 describe("Pedido — sucesso", () => {
   it("buscando pela identidade: link de volta, h1 em mono com 'Pedido ' oculto, 'Presente em 3 de 3 sistemas'", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaLinhaDoTempoValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaLinhaDoTempoValida()) })),
     );
 
     const { container } = renderizar();
@@ -173,8 +173,8 @@ describe("Pedido — sucesso", () => {
   });
 
   it("cartões de valor: PC com R$, Saldo e Data limite; celular sem R$ e sem Saldo", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaLinhaDoTempoValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaLinhaDoTempoValida()) })),
     );
 
     const { container } = renderizar();
@@ -205,11 +205,11 @@ describe("Pedido — sucesso", () => {
   });
 
   it("pago menor que o devido: saldo negativo com sinal e Pago/Saldo em vermelho", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => respostaLinhaDoTempoValida({ devido: 440, pago: 264 }),
-      }),
+        json: () => Promise.resolve(respostaLinhaDoTempoValida({ devido: 440, pago: 264 })),
+      })),
     );
 
     const { container } = renderizar();
@@ -230,11 +230,11 @@ describe("Pedido — sucesso", () => {
   });
 
   it("pago maior que o devido: saldo positivo com '+'", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => respostaLinhaDoTempoValida({ devido: 440, pago: 880 }),
-      }),
+        json: () => Promise.resolve(respostaLinhaDoTempoValida({ devido: 440, pago: 880 })),
+      })),
     );
 
     const { container } = renderizar();
@@ -245,8 +245,8 @@ describe("Pedido — sucesso", () => {
   });
 
   it("linha do tempo: h2 com nota no PC e versão curta no celular, eventos e código de vendas no cabeçalho", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaLinhaDoTempoValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaLinhaDoTempoValida()) })),
     );
 
     const { container } = renderizar();
@@ -272,12 +272,12 @@ describe("Pedido — sucesso", () => {
   });
 
   it("buscando por código de fonte: 'Encontrado pelo código' (PC) e 'encontrado por' (celular)", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaLinhaDoTempoValida({ codigoBuscado: "TX-88812" }),
-      }),
+        json: () =>
+          Promise.resolve(respostaLinhaDoTempoValida({ codigoBuscado: "TX-88812" })),
+      })),
     );
 
     const { container } = renderizar("TX-88812");
@@ -295,11 +295,11 @@ describe("Pedido — sucesso", () => {
   });
 
   it("sem divergência mostra 'Sem divergência' (EtiquetaEstado ok)", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => respostaLinhaDoTempoValida({ divergencias: [] }),
-      }),
+        json: () => Promise.resolve(respostaLinhaDoTempoValida({ divergencias: [] })),
+      })),
     );
 
     renderizar();
@@ -313,11 +313,11 @@ describe("Pedido — sucesso", () => {
   });
 
   it("divergência 'duplicado': marca o segundo pagamento integral, não o primeiro", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaLinhaDoTempoValida({
+        json: () =>
+          Promise.resolve(respostaLinhaDoTempoValida({
             devido: 150,
             pago: 300,
             divergencias: [{ tipo: "duplicado", motivo: "Pago duas vezes." }],
@@ -326,8 +326,8 @@ describe("Pedido — sucesso", () => {
               eventoPagamentoCom("TX-1", 150),
               eventoPagamentoCom("TX-2", 150),
             ],
-          }),
-      }),
+          })),
+      })),
     );
 
     const { container } = renderizar();
@@ -346,11 +346,11 @@ describe("Pedido — sucesso", () => {
   });
 
   it("sem a divergência 'duplicado' na API, nenhum pagamento é marcado", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaLinhaDoTempoValida({
+        json: () =>
+          Promise.resolve(respostaLinhaDoTempoValida({
             devido: 150,
             pago: 300,
             divergencias: [],
@@ -359,8 +359,8 @@ describe("Pedido — sucesso", () => {
               eventoPagamentoCom("TX-1", 150),
               eventoPagamentoCom("TX-2", 150),
             ],
-          }),
-      }),
+          })),
+      })),
     );
 
     const { container } = renderizar();
@@ -371,17 +371,17 @@ describe("Pedido — sucesso", () => {
   });
 
   it("com divergência mostra uma EtiquetaTipo por item", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaLinhaDoTempoValida({
+        json: () =>
+          Promise.resolve(respostaLinhaDoTempoValida({
             divergencias: [
               { tipo: "parcial", motivo: "Pago parcialmente." },
               { tipo: "entrega_atrasada", motivo: "Atraso de 5 dias." },
             ],
-          }),
-      }),
+          })),
+      })),
     );
 
     renderizar();
@@ -396,13 +396,13 @@ describe("Pedido — sucesso", () => {
 
 describe("Pedido — vazio (404/400)", () => {
   it("404 pedido_nao_encontrado: 'Pedido não encontrado' + dica de formatos, sem 'Tentar de novo', sem role=alert", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: false,
         status: 404,
-        json: async () =>
-          respostaErro({ status: 404, codigo: "pedido_nao_encontrado" }),
-      }),
+        json: () =>
+          Promise.resolve(respostaErro({ status: 404, codigo: "pedido_nao_encontrado" })),
+      })),
     );
 
     renderizar("PED-999999");
@@ -427,13 +427,13 @@ describe("Pedido — vazio (404/400)", () => {
   });
 
   it("400 parametro_invalido: mesma mensagem de 'vazio', sem 'Tentar de novo'", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: false,
         status: 400,
-        json: async () =>
-          respostaErro({ status: 400, codigo: "parametro_invalido" }),
-      }),
+        json: () =>
+          Promise.resolve(respostaErro({ status: 400, codigo: "parametro_invalido" })),
+      })),
     );
 
     renderizar("codigo-invalido");
@@ -451,9 +451,7 @@ describe("Pedido — vazio (404/400)", () => {
 
 describe("Pedido — erro 5xx/rede/timeout", () => {
   it("erro de rede mostra EstadoErro e 'Tentar de novo' refaz a chamada", async () => {
-    const mock = instalarFetchMock(async () => {
-      throw new TypeError("Failed to fetch");
-    });
+    const mock = instalarFetchMock(() => Promise.reject(new TypeError("Failed to fetch")));
 
     renderizar();
 
@@ -472,13 +470,13 @@ describe("Pedido — erro 5xx/rede/timeout", () => {
   });
 
   it("erro 5xx da API mostra EstadoErro com 'Tentar de novo'", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: false,
         status: 500,
-        json: async () =>
-          respostaErro({ status: 500, codigo: "erro_interno" }),
-      }),
+        json: () =>
+          Promise.resolve(respostaErro({ status: 500, codigo: "erro_interno" })),
+      })),
     );
 
     renderizar();
@@ -519,9 +517,7 @@ describe("Pedido — acessibilidade (vitest-axe)", () => {
   });
 
   it("erro (5xx/rede) não tem violações", async () => {
-    instalarFetchMock(async () => {
-      throw new TypeError("Failed to fetch");
-    });
+    instalarFetchMock(() => Promise.reject(new TypeError("Failed to fetch")));
 
     const { container } = renderizar();
 
@@ -533,13 +529,13 @@ describe("Pedido — acessibilidade (vitest-axe)", () => {
   });
 
   it("vazio (404) não tem violações", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: false,
         status: 404,
-        json: async () =>
-          respostaErro({ status: 404, codigo: "pedido_nao_encontrado" }),
-      }),
+        json: () =>
+          Promise.resolve(respostaErro({ status: 404, codigo: "pedido_nao_encontrado" })),
+      })),
     );
 
     const { container } = renderizar("PED-999999");
@@ -552,8 +548,8 @@ describe("Pedido — acessibilidade (vitest-axe)", () => {
   });
 
   it("sucesso não tem violações", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaLinhaDoTempoValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaLinhaDoTempoValida()) })),
     );
 
     const { container } = renderizar();

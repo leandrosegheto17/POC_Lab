@@ -88,7 +88,7 @@ export function TabelaDados({
 
               return (
                 <th
-                  key={`${texto}-${indice}`}
+                  key={`${texto}-${String(indice)}`}
                   scope="col"
                   className={numerico ? "num" : undefined}
                 >

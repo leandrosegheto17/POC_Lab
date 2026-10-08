@@ -3,7 +3,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { lerBaseDeVendas, type PedidoVendas } from "../fontes/leitura-vendas.js";
 import { calcularDivergenciasNaturais } from "../gerador/divergencias-naturais.js";
-import { escreverGabarito, type EntradaGabarito } from "../gerador/gabarito.js";
+import { escreverGabarito, type EntradaGabarito } from "../gerador/problemas-plantados.js";
 import { pedidosLimpos } from "../gerador/gerar.js";
 import { gerarPagamentos } from "../gerador/pagamentos.js";
 import { plantarCasosPagamento } from "../gerador/plantar-pagamentos.js";
@@ -19,7 +19,7 @@ export const DIR_SAIDA_PADRAO = path.join("dados", "gerado");
 
 export const NOME_PAGAMENTOS_CSV = "pagamentos.csv";
 export const NOME_RASTREIO_CSV = "rastreio.csv";
-export const NOME_GABARITO_JSON = "gabarito.json";
+export const NOME_GABARITO_JSON = "problemas-plantados.json";
 
 const CABECALHO_PAGAMENTOS_CSV =
   "codigo_transacao,referencia,valor,data_pagamento,meio_pagamento";
@@ -63,7 +63,7 @@ export function montarConteudoRastreioCsv(linhasCsv: string[]): string {
 }
 
 /**
- * Monta o conteúdo completo (string) do `gabarito.json` a partir dos
+ * Monta o conteúdo completo (string) do `problemas-plantados.json` a partir dos
  * problemas plantados (TP-0025 em diante). Função pura — não escreve em
  * disco.
  */
@@ -80,7 +80,7 @@ export type ConteudoGerado = {
 /**
  * Monta, de forma determinística e sem nenhum efeito colateral de I/O, o
  * conteúdo dos arquivos de saída do gerador (`pagamentos.csv`,
- * `rastreio.csv`, `gabarito.json`) a partir dos pedidos lidos da base e de
+ * `rastreio.csv`, `problemas-plantados.json`) a partir dos pedidos lidos da base e de
  * uma semente.
  *
  * Toda a lógica de montagem de conteúdo fica concentrada aqui, separada da
@@ -152,7 +152,7 @@ async function main(): Promise<void> {
     await writeFile(path.join(DIR_SAIDA_PADRAO, NOME_GABARITO_JSON), gabaritoJson, "utf-8");
 
     console.log(
-      `Dados gerados com semente ${semente} em "${DIR_SAIDA_PADRAO}" (${NOME_PAGAMENTOS_CSV}, ${NOME_RASTREIO_CSV}, ${NOME_GABARITO_JSON}).`,
+      `Dados gerados com semente ${String(semente)} em "${DIR_SAIDA_PADRAO}" (${NOME_PAGAMENTOS_CSV}, ${NOME_RASTREIO_CSV}, ${NOME_GABARITO_JSON}).`,
     );
   } catch (erro) {
     const mensagem = erro instanceof Error ? erro.message : "Erro desconhecido ao gerar dados.";

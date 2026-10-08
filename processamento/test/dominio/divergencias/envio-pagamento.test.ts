@@ -58,7 +58,7 @@ describe("detectarEnvioPagamento (RN-05 + RN-14)", () => {
 
     expect(resultado).toEqual({
       tipo: "pago_nao_enviado",
-      motivo: expect.stringContaining("quitado"),
+      motivo: expect.stringContaining("quitado") as string,
       idsEventos: ["evt-venda", "evt-pagamento"],
     });
   });
@@ -73,7 +73,7 @@ describe("detectarEnvioPagamento (RN-05 + RN-14)", () => {
 
     expect(resultado).toEqual({
       tipo: "enviado_nao_pago",
-      motivo: expect.stringContaining("coletado"),
+      motivo: expect.stringContaining("coletado") as string,
       idsEventos: ["evt-venda", "evt-coleta"],
     });
   });
@@ -123,7 +123,7 @@ describe("detectarEnvioPagamento (RN-05 + RN-14)", () => {
 
     expect(resultado).toEqual({
       tipo: "pago_nao_enviado",
-      motivo: expect.stringContaining("quitado"),
+      motivo: expect.stringContaining("quitado") as string,
       idsEventos: ["evt-venda", "evt-pagamento"],
     });
   });

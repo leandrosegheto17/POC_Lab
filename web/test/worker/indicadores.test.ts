@@ -60,7 +60,7 @@ describe("GET /api/v1/indicadores", () => {
     const resposta = await app.request("/api/v1/indicadores", {}, { DB: db });
 
     expect(resposta.status).toBe(500);
-    const corpo = (await resposta.json()) as { codigo: string; detail: string };
+    const corpo = await resposta.json<{ codigo: string; detail: string }>();
     expect(corpo.codigo).toBe("erro_interno");
     expect(corpo.detail).not.toMatch(/sql|sqlite|stack|exception/i);
   });

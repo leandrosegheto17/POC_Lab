@@ -100,7 +100,12 @@ export function criarProvedorOpenAI(
           return null;
         }
 
-        const textoResposta = validacao.data.choices[0]!.message.content.trim();
+        const primeiraEscolha = validacao.data.choices[0];
+        if (primeiraEscolha === undefined) {
+          return null;
+        }
+
+        const textoResposta = primeiraEscolha.message.content.trim();
         if (!candidatos.includes(textoResposta)) {
           return null;
         }

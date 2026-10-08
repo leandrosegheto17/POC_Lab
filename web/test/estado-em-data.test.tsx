@@ -98,10 +98,10 @@ function respostaFake(json: () => Promise<unknown>) {
 }
 
 function instalarFetchMock() {
-  const mock = vi.fn(async () =>
-    respostaFake(async () => respostaLinhaDoTempoValida()),
+  const mock = vi.fn(() =>
+    Promise.resolve(respostaFake(() => Promise.resolve(respostaLinhaDoTempoValida()))),
   );
-  global.fetch = mock as unknown as typeof fetch;
+  global.fetch = mock;
   return mock;
 }
 
@@ -164,9 +164,9 @@ describe("Estado do pedido em uma data — evento do próprio dia", () => {
     resposta.eventos = [
       eventoVenda({ momentoFato: "2026-01-05T10:00:00Z" }),
     ];
-    global.fetch = vi.fn(async () =>
-      respostaFake(async () => resposta),
-    ) as unknown as typeof fetch;
+    global.fetch = vi.fn(() =>
+      Promise.resolve(respostaFake(() => Promise.resolve(resposta))),
+    );
     const { container } = renderizarPedido();
     await aguardarCarregado();
 

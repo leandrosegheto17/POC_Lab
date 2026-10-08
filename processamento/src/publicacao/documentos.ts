@@ -150,7 +150,7 @@ function ordenarChavesRecursivamente(valor: unknown): unknown {
     return valor.map(ordenarChavesRecursivamente);
   }
   if (valor !== null && typeof valor === "object") {
-    const chavesOrdenadas = Object.keys(valor as Record<string, unknown>).sort();
+    const chavesOrdenadas = Object.keys(valor).sort();
     const resultado: Record<string, unknown> = {};
     for (const chave of chavesOrdenadas) {
       resultado[chave] = ordenarChavesRecursivamente((valor as Record<string, unknown>)[chave]);

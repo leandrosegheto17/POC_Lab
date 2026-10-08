@@ -58,7 +58,7 @@ rotaDivergencias.get(
         pedido: linha.id_pedido,
         tipo: linha.tipo,
         motivo: linha.motivo,
-        eventos: JSON.parse(linha.eventos),
+        eventos: JSON.parse(linha.eventos) as unknown,
       })),
       paginacao: {
         pagina,

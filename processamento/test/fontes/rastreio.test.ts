@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { processarRastreio } from "../../src/fontes/rastreio.js";
+import { obrigatorio } from "../apoio/obrigatorio.js";
 
 const cabecalho =
   "codigo_evento,codigo_rastreio,pedido_venda,tipo,momento_fato,transportadora";
@@ -112,7 +113,7 @@ describe("processarRastreio", () => {
       regra: "tipo_valido",
     });
     expect(resultado.eventos).toHaveLength(1);
-    expect(resultado.eventos[0]!.codigoEvento).toBe("evt-2");
+    expect(obrigatorio(resultado.eventos[0]).codigoEvento).toBe("evt-2");
     expect(resultado.vinculos).toHaveLength(1);
   });
 
@@ -132,7 +133,7 @@ describe("processarRastreio", () => {
       regra: "momento_fato_iso",
     });
     expect(resultado.eventos).toHaveLength(1);
-    expect(resultado.eventos[0]!.codigoEvento).toBe("evt-2");
+    expect(obrigatorio(resultado.eventos[0]).codigoEvento).toBe("evt-2");
   });
 
   it("gera achado linha_invalida quando falta campo obrigatório", () => {
@@ -169,8 +170,8 @@ describe("processarRastreio", () => {
       regra: "campos_obrigatorios",
     });
     expect(resultado.eventos).toHaveLength(1);
-    expect(resultado.eventos[0]!.codigoEvento).toBe("evt-2");
-    expect(resultado.eventos[0]!.ordemChegada).toBe(1);
+    expect(obrigatorio(resultado.eventos[0]).codigoEvento).toBe("evt-2");
+    expect(obrigatorio(resultado.eventos[0]).ordemChegada).toBe(1);
   });
 
   it("gera achado registro_repetido para codigo_evento duplicado, sem duplicar vínculo/evento", () => {

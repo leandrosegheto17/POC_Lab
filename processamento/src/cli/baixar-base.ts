@@ -92,7 +92,7 @@ export async function garantirBaseLocal(
 
   const caminhoTemporario = path.join(
     dirDestino,
-    `${nomeArquivo}.download-${process.pid}-${Date.now()}.tmp`,
+    `${nomeArquivo}.download-${String(process.pid)}-${String(Date.now())}.tmp`,
   );
 
   let resposta: Response;
@@ -106,7 +106,7 @@ export async function garantirBaseLocal(
 
   if (!resposta.ok) {
     throw new Error(
-      `Falha ao baixar a base em "${url}" (HTTP ${resposta.status}). Verifique se a URL ainda está válida.`,
+      `Falha ao baixar a base em "${url}" (HTTP ${String(resposta.status)}). Verifique se a URL ainda está válida.`,
     );
   }
 

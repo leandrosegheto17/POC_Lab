@@ -23,6 +23,8 @@ import { escreverSqlPublicacao, type TabelasParaPublicacao } from "processamento
 import { EsquemaLinhaDoTempoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
 
 import { D1Teste } from "../apoio/d1-teste.js";
+import type { CorpoLinhaDoTempoSolto } from "../apoio/corpo-teste.ts";
+import { obrigatorio } from "../apoio/obrigatorio.ts";
 import { rotaLinhaDoTempo } from "../../worker/rotas/linha-do-tempo.ts";
 
 /** Formato mínimo do corpo RFC 9457 usado nas asserções de erro abaixo. */
@@ -154,7 +156,7 @@ describe("GET /api/v1/pedidos/{codigo}/linha-do-tempo", () => {
     );
 
     expect(resposta.status).toBe(200);
-    const corpo = await resposta.json();
+    const corpo = await resposta.json<CorpoLinhaDoTempoSolto>();
 
     const validacao = EsquemaLinhaDoTempoV1.safeParse(corpo);
     expect(validacao.success).toBe(true);
@@ -163,15 +165,15 @@ describe("GET /api/v1/pedidos/{codigo}/linha-do-tempo", () => {
     expect(corpo.pedido.identidade).toBe(ID_PEDIDO);
 
     // Ordem canônica (por `posicao`): venda, pagamento, coleta.
-    expect(corpo.eventos.map((e: { tipo: string }) => e.tipo)).toEqual([
+    expect(corpo.eventos.map((e) => e.tipo)).toEqual([
       "venda",
       "pagamento",
       "coleta",
     ]);
 
     // Evento fora de ordem reportado corretamente.
-    expect(corpo.eventos[2].chegouForaDeOrdem).toBe(true);
-    expect(corpo.eventos[0].chegouForaDeOrdem).toBe(false);
+    expect(obrigatorio(corpo.eventos[2]).chegouForaDeOrdem).toBe(true);
+    expect(obrigatorio(corpo.eventos[0]).chegouForaDeOrdem).toBe(false);
 
     // Divergência com tipo válido presente.
     expect(corpo.pedido.divergencias).toEqual([
@@ -197,10 +199,10 @@ describe("GET /api/v1/pedidos/{codigo}/linha-do-tempo", () => {
       { DB },
     );
 
-    const corpo = await resposta.json();
-    const eventoPagamento = corpo.eventos.find(
-      (e: { tipo: string }) => e.tipo === "pagamento",
-    );
+    const corpo = await resposta.json<CorpoLinhaDoTempoSolto>();
+    const eventoPagamento = obrigatorio(corpo.eventos.find(
+      (e) => e.tipo === "pagamento",
+    ))
 
     expect(eventoPagamento).toBeDefined();
     expect(eventoPagamento).not.toHaveProperty("meio_pagamento");
@@ -218,7 +220,7 @@ describe("GET /api/v1/pedidos/{codigo}/linha-do-tempo", () => {
     );
 
     expect(resposta.status).toBe(200);
-    const corpo = await resposta.json();
+    const corpo = await resposta.json<CorpoLinhaDoTempoSolto>();
 
     expect(corpo.pedido.identidade).toBe(ID_PEDIDO);
     // Código buscado é o CRU enviado na URL, não o normalizado.
@@ -237,7 +239,7 @@ describe("GET /api/v1/pedidos/{codigo}/linha-do-tempo", () => {
     );
 
     expect(resposta.status).toBe(200);
-    const corpo = await resposta.json();
+    const corpo = await resposta.json<CorpoLinhaDoTempoSolto>();
 
     expect(corpo.pedido.identidade).toBe(ID_PEDIDO);
     // Código buscado é o CRU enviado (com espaços/caixa originais), não o
@@ -256,7 +258,7 @@ describe("GET /api/v1/pedidos/{codigo}/linha-do-tempo", () => {
     );
 
     expect(resposta.status).toBe(404);
-    const corpo = (await resposta.json()) as CorpoErroTeste;
+    const corpo = await resposta.json<CorpoErroTeste>();
     expect(corpo.codigo).toBe("pedido_nao_encontrado");
   });
 
@@ -272,7 +274,7 @@ describe("GET /api/v1/pedidos/{codigo}/linha-do-tempo", () => {
     );
 
     expect(resposta.status).toBe(400);
-    const corpo = (await resposta.json()) as CorpoErroTeste;
+    const corpo = await resposta.json<CorpoErroTeste>();
     expect(corpo.codigo).toBe("parametro_invalido");
   });
 
@@ -289,7 +291,7 @@ describe("GET /api/v1/pedidos/{codigo}/linha-do-tempo", () => {
 
     expect(resposta.status).toBe(400);
     expect(resposta.status).not.toBe(200);
-    const corpo = (await resposta.json()) as CorpoErroTeste;
+    const corpo = await resposta.json<CorpoErroTeste>();
     expect(corpo.codigo).toBe("parametro_invalido");
   });
 
@@ -312,7 +314,7 @@ describe("GET /api/v1/pedidos/{codigo}/linha-do-tempo", () => {
       );
 
       expect(resposta.status).toBe(400);
-      const corpo = (await resposta.json()) as CorpoErroTeste;
+      const corpo = await resposta.json<CorpoErroTeste>();
       expect(corpo.codigo).toBe("parametro_invalido");
       expect(consultas).toBe(0);
     },

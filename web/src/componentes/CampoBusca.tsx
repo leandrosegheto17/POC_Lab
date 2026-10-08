@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { useNavigate } from "react-router";
 
 // TP-0057 — campo de busca de pedido. Montado UMA ÚNICA VEZ no DOM, dentro
@@ -33,7 +33,7 @@ export function CampoBusca({
   const [valor, setValor] = useState("");
   const [erroVisivel, setErroVisivel] = useState(false);
 
-  function aoSubmeter(event: FormEvent<HTMLFormElement>) {
+  function aoSubmeter(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const valorTrim = valor.trim();
@@ -44,7 +44,7 @@ export function CampoBusca({
     }
 
     setErroVisivel(false);
-    navigate(`/pedido/${encodeURIComponent(valorTrim)}`);
+    void navigate(`/pedido/${encodeURIComponent(valorTrim)}`);
   }
 
   return (
@@ -64,7 +64,7 @@ export function CampoBusca({
           className="campo-busca__input"
           placeholder="PED-, 10248, TX-…"
           value={valor}
-          onChange={(event) => setValor(event.target.value)}
+          onChange={(event) => { setValor(event.target.value); }}
           aria-describedby={erroVisivel ? idErro : undefined}
         />
         {variante === "pagina" ? (

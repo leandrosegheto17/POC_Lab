@@ -89,9 +89,9 @@ export function processarPagamentos(
       achados.push({
         tipo: "linha_invalida",
         fonte: "pagamentos",
-        referencia: `linha ${numeroLinha}`,
+        referencia: `linha ${String(numeroLinha)}`,
         regra: REGRA_LINHA_INVALIDA,
-        detalhe: `linha ${numeroLinha} com erro de sintaxe CSV (${motivo})`,
+        detalhe: `linha ${String(numeroLinha)} com erro de sintaxe CSV (${motivo})`,
       });
     },
     on_record: (registro: LinhaPagamentoCsv) => {
@@ -108,7 +108,7 @@ export function processarPagamentos(
   linhas.forEach((linha) => {
     const numeroLinha = Number(linha.__linha);
     const identificadorLinha =
-      linha.codigo_transacao?.trim() || `linha ${numeroLinha}`;
+      linha.codigo_transacao?.trim() || `linha ${String(numeroLinha)}`;
 
     const codigoTransacao = linha.codigo_transacao?.trim();
     const referencia = linha.referencia?.trim();
@@ -122,7 +122,7 @@ export function processarPagamentos(
         fonte: "pagamentos",
         referencia: identificadorLinha,
         regra: REGRA_LINHA_INVALIDA,
-        detalhe: `campo(s) obrigatório(s) ausente(s) na linha ${numeroLinha} (codigo_transacao, referencia, valor e data_pagamento são obrigatórios)`,
+        detalhe: `campo(s) obrigatório(s) ausente(s) na linha ${String(numeroLinha)} (codigo_transacao, referencia, valor e data_pagamento são obrigatórios)`,
       });
       return;
     }
@@ -134,7 +134,7 @@ export function processarPagamentos(
         fonte: "pagamentos",
         referencia: identificadorLinha,
         regra: REGRA_LINHA_INVALIDA,
-        detalhe: `valor "${valorBruto}" não é numérico na linha ${numeroLinha}`,
+        detalhe: `valor "${valorBruto}" não é numérico na linha ${String(numeroLinha)}`,
       });
       return;
     }
@@ -146,7 +146,7 @@ export function processarPagamentos(
         fonte: "pagamentos",
         referencia: identificadorLinha,
         regra: REGRA_LINHA_INVALIDA,
-        detalhe: `data_pagamento "${dataPagamentoBruta}" não é uma data válida na linha ${numeroLinha}`,
+        detalhe: `data_pagamento "${dataPagamentoBruta}" não é uma data válida na linha ${String(numeroLinha)}`,
       });
       return;
     }
@@ -157,7 +157,7 @@ export function processarPagamentos(
         fonte: "pagamentos",
         referencia: codigoTransacao,
         regra: REGRA_REGISTRO_REPETIDO,
-        detalhe: `codigo_transacao "${codigoTransacao}" já foi processado nesta importação; linha ${numeroLinha} ignorada para fins de evento/vínculo`,
+        detalhe: `codigo_transacao "${codigoTransacao}" já foi processado nesta importação; linha ${String(numeroLinha)} ignorada para fins de evento/vínculo`,
       });
       return;
     }

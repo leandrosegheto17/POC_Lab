@@ -93,7 +93,7 @@ export type DependenciasPublicarDados = {
 
 const DEPENDENCIAS_PADRAO: DependenciasPublicarDados = {
   criarRepositorio,
-  escreverArquivo: (caminho, conteudo) => writeFileSync(caminho, conteudo, "utf8"),
+  escreverArquivo: (caminho, conteudo) => { writeFileSync(caminho, conteudo, "utf8"); },
   criarDiretorio: (caminho) => mkdirSync(caminho, { recursive: true }),
   executarWrangler,
 };
@@ -144,14 +144,14 @@ export function publicarDados(
   if (resultado.codigo !== 0) {
     throw new Error(
       `Falha ao carregar "${caminhoArquivo}" no D1 local (wrangler d1 execute poc-lab --local) ` +
-        `— código de saída ${resultado.codigo}.\n` +
+        `— código de saída ${String(resultado.codigo)}.\n` +
         `--- stdout ---\n${resultado.stdout}\n` +
         `--- stderr ---\n${resultado.stderr}`,
     );
   }
 }
 
-async function main(): Promise<void> {
+function main(): void {
   try {
     const semente = obterSemente(process.argv.slice(2));
 
@@ -163,7 +163,7 @@ async function main(): Promise<void> {
     });
 
     console.log(
-      `Dados publicados com semente ${semente}: ` +
+      `Dados publicados com semente ${String(semente)}: ` +
         `"${path.join(DIR_PUBLICACAO_PADRAO, NOME_ARQUIVO_LEITURA_SQL)}" gerado e carregado no D1 local (poc-lab).`,
     );
   } catch (erro) {
@@ -174,5 +174,5 @@ async function main(): Promise<void> {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  void main();
+  main();
 }

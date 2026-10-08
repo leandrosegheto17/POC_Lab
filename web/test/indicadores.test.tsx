@@ -133,7 +133,7 @@ function respostaFake(opcoes: {
   return {
     ok: opcoes.ok,
     status: opcoes.status ?? (opcoes.ok ? 200 : 500),
-    json: opcoes.json ?? (async () => ({})),
+    json: opcoes.json ?? (() => Promise.resolve({})),
   } as unknown as Response;
 }
 
@@ -179,8 +179,8 @@ const FORMULA_ENTREGAS =
 
 describe("Indicadores — topo (Modelo B)", () => {
   it("mostra o rótulo da página e o h1", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaIndicadoresValida()) })),
     );
 
     renderizar();
@@ -197,8 +197,8 @@ describe("Indicadores — topo (Modelo B)", () => {
 
 describe("Indicadores — Entregas no prazo", () => {
   it("mostra o geral (soma dos numeradores ÷ soma dos denominadores) com numerador e denominador", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaIndicadoresValida()) })),
     );
 
     renderizar();
@@ -211,8 +211,8 @@ describe("Indicadores — Entregas no prazo", () => {
   });
 
   it("fórmula da API na caixa, com o total de pedidos sem entrega (sem linha solta)", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaIndicadoresValida()) })),
     );
 
     renderizar();
@@ -225,8 +225,8 @@ describe("Indicadores — Entregas no prazo", () => {
   });
 
   it("tabela em colunas (Transportadora, Mês, No prazo, Entregas, %) do mês mais recente por padrão", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaIndicadoresValida()) })),
     );
 
     renderizar();
@@ -256,8 +256,8 @@ describe("Indicadores — Entregas no prazo", () => {
   });
 
   it("filtro 'Mês' lista os meses em ordem crescente e filtra no navegador, sem nova chamada à API", async () => {
-    const mock = instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    const mock = instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaIndicadoresValida()) })),
     );
 
     renderizar();
@@ -289,15 +289,15 @@ describe("Indicadores — Entregas no prazo", () => {
   });
 
   it("lista do celular: uma linha por transportadora com fração e %", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaIndicadoresValida()) })),
     );
 
     renderizar();
     const secao = await secaoDoBloco(TITULO_ENTREGAS);
     const itens = Array.from(
       secao.querySelectorAll(".indicador__linhas li"),
-    ).map((li) => li.textContent?.replace(/\s+/g, " ").trim());
+    ).map((li) => li.textContent.replace(/\s+/g, " ").trim());
 
     expect(itens).toEqual([
       "Transportadora A 8/1080,0%",
@@ -306,19 +306,19 @@ describe("Indicadores — Entregas no prazo", () => {
   });
 
   it("linha com denominador 0 mostra o texto específico, sem NaN", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaIndicadoresValida({
+        json: () =>
+          Promise.resolve(respostaIndicadoresValida({
             entregas: blocoEntregasNoPrazo({
               linhas: [
                 linha("Transportadora B / 2026-09", 0, 0, null),
                 linha("Pedidos sem entrega", 0, 1, 0),
               ],
             }),
-          }),
-      }),
+          })),
+      })),
     );
 
     renderizar();
@@ -331,16 +331,16 @@ describe("Indicadores — Entregas no prazo", () => {
   });
 
   it("sem nenhuma linha de entrega: sem filtro e com aviso", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaIndicadoresValida({
+        json: () =>
+          Promise.resolve(respostaIndicadoresValida({
             entregas: blocoEntregasNoPrazo({
               linhas: [linha("Pedidos sem entrega", 4, 1, 4)],
             }),
-          }),
-      }),
+          })),
+      })),
     );
 
     renderizar();
@@ -355,8 +355,8 @@ describe("Indicadores — Entregas no prazo", () => {
 
 describe("Indicadores — Divergências por tipo", () => {
   it("tabela Tipo | Divergências em ordem decrescente, com etiqueta-link para /?tipo=<literal>", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaIndicadoresValida()) })),
     );
 
     renderizar();
@@ -404,8 +404,8 @@ describe("Indicadores — Divergências por tipo", () => {
   });
 
   it("fórmula da API com o total de divergências", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaIndicadoresValida()) })),
     );
 
     renderizar();
@@ -417,8 +417,8 @@ describe("Indicadores — Divergências por tipo", () => {
   });
 
   it("lista do celular com os mesmos links e contagens", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaIndicadoresValida()) })),
     );
 
     renderizar();
@@ -436,19 +436,19 @@ describe("Indicadores — Divergências por tipo", () => {
   });
 
   it("rótulo desconhecido vira texto sem link (tabela e lista do celular)", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaIndicadoresValida({
+        json: () =>
+          Promise.resolve(respostaIndicadoresValida({
             divergencias: blocoDivergenciasPorTipo({
               linhas: [
                 linha("duplicado", 2, 3, 0.67),
                 linha("tipo_inexistente", 1, 3, 0.33),
               ],
             }),
-          }),
-      }),
+          })),
+      })),
     );
 
     renderizar();
@@ -464,9 +464,7 @@ describe("Indicadores — Divergências por tipo", () => {
 
 describe("Indicadores — erro 5xx/rede/timeout", () => {
   it("mostra EstadoErro e 'Tentar de novo' refaz a chamada", async () => {
-    const mock = instalarFetchMock(async () => {
-      throw new TypeError("Failed to fetch");
-    });
+    const mock = instalarFetchMock(() => Promise.reject(new TypeError("Failed to fetch")));
 
     renderizar();
 
@@ -486,18 +484,18 @@ describe("Indicadores — erro 5xx/rede/timeout", () => {
   });
 
   it("5xx mostra a mensagem de indisponibilidade", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: false,
         status: 500,
-        json: async () => ({
+        json: () => Promise.resolve({
           type: "about:blank",
           title: "Erro interno",
           status: 500,
           detail: "falha",
           codigo: "erro_interno",
         }),
-      }),
+      })),
     );
 
     renderizar();
@@ -527,11 +525,11 @@ describe("Indicadores — carregando", () => {
 
 describe("Indicadores — os 4 blocos (Modelo B)", () => {
   it("desenha as 4 seções na ordem da API, com os títulos do mockup e sem selos", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => respostaComplementaresValida(),
-      }),
+        json: () => Promise.resolve(respostaComplementaresValida()),
+      })),
     );
 
     renderizar();
@@ -550,11 +548,11 @@ describe("Indicadores — os 4 blocos (Modelo B)", () => {
   });
 
   it("Tempo médio mostra dias (numerador ÷ denominador), não percentual", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => respostaComplementaresValida(),
-      }),
+        json: () => Promise.resolve(respostaComplementaresValida()),
+      })),
     );
 
     renderizar();
@@ -570,11 +568,11 @@ describe("Indicadores — os 4 blocos (Modelo B)", () => {
   });
 
   it("Tempo médio: fórmula da API com numerador e denominador de cada etapa", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => respostaComplementaresValida(),
-      }),
+        json: () => Promise.resolve(respostaComplementaresValida()),
+      })),
     );
 
     renderizar();
@@ -586,19 +584,19 @@ describe("Indicadores — os 4 blocos (Modelo B)", () => {
   });
 
   it("Tempo médio com denominador 0 mostra '—', sem NaN", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaComplementaresValida({
+        json: () =>
+          Promise.resolve(respostaComplementaresValida({
             tempoMedio: blocoTempoMedio({
               linhas: [
                 linha("pedido→envio", 0, 0, null),
                 linha("envio→entrega", 0, 0, null),
               ],
             }),
-          }),
-      }),
+          })),
+      })),
     );
 
     renderizar();
@@ -609,11 +607,11 @@ describe("Indicadores — os 4 blocos (Modelo B)", () => {
   });
 
   it("Pago × devido: valores compacto e exato, e % calculado como numerador ÷ denominador", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => respostaComplementaresValida(),
-      }),
+        json: () => Promise.resolve(respostaComplementaresValida()),
+      })),
     );
 
     renderizar();
@@ -634,11 +632,11 @@ describe("Indicadores — os 4 blocos (Modelo B)", () => {
   });
 
   it("Pago × devido: quebra por situação com rótulos em português e '—' de dados quando devido é 0", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => respostaComplementaresValida(),
-      }),
+        json: () => Promise.resolve(respostaComplementaresValida()),
+      })),
     );
 
     renderizar();
@@ -670,10 +668,10 @@ describe("Indicadores — os 4 blocos (Modelo B)", () => {
   });
 
   it("bloco de chave desconhecida cai no componente genérico (título, fórmula e linhas)", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => [
+        json: () => Promise.resolve([
           ...(respostaIndicadoresValida() as unknown[]),
           {
             chave: "indicador_novo",
@@ -682,8 +680,8 @@ describe("Indicadores — os 4 blocos (Modelo B)", () => {
             linhas: [linha("Grupo X", 1, 4, 0.25)],
             aParte: false,
           },
-        ],
-      }),
+        ]),
+      })),
     );
 
     renderizar();
@@ -695,11 +693,11 @@ describe("Indicadores — os 4 blocos (Modelo B)", () => {
   });
 
   it("sucesso com as 4 seções não tem violação de acessibilidade (axe)", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => respostaComplementaresValida(),
-      }),
+        json: () => Promise.resolve(respostaComplementaresValida()),
+      })),
     );
 
     const { container } = renderizar();
@@ -711,8 +709,8 @@ describe("Indicadores — os 4 blocos (Modelo B)", () => {
 
 describe("Indicadores — acessibilidade (vitest-axe)", () => {
   it("sucesso não tem violações", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaIndicadoresValida()) })),
     );
 
     const { container } = renderizar();
@@ -735,9 +733,7 @@ describe("Indicadores — acessibilidade (vitest-axe)", () => {
   });
 
   it("erro não tem violações", async () => {
-    instalarFetchMock(async () => {
-      throw new TypeError("Failed to fetch");
-    });
+    instalarFetchMock(() => Promise.reject(new TypeError("Failed to fetch")));
 
     const { container } = renderizar();
 

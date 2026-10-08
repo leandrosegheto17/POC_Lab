@@ -15,6 +15,7 @@ import { MemoryRouter } from "react-router";
 import { axe } from "vitest-axe";
 import { ProvedorResumo } from "../src/dados/contexto-resumo.tsx";
 import { Divergencias } from "../src/paginas/Divergencias.tsx";
+import { obrigatorio } from "./apoio/obrigatorio.ts";
 
 /** Objeto mínimo válido contra `EsquemaCartao` (processamento/contrato/resumo.ts). */
 function cartao(numerador: number, denominador = 1): unknown {
@@ -108,7 +109,7 @@ function respostaFake(opcoes: {
   return {
     ok: opcoes.ok,
     status: opcoes.status ?? (opcoes.ok ? 200 : 500),
-    json: opcoes.json ?? (async () => ({})),
+    json: opcoes.json ?? (() => Promise.resolve({})),
   } as unknown as Response;
 }
 
@@ -125,12 +126,12 @@ function instalarFetchMock(
   const mock = vi.fn(async (entrada: string | URL) => {
     const url = String(entrada);
     if (url.startsWith("/api/v1/resumo")) {
-      return respostaFake({ ok: true, json: async () => resumoValido() });
+      return respostaFake({ ok: true, json: () => Promise.resolve(resumoValido()) });
     }
     if (url.startsWith("/api/v1/divergencias")) {
       return aoChamarDivergencias(url);
     }
-    throw new Error(`fetch não mockado para ${url}`);
+    return Promise.reject(new Error(`fetch não mockado para ${url}`));
   });
   global.fetch = mock as unknown as typeof fetch;
   return mock;
@@ -159,16 +160,16 @@ afterEach(() => {
 
 describe("Divergencias — sucesso", () => {
   it("mostra o total no h1, a tabela e o caption com filtro/página", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
             dados: [divergenciaValida("PED-001", "duplicado")],
             total: 1,
             totalPaginas: 1,
-          }),
-      }),
+          })),
+      })),
     );
 
     renderizar();
@@ -222,16 +223,16 @@ describe("Divergencias — sucesso", () => {
   });
 
   it("total no h1 com milhar e resumo da paginação 'início–fim de total'", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
             dados: [divergenciaValida("PED-001", "duplicado")],
             total: 8856,
             totalPaginas: 178,
-          }),
-      }),
+          })),
+      })),
     );
 
     renderizar();
@@ -251,11 +252,11 @@ describe("Divergencias — sucesso", () => {
   });
 
   it("singular '1 evento ▸' quando há um só evento", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
             dados: [
               {
                 pedido: "PED-003",
@@ -271,8 +272,8 @@ describe("Divergencias — sucesso", () => {
                 ],
               },
             ],
-          }),
-      }),
+          })),
+      })),
     );
 
     renderizar();
@@ -283,11 +284,11 @@ describe("Divergencias — sucesso", () => {
   });
 
   it("expande os eventos dentro do <details> com data, sistema e tipo em português", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
             dados: [
               {
                 pedido: "PED-002",
@@ -309,8 +310,8 @@ describe("Divergencias — sucesso", () => {
                 ],
               },
             ],
-          }),
-      }),
+          })),
+      })),
     );
 
     const { container } = renderizar();
@@ -325,7 +326,7 @@ describe("Divergencias — sucesso", () => {
     const detalhes = tabela.querySelector("details");
     expect(detalhes).not.toBeNull();
 
-    const itens = Array.from(detalhes!.querySelectorAll("li")).map(
+    const itens = Array.from(obrigatorio(detalhes).querySelectorAll("li")).map(
       (li) => li.textContent,
     );
     expect(itens).toEqual([
@@ -345,14 +346,14 @@ describe("Divergencias — sucesso", () => {
 
 describe("Divergencias — filtro via URL e troca de chip", () => {
   it("usa ?tipo= inicial na chamada e atualiza a URL/chamada ao trocar de chip", async () => {
-    const mock = instalarFetchMock(async () =>
-      respostaFake({
+    const mock = instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
             dados: [divergenciaValida("PED-010", "duplicado")],
-          }),
-      }),
+          })),
+      })),
     );
 
     renderizar(["/?tipo=duplicado"]);
@@ -384,11 +385,11 @@ describe("Divergencias — filtro via URL e troca de chip", () => {
   });
 
   it("selecionar 'Todos' remove o parâmetro ?tipo= da URL (não escreve tipo=todos)", async () => {
-    const mock = instalarFetchMock(async () =>
-      respostaFake({
+    const mock = instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => respostaDivergenciasValida(),
-      }),
+        json: () => Promise.resolve(respostaDivergenciasValida()),
+      })),
     );
 
     renderizar(["/?tipo=duplicado"]);
@@ -412,11 +413,11 @@ describe("Divergencias — filtro via URL e troca de chip", () => {
 
 describe("Divergencias — vazio", () => {
   it("sem itens mostra mensagem com o rótulo do filtro ativo", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () => respostaDivergenciasValida({ dados: [], total: 0, totalPaginas: 0 }),
-      }),
+        json: () => Promise.resolve(respostaDivergenciasValida({ dados: [], total: 0, totalPaginas: 0 })),
+      })),
     );
 
     renderizar();
@@ -431,8 +432,8 @@ describe("Divergencias — vazio", () => {
 
 describe("Divergencias — vazio corrigível (tipo inválido na URL)", () => {
   it("mostra a mensagem e o link, sem chamar a API de divergências", async () => {
-    const mock = instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaDivergenciasValida() }),
+    const mock = instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaDivergenciasValida()) })),
     );
 
     renderizar(["/?tipo=inexistente"]);
@@ -453,12 +454,12 @@ describe("Divergencias — vazio corrigível (tipo inválido na URL)", () => {
 
 describe("Divergencias — 400 real da API (parametro_invalido)", () => {
   it("trata igual ao tipo inválido na URL: mesma mensagem e link", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: false,
         status: 400,
-        json: async () => erroParametroInvalido(),
-      }),
+        json: () => Promise.resolve(erroParametroInvalido()),
+      })),
     );
 
     renderizar(["/?tipo=duplicado"]);
@@ -477,9 +478,7 @@ describe("Divergencias — 400 real da API (parametro_invalido)", () => {
 
 describe("Divergencias — erro 5xx/rede", () => {
   it("mostra mensagem de erro e 'Tentar de novo' refaz a chamada", async () => {
-    const mock = instalarFetchMock(async () => {
-      throw new TypeError("Failed to fetch");
-    });
+    const mock = instalarFetchMock(() => Promise.reject(new TypeError("Failed to fetch")));
 
     renderizar();
 
@@ -516,14 +515,14 @@ describe("Divergencias — carregando", () => {
 
 describe("Divergencias — acessibilidade (vitest-axe)", () => {
   it("sucesso não tem violações", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
             dados: [divergenciaValida("PED-900", "duplicado")],
-          }),
-      }),
+          })),
+      })),
     );
 
     const { container } = renderizar();
@@ -538,12 +537,12 @@ describe("Divergencias — acessibilidade (vitest-axe)", () => {
   });
 
   it("vazio não tem violações", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({
         ok: true,
-        json: async () =>
-          respostaDivergenciasValida({ dados: [], total: 0, totalPaginas: 0 }),
-      }),
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({ dados: [], total: 0, totalPaginas: 0 })),
+      })),
     );
 
     const { container } = renderizar();
@@ -558,8 +557,8 @@ describe("Divergencias — acessibilidade (vitest-axe)", () => {
   });
 
   it("vazio corrigível (tipo inválido na URL) não tem violações", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaDivergenciasValida() }),
+    instalarFetchMock(() =>
+      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaDivergenciasValida()) })),
     );
 
     const { container } = renderizar(["/?tipo=inexistente"]);
