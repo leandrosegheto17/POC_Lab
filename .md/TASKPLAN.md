@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-08 13:06
+Atualizado: 2026-10-08 13:09
 
-Resumo: Não executada 36 · Em execução 3 · Testada (aguarda segurança) 42 · Aprovada 40 · total 121
+Resumo: Não executada 37 · Em execução 3 · Testada (aguarda segurança) 22 · Aprovada 60 · total 122
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -54,27 +54,27 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 39 | TP-0039 | executor | ✔ | Projeção dos documentos resumo e indicadores | Lote 7 | TP-0030, TP-0031, TP-0032, TP-0033, TP-0034 | Aprovada |
 | 40 | TP-0040 | executor | ✔ | Escritor do arquivo leitura.sql | Lote 8 | TP-0032 | Aprovada |
 | 41 | TP-0041 | executor | ✔ | Esqueleto do Worker e pnpm dev com site + API | Lote 8 | TP-0003 | Aprovada |
-| 42 | TP-0042 | executor | ✔ | Erros centrais e cabeçalhos da API | Lote 8 | TP-0029, TP-0041 | Testada (aguarda segurança) |
-| 43 | TP-0043 | executor | ✔ | D1 de teste sobre node:sqlite | Lote 8 | TP-0040, TP-0041 | Testada (aguarda segurança) |
-| 44 | TP-0044 | executor | ✔ | CLI publicar-dados: escreve leitura.sql e carrega o D1 local | Lote 8 | TP-0035, TP-0036, TP-0037, TP-0038, TP-0039, TP-0040, TP-0041 | Testada (aguarda segurança) |
-| 45 | TP-0045 | executor | ✔ | pnpm preparar de ponta a ponta | Lote 8 | TP-0004, TP-0024, TP-0025, TP-0026, TP-0027, TP-0044 | Testada (aguarda segurança) |
-| 46 | TP-0046 | executor | ✔ | Endpoint GET /api/v1/resumo | Lote 9 | TP-0030, TP-0042, TP-0043 | Testada (aguarda segurança) |
-| 47 | TP-0047 | executor | ✔ | Endpoint GET /api/v1/divergencias | Lote 9 | TP-0030, TP-0042, TP-0043 | Testada (aguarda segurança) |
-| 48 | TP-0048 | executor | ✔ | Endpoint GET /api/v1/pedidos/{codigo}/linha-do-tempo | Lote 9 | TP-0030, TP-0042, TP-0043 | Testada (aguarda segurança) |
-| 49 | TP-0049 | executor | ✔ | Endpoint GET /api/v1/indicadores | Lote 9 | TP-0031, TP-0042, TP-0043 | Testada (aguarda segurança) |
-| 50 | TP-0050 | executor | ✔ | Endpoint GET /api/v1/qualidade | Lote 9 | TP-0031, TP-0042, TP-0043 | Testada (aguarda segurança) |
-| 51 | TP-0051 | executor | ✔ | Tokens do Modelo B e fontes auto-hospedadas | Lote 10 | TP-0003 | Testada (aguarda segurança) |
-| 52 | TP-0052 | executor | ✔ | clienteApi e gancho useConsulta | Lote 10 | TP-0003, TP-0029 | Testada (aguarda segurança) |
+| 42 | TP-0042 | executor | ✔ | Erros centrais e cabeçalhos da API | Lote 8 | TP-0029, TP-0041 | Aprovada |
+| 43 | TP-0043 | executor | ✔ | D1 de teste sobre node:sqlite | Lote 8 | TP-0040, TP-0041 | Aprovada |
+| 44 | TP-0044 | executor | ✔ | CLI publicar-dados: escreve leitura.sql e carrega o D1 local | Lote 8 | TP-0035, TP-0036, TP-0037, TP-0038, TP-0039, TP-0040, TP-0041 | Aprovada |
+| 45 | TP-0045 | executor | ✔ | pnpm preparar de ponta a ponta | Lote 8 | TP-0004, TP-0024, TP-0025, TP-0026, TP-0027, TP-0044 | Aprovada |
+| 46 | TP-0046 | executor | ✔ | Endpoint GET /api/v1/resumo | Lote 9 | TP-0030, TP-0042, TP-0043 | Aprovada |
+| 47 | TP-0047 | executor | ✔ | Endpoint GET /api/v1/divergencias | Lote 9 | TP-0030, TP-0042, TP-0043 | Aprovada |
+| 48 | TP-0048 | executor | ✔ | Endpoint GET /api/v1/pedidos/{codigo}/linha-do-tempo | Lote 9 | TP-0030, TP-0042, TP-0043 | Aprovada |
+| 49 | TP-0049 | executor | ✔ | Endpoint GET /api/v1/indicadores | Lote 9 | TP-0031, TP-0042, TP-0043 | Aprovada |
+| 50 | TP-0050 | executor | ✔ | Endpoint GET /api/v1/qualidade | Lote 9 | TP-0031, TP-0042, TP-0043 | Aprovada |
+| 51 | TP-0051 | executor | ✔ | Tokens do Modelo B e fontes auto-hospedadas | Lote 10 | TP-0003 | Aprovada |
+| 52 | TP-0052 | executor | ✔ | clienteApi e gancho useConsulta | Lote 10 | TP-0003, TP-0029 | Aprovada |
 | 53 | TP-0053 | executor | ✔ | Componentes de estado | Lote 10 | TP-0003 | Em execução |
-| 54 | TP-0054 | executor | ✔ | Componentes TabelaDados, EtiquetaTipo, EtiquetaFonte e Paginacao | Lote 10 | TP-0051 | Testada (aguarda segurança) |
-| 55 | TP-0055 | executor | ✔ | Casca do app: menu lateral / barra de abas, rotas e página não encontrada (T5) | Lote 11 | TP-0051 | Testada (aguarda segurança) |
-| 56 | TP-0056 | executor | ✔ | Faixa de resumo e contexto do resumo | Lote 11 | TP-0030, TP-0052, TP-0055 | Testada (aguarda segurança) |
-| 57 | TP-0057 | executor | ✔ | Busca de pedido | Lote 11 | TP-0055 | Testada (aguarda segurança) |
-| 58 | TP-0058 | executor | ✔ | Componentes CartoesResumo e FiltroTipo em chips | Lote 12 | TP-0054, TP-0056 | Testada (aguarda segurança) |
-| 59 | TP-0059 | executor | ✔ | Tela T1 Divergências: consulta, filtro e tabela | Lote 12 | TP-0052, TP-0053, TP-0055, TP-0058 | Testada (aguarda segurança) |
-| 60 | TP-0060 | executor | ✔ | Tela T1: paginação na URL | Lote 12 | TP-0059 | Testada (aguarda segurança) |
-| 61 | TP-0061 | executor | ✔ | Componente LinhaDoTempo (grade no PC, cartões no celular) | Lote 13 | TP-0054 | Testada (aguarda segurança) |
-| 62 | TP-0062 | executor | ✔ | Tela T2 Linha do tempo do pedido (sem estado em data) | Lote 13 | TP-0030, TP-0052, TP-0053, TP-0055, TP-0061 | Testada (aguarda segurança) |
+| 54 | TP-0054 | executor | ✔ | Componentes TabelaDados, EtiquetaTipo, EtiquetaFonte e Paginacao | Lote 10 | TP-0051 | Aprovada |
+| 55 | TP-0055 | executor | ✔ | Casca do app: menu lateral / barra de abas, rotas e página não encontrada (T5) | Lote 11 | TP-0051 | Aprovada |
+| 56 | TP-0056 | executor | ✔ | Faixa de resumo e contexto do resumo | Lote 11 | TP-0030, TP-0052, TP-0055 | Aprovada |
+| 57 | TP-0057 | executor | ✔ | Busca de pedido | Lote 11 | TP-0055 | Aprovada |
+| 58 | TP-0058 | executor | ✔ | Componentes CartoesResumo e FiltroTipo em chips | Lote 12 | TP-0054, TP-0056 | Aprovada |
+| 59 | TP-0059 | executor | ✔ | Tela T1 Divergências: consulta, filtro e tabela | Lote 12 | TP-0052, TP-0053, TP-0055, TP-0058 | Aprovada |
+| 60 | TP-0060 | executor | ✔ | Tela T1: paginação na URL | Lote 12 | TP-0059 | Aprovada |
+| 61 | TP-0061 | executor | ✔ | Componente LinhaDoTempo (grade no PC, cartões no celular) | Lote 13 | TP-0054 | Aprovada |
+| 62 | TP-0062 | executor | ✔ | Tela T2 Linha do tempo do pedido (sem estado em data) | Lote 13 | TP-0030, TP-0052, TP-0053, TP-0055, TP-0061 | Aprovada |
 | 63 | TP-0063 | executor | ✔ | Tela T3 Indicadores (Must) | Lote 13 | TP-0031, TP-0052, TP-0053, TP-0054, TP-0055 | Testada (aguarda segurança) |
 | 64 | TP-0064 | executor | ✔ | Tela T4 Qualidade dos dados | Lote 13 | TP-0031, TP-0052, TP-0053, TP-0054, TP-0055 | Testada (aguarda segurança) |
 | 65 | TP-0065 | executor | ✔ | pnpm publicar: D1 remoto + Worker, e conferência do link | Lote 14 | TP-0045, TP-0046, TP-0047, TP-0048, TP-0049, TP-0050, TP-0057, TP-0060, TP-0062, TP-0063, TP-0064 | Testada (aguarda segurança) |
@@ -127,10 +127,11 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 112 | RTP-0033 | executor | ✔ | README: registrar a IA (Sugestões da IA, ADR-010) como entregue | Refatoração Lote-18 | TP-0085 | Não executada |
 | 113 | RTP-0010 | executor | ✔ | Ajustar web/tsconfig.json para o typecheck do Worker (tipos Cloudflare e extensão .ts) | Refatoração Lote-8 | TP-0041 | Não executada |
 | 114 | RTP-0037 | executor | ✔ | Escritor SQL: rejeitar número não finito e valor não primitivo | Refatoração Lote-8 | TP-0040 | Não executada |
-| 115 | RTP-0012 | executor | ✔ | clienteApi: 5xx sem corpo RFC 9457 deve mostrar a mensagem de indisponível | Refatoração Lote-10 | TP-0052 | Não executada |
-| 116 | RTP-0013 | executor | ✔ | T2: incluir eventos do próprio dia escolhido no estado em uma data | Refatoração Lote-16 | TP-0073 | Não executada |
-| 117 | RTP-0015 | executor | ✔ | T1 paginação: foco no caption e anúncio 'página X de Y' | Refatoração Lote-12 | TP-0060 | Não executada |
-| 118 | RTP-0016 | executor | ✔ | Tipar os casos negativos de qualidade em respostas-v1.test.ts | Refatoração Lote-6 | TP-0031 | Não executada |
-| 119 | RTP-0024 | executor | ✔ | Teste de ordenação secundária por tipo em divergencias | Refatoração Lote-7 | TP-0037 | Não executada |
-| 120 | RTP-0031 | executor | ✔ | Teste de qualidade: tipos com contagem 0 e os 830 pedidos de formato curto | Refatoração Lote-7 | TP-0038 | Não executada |
-| 121 | RTP-0032 | executor | ✔ | Testar dataCorte = maior momento_fato na publicação | Refatoração Lote-7 | TP-0039 | Não executada |
+| 115 | RTP-0038 | executor | ✔ | publicar-dados: não usar shell:true no spawn do wrangler | Refatoração Lote-8 | TP-0044 | Não executada |
+| 116 | RTP-0012 | executor | ✔ | clienteApi: 5xx sem corpo RFC 9457 deve mostrar a mensagem de indisponível | Refatoração Lote-10 | TP-0052 | Não executada |
+| 117 | RTP-0013 | executor | ✔ | T2: incluir eventos do próprio dia escolhido no estado em uma data | Refatoração Lote-16 | TP-0073 | Não executada |
+| 118 | RTP-0015 | executor | ✔ | T1 paginação: foco no caption e anúncio 'página X de Y' | Refatoração Lote-12 | TP-0060 | Não executada |
+| 119 | RTP-0016 | executor | ✔ | Tipar os casos negativos de qualidade em respostas-v1.test.ts | Refatoração Lote-6 | TP-0031 | Não executada |
+| 120 | RTP-0024 | executor | ✔ | Teste de ordenação secundária por tipo em divergencias | Refatoração Lote-7 | TP-0037 | Não executada |
+| 121 | RTP-0031 | executor | ✔ | Teste de qualidade: tipos com contagem 0 e os 830 pedidos de formato curto | Refatoração Lote-7 | TP-0038 | Não executada |
+| 122 | RTP-0032 | executor | ✔ | Testar dataCorte = maior momento_fato na publicação | Refatoração Lote-7 | TP-0039 | Não executada |

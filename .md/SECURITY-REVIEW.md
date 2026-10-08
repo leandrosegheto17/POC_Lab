@@ -113,3 +113,63 @@ APROVADA — escape de aspas sempre aplicado, tabela/colunas fixas (sem injeçã
 
 ## TP-0041 — DevSecOps — 2026-10-08
 APROVADA; 0 críticos, 0 não críticos novos (RTP-0010 já cobre o typecheck); wrangler.jsonc sem segredo, dependências dentro da lista G-17, sem CORS, sem node:*/import de src no Worker.
+
+## TP-0042 — DevSecOps — 2026-10-08
+APROVADA - erros RFC 9457 genéricos sem vazamento de exceção/SQL, cabeçalhos G-13 em toda resposta (inclusive erros), sem CORS; 0 críticos, 0 não críticos.
+
+## TP-0043 — DevSecOps — 2026-10-08
+APROVADA — isolamento em web/test confirmado, sem segredo/dado pessoal/dependência nova; 0 críticos, 0 não críticos.
+
+## TP-0044 — DevSecOps — 2026-10-08
+APROVADA, 0 críticos e 1 não crítico (baixa: shell:true no spawn do wrangler com caminho sem aspas, RTP-0038); só --local, sem env/segredo, leitura apenas no event store.
+
+## TP-0045 — DevSecOps — 2026-10-08
+OK em segurança — 0 críticos, 1 não crítico (mensagem desatualizada, RTP-0027); chave de IA nunca logada, sem dependência nova nem superfície nova.
+
+## TP-0046 — DevSecOps — 2026-10-08
+APROVADA — consulta parametrizada com chave fixa, erros sem detalhe ao cliente, sem dado pessoal/segredo; 0 críticos, 0 não críticos.
+
+## TP-0047 — DevSecOps — 2026-10-08
+OK em segurança — G-08 cumprido (bind em todas as consultas), entrada validada por zod strict com limites, erros sem vazamento; 0 críticos, 0 não críticos.
+
+## TP-0048 — DevSecOps — 2026-10-08
+APROVADA em segurança; 0 críticos, 1 não crítico (teste de % e ; já coberto por RTP-0014); consultas todas com bind, regex fecha o alfabeto, 404/500 genéricos, G-21 garantido por parse v1.
+
+## TP-0049 — DevSecOps — 2026-10-08
+APROVADA em segurança; 0 críticos, 0 não críticos novos (chave literal, bind parametrizado, 500 sem detalhe via onError; lacuna de teste já em RTP-0022).
+
+## TP-0050 — DevSecOps — 2026-10-08
+TP-0050 segurança APROVADA — chave literal, D1 parametrizado, erro 500 genérico, saída validada por esquema; 0 críticos, 0 não críticos novos (teste de Cache-Control/HEAD já em RTP-0025).
+
+## TP-0051 — DevSecOps — 2026-10-08
+APROVADA — 0 críticos, 0 não críticos; fontes 100% locais (sem URL externa, compatível com CSP 'self'), OFL presente, sem dependência nova.
+
+## TP-0052 — DevSecOps — 2026-10-08
+APROVADA em segurança; 0 críticos, 1 não crítico (RTP-0012 existente); só `codigo` sai do cliente, timer/listener limpos, sem dependência nem log.
+
+## TP-0054 — DevSecOps — 2026-10-08
+APROVADA — 0 críticos/0 não críticos; G-12 ok, componentes apresentacionais sem HTML bruto, rede, log ou segredo.
+
+## TP-0055 — DevSecOps — 2026-10-08
+OK — casca sem superfície de risco (sem dep nova, sem innerHTML, rel noopener ok, sem segredo/log); 0 críticos, 1 não crítico já coberto pela RTP-0003 (URL placeholder do repositório).
+
+## TP-0056 — DevSecOps — 2026-10-08
+APROVADA; 0 críticos/0 não críticos; JSX puro, resposta validada por esquema, erro sem vazamento, sem segredo/dependência nova.
+
+## TP-0057 — DevSecOps — 2026-10-08
+APROVADA em segurança; 0 críticos, 0 não críticos; só JSX, encodeURIComponent, sem API/segredo/dependência/persistência.
+
+## TP-0058 — DevSecOps — 2026-10-08
+APROVADA em seguranca - componentes puros sem HTML cru, rede, log, segredo ou dependencia nova; 0 criticos, 0 nao criticos.
+
+## TP-0059 — DevSecOps — 2026-10-08
+OK — sem innerHTML, entradas da URL validadas, erros só com texto fixo, sem dado pessoal; 0 críticos e 0 não críticos.
+
+## TP-0060 — DevSecOps — 2026-10-08
+APROVADA em segurança; 0 críticos, 0 não críticos novos (pagina validada por regex + URLSearchParams + zod, sem exposição de erro técnico; a11y já na RTP-0015).
+
+## TP-0061 — DevSecOps — 2026-10-08
+APROVADA em segurança; 0 críticos, 0 não críticos; sem sinks de HTML, sem log/segredo/rede, texto da API só via JSX (G-12).
+
+## TP-0062 — DevSecOps — 2026-10-08
+APROVADA — 0 críticos, 0 não críticos; codigo com encodeURIComponent, render só por JSX, 404/400 com texto fixo sem detalhe técnico, sem dado pessoal.
