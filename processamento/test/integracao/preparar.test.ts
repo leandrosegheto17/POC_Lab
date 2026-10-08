@@ -19,10 +19,13 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { executarPreparar, decidirSugerir } from "../../src/cli/preparar.ts";
 import { DIR_DESTINO_PADRAO, NOME_ARQUIVO_PADRAO } from "../../src/cli/baixar-base.ts";
+import { executarSugerir } from "../../src/cli/sugerir.ts";
+import { criarRepositorio } from "../../src/armazenamento/repositorio.ts";
+import { criarProvedorFalso } from "../../src/ia/provedor-falso.ts";
 
 const CAMINHO_BASE_REAL = path.join(DIR_DESTINO_PADRAO, NOME_ARQUIVO_PADRAO);
 const baseDisponivel = existsSync(CAMINHO_BASE_REAL);
@@ -126,4 +129,133 @@ describe("decidirSugerir (TP-0045, passo 4 isolado)", () => {
     expect(decisao.pular).toBe(true);
     expect(decisao.mensagem).toMatch(/ainda não existe/i);
   });
+});
+
+/**
+ * TP-0083 — CLI `sugerir` e sua chamada dentro de `preparar` (passo 4).
+ *
+ * `executarSugerir` é testada diretamente (em vez de só através de
+ * `executarPreparar`) nos casos de fixture controlada, porque montar um
+ * pagamento "sem identificação" através do pipeline completo dependeria da
+ * base real e do conteúdo exato gerado por `gerar.ts` para aquela semente —
+ * incerto e desnecessário para provar o comportamento desta tarefa. O
+ * provedor de IA real NUNCA é chamado nestes testes — sempre
+ * `criarProvedorFalso` (TP-0081), injetado via `opcoes.provedor`.
+ */
+describe("executarSugerir (TP-0083)", () => {
+  it("sem OPENAI_API_KEY: não lança, imprime a mensagem esperada e não abre nenhuma conexão de escrita", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    // Caminho de banco deliberadamente inválido (diretório inexistente): se
+    // `executarSugerir` chamasse `criarRepositorio` neste ramo, o teste
+    // lançaria — como não lança, confirma que a abertura nunca ocorre.
+    const caminhoInvalido = path.join(
+      os.tmpdir(),
+      "poc-lab-sugerir-caminho-inexistente",
+      "sub",
+      "poc_lab.sqlite",
+    );
+
+    const resultado = await executarSugerir(caminhoInvalido, {
+      ambiente: {} as NodeJS.ProcessEnv,
+    });
+
+    expect(resultado).toEqual([]);
+    expect(logSpy).toHaveBeenCalledWith("sem chave, nenhuma sugestão gerada");
+
+    logSpy.mockRestore();
+  });
+
+  it("com OPENAI_API_KEY e provedor falso injetado: grava cache_ia quando há pagamento sem identificação", async () => {
+    const dirBanco = criarDiretorioTemporario("poc-lab-sugerir-banco-");
+    const caminhoBanco = path.join(dirBanco, "poc_lab.sqlite");
+
+    // Fixture mínima: um pedido não quitado, elegível (RN-09/L-03), e um
+    // pagamento sem identificação compatível com ele.
+    const repositorioFixture = criarRepositorio(caminhoBanco);
+    repositorioFixture.inserirPedido("PED-083");
+    repositorioFixture.inserirEvento({
+      fonte: "vendas",
+      codigoEvento: "VENDA-PED-083",
+      idPedido: "PED-083",
+      tipo: "venda",
+      momentoFato: "2026-01-01T00:00:00.000Z",
+      ordemChegada: 1,
+      versaoSchema: 1,
+      dados: JSON.stringify({
+        valor_devido: 100,
+        data_limite: "2026-01-01T00:00:00.000Z",
+        transportadora: "Transportadora X",
+      }),
+    });
+    repositorioFixture.inserirEvento({
+      fonte: "pagamentos",
+      codigoEvento: "TRANS-083",
+      idPedido: null,
+      tipo: "pagamento",
+      momentoFato: "2026-03-01T00:00:00.000Z",
+      ordemChegada: null,
+      versaoSchema: 1,
+      dados: JSON.stringify({ valor: 100, referencia_original: "REF-083" }),
+    });
+    repositorioFixture.inserirAchadoQualidade({
+      tipo: "sem_identificacao",
+      fonte: "pagamentos",
+      referencia: "TRANS-083",
+      regra: "RN-09: referência de pagamento sem casamento único com pedido conhecido",
+      detalhe: 'referência "REF-083" não casou com exatamente 1 código de pedido conhecido',
+    });
+
+    const provedorFalso = criarProvedorFalso({ "REF-083": "PED-083" });
+
+    const resultado = await executarSugerir(caminhoBanco, {
+      ambiente: { OPENAI_API_KEY: "chave-fake" } as NodeJS.ProcessEnv,
+      provedor: provedorFalso,
+    });
+
+    expect(resultado).toHaveLength(1);
+    expect(resultado[0]).toMatchObject({
+      pagamento: "TRANS-083",
+      pedidoSugerido: "PED-083",
+    });
+    expect(provedorFalso.chamadas).toBe(1);
+
+    const linhaCache = repositorioFixture.db
+      .prepare(`SELECT COUNT(*) AS total FROM cache_ia`)
+      .get() as { total: number };
+    expect(linhaCache.total).toBe(1);
+  });
+});
+
+describe("executarPreparar + passo 4 (TP-0083, pipeline completo, base real)", () => {
+  it.skipIf(!baseDisponivel)(
+    "com OPENAI_API_KEY e provedor falso: roda o passo de sugestão entre importar e publicar-dados sem lançar",
+    async () => {
+      const { opcoes } = montarOpcoesIsoladas();
+
+      const resumo = await executarPreparar({
+        ...opcoes,
+        ambiente: { OPENAI_API_KEY: "chave-fake" } as NodeJS.ProcessEnv,
+        provedorSugestao: criarProvedorFalso({}),
+      });
+
+      expect(resumo.sugestao.pular).toBe(false);
+      expect(resumo.sugestao.mensagem).toMatch(/concluída/i);
+    },
+  );
+
+  it.skipIf(!baseDisponivel)(
+    "sem OPENAI_API_KEY: nenhuma linha é gravada em cache_ia pelo pipeline completo",
+    async () => {
+      const { opcoes } = montarOpcoesIsoladas();
+
+      await executarPreparar(opcoes);
+
+      const repositorioVerificacao = criarRepositorio(opcoes.caminhoBanco);
+      const linhaCache = repositorioVerificacao.db
+        .prepare(`SELECT COUNT(*) AS total FROM cache_ia`)
+        .get() as { total: number };
+      expect(linhaCache.total).toBe(0);
+    },
+  );
 });

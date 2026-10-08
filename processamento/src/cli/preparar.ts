@@ -29,6 +29,8 @@ import {
   CAMINHO_WEB_PADRAO,
   type DependenciasPublicarDados,
 } from "./publicar-dados.js";
+import { executarSugerir, type OpcoesExecutarSugerir } from "./sugerir.js";
+import type { ProvedorSugestao } from "../ia/porta.js";
 
 /**
  * TP-0045 — CLI `preparar`: encadeia, nesta ordem estrita (cada etapa espera
@@ -38,7 +40,10 @@ import {
  *   1. baixar-base  (idempotente, confere SHA-256)
  *   2. gerar        (semente padrão `SEMENTE_PADRAO` = 20261007)
  *   3. importar
- *   4. sugerir      (pulado nesta versão do projeto — ver `decidirSugerir`)
+ *   4. sugerir      (TP-0083 — chama `executarSugerir`, que só efetivamente
+ *                     consulta o provedor de IA quando há `OPENAI_API_KEY`
+ *                     no ambiente; sem chave, `decidirSugerir` é reaproveitado
+ *                     só para a mensagem/formato de retorno — ver abaixo)
  *   5. publicar-dados
  *
  * Reaproveitamento dos 4 CLIs já existentes — NENHUMA das etapas abaixo
@@ -97,23 +102,29 @@ function formatarLinhaRelatorio(nomeFonte: string, relatorio: RelatorioFonte): s
   return `${nomeFonte}: lidas=${relatorio.lidas} novas=${relatorio.novas} ja_existentes=${relatorio.jaExistentes} rejeitadas=${relatorio.rejeitadas}`;
 }
 
-/** Decisão (sempre "pular" nesta versão do projeto) do passo 4, isolada para ser testável sem rodar o pipeline inteiro. */
+/**
+ * Decisão/resultado do passo 4, isolada para ser testável sem rodar o
+ * pipeline inteiro. `pular: true` quando o passo não chamou o provedor de IA
+ * (sem `OPENAI_API_KEY`); `pular: false` quando `executarSugerir` (TP-0083)
+ * de fato consultou a porta de IA.
+ */
 export type DecisaoSugerir = {
-  pular: true;
+  pular: boolean;
   mensagem: string;
 };
 
 /**
- * Decide o passo de "sugerir" (porta de IA). A CLI `sugerir` ainda NÃO
- * existe neste ponto do projeto — então este passo nunca tenta importar
- * nenhum módulo correspondente, independente do ambiente. A única coisa que
- * muda é a mensagem impressa, para deixar claro ao operador por que o passo
- * foi pulado:
+ * Decide a mensagem do passo de "sugerir" (porta de IA) para o caso em que
+ * NÃO há `OPENAI_API_KEY` no ambiente — usada por `executarPreparar` só
+ * nesse ramo (TP-0083: com chave, o passo chama `executarSugerir` de
+ * verdade e monta sua própria mensagem de conclusão, sem passar por aqui).
+ * Mantida com a assinatura/comportamento original da TP-0045 (inclusive a
+ * ramificação "com chave", abaixo) porque ainda é exercitada diretamente por
+ * teste já existente.
  *
  * - sem `OPENAI_API_KEY`: "sem sugestão" por falta de chave (caso normal).
- * - com `OPENAI_API_KEY`: ainda pulado, mas com mensagem explícita de que o
- *   recurso em si ainda não foi implementado (para não sugerir ao operador
- *   que configurar a chave já bastaria).
+ * - com `OPENAI_API_KEY`: mensagem legada da TP-0045 (não é mais o caminho
+ *   usado pelo pipeline — ver `executarPreparar`).
  */
 export function decidirSugerir(ambiente: NodeJS.ProcessEnv = process.env): DecisaoSugerir {
   if (!ambiente.OPENAI_API_KEY) {
@@ -145,8 +156,16 @@ export type OpcoesPreparar = {
   diretorioPublicacao?: string;
   /** Caminho do pacote `web` (onde o `wrangler` é invocado). Padrão: `web`. */
   caminhoWeb?: string;
-  /** Ambiente usado para decidir o passo de sugestão. Padrão: `process.env`. */
+  /** Ambiente usado para decidir/parametrizar o passo de sugestão. Padrão: `process.env`. */
   ambiente?: NodeJS.ProcessEnv;
+  /**
+   * Provedor de IA injetável para o passo 4 (TP-0083) — usado pelos testes
+   * para nunca chamar o provedor OpenAI real contra rede verdadeira. Padrão:
+   * `criarProvedorOpenAI()`, dentro de `executarSugerir`.
+   */
+  provedorSugestao?: ProvedorSugestao;
+  /** Overrides adicionais do passo 4, repassados a `executarSugerir`. */
+  opcoesSugerir?: OpcoesExecutarSugerir["opcoesSugerir"];
   /** Dependências injetáveis do passo 5 (ver `publicarDados`), para teste sem `wrangler` real. */
   dependenciasPublicar?: Partial<DependenciasPublicarDados>;
 };
@@ -156,7 +175,7 @@ export type ResumoPreparar = {
   tempoSegundos: number;
   /** Retorno de `importar`, reaproveitado sem reformulação (lidas/novas/já existentes/rejeitadas por fonte). */
   resumoImportacao: RelatorioImportacao;
-  /** Decisão do passo de sugestão (sempre pulado nesta versão do projeto). */
+  /** Resultado do passo de sugestão (TP-0083): `pular: true` sem `OPENAI_API_KEY`, `pular: false` quando a porta de IA foi de fato consultada. */
   sugestao: DecisaoSugerir;
   /** Se a base de origem já estava presente localmente (idempotência do passo 1). */
   baseJaExistia: boolean;
@@ -217,8 +236,19 @@ export async function executarPreparar(opcoes: OpcoesPreparar = {}): Promise<Res
   });
   console.log(`[3/5] Importação concluída em "${caminhoBanco}".`);
 
-  // --- passo 4: sugerir (porta de IA — ainda não implementada) ---------------
-  const decisaoSugerir = decidirSugerir(opcoes.ambiente ?? process.env);
+  // --- passo 4: sugerir (porta de IA, TP-0083) --------------------------------
+  const ambienteSugerir = opcoes.ambiente ?? process.env;
+  const resultadosSugestao = await executarSugerir(caminhoBanco, {
+    ambiente: ambienteSugerir,
+    provedor: opcoes.provedorSugestao,
+    opcoesSugerir: opcoes.opcoesSugerir,
+  });
+  const decisaoSugerir: DecisaoSugerir = ambienteSugerir.OPENAI_API_KEY
+    ? {
+        pular: false,
+        mensagem: `Sugestão concluída: ${resultadosSugestao.length} pagamento(s) sem identificação avaliado(s).`,
+      }
+    : decidirSugerir(ambienteSugerir);
   console.log(`[4/5] ${decisaoSugerir.mensagem}`);
 
   // --- passo 5: publicar-dados -------------------------------------------------

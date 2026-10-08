@@ -46,12 +46,7 @@ Cada linha é um ADR, em `.md/adr/`. Os substituídos estão marcados.
 
 ## Fora de propósito (por agora)
 
-Itens previstos no `PRD.md`, ainda não implementados nesta fase. Cada um fica
-para depois da entrega Must, seguindo a ordem de corte do projeto (ADR-001), e
-é removido desta lista quando for implementado:
-
-- **Sugestões de IA para pagamentos sem identificação** — fica para depois da
-  entrega Must, seguindo a ordem de corte do projeto (ADR-001).
+Nenhum item pendente — todos os lotes planejados foram entregues.
 
 ## Origem dos dados
 

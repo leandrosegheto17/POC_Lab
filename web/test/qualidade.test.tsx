@@ -354,6 +354,178 @@ describe("Qualidade — carregando", () => {
   });
 });
 
+// TP-0085 — "Sugestões da IA": tabela com as 5 colunas quando há sugestões
+// válidas, mensagem fixa quando não há (IA não utilizada OU sem itens
+// válidos) e descarte silencioso de item malformado.
+function sugestaoIa(opcoes: {
+  pagamento: string;
+  textoReferencia: string;
+  pedidoSugerido: string;
+  conferida: boolean;
+  motivo: string;
+}): unknown {
+  return opcoes;
+}
+
+function respostaComSugestoes(sugestoes: unknown[]): unknown {
+  const base = respostaQualidadeValida({ iaUtilizada: true }) as {
+    achados: unknown[];
+    ia: { utilizada: boolean; sugestoes: unknown[] };
+  };
+  return { ...base, ia: { utilizada: true, sugestoes } };
+}
+
+describe("Qualidade — Sugestões da IA (TP-0085)", () => {
+  it("ia.utilizada === true com 2 sugestões válidas mostra a tabela com as 5 colunas", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () =>
+          respostaComSugestoes([
+            sugestaoIa({
+              pagamento: "PAG-100",
+              textoReferencia: "ref pedido 100",
+              pedidoSugerido: "PED-100",
+              conferida: true,
+              motivo: "Valor e data batem com o saldo em aberto.",
+            }),
+            sugestaoIa({
+              pagamento: "PAG-200",
+              textoReferencia: "ref pedido 200",
+              pedidoSugerido: "PED-200",
+              conferida: false,
+              motivo: "Diferença de valor acima da tolerância.",
+            }),
+          ]),
+      }),
+    );
+
+    renderizar();
+
+    await waitFor(() => {
+      expect(screen.getByText("PAG-100")).toBeInTheDocument();
+    });
+
+    const secaoIa = screen
+      .getByRole("heading", { level: 2, name: "Sugestões da IA" })
+      .closest("section") as HTMLElement;
+
+    expect(
+      within(secaoIa).getByRole("columnheader", { name: "Pagamento" }),
+    ).toBeInTheDocument();
+    expect(
+      within(secaoIa).getByRole("columnheader", {
+        name: "Texto da referência",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(secaoIa).getByRole("columnheader", { name: "Pedido sugerido" }),
+    ).toBeInTheDocument();
+    expect(
+      within(secaoIa).getByRole("columnheader", { name: "Conferida?" }),
+    ).toBeInTheDocument();
+    expect(
+      within(secaoIa).getByRole("columnheader", { name: "Motivo da regra" }),
+    ).toBeInTheDocument();
+
+    expect(within(secaoIa).getByText("ref pedido 100")).toBeInTheDocument();
+    expect(
+      within(secaoIa).getByText(
+        "Valor e data batem com o saldo em aberto.",
+      ),
+    ).toBeInTheDocument();
+
+    const linkPedido100 = within(secaoIa).getByRole("link", {
+      name: "PED-100",
+    });
+    expect(linkPedido100).toHaveAttribute("href", "/pedido/PED-100");
+    const linkPedido200 = within(secaoIa).getByRole("link", {
+      name: "PED-200",
+    });
+    expect(linkPedido200).toHaveAttribute("href", "/pedido/PED-200");
+
+    expect(within(secaoIa).getByText("Conferida")).toBeInTheDocument();
+    expect(within(secaoIa).getByText("Não conferida")).toBeInTheDocument();
+  });
+
+  it("ia.utilizada === true com sugestoes: [] mostra a mensagem de 'sem sugestões'", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () => respostaComSugestoes([]),
+      }),
+    );
+
+    renderizar();
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'IA não utilizada nesta publicação: pagamentos ficaram "sem sugestão".',
+        ),
+      ).toBeInTheDocument();
+    });
+
+    const secaoIa = screen
+      .getByRole("heading", { level: 2, name: "Sugestões da IA" })
+      .closest("section") as HTMLElement;
+    expect(within(secaoIa).queryByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("ia.utilizada === false continua mostrando a mesma mensagem (regressão)", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () => respostaQualidadeValida({ iaUtilizada: false }),
+      }),
+    );
+
+    renderizar();
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'IA não utilizada nesta publicação: pagamentos ficaram "sem sugestão".',
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("item malformado (sem 'motivo') é descartado; o item válido continua aparecendo", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () =>
+          respostaComSugestoes([
+            {
+              pagamento: "PAG-900",
+              textoReferencia: "ref malformada",
+              pedidoSugerido: "PED-900",
+              conferida: true,
+              // motivo ausente de propósito
+            },
+            sugestaoIa({
+              pagamento: "PAG-300",
+              textoReferencia: "ref pedido 300",
+              pedidoSugerido: "PED-300",
+              conferida: true,
+              motivo: "Candidato único com saldo compatível.",
+            }),
+          ]),
+      }),
+    );
+
+    renderizar();
+
+    await waitFor(() => {
+      expect(screen.getByText("PAG-300")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText("PAG-900")).not.toBeInTheDocument();
+    expect(screen.queryByText("ref malformada")).not.toBeInTheDocument();
+  });
+});
+
 describe("Qualidade — acessibilidade (vitest-axe)", () => {
   it("carregando não tem violações", async () => {
     instalarFetchMock(() => new Promise<Response>(() => {}));
@@ -391,6 +563,39 @@ describe("Qualidade — acessibilidade (vitest-axe)", () => {
       expect(
         screen.getByRole("heading", { level: 2, name: "Registros repetidos" }),
       ).toBeInTheDocument();
+    });
+
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("sucesso com tabela de Sugestões da IA preenchida não tem violações (TP-0085)", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () =>
+          respostaComSugestoes([
+            sugestaoIa({
+              pagamento: "PAG-100",
+              textoReferencia: "ref pedido 100",
+              pedidoSugerido: "PED-100",
+              conferida: true,
+              motivo: "Valor e data batem com o saldo em aberto.",
+            }),
+            sugestaoIa({
+              pagamento: "PAG-200",
+              textoReferencia: "ref pedido 200",
+              pedidoSugerido: "PED-200",
+              conferida: false,
+              motivo: "Diferença de valor acima da tolerância.",
+            }),
+          ]),
+      }),
+    );
+
+    const { container } = renderizar();
+
+    await waitFor(() => {
+      expect(screen.getByText("PAG-100")).toBeInTheDocument();
     });
 
     expect(await axe(container)).toHaveNoViolations();

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import {
   EsquemaRespostaQualidade,
   type Achado,
@@ -8,9 +9,17 @@ import type { TipoAchado } from "processamento/dominio/modelo.js";
 import { useFocoNoTitulo } from "../nav/useFocoNoTitulo.ts";
 import { useTituloDocumento } from "../nav/useTituloDocumento.ts";
 import { useConsulta } from "../dados/use-consulta.ts";
+import {
+  EsquemaSugestaoIA,
+  type SugestaoIA,
+} from "../dados/esquema-sugestao-ia.ts";
 import { BlocoAchado } from "../componentes/BlocoAchado.tsx";
 import { EstadoCarregando } from "../componentes/EstadoCarregando.tsx";
 import { EstadoErro } from "../componentes/EstadoErro.tsx";
+import { TabelaDados } from "../componentes/TabelaDados.tsx";
+// Reaproveita os tokens visuais de etiqueta de EtiquetaTipo.tsx (TP-0054)
+// para a coluna "Conferida?" abaixo (ver EtiquetaConferida) — sem CSS novo.
+import "../componentes/Etiquetas.css";
 
 // TP-0064 — T4 Qualidade dos dados: GET /api/v1/qualidade, 7 `BlocoAchado`
 // numa ORDEM FIXA (definida pelo wireframe) mais a seção de sugestões da
@@ -36,6 +45,46 @@ const TIPOS_EM_ORDEM: ReadonlyArray<{ tipo: TipoAchado; titulo: string }> = [
  */
 function construirUrlConsulta(tentativa: number): string {
   return `/api/v1/qualidade#${tentativa}`;
+}
+
+/** Mensagem fixa exibida quando a IA não foi utilizada OU foi utilizada mas não sobrou nenhuma sugestão válida. */
+const MENSAGEM_SEM_SUGESTOES_IA = (
+  <p>
+    IA não utilizada nesta publicação: pagamentos ficaram &quot;sem
+    sugestão&quot;.
+  </p>
+);
+
+/**
+ * TP-0085 — valida cada item de `dados.ia.sugestoes` (`unknown[]` no
+ * contrato v1) contra `EsquemaSugestaoIA`; itens que falharem são
+ * descartados silenciosamente (nunca quebram a renderização dos demais).
+ */
+function filtrarSugestoesValidas(sugestoes: unknown[]): SugestaoIA[] {
+  const validas: SugestaoIA[] = [];
+  for (const item of sugestoes) {
+    const resultado = EsquemaSugestaoIA.safeParse(item);
+    if (resultado.success) {
+      validas.push(resultado.data);
+    }
+  }
+  return validas;
+}
+
+/**
+ * TP-0085 — "Conferida?" como etiqueta com texto. Reaproveita as classes de
+ * `EtiquetaTipo` (TP-0054, `Etiquetas.css`) em vez de um componente novo:
+ * "quitado" (verde, variante positiva) para `true`, "pendente" (neutro)
+ * para `false` — nenhuma CSS nova foi criada para esta tarefa.
+ */
+function EtiquetaConferida({ conferida }: { conferida: boolean }) {
+  const variante = conferida ? "quitado" : "pendente";
+  const rotulo = conferida ? "Conferida" : "Não conferida";
+  return (
+    <span className={`etiqueta etiqueta--${variante}`} data-variante={variante}>
+      {rotulo}
+    </span>
+  );
 }
 
 export function Qualidade() {
@@ -98,11 +147,46 @@ function RelatorioQualidade({ dados }: { dados: RespostaQualidade }) {
       <section>
         <h2>Sugestões da IA</h2>
         {dados.ia.utilizada === false ? (
-          <p>
-            IA não utilizada nesta publicação: pagamentos ficaram &quot;sem
-            sugestão&quot;.
-          </p>
-        ) : null}
+          MENSAGEM_SEM_SUGESTOES_IA
+        ) : (
+          (() => {
+            const sugestoesValidas = filtrarSugestoesValidas(
+              dados.ia.sugestoes,
+            );
+            return sugestoesValidas.length === 0 ? (
+              MENSAGEM_SEM_SUGESTOES_IA
+            ) : (
+              <TabelaDados
+                caption="Sugestões da IA"
+                cabecalhos={[
+                  "Pagamento",
+                  "Texto da referência",
+                  "Pedido sugerido",
+                  "Conferida?",
+                  "Motivo da regra",
+                ]}
+              >
+                {sugestoesValidas.map((sugestao) => (
+                  <tr key={sugestao.pagamento}>
+                    <td>{sugestao.pagamento}</td>
+                    <td>{sugestao.textoReferencia}</td>
+                    <td>
+                      <Link
+                        to={`/pedido/${encodeURIComponent(sugestao.pedidoSugerido)}`}
+                      >
+                        {sugestao.pedidoSugerido}
+                      </Link>
+                    </td>
+                    <td>
+                      <EtiquetaConferida conferida={sugestao.conferida} />
+                    </td>
+                    <td>{sugestao.motivo}</td>
+                  </tr>
+                ))}
+              </TabelaDados>
+            );
+          })()
+        )}
       </section>
     </>
   );
