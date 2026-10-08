@@ -37,11 +37,15 @@ describe.skipIf(!baseDisponivel)("montarDocumentoQualidade (pipeline completo, b
   // entre as etapas, para o worker do vitest não perder o RPC `onTaskUpdate`
   // ("Unhandled Error: Timeout calling onTaskUpdate", exit 1).
   let documentoCompartilhado: ReturnType<typeof montarDocumentoQualidade>;
+  let totalPedidos = 0;
+  let pedidosFormatoCurto = 0;
 
   const ceder = (): Promise<void> => new Promise((resolver) => setImmediate(resolver));
 
   beforeAll(async () => {
     const pedidosVendas = lerBaseDeVendas(CAMINHO_BASE);
+    totalPedidos = pedidosVendas.length;
+    pedidosFormatoCurto = pedidosVendas.filter((p) => p.dataPedido.formato === "curto").length;
     await ceder();
     const { pagamentosCsv, rastreioCsv } = gerarConteudo(pedidosVendas, SEMENTE_PADRAO);
     await ceder();
@@ -138,6 +142,32 @@ describe.skipIf(!baseDisponivel)("montarDocumentoQualidade (pipeline completo, b
 
       for (const achado of documento.achados) {
         expect(achado.exemplos.length).toBeLessThanOrEqual(10);
+      }
+    },
+    { timeout: 300_000 },
+  );
+
+  it(
+    "os 830 pedidos de formato curto ficam sem achado: formato_data cobre só os longos (15.452)",
+    () => {
+      const formatoData = montarDocumento().achados.find((a) => a.tipo === "formato_data");
+
+      expect(pedidosFormatoCurto).toBe(830);
+      expect(formatoData?.contagem).toBe(15_452);
+      expect(formatoData?.contagem).toBe(totalPedidos - pedidosFormatoCurto);
+    },
+    { timeout: 300_000 },
+  );
+
+  it(
+    "banco :memory: sem ocorrências devolve os 7 tipos com contagem 0 e exemplos []",
+    () => {
+      const documento = montarDocumentoQualidade(criarRepositorio(":memory:").db);
+
+      expect(documento.achados).toHaveLength(7);
+      for (const achado of documento.achados) {
+        expect(achado.contagem).toBe(0);
+        expect(achado.exemplos).toEqual([]);
       }
     },
     { timeout: 300_000 },
