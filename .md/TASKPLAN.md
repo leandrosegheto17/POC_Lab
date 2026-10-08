@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-08 16:27
+Atualizado: 2026-10-08 17:36
 
-Resumo: Não executada 2 · Aprovada 130 · total 132
+Resumo: Executada (aguarda teste) 1 · Testada (aguarda segurança) 1 · Aprovada 132 · total 134
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -101,47 +101,49 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 86 | RTP-0001 | executor | ✔ | Corrigir erros de typecheck em processamento/test/dominio/evento.test.ts após pagamento v2 | Refatoração Lote-17 | TP-0074 | Aprovada |
 | 87 | RTP-0002 | executor | ✔ | Deixar pnpm typecheck verde no pacote processamento (tsconfig base e testes) | Refatoração Lote-1 | TP-0001 | Aprovada |
 | 88 | RTP-0011 | executor | ✔ | Cobrir dangerouslySetInnerHTML em componentes JSX customizados no ESLint | Refatoração Lote-1 | TP-0002 | Aprovada |
-| 89 | RTP-0023 | executor | ✔ | Confirmar execução verde do CI no GitHub | Refatoração Lote-1 | TP-0005 | Não executada |
-| 90 | RTP-0034 | executor | ✔ | Ampliar .gitignore para variantes de segredo local | Refatoração Lote-1 | TP-0001 | Aprovada |
-| 91 | RTP-0035 | executor | ✔ | Desligar persistência de credenciais no checkout do CI | Refatoração Lote-1 | TP-0005 | Aprovada |
-| 92 | RTP-0039 | executor | ✔ | Zerar o backlog do pnpm lint do código dos lotes 2+ | Refatoração Lote-1 | TP-0002 | Aprovada |
-| 93 | RTP-0045 | executor | ✔ | Ignorar variantes .dev.vars.* no .gitignore | Refatoração Lote-1 | RTP-0034 | Aprovada |
-| 94 | RTP-0046 | executor | ✔ | Alinhar a nomenclatura gabarito/problemas-plantados nos docs e na regra de fronteira | Refatoração Lote-1 | RTP-0039 | Não executada |
-| 95 | RTP-0003 | executor | ✔ | Trocar a URL placeholder do link 'Como foi feito' pelo repositório real | Refatoração Lote-11 | TP-0055 | Aprovada |
-| 96 | RTP-0018 | executor | ✔ | Teste axe do CampoBusca dentro da Casca | Refatoração Lote-11 | TP-0057 | Aprovada |
-| 97 | RTP-0004 | executor | ✔ | Teste de Cache-Control no 200 de GET /api/v1/resumo | Refatoração Lote-9 | TP-0046 | Aprovada |
-| 98 | RTP-0014 | executor | ✔ | Teste de rota: % e ; em código inválido devolvem 400 parametro_invalido | Refatoração Lote-9 | TP-0048 | Aprovada |
-| 99 | RTP-0022 | executor | ✔ | Cobrir Cache-Control e HEAD de /api/v1/indicadores na app real | Refatoração Lote-9 | TP-0049 | Aprovada |
-| 100 | RTP-0025 | executor | ✔ | Cobrir Cache-Control e HEAD sem corpo em /api/v1/qualidade | Refatoração Lote-9 | TP-0050 | Aprovada |
-| 101 | RTP-0005 | executor | ✔ | LinhaDoTempo: texto 'chegou fora de ordem' e valor em mono na grade (achado QA TP-0061) | Refatoração Lote-13 | TP-0061 | Aprovada |
-| 102 | RTP-0017 | executor | ✔ | Validar /?tipo= do bloco Divergências por tipo contra TipoDivergencia | Refatoração Lote-13 | TP-0063 | Aprovada |
-| 103 | RTP-0006 | executor | ✔ | Nomear teste de ordenação como 'validação: ordenação' (G-07) | Refatoração Lote-2 | TP-0007 | Aprovada |
-| 104 | RTP-0019 | executor | ✔ | Quitação: tolerância de R$ 0,01 robusta a ponto flutuante | Refatoração Lote-2 | TP-0009 | Aprovada |
-| 105 | RTP-0036 | executor | ✔ | RN-10 tratar NaN/Infinity como valor fora do padrão | Refatoração Lote-2 | TP-0011 | Aprovada |
-| 106 | RTP-0040 | executor | ✔ | Quitação: tolerância não pode absorver saldo sub-centavo (0,011) | Refatoração Lote-2 | RTP-0019 | Aprovada |
-| 107 | RTP-0007 | executor | ✔ | Endurecer asserções do teste de leitura-vendas (curto/longo e somente leitura) | Refatoração Lote-4 | TP-0019 | Aprovada |
-| 108 | RTP-0020 | executor | ✔ | Pagamentos: aspas quebradas no CSV viram linha_invalida sem abortar | Refatoração Lote-4 | TP-0021 | Aprovada |
-| 109 | RTP-0026 | executor | ✔ | Rastreio: linha com número de colunas diferente do cabeçalho não aborta a importação | Refatoração Lote-4 | TP-0022 | Aprovada |
-| 110 | RTP-0048 | executor | ✔ | Pagamentos: achado linha_invalida sem conteúdo do CSV e sem perda silenciosa de linhas | Refatoração Lote-4 | RTP-0020 | Aprovada |
-| 111 | RTP-0008 | executor | ✔ | rastreio.csv: repassar 'Transportadora N' em vez do código cru de ShipVia | Refatoração Lote-5 | TP-0024 | Aprovada |
-| 112 | RTP-0030 | executor | ✔ | Testes de integração pesados (gabarito/qualidade) terminam sem Unhandled Error e com ex... | Refatoração Lote-5 | TP-0028 | Aprovada |
-| 113 | RTP-0009 | executor | ✔ | Tolerância de R$ 0,01 em conferirSugestao sensível a ponto flutuante | Refatoração Lote-18 | TP-0080 | Aprovada |
-| 114 | RTP-0021 | executor | ✔ | Timeout na chamada do provedor de IA | Refatoração Lote-18 | TP-0082 | Aprovada |
-| 115 | RTP-0027 | executor | ✔ | Passo 4 do preparar: mensagem desatualizada e ordem não testada | Refatoração Lote-18 | TP-0083 | Aprovada |
-| 116 | RTP-0028 | executor | ✔ | qualidade: sugestões de IA reais aparecem em ia.sugestoes (modelo na chave de cache) | Refatoração Lote-18 | TP-0084 | Aprovada |
-| 117 | RTP-0033 | executor | ✔ | README: registrar a IA (Sugestões da IA, ADR-010) como entregue | Refatoração Lote-18 | TP-0085 | Aprovada |
-| 118 | RTP-0041 | executor | ✔ | qualidade: persistir o modelo em cache_ia para listar sugestões de qualquer modelo | Refatoração Lote-18 | RTP-0028 | Aprovada |
-| 119 | RTP-0047 | executor | ✔ | repositorio: teste de migração do ALTER TABLE cache_ia em banco legado | Refatoração Lote-18 | RTP-0041 | Aprovada |
-| 120 | RTP-0010 | executor | ✔ | Ajustar web/tsconfig.json para o typecheck do Worker (tipos Cloudflare e extensão .ts) | Refatoração Lote-8 | TP-0041 | Aprovada |
-| 121 | RTP-0037 | executor | ✔ | Escritor SQL: rejeitar número não finito e valor não primitivo | Refatoração Lote-8 | TP-0040 | Aprovada |
-| 122 | RTP-0038 | executor | ✔ | publicar-dados: não usar shell:true no spawn do wrangler | Refatoração Lote-8 | TP-0044 | Aprovada |
-| 123 | RTP-0042 | executor | ✔ | Zerar o typecheck do pacote web (alinhar vite/vitest e tipos dos testes) | Refatoração Lote-8 | RTP-0010 | Aprovada |
-| 124 | RTP-0012 | executor | ✔ | clienteApi: 5xx sem corpo RFC 9457 deve mostrar a mensagem de indisponível | Refatoração Lote-10 | TP-0052 | Aprovada |
-| 125 | RTP-0013 | executor | ✔ | T2: incluir eventos do próprio dia escolhido no estado em uma data | Refatoração Lote-16 | TP-0073 | Aprovada |
-| 126 | RTP-0043 | executor | ✔ | Ajustar teste de LinhaDoTempo para dataEscolhida em AAAA-MM-DD | Refatoração Lote-16 | RTP-0013 | Aprovada |
-| 127 | RTP-0015 | executor | ✔ | T1 paginação: foco no caption e anúncio 'página X de Y' | Refatoração Lote-12 | TP-0060 | Aprovada |
-| 128 | RTP-0044 | executor | ✔ | T1: limpar focoPendente em erro ou troca de filtro | Refatoração Lote-12 | RTP-0015 | Aprovada |
-| 129 | RTP-0016 | executor | ✔ | Tipar os casos negativos de qualidade em respostas-v1.test.ts | Refatoração Lote-6 | TP-0031 | Aprovada |
-| 130 | RTP-0024 | executor | ✔ | Teste de ordenação secundária por tipo em divergencias | Refatoração Lote-7 | TP-0037 | Aprovada |
-| 131 | RTP-0031 | executor | ✔ | Teste de qualidade: tipos com contagem 0 e os 830 pedidos de formato curto | Refatoração Lote-7 | TP-0038 | Aprovada |
-| 132 | RTP-0032 | executor | ✔ | Testar dataCorte = maior momento_fato na publicação | Refatoração Lote-7 | TP-0039 | Aprovada |
+| 89 | BK-0001 | coordenador | ✔ | Fazer o push da main (331 commits à frente do origin; último CI no GitHub = failure em a42 | — | — | Aprovada |
+| 90 | RTP-0023 | executor | ✔ | Confirmar execução verde do CI no GitHub | Refatoração Lote-1 | BK-0001, TP-0005 | Testada (aguarda segurança) |
+| 91 | RTP-0034 | executor | ✔ | Ampliar .gitignore para variantes de segredo local | Refatoração Lote-1 | TP-0001 | Aprovada |
+| 92 | RTP-0035 | executor | ✔ | Desligar persistência de credenciais no checkout do CI | Refatoração Lote-1 | TP-0005 | Aprovada |
+| 93 | RTP-0039 | executor | ✔ | Zerar o backlog do pnpm lint do código dos lotes 2+ | Refatoração Lote-1 | TP-0002 | Aprovada |
+| 94 | RTP-0045 | executor | ✔ | Ignorar variantes .dev.vars.* no .gitignore | Refatoração Lote-1 | RTP-0034 | Aprovada |
+| 95 | BK-0002 | coordenador | ✔ | Aprovar a mudança em GUARDRAILS.md G-04 (citar problemas-plantados.json), que é do Gestor; | — | — | Aprovada |
+| 96 | RTP-0046 | executor | ✔ | Alinhar a nomenclatura gabarito/problemas-plantados nos docs e na regra de fronteira | Refatoração Lote-1 | BK-0002, RTP-0039 | Executada (aguarda teste) |
+| 97 | RTP-0003 | executor | ✔ | Trocar a URL placeholder do link 'Como foi feito' pelo repositório real | Refatoração Lote-11 | TP-0055 | Aprovada |
+| 98 | RTP-0018 | executor | ✔ | Teste axe do CampoBusca dentro da Casca | Refatoração Lote-11 | TP-0057 | Aprovada |
+| 99 | RTP-0004 | executor | ✔ | Teste de Cache-Control no 200 de GET /api/v1/resumo | Refatoração Lote-9 | TP-0046 | Aprovada |
+| 100 | RTP-0014 | executor | ✔ | Teste de rota: % e ; em código inválido devolvem 400 parametro_invalido | Refatoração Lote-9 | TP-0048 | Aprovada |
+| 101 | RTP-0022 | executor | ✔ | Cobrir Cache-Control e HEAD de /api/v1/indicadores na app real | Refatoração Lote-9 | TP-0049 | Aprovada |
+| 102 | RTP-0025 | executor | ✔ | Cobrir Cache-Control e HEAD sem corpo em /api/v1/qualidade | Refatoração Lote-9 | TP-0050 | Aprovada |
+| 103 | RTP-0005 | executor | ✔ | LinhaDoTempo: texto 'chegou fora de ordem' e valor em mono na grade (achado QA TP-0061) | Refatoração Lote-13 | TP-0061 | Aprovada |
+| 104 | RTP-0017 | executor | ✔ | Validar /?tipo= do bloco Divergências por tipo contra TipoDivergencia | Refatoração Lote-13 | TP-0063 | Aprovada |
+| 105 | RTP-0006 | executor | ✔ | Nomear teste de ordenação como 'validação: ordenação' (G-07) | Refatoração Lote-2 | TP-0007 | Aprovada |
+| 106 | RTP-0019 | executor | ✔ | Quitação: tolerância de R$ 0,01 robusta a ponto flutuante | Refatoração Lote-2 | TP-0009 | Aprovada |
+| 107 | RTP-0036 | executor | ✔ | RN-10 tratar NaN/Infinity como valor fora do padrão | Refatoração Lote-2 | TP-0011 | Aprovada |
+| 108 | RTP-0040 | executor | ✔ | Quitação: tolerância não pode absorver saldo sub-centavo (0,011) | Refatoração Lote-2 | RTP-0019 | Aprovada |
+| 109 | RTP-0007 | executor | ✔ | Endurecer asserções do teste de leitura-vendas (curto/longo e somente leitura) | Refatoração Lote-4 | TP-0019 | Aprovada |
+| 110 | RTP-0020 | executor | ✔ | Pagamentos: aspas quebradas no CSV viram linha_invalida sem abortar | Refatoração Lote-4 | TP-0021 | Aprovada |
+| 111 | RTP-0026 | executor | ✔ | Rastreio: linha com número de colunas diferente do cabeçalho não aborta a importação | Refatoração Lote-4 | TP-0022 | Aprovada |
+| 112 | RTP-0048 | executor | ✔ | Pagamentos: achado linha_invalida sem conteúdo do CSV e sem perda silenciosa de linhas | Refatoração Lote-4 | RTP-0020 | Aprovada |
+| 113 | RTP-0008 | executor | ✔ | rastreio.csv: repassar 'Transportadora N' em vez do código cru de ShipVia | Refatoração Lote-5 | TP-0024 | Aprovada |
+| 114 | RTP-0030 | executor | ✔ | Testes de integração pesados (gabarito/qualidade) terminam sem Unhandled Error e com ex... | Refatoração Lote-5 | TP-0028 | Aprovada |
+| 115 | RTP-0009 | executor | ✔ | Tolerância de R$ 0,01 em conferirSugestao sensível a ponto flutuante | Refatoração Lote-18 | TP-0080 | Aprovada |
+| 116 | RTP-0021 | executor | ✔ | Timeout na chamada do provedor de IA | Refatoração Lote-18 | TP-0082 | Aprovada |
+| 117 | RTP-0027 | executor | ✔ | Passo 4 do preparar: mensagem desatualizada e ordem não testada | Refatoração Lote-18 | TP-0083 | Aprovada |
+| 118 | RTP-0028 | executor | ✔ | qualidade: sugestões de IA reais aparecem em ia.sugestoes (modelo na chave de cache) | Refatoração Lote-18 | TP-0084 | Aprovada |
+| 119 | RTP-0033 | executor | ✔ | README: registrar a IA (Sugestões da IA, ADR-010) como entregue | Refatoração Lote-18 | TP-0085 | Aprovada |
+| 120 | RTP-0041 | executor | ✔ | qualidade: persistir o modelo em cache_ia para listar sugestões de qualquer modelo | Refatoração Lote-18 | RTP-0028 | Aprovada |
+| 121 | RTP-0047 | executor | ✔ | repositorio: teste de migração do ALTER TABLE cache_ia em banco legado | Refatoração Lote-18 | RTP-0041 | Aprovada |
+| 122 | RTP-0010 | executor | ✔ | Ajustar web/tsconfig.json para o typecheck do Worker (tipos Cloudflare e extensão .ts) | Refatoração Lote-8 | TP-0041 | Aprovada |
+| 123 | RTP-0037 | executor | ✔ | Escritor SQL: rejeitar número não finito e valor não primitivo | Refatoração Lote-8 | TP-0040 | Aprovada |
+| 124 | RTP-0038 | executor | ✔ | publicar-dados: não usar shell:true no spawn do wrangler | Refatoração Lote-8 | TP-0044 | Aprovada |
+| 125 | RTP-0042 | executor | ✔ | Zerar o typecheck do pacote web (alinhar vite/vitest e tipos dos testes) | Refatoração Lote-8 | RTP-0010 | Aprovada |
+| 126 | RTP-0012 | executor | ✔ | clienteApi: 5xx sem corpo RFC 9457 deve mostrar a mensagem de indisponível | Refatoração Lote-10 | TP-0052 | Aprovada |
+| 127 | RTP-0013 | executor | ✔ | T2: incluir eventos do próprio dia escolhido no estado em uma data | Refatoração Lote-16 | TP-0073 | Aprovada |
+| 128 | RTP-0043 | executor | ✔ | Ajustar teste de LinhaDoTempo para dataEscolhida em AAAA-MM-DD | Refatoração Lote-16 | RTP-0013 | Aprovada |
+| 129 | RTP-0015 | executor | ✔ | T1 paginação: foco no caption e anúncio 'página X de Y' | Refatoração Lote-12 | TP-0060 | Aprovada |
+| 130 | RTP-0044 | executor | ✔ | T1: limpar focoPendente em erro ou troca de filtro | Refatoração Lote-12 | RTP-0015 | Aprovada |
+| 131 | RTP-0016 | executor | ✔ | Tipar os casos negativos de qualidade em respostas-v1.test.ts | Refatoração Lote-6 | TP-0031 | Aprovada |
+| 132 | RTP-0024 | executor | ✔ | Teste de ordenação secundária por tipo em divergencias | Refatoração Lote-7 | TP-0037 | Aprovada |
+| 133 | RTP-0031 | executor | ✔ | Teste de qualidade: tipos com contagem 0 e os 830 pedidos de formato curto | Refatoração Lote-7 | TP-0038 | Aprovada |
+| 134 | RTP-0032 | executor | ✔ | Testar dataCorte = maior momento_fato na publicação | Refatoração Lote-7 | TP-0039 | Aprovada |

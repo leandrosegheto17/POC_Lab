@@ -392,3 +392,6 @@ APROVADA; 0 críticos, 0 não críticos; teste de migração de cache_ia legado 
 
 ## RTP-0048 — QA — 2026-10-08
 APROVADA; 0 críticos, 0 não críticos; detalhe só com código e linha (inclusive valor/data), sequência deduplicada por erro.lines (confirmado com o csv-parse real), 13 testes, typecheck e lint ok.
+
+## RTP-0023 — QA — 2026-10-08
+APROVADA — CI na main (run 37836655505, 282b45f) com success em Lint, Typecheck e Test; commit confirmado na main; 0 críticos, 0 não críticos.
