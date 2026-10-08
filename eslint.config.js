@@ -44,9 +44,22 @@ import reactPlugin from "eslint-plugin-react";
 const SELETOR_PREPARE =
   ':matches(CallExpression[callee.name="prepare"], CallExpression[callee.property.name="prepare"])';
 
-const GRUPO_GABARITO = ["**/gabarito*", "*gabarito*"];
+// RTP-0046: o gabarito se chama `problemas-plantados.json` (o nome antigo
+// `gabarito*` continua barrado). A regra trata de LER/CITAR o gabarito fora de
+// test/; o gerador e os dois comandos da CLI que o ESCREVEM (GERACAO abaixo)
+// são exceção só para o nome novo — o nome antigo segue proibido neles.
+const GRUPO_GABARITO_ANTIGO = ["**/gabarito*", "*gabarito*"];
+const GRUPO_PLANTADOS = ["**/problemas-plantados*", "*problemas-plantados*"];
+const GRUPO_GABARITO = [...GRUPO_GABARITO_ANTIGO, ...GRUPO_PLANTADOS];
 
-const SELETOR_LITERAL_GABARITO = "Literal[value=/gabarito/i]";
+const GERACAO = [
+  "processamento/src/gerador/**",
+  "processamento/src/cli/gerar.ts",
+  "processamento/src/cli/preparar.ts",
+];
+
+const SELETOR_LITERAL_GABARITO = "Literal[value=/gabarito|problemas-plantados/i]";
+const SELETOR_LITERAL_GABARITO_ANTIGO = "Literal[value=/gabarito/i]";
 
 const SELETORES_PREPARE = [
   {
@@ -311,6 +324,7 @@ export default tseslint.config(
       "processamento/src/contrato/**",
       "web/worker/**",
       "web/src/**",
+      ...GERACAO,
       "**/test/**",
       "**/*.test.*",
       "**/*.spec.*",
@@ -330,18 +344,57 @@ export default tseslint.config(
     },
   },
 
+  // G-04 (RN-13) — arquivos de GERAÇÃO (escrevem o problemas-plantados.json;
+  // não o leem): podem importar o módulo `problemas-plantados`, mas o nome
+  // antigo `gabarito*` segue barrado.
+  {
+    files: GERACAO,
+    ignores: ["**/test/**", "**/*.test.*", "**/*.spec.*"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: GRUPO_GABARITO_ANTIGO,
+              message: "só código em test/ pode citar o gabarito (G-04/RN-13).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // ---------------------------------------------------------------------
   // G-04 (RN-13) + G-08 — fora de test/: nem citação ao gabarito por
   // string literal, nem prepare() inseguro.
   // ---------------------------------------------------------------------
   {
     files: ["**/*.{ts,tsx,js,jsx}"],
-    ignores: ["**/test/**", "**/*.test.*", "**/*.spec.*"],
+    ignores: [...GERACAO, "**/test/**", "**/*.test.*", "**/*.spec.*"],
     rules: {
       "no-restricted-syntax": [
         "error",
         {
           selector: SELETOR_LITERAL_GABARITO,
+          message: "só código em test/ pode citar o gabarito (G-04/RN-13).",
+        },
+        ...SELETORES_PREPARE,
+        SELETOR_DANGER,
+      ],
+    },
+  },
+
+  // G-04 + G-08 — arquivos de geração: o literal "problemas-plantados.json"
+  // (nome do arquivo que escrevem) é permitido; o literal antigo não.
+  {
+    files: GERACAO,
+    ignores: ["**/test/**", "**/*.test.*", "**/*.spec.*"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: SELETOR_LITERAL_GABARITO_ANTIGO,
           message: "só código em test/ pode citar o gabarito (G-04/RN-13).",
         },
         ...SELETORES_PREPARE,
