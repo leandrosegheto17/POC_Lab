@@ -29,6 +29,9 @@ const INSTRUCAO_SISTEMA =
 
 const URL_CHAT_COMPLETIONS = "https://api.openai.com/v1/chat/completions";
 
+/** Limite padrão (ms) da chamada ao provedor; estourou, `sugerir` devolve `null`. */
+const TIMEOUT_PADRAO_MS = 10_000;
+
 /** Esquema mínimo da resposta da OpenAI relevante para extrair o texto escolhido. */
 const EsquemaRespostaProvedor = z.object({
   choices: z
@@ -48,7 +51,10 @@ const EsquemaRespostaProvedor = z.object({
  * `fetchFn` é injetável para testes (default: `fetch` global); nunca usa SDK
  * oficial de IA (G-17).
  */
-export function criarProvedorOpenAI(fetchFn: typeof fetch = fetch): ProvedorSugestao {
+export function criarProvedorOpenAI(
+  fetchFn: typeof fetch = fetch,
+  timeoutMs: number = TIMEOUT_PADRAO_MS,
+): ProvedorSugestao {
   return {
     async sugerir(texto: string, candidatos: string[], modelo: string): Promise<string | null> {
       const chave = process.env.OPENAI_API_KEY;
@@ -56,9 +62,19 @@ export function criarProvedorOpenAI(fetchFn: typeof fetch = fetch): ProvedorSuge
         return null;
       }
 
+      const controlador = new AbortController();
+      let temporizador: ReturnType<typeof setTimeout> | undefined;
+      const limite = new Promise<never>((_, rejeitar) => {
+        temporizador = setTimeout(() => {
+          controlador.abort();
+          rejeitar(new Error("timeout na chamada do provedor de IA"));
+        }, timeoutMs);
+      });
+
       try {
-        const resposta = await fetchFn(URL_CHAT_COMPLETIONS, {
+        const chamada = fetchFn(URL_CHAT_COMPLETIONS, {
           method: "POST",
+          signal: controlador.signal,
           headers: {
             Authorization: `Bearer ${chave}`,
             "Content-Type": "application/json",
@@ -71,6 +87,8 @@ export function criarProvedorOpenAI(fetchFn: typeof fetch = fetch): ProvedorSuge
             ],
           }),
         });
+        // Corrida contra o limite: mesmo um fetch que ignora o signal não trava a porta.
+        const resposta = await Promise.race([chamada, limite]);
 
         if (!resposta.ok) {
           return null;
@@ -90,6 +108,8 @@ export function criarProvedorOpenAI(fetchFn: typeof fetch = fetch): ProvedorSuge
         return textoResposta;
       } catch {
         return null;
+      } finally {
+        clearTimeout(temporizador);
       }
     },
   };

@@ -127,6 +127,20 @@ describe("criarProvedorOpenAI", () => {
     expect(opcoes.headers.Authorization).toBe("Bearer chave-de-teste-fake");
   });
 
+  it("devolve null dentro do limite configurado quando o fetch nunca resolve", async () => {
+    const fetchFalso = vi.fn().mockReturnValue(new Promise(() => {}));
+    const provedor = criarProvedorOpenAI(fetchFalso as unknown as typeof fetch, 50);
+
+    const inicio = Date.now();
+    const resultado = await provedor.sugerir("REF-123", ["PED-001"], "gpt-teste");
+
+    expect(resultado).toBeNull();
+    expect(Date.now() - inicio).toBeLessThan(1000);
+    const [, opcoes] = fetchFalso.mock.calls[0]!;
+    expect(opcoes.signal).toBeInstanceOf(AbortSignal);
+    expect(opcoes.signal.aborted).toBe(true);
+  });
+
   it("sem OPENAI_API_KEY no ambiente, devolve null imediatamente sem chamar fetchFn", async () => {
     delete process.env.OPENAI_API_KEY;
     const fetchFalso = vi.fn();
