@@ -365,3 +365,9 @@ RTP-0044 APROVADA em seguranca; 0 achados; foco e ref local, sem fetch/HTML dina
 
 ## RTP-0045 — DevSecOps — 2026-10-08
 APROVADA; 0 críticos, 1 não crítico informativo (sem RTP); .dev.vars.*, .env.local e .env.production ignorados, .env.example rastreado, nenhum segredo rastreado nem no histórico recente.
+
+## RTP-0047 — DevSecOps — 2026-10-08
+APROVADA; 0 críticos, 0 não críticos; só teste, banco em os.tmpdir() removido, dados sintéticos, SQL fixo, sem dependência nova nem asserção afrouxada.
+
+## RTP-0048 — DevSecOps — 2026-10-08
+APROVADA; 0 críticos, 0 não críticos; detalhe de linha_invalida/valor/data só com código e linha (sem erro.message nem valor de campo), linha malformada nunca vira pagamento, sem any/I-O/dependência nova.

@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-08 16:21
+Atualizado: 2026-10-08 16:27
 
-Resumo: Não executada 4 · Aprovada 128 · total 132
+Resumo: Não executada 2 · Aprovada 130 · total 132
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -122,7 +122,7 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 107 | RTP-0007 | executor | ✔ | Endurecer asserções do teste de leitura-vendas (curto/longo e somente leitura) | Refatoração Lote-4 | TP-0019 | Aprovada |
 | 108 | RTP-0020 | executor | ✔ | Pagamentos: aspas quebradas no CSV viram linha_invalida sem abortar | Refatoração Lote-4 | TP-0021 | Aprovada |
 | 109 | RTP-0026 | executor | ✔ | Rastreio: linha com número de colunas diferente do cabeçalho não aborta a importação | Refatoração Lote-4 | TP-0022 | Aprovada |
-| 110 | RTP-0048 | executor | ✔ | Pagamentos: achado linha_invalida sem conteúdo do CSV e sem perda silenciosa de linhas | Refatoração Lote-4 | RTP-0020 | Não executada |
+| 110 | RTP-0048 | executor | ✔ | Pagamentos: achado linha_invalida sem conteúdo do CSV e sem perda silenciosa de linhas | Refatoração Lote-4 | RTP-0020 | Aprovada |
 | 111 | RTP-0008 | executor | ✔ | rastreio.csv: repassar 'Transportadora N' em vez do código cru de ShipVia | Refatoração Lote-5 | TP-0024 | Aprovada |
 | 112 | RTP-0030 | executor | ✔ | Testes de integração pesados (gabarito/qualidade) terminam sem Unhandled Error e com ex... | Refatoração Lote-5 | TP-0028 | Aprovada |
 | 113 | RTP-0009 | executor | ✔ | Tolerância de R$ 0,01 em conferirSugestao sensível a ponto flutuante | Refatoração Lote-18 | TP-0080 | Aprovada |
@@ -131,7 +131,7 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 116 | RTP-0028 | executor | ✔ | qualidade: sugestões de IA reais aparecem em ia.sugestoes (modelo na chave de cache) | Refatoração Lote-18 | TP-0084 | Aprovada |
 | 117 | RTP-0033 | executor | ✔ | README: registrar a IA (Sugestões da IA, ADR-010) como entregue | Refatoração Lote-18 | TP-0085 | Aprovada |
 | 118 | RTP-0041 | executor | ✔ | qualidade: persistir o modelo em cache_ia para listar sugestões de qualquer modelo | Refatoração Lote-18 | RTP-0028 | Aprovada |
-| 119 | RTP-0047 | executor | ✔ | repositorio: teste de migração do ALTER TABLE cache_ia em banco legado | Refatoração Lote-18 | RTP-0041 | Não executada |
+| 119 | RTP-0047 | executor | ✔ | repositorio: teste de migração do ALTER TABLE cache_ia em banco legado | Refatoração Lote-18 | RTP-0041 | Aprovada |
 | 120 | RTP-0010 | executor | ✔ | Ajustar web/tsconfig.json para o typecheck do Worker (tipos Cloudflare e extensão .ts) | Refatoração Lote-8 | TP-0041 | Aprovada |
 | 121 | RTP-0037 | executor | ✔ | Escritor SQL: rejeitar número não finito e valor não primitivo | Refatoração Lote-8 | TP-0040 | Aprovada |
 | 122 | RTP-0038 | executor | ✔ | publicar-dados: não usar shell:true no spawn do wrangler | Refatoração Lote-8 | TP-0044 | Aprovada |
