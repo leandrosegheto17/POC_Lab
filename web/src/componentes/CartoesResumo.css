@@ -1,0 +1,83 @@
+/* TP-0058 — estilos de CartoesResumo/FiltroTipo. Só tokens de tokens.css,
+ * nenhuma cor/espaçamento declarado diretamente aqui. */
+
+.cartoes-resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-4);
+}
+
+.cartao-resumo {
+  flex: 1 1 200px;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  padding: var(--espaco-4);
+}
+
+.cartao-resumo-titulo {
+  font-size: var(--texto-sm);
+  color: var(--cor-texto-2);
+}
+
+.cartao-resumo-valor {
+  margin-top: var(--espaco-2);
+  font-family: var(--fonte-mono);
+  font-size: var(--texto-xl);
+  font-weight: 600;
+  color: var(--cor-texto);
+}
+
+.cartao-resumo-base {
+  margin-top: var(--espaco-1);
+  font-size: var(--texto-sm);
+  color: var(--cor-texto-2);
+}
+
+.filtro-tipo {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-2);
+}
+
+.filtro-tipo legend {
+  font-size: var(--texto-sm);
+  color: var(--cor-texto-2);
+  padding: 0;
+}
+
+.filtro-tipo-opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-2);
+}
+
+.filtro-tipo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-1);
+  padding: var(--espaco-1) var(--espaco-3);
+  border-radius: var(--raio-chip);
+  border: 1px solid var(--cor-borda-controle);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filtro-tipo-chip--selecionado {
+  background: var(--cor-destaque);
+  color: var(--cor-sobre-destaque);
+  border-color: var(--cor-destaque);
+}
+
+.filtro-tipo-chip-marca {
+  font-weight: 700;
+}
+
+.filtro-tipo-chip-contagem {
+  font-family: var(--fonte-mono);
+}
