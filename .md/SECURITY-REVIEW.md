@@ -371,3 +371,6 @@ APROVADA; 0 críticos, 0 não críticos; só teste, banco em os.tmpdir() removid
 
 ## RTP-0048 — DevSecOps — 2026-10-08
 APROVADA; 0 críticos, 0 não críticos; detalhe de linha_invalida/valor/data só com código e linha (sem erro.message nem valor de campo), linha malformada nunca vira pagamento, sem any/I-O/dependência nova.
+
+## RTP-0023 — DevSecOps — 2026-10-08
+APROVADA — ci.yml inalterado pela tarefa, permissões mínimas (contents: read), sem segredos, actions fixadas por SHA; 0 achados.

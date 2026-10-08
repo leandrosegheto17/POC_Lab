@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-08 17:36
+Atualizado: 2026-10-08 17:51
 
-Resumo: Executada (aguarda teste) 1 · Testada (aguarda segurança) 1 · Aprovada 132 · total 134
+Resumo: Em teste 1 · Aprovada 133 · total 134
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -102,13 +102,13 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 87 | RTP-0002 | executor | ✔ | Deixar pnpm typecheck verde no pacote processamento (tsconfig base e testes) | Refatoração Lote-1 | TP-0001 | Aprovada |
 | 88 | RTP-0011 | executor | ✔ | Cobrir dangerouslySetInnerHTML em componentes JSX customizados no ESLint | Refatoração Lote-1 | TP-0002 | Aprovada |
 | 89 | BK-0001 | coordenador | ✔ | Fazer o push da main (331 commits à frente do origin; último CI no GitHub = failure em a42 | — | — | Aprovada |
-| 90 | RTP-0023 | executor | ✔ | Confirmar execução verde do CI no GitHub | Refatoração Lote-1 | BK-0001, TP-0005 | Testada (aguarda segurança) |
+| 90 | RTP-0023 | executor | ✔ | Confirmar execução verde do CI no GitHub | Refatoração Lote-1 | BK-0001, TP-0005 | Aprovada |
 | 91 | RTP-0034 | executor | ✔ | Ampliar .gitignore para variantes de segredo local | Refatoração Lote-1 | TP-0001 | Aprovada |
 | 92 | RTP-0035 | executor | ✔ | Desligar persistência de credenciais no checkout do CI | Refatoração Lote-1 | TP-0005 | Aprovada |
 | 93 | RTP-0039 | executor | ✔ | Zerar o backlog do pnpm lint do código dos lotes 2+ | Refatoração Lote-1 | TP-0002 | Aprovada |
 | 94 | RTP-0045 | executor | ✔ | Ignorar variantes .dev.vars.* no .gitignore | Refatoração Lote-1 | RTP-0034 | Aprovada |
 | 95 | BK-0002 | coordenador | ✔ | Aprovar a mudança em GUARDRAILS.md G-04 (citar problemas-plantados.json), que é do Gestor; | — | — | Aprovada |
-| 96 | RTP-0046 | executor | ✔ | Alinhar a nomenclatura gabarito/problemas-plantados nos docs e na regra de fronteira | Refatoração Lote-1 | BK-0002, RTP-0039 | Executada (aguarda teste) |
+| 96 | RTP-0046 | executor | ✔ | Alinhar a nomenclatura gabarito/problemas-plantados nos docs e na regra de fronteira | Refatoração Lote-1 | BK-0002, RTP-0039 | Em teste |
 | 97 | RTP-0003 | executor | ✔ | Trocar a URL placeholder do link 'Como foi feito' pelo repositório real | Refatoração Lote-11 | TP-0055 | Aprovada |
 | 98 | RTP-0018 | executor | ✔ | Teste axe do CampoBusca dentro da Casca | Refatoração Lote-11 | TP-0057 | Aprovada |
 | 99 | RTP-0004 | executor | ✔ | Teste de Cache-Control no 200 de GET /api/v1/resumo | Refatoração Lote-9 | TP-0046 | Aprovada |
