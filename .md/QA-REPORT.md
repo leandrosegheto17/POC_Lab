@@ -224,3 +224,21 @@ TP-0078 APROVADA; 0 críticos, 0 não críticos; contrato-v1-v2 3/3 e telas v1 (
 
 ## TP-0083 — QA — 2026-10-08
 APROVADA; 0 críticos, 1 não crítico (mensagem desatualizada "CLI sugerir ainda não existe" no passo 4 sem chave + ordem não asserida em teste; RTP-0027); evidência: preparar.test.ts 8/8 verde e `pnpm sugerir` sem chave exit 0.
+
+## TP-0011 — QA — 2026-10-08
+APROVADA — aceite RN-10 coberto, 15/15 testes passando, 0 críticos/0 não críticos.
+
+## TP-0017 — QA — 2026-10-08
+APROVADA — 5/5 testes passam, aceite RN-06 atendido (estrito, sem entrega, motivo com as duas datas); 0 críticos, 0 não críticos.
+
+## TP-0028 — QA — 2026-10-08
+APROVADA — 2/2 testes de gabarito passam (100% dos casos plantados, 0 falso positivo, função pura e gabarito só em teste); 0 críticos, 1 não crítico (worker do vitest emite Unhandled Error "onTaskUpdate" e sai com código 1 apesar de passar; RTP-0030).
+
+## TP-0038 — QA — 2026-10-08
+APROVADA — 0 críticos, 1 não crítico (testes sem asserção determinística de tipo com 0 e do 830, e pipeline refeito 6 vezes causando Unhandled Error de RPC no vitest); 6/6 testes passam com a base real (formato_data 15.452, pedido_sem_envio 21, 7 tipos, ia vazia); RTP-0031.
+
+## TP-0045 — QA — 2026-10-08
+APROVADA — 4/4 testes de TP-0045 passam (pipeline 71–75s, leitura.sql idêntico byte a byte, resumo e tempo impressos); 0 críticos, 1 não crítico (mensagem "sugerir ainda não existe" desatualizada); RTP-0027.
+
+## TP-0084 — QA — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico (média: chave de cache usa modelo "falso" fixo, sugestões reais da CLI com gpt-4o-mini não aparecem em ia.sugestoes); 24 testes verdes (qualidade-ia, qualidade, documentos); RTP-0028.
