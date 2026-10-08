@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { obrigatorio } from "./apoio/obrigatorio.ts";
 import { razaoDeContraste } from "../src/estilos/contraste.ts";
 
 const diretorioAtual = dirname(fileURLToPath(import.meta.url));
@@ -23,7 +24,7 @@ function obterToken(nome: string): string {
     throw new Error(`Token --${nome} não encontrado em tokens.css`);
   }
 
-  return resultado[1].trim();
+  return obrigatorio(resultado[1], "valor do token").trim();
 }
 
 describe("contraste WCAG dos tokens do Modelo B", () => {
@@ -124,7 +125,7 @@ describe("contraste WCAG dos tokens do Modelo B", () => {
 describe("@font-face aponta para arquivos locais existentes", () => {
   it("todo caminho de font-face em tokens.css resolve para um arquivo real", () => {
     const regexUrl = /url\((?:["'])(\.\/fontes\/[^"')]+)(?:["'])\)/g;
-    const caminhos = [...cssTokens.matchAll(regexUrl)].map((m) => m[1]);
+    const caminhos = [...cssTokens.matchAll(regexUrl)].map((m) => obrigatorio(m[1], "caminho da fonte"));
 
     expect(caminhos.length).toBeGreaterThan(0);
 

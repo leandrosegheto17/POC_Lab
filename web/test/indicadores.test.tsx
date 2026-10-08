@@ -12,6 +12,7 @@ import {
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { axe } from "vitest-axe";
+import { obrigatorio } from "./apoio/obrigatorio.ts";
 import { Indicadores } from "../src/paginas/Indicadores.tsx";
 
 type LinhaMock = {
@@ -248,10 +249,10 @@ describe("Indicadores — Entregas no prazo", () => {
     const linhas = within(tabela).getAllByRole("row").slice(1);
     expect(linhas).toHaveLength(2);
     expect(
-      within(linhas[0]).getAllByRole("cell").map((td) => td.textContent),
+      within(obrigatorio(linhas[0], "linha 1")).getAllByRole("cell").map((td) => td.textContent),
     ).toEqual(["Transportadora A", "2026-09", "8", "10", "80,0%", ""]);
     expect(
-      within(linhas[1]).getAllByRole("cell").map((td) => td.textContent),
+      within(obrigatorio(linhas[1], "linha 2")).getAllByRole("cell").map((td) => td.textContent),
     ).toEqual(["Transportadora B", "2026-09", "3", "4", "75,0%", ""]);
   });
 
@@ -264,7 +265,10 @@ describe("Indicadores — Entregas no prazo", () => {
     const secao = await secaoDoBloco(TITULO_ENTREGAS);
     const chamadasAntes = mock.mock.calls.length;
 
-    const seletor = within(secao).getByLabelText("Mês") as HTMLSelectElement;
+    const seletor = within(secao).getByLabelText("Mês");
+    if (!(seletor instanceof HTMLSelectElement)) {
+      throw new Error("O filtro 'Mês' deveria ser um <select>");
+    }
     expect(seletor.value).toBe("2026-09");
     expect(Array.from(seletor.options).map((opcao) => opcao.value)).toEqual([
       "2026-08",
@@ -277,7 +281,7 @@ describe("Indicadores — Entregas no prazo", () => {
     const linhas = within(tabela).getAllByRole("row").slice(1);
     expect(linhas).toHaveLength(1);
     expect(
-      within(linhas[0]).getAllByRole("cell").map((td) => td.textContent),
+      within(obrigatorio(linhas[0], "linha 1")).getAllByRole("cell").map((td) => td.textContent),
     ).toEqual(["Transportadora A", "2026-08", "5", "10", "50,0%", ""]);
 
     // Lista do celular acompanha o mesmo filtro.
@@ -428,11 +432,11 @@ describe("Indicadores — Divergências por tipo", () => {
     );
 
     expect(itens).toHaveLength(5);
-    expect(itens[0].querySelector("a")).toHaveAttribute(
+    expect(obrigatorio(itens[0], "item 1").querySelector("a")).toHaveAttribute(
       "href",
       "/?tipo=entrega_atrasada",
     );
-    expect(itens[0].textContent).toBe("Entrega atrasada4");
+    expect(obrigatorio(itens[0], "item 1").textContent).toBe("Entrega atrasada4");
   });
 
   it("rótulo desconhecido vira texto sem link (tabela e lista do celular)", async () => {
@@ -654,7 +658,7 @@ describe("Indicadores — os 4 blocos (Modelo B)", () => {
     const rotulos = within(tabela)
       .getAllByRole("row")
       .slice(1)
-      .map((tr) => within(tr).getAllByRole("cell")[0].textContent);
+      .map((tr) => obrigatorio(within(tr).getAllByRole("cell")[0], "primeira célula").textContent);
     expect(rotulos).toEqual([
       "Sem pagamento",
       "Parcial",

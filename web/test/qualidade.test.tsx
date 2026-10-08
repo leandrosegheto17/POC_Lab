@@ -306,8 +306,9 @@ describe("Qualidade — sucesso", () => {
     );
 
     // Clicar noutro mini-cartão move a seleção.
-    fireEvent.click(links[2]);
-    expect(links[2]).toHaveAttribute("aria-current", "true");
+    const terceiro = obrigatorio(links[2], "terceiro mini-cartão");
+    fireEvent.click(terceiro);
+    expect(terceiro).toHaveAttribute("aria-current", "true");
     expect(links[0]).not.toHaveAttribute("aria-current");
   });
 
@@ -461,7 +462,7 @@ describe("Qualidade — sucesso", () => {
     const todos = formaCelular().querySelectorAll("details");
     // 7 achados + Sugestões da IA.
     expect(todos).toHaveLength(8);
-    expect(todos[0].open).toBe(true);
+    expect(obrigatorio(todos[0], "primeiro detalhe").open).toBe(true);
     Array.from(todos)
       .slice(1)
       .forEach((detalhes) => { expect(detalhes.open).toBe(false); });
@@ -719,13 +720,13 @@ describe("Qualidade — Sugestões da IA (TP-0085)", () => {
       detalhesIa.querySelectorAll<HTMLElement>("li"),
     );
     expect(linhas).toHaveLength(2);
-    expect(linhas[0]).toHaveTextContent("PAG-100 → PED-100");
-    expect(within(linhas[0]).getByText("PED-100")).toHaveAttribute(
+    expect(obrigatorio(linhas[0], "linha 1")).toHaveTextContent("PAG-100 → PED-100");
+    expect(within(obrigatorio(linhas[0], "linha 1")).getByText("PED-100")).toHaveAttribute(
       "href",
       "/pedido/PED-100",
     );
-    expect(within(linhas[0]).getByText("Aceita")).toHaveClass("etiqueta--ok");
-    expect(within(linhas[1]).getByText("Rejeitada")).toHaveClass(
+    expect(within(obrigatorio(linhas[0], "linha 1")).getByText("Aceita")).toHaveClass("etiqueta--ok");
+    expect(within(obrigatorio(linhas[1], "linha 2")).getByText("Rejeitada")).toHaveClass(
       "etiqueta--ruim",
     );
   });

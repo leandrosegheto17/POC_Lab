@@ -304,7 +304,7 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
   });
 
   it("durante a troca de página os botões de Paginacao ficam aria-disabled mas continuam no DOM e focáveis", async () => {
-    let liberarSegundaChamada: (() => void) | null = null;
+    let liberarSegundaChamada = null as (() => void) | null;
 
     const mock = instalarFetchMock(async (url) => {
       const pagina = paginaDaUrl(url);
@@ -600,7 +600,7 @@ describe("Divergencias — paginação e acessibilidade (vitest-axe)", () => {
   });
 
   it("carregando a próxima página com botões aria-disabled não tem violações", async () => {
-    let liberarSegundaChamada: (() => void) | null = null;
+    let liberarSegundaChamada = null as (() => void) | null;
 
     instalarFetchMock(async (url) => {
       const pagina = paginaDaUrl(url);

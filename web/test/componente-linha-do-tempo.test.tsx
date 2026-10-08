@@ -7,6 +7,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { axe } from "vitest-axe";
+import { obrigatorio } from "./apoio/obrigatorio.js";
 import { LinhaDoTempo } from "../src/componentes/LinhaDoTempo.tsx";
 import type { EventoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
 
@@ -129,7 +130,7 @@ describe("LinhaDoTempo — estrutura e ordem", () => {
     // Ordem de primeira aparição; os dois eventos de 2026-10-03 ficam na
     // mesma linha.
     expect(datas).toEqual(["2026-10-03", "2026-10-01"]);
-    expect(cartoes(linhasDeData(container)[0])).toHaveLength(2);
+    expect(cartoes(obrigatorio(linhasDeData(container)[0], "primeira linha"))).toHaveLength(2);
   });
 
   it("cada evento vai para a célula do seu sistema", () => {
@@ -143,7 +144,7 @@ describe("LinhaDoTempo — estrutura e ordem", () => {
       );
     }
     // Três células por data, mesmo vazias (bordas da grade no PC).
-    const primeiraLinha = linhasDeData(container)[0];
+    const primeiraLinha = obrigatorio(linhasDeData(container)[0], "primeira linha");
     expect(
       primeiraLinha.querySelectorAll(".linha-do-tempo__celula"),
     ).toHaveLength(3);
@@ -169,7 +170,7 @@ describe("LinhaDoTempo — conteúdo dos cartões", () => {
   it("venda: título 'Venda', valor no PC e '#código · valor' no celular", () => {
     const { container } = render(<LinhaDoTempo eventos={[eventoVenda()]} />);
 
-    const cartao = cartoes(container)[0];
+    const cartao = obrigatorio(cartoes(container)[0], "cartão");
     expect(within(cartao).getByText("Venda")).toBeInTheDocument();
     expect(cartao.querySelector(".evento__linha--pc")).toHaveTextContent(
       /^R\$ 150,50$/,
@@ -186,7 +187,7 @@ describe("LinhaDoTempo — conteúdo dos cartões", () => {
   it("pagamento: código em mono + valor (PC e celular)", () => {
     const { container } = render(<LinhaDoTempo eventos={[eventoPagamento()]} />);
 
-    const cartao = cartoes(container)[0];
+    const cartao = obrigatorio(cartoes(container)[0], "cartão");
     expect(within(cartao).getByText("Pagamento")).toBeInTheDocument();
     const linhaPc = cartao.querySelector(".evento__linha--pc");
     expect(linhaPc).toHaveTextContent("TX-88812 · R$ 150,50");
@@ -256,7 +257,7 @@ describe("LinhaDoTempo — marcas no título", () => {
     const marcas = screen.getAllByText("chegou fora de ordem");
     expect(marcas).toHaveLength(1);
     expect(marcas[0]).toHaveAttribute("data-variante", "alerta");
-    expect(marcas[0].closest(".evento")).toBe(cartoes(container)[0]);
+    expect(obrigatorio(marcas[0], "marca").closest(".evento")).toBe(cartoes(container)[0]);
   });
 
   it("'duplicado' (ruim) e cartão vermelho só nos ids informados", () => {
@@ -270,7 +271,9 @@ describe("LinhaDoTempo — marcas no título", () => {
       />,
     );
 
-    const [primeiro, segundo] = cartoes(container);
+    const lista = cartoes(container);
+    const primeiro = obrigatorio(lista[0], "primeiro cartão");
+    const segundo = obrigatorio(lista[1], "segundo cartão");
     expect(primeiro).not.toHaveClass("evento--ruim");
     expect(within(primeiro).queryByText("duplicado")).toBeNull();
     expect(segundo).toHaveClass("evento--ruim");
@@ -324,7 +327,9 @@ describe("LinhaDoTempo — depois da data escolhida", () => {
       />,
     );
 
-    const [venda, pagamento] = cartoes(container);
+    const lista = cartoes(container);
+    const venda = obrigatorio(lista[0], "cartão de venda");
+    const pagamento = obrigatorio(lista[1], "cartão de pagamento");
     expect(venda).not.toHaveClass("evento--depois");
     expect(pagamento).toHaveClass("evento--depois");
     expect(pagamento).toHaveTextContent("depois da data escolhida");

@@ -1,4 +1,5 @@
 // TP-0042 — Erros centrais e cabeçalhos da API.
+import { obrigatorio } from "../apoio/obrigatorio.ts";
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 import app from "../../worker/index.ts";
@@ -66,7 +67,7 @@ describe("hookValidacaoZod", () => {
       "application/problem+json",
     );
 
-    const corpo = await resposta?.json<CorpoErroTeste>();
+    const corpo = await obrigatorio(resposta, "resposta").json<CorpoErroTeste>();
     expect(corpo.codigo).toBe("parametro_invalido");
     expect(Array.isArray(corpo.erros)).toBe(true);
     expect(corpo.erros?.length).toBeGreaterThan(0);

@@ -212,7 +212,7 @@ describe("consultarApi", () => {
 
   it("tempo esgotado (10s) → mensagem de tempo esgotado", async () => {
     global.fetch = vi.fn(
-      (_caminho: string, init?: { signal?: AbortSignal }) =>
+      (_caminho: RequestInfo | URL, init?: RequestInit) =>
         new Promise<Response>((_resolve, reject) => {
           init?.signal?.addEventListener("abort", () => {
             reject(new DOMException("Aborted", "AbortError"));
@@ -233,7 +233,7 @@ describe("consultarApi", () => {
 
   it("cancelada via signal externo abortado durante a chamada → cancelada, sem mensagem", async () => {
     global.fetch = vi.fn(
-      (_caminho: string, init?: { signal?: AbortSignal }) =>
+      (_caminho: RequestInfo | URL, init?: RequestInit) =>
         new Promise<Response>((_resolve, reject) => {
           init?.signal?.addEventListener("abort", () => {
             reject(new DOMException("Aborted", "AbortError"));
@@ -254,7 +254,7 @@ describe("consultarApi", () => {
 
   it("cancelada via signal externo já abortado antes da chamada → cancelada", async () => {
     global.fetch = vi.fn(
-      (_caminho: string, init?: { signal?: AbortSignal }) =>
+      (_caminho: RequestInfo | URL, init?: RequestInit) =>
         new Promise<Response>((_resolve, reject) => {
           if (init?.signal?.aborted) {
             reject(new DOMException("Aborted", "AbortError"));

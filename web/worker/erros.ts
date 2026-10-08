@@ -79,7 +79,7 @@ export function problema(
 interface ResultadoValidacaoZod {
   success: boolean;
   error?: {
-    issues: Array<{ path: Array<string | number>; message: string }>;
+    issues: Array<{ path: PropertyKey[]; message: string }>;
   };
 }
 
@@ -107,7 +107,7 @@ export function hookValidacaoZod(
   const erros: ItemErroCampo[] =
     issues.length > 0
       ? issues.map((issue) => ({
-          campo: issue.path.length > 0 ? issue.path.join(".") : "(desconhecido)",
+          campo: issue.path.length > 0 ? issue.path.map(String).join(".") :"(desconhecido)",
           mensagem: issue.message,
         }))
       : [{ campo: "(desconhecido)", mensagem: "Falha de validação." }];

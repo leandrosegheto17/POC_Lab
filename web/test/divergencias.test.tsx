@@ -320,7 +320,7 @@ describe("Divergencias — sucesso", () => {
       expect(screen.getAllByText("2 eventos ▸")).toHaveLength(2);
     });
 
-    fireEvent.click(screen.getAllByText("2 eventos ▸")[0]);
+    fireEvent.click(obrigatorio(screen.getAllByText("2 eventos ▸")[0], "botão de eventos"));
 
     const tabela = screen.getByRole("table");
     const detalhes = tabela.querySelector("details");
