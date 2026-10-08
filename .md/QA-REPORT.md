@@ -155,3 +155,42 @@ APROVADA; 0 críticos, 0 não críticos; 23/23 testes (v2 + v1) passam, v1 intoc
 
 ## TP-0081 — QA — 2026-10-08
 APROVADA — 8/8 testes do `sugerir` verdes, aceite (L-03, cache SHA-256, teto, sem provedor, RN-11) atendido; 0 críticos, 0 não críticos.
+
+## TP-0004 — QA — 2026-10-08
+APROVADA — 5/5 testes passam, aceite cumprido (idempotência, falha clara em hash divergente, sem artefato inválido), 0 críticos / 0 não críticos.
+
+## TP-0009 — QA — 2026-10-08
+APROVADA com ressalva; 0 críticos, 1 não crítico (fronteira exata R$ 0,01 falha por ponto flutuante: 100 vs [99.99] retorna parcial); 8/8 testes passam; RTP-0019.
+
+## TP-0015 — QA — 2026-10-08
+APROVADA — 5/5 testes, aceite RN-04 cumprido, G-02/G-04 ok; 0 críticos, 0 não críticos.
+
+## TP-0021 — QA — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico (aspas não fechadas abortam o parse inteiro em vez de gerar `linha_invalida`); 10/10 testes passam; RTP-0020.
+
+## TP-0026 — QA — 2026-10-08
+APROVADA — 32/32 em gerador.test.ts, 5 casos plantados com tipos exatos no gabarito, disjuntos de TP-0025 e determinísticos; 0 críticos, 0 não críticos.
+
+## TP-0032 — QA — 2026-10-08
+APROVADA, 0 críticos/0 não críticos; 7/7 testes verdes, DDL idempotente e consultas por código/pedido/tipo usam índice/PK.
+
+## TP-0036 — QA — 2026-10-08
+APROVADA — 5/5 testes passam, aceite cumprido (posição canônica, fora_de_ordem via RN-08, sem-identificação fora, dados como gravados, determinístico); 0 críticos, 0 não críticos.
+
+## TP-0043 — QA — 2026-10-08
+APROVADA — 8/8 testes, aceite cumprido, isolamento em web/test confirmado; 0 críticos, 0 não críticos.
+
+## TP-0049 — QA — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico (teste sem Cache-Control/HEAD 200 na app real, RTP-0022); 3/3 testes passam.
+
+## TP-0054 — QA — 2026-10-08
+APROVADA — 0 críticos/0 não críticos; 45/45 testes e axe ok, aceite de tabela, etiquetas e paginação confirmado.
+
+## TP-0064 — QA — 2026-10-08
+APROVADA — 21/21 testes de qualidade.test.tsx passando, 0 achados críticos, 0 não críticos; aceite (7 blocos em ordem fixa, contagem 0, IA não utilizada, 4 estados, axe) atendido.
+
+## TP-0071 — QA — 2026-10-08
+APROVADA — 25/25 testes de indicadores (axe com 4 seções ok, resultado nulo sem NaN), README sem pendência; 0 críticos, 0 não críticos.
+
+## TP-0082 — QA — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico (sem timeout no fetch, RTP-0021); 10/10 testes com fetch falso, aceite e G-01/G-09 verificados.
