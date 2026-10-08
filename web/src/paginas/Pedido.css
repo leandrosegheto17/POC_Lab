@@ -1,0 +1,6 @@
+/* TP-0062 — valores monetários e data limite em fonte monoespaçada, mesmo
+   padrão de alinhamento numérico já usado em `LinhaDoTempo.css`/
+   `CartoesResumo.css`/`TabelaDados.css`. */
+.pedido-valores-mono {
+  font-family: var(--fonte-mono);
+}

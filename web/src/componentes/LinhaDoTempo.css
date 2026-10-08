@@ -1,0 +1,103 @@
+/* TP-0061 — estilos de LinhaDoTempo. Só tokens de tokens.css/base.css,
+ * nenhuma cor/espaçamento declarado diretamente aqui.
+ *
+ * Mobile-first, mesmo breakpoint de 1024px usado em casca.css/CampoBusca —
+ * <1024px: cada <li> é um cartão empilhado; >=1024px: grade de 4 colunas
+ * (Data | Vendas | Pagamentos | Transportadora), coluna do evento decidida
+ * pelo atributo `data-fonte` do <li>, nunca pela posição/índice do array.
+ */
+
+.linha-do-tempo {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-3);
+}
+
+/* Cabeçalho de colunas — só existe visualmente na grade (>=1024px). Em
+ * <1024px fica oculto via CSS (permanece no DOM, aria-hidden="true"). */
+.linha-do-tempo-cabecalho {
+  display: none;
+}
+
+/* <1024px: cartão. */
+.linha-do-tempo-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-2);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  padding: var(--espaco-4);
+}
+
+.linha-do-tempo-celula-data {
+  color: var(--cor-texto-2);
+  font-size: var(--texto-sm);
+}
+
+.linha-do-tempo-celula-evento {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-2);
+}
+
+.linha-do-tempo-tipo {
+  color: var(--cor-texto);
+  font-weight: 600;
+}
+
+.linha-do-tempo-mono {
+  font-family: var(--fonte-mono);
+  color: var(--cor-texto);
+}
+
+.linha-do-tempo-fora-de-ordem {
+  color: var(--etq-parcial-texto);
+  background: var(--etq-parcial-fundo);
+  border: 1px solid var(--etq-parcial-borda);
+  border-radius: var(--raio-chip);
+  padding: var(--espaco-1) var(--espaco-3);
+  font-size: var(--texto-sm);
+}
+
+/* >=1024px: grade Data | Vendas | Pagamentos | Transportadora. */
+@media (min-width: 1024px) {
+  .linha-do-tempo-cabecalho {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 0 var(--espaco-4);
+  }
+
+  .linha-do-tempo-cabecalho-coluna {
+    color: var(--cor-texto-2);
+    font-size: var(--texto-sm);
+    font-weight: 600;
+  }
+
+  .linha-do-tempo-item {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    align-items: center;
+    flex-direction: unset;
+  }
+
+  .linha-do-tempo-celula-data {
+    grid-column: 1;
+  }
+
+  .linha-do-tempo-item[data-fonte="vendas"] .linha-do-tempo-celula-evento {
+    grid-column: 2;
+  }
+
+  .linha-do-tempo-item[data-fonte="pagamentos"] .linha-do-tempo-celula-evento {
+    grid-column: 3;
+  }
+
+  .linha-do-tempo-item[data-fonte="rastreio"] .linha-do-tempo-celula-evento {
+    grid-column: 4;
+  }
+}
