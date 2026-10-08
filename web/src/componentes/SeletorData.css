@@ -1,0 +1,24 @@
+/* TP-0072 — estilos do SeletorData. Só tokens de tokens.css, nenhuma
+ * cor/espaçamento declarado diretamente aqui. Foco visível herdado do
+ * `:focus-visible` global (TP-0051, base.css) — não redefinir aqui. */
+
+.seletor-data {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-2);
+}
+
+.seletor-data__input {
+  border: 1px solid var(--cor-borda-controle);
+  border-radius: var(--raio);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  padding: var(--espaco-1) var(--espaco-2);
+  font-family: var(--fonte-texto);
+  font-size: var(--texto-sm);
+}
+
+.seletor-data button[aria-disabled="true"] {
+  color: var(--cor-desabilitado);
+  cursor: not-allowed;
+}

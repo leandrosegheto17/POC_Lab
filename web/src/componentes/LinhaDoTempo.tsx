@@ -57,6 +57,13 @@ function valorDoEvento(evento: EventoV1): number | null {
 
 type LinhaDoTempoProps = {
   eventos: EventoV1[];
+  // TP-0073 — quando presente (vindo do `SeletorData`/"Ver estado numa
+  // data" em `Pedido.tsx`), cada item com `momentoFato > dataEscolhida` é
+  // atenuado visualmente e ganha o texto "depois da data escolhida". Só
+  // comparação simples de string para fins de EXIBIÇÃO — o filtro de
+  // verdade (para o cálculo do estado) já é feito por `derivarEstado`
+  // (TP-0012), não duplicado aqui.
+  dataEscolhida?: string;
 };
 
 // Cabeçalho de colunas da grade (>=1024px) — sempre no DOM, `aria-hidden`
@@ -73,12 +80,29 @@ function CabecalhoColunas() {
   );
 }
 
-function ItemLinhaDoTempo({ evento }: { evento: EventoV1 }) {
+function ItemLinhaDoTempo({
+  evento,
+  dataEscolhida,
+}: {
+  evento: EventoV1;
+  dataEscolhida?: string;
+}) {
   const fonte = MAPA_FONTE[evento.tipo];
   const valor = valorDoEvento(evento);
+  // Comparação de string simples (ver nota em `LinhaDoTempoProps`), só
+  // para decidir a atenuação visual deste item — não recalcula estado.
+  const depoisDaDataEscolhida =
+    dataEscolhida !== undefined && evento.momentoFato > dataEscolhida;
 
   return (
-    <li className="linha-do-tempo-item" data-fonte={fonte}>
+    <li
+      className={
+        depoisDaDataEscolhida
+          ? "linha-do-tempo-item linha-do-tempo-item--atenuado"
+          : "linha-do-tempo-item"
+      }
+      data-fonte={fonte}
+    >
       <span className="linha-do-tempo-celula-data linha-do-tempo-mono">
         {evento.momentoFato}
       </span>
@@ -98,17 +122,28 @@ function ItemLinhaDoTempo({ evento }: { evento: EventoV1 }) {
             chegou fora de ordem
           </span>
         ) : null}
+        {depoisDaDataEscolhida ? (
+          // G-14 — nunca só cor/opacidade: o texto abaixo é visível no
+          // DOM, não um rótulo só para leitor de tela.
+          <span className="linha-do-tempo-depois-da-data">
+            depois da data escolhida
+          </span>
+        ) : null}
       </span>
     </li>
   );
 }
 
-export function LinhaDoTempo({ eventos }: LinhaDoTempoProps) {
+export function LinhaDoTempo({ eventos, dataEscolhida }: LinhaDoTempoProps) {
   return (
     <ol className="linha-do-tempo">
       <CabecalhoColunas />
       {eventos.map((evento) => (
-        <ItemLinhaDoTempo key={evento.codigoEvento} evento={evento} />
+        <ItemLinhaDoTempo
+          key={evento.codigoEvento}
+          evento={evento}
+          dataEscolhida={dataEscolhida}
+        />
       ))}
     </ol>
   );

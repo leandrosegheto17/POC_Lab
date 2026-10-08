@@ -50,8 +50,6 @@ Itens previstos no `PRD.md`, ainda não implementados nesta fase. Cada um fica
 para depois da entrega Must, seguindo a ordem de corte do projeto (ADR-001), e
 é removido desta lista quando for implementado:
 
-- **Estado do pedido numa data específica** — fica para depois da entrega
-  Must, seguindo a ordem de corte do projeto (ADR-001).
 - **Contrato de API v2** — fica para depois da entrega Must, seguindo a ordem
   de corte do projeto (ADR-001).
 - **Sugestões de IA para pagamentos sem identificação** — fica para depois da

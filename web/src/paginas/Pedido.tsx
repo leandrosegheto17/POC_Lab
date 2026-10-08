@@ -1,16 +1,20 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "react-router";
 import "./Pedido.css";
 import {
   EsquemaLinhaDoTempoV1,
+  type EventoV1,
   type LinhaDoTempoV1,
 } from "processamento/contrato/linha-do-tempo-v1.js";
+import { derivarEstado } from "processamento/dominio/estado.js";
+import type { Evento } from "processamento/dominio/evento.js";
 import { useFocoNoTitulo } from "../nav/useFocoNoTitulo.ts";
 import { useTituloDocumento } from "../nav/useTituloDocumento.ts";
 import { useConsulta } from "../dados/use-consulta.ts";
 import { EtiquetaFonte } from "../componentes/EtiquetaFonte.tsx";
 import { EtiquetaTipo } from "../componentes/EtiquetaTipo.tsx";
 import { LinhaDoTempo } from "../componentes/LinhaDoTempo.tsx";
+import { SeletorData } from "../componentes/SeletorData.tsx";
 import { EstadoCarregando } from "../componentes/EstadoCarregando.tsx";
 import { EstadoVazio } from "../componentes/EstadoVazio.tsx";
 import { EstadoErro } from "../componentes/EstadoErro.tsx";
@@ -45,6 +49,16 @@ function formatarDataLimite(dataLimite: string): string {
  */
 function construirUrlConsulta(codigo: string, tentativa: number): string {
   return `/api/v1/pedidos/${encodeURIComponent(codigo)}/linha-do-tempo#${tentativa}`;
+}
+
+// TP-0073 — `EventoV1` (contrato da API) não tem `versao_schema` (não
+// exposto na API v1 — ver comentário em linha-do-tempo-v1.ts); `Evento`
+// (dominio, consumido por `derivarEstado`) exige esse campo. O cast abaixo
+// é seguro porque `derivarEstado`/`ordenarEventos`/`calcularQuitacao` nunca
+// leem `versao_schema` — só `tipo`, `momentoFato`, `codigoEvento`,
+// `valor_devido` e `valor`, todos presentes em `EventoV1`.
+function comoEventosDeDominio(eventos: EventoV1[]): Evento[] {
+  return eventos as unknown as Evento[];
 }
 
 export function Pedido() {
@@ -103,8 +117,28 @@ export function Pedido() {
   );
 }
 
+// TP-0073 — "Ver estado numa data": usa `derivarEstado` (TP-0012) no
+// navegador, sobre os `eventos` JÁ carregados por esta mesma consulta —
+// nenhuma nova chamada à API. Gatilho escolhido: REATIVO (recalcula a cada
+// mudança de `dataEscolhida`, inclusive a cada tecla/seleção no
+// `<input type="date">`), não preso ao clique em "Ver estado" — é o
+// disparo mais simples (sem estado adicional de "data aplicada" nem
+// handler dedicado) e o botão "Ver estado" do `SeletorData` (TP-0072) seria
+// redundante com o próprio `onChange`; o botão continua renderizado (prop
+// obrigatória do componente) mas seu `onClick` não faz nada além do que já
+// aconteceu reativamente.
 function DetalheLinhaDoTempo({ dados }: { dados: LinhaDoTempoV1 }) {
   const { pedido, eventos } = dados;
+  const [dataEscolhida, setDataEscolhida] = useState<string | undefined>(
+    undefined,
+  );
+
+  const estadoNaData = useMemo(() => {
+    if (!dataEscolhida) {
+      return null;
+    }
+    return derivarEstado(comoEventosDeDominio(eventos), dataEscolhida);
+  }, [eventos, dataEscolhida]);
 
   return (
     <>
@@ -141,7 +175,21 @@ function DetalheLinhaDoTempo({ dados }: { dados: LinhaDoTempoV1 }) {
         )}
       </p>
 
-      <LinhaDoTempo eventos={eventos} />
+      <SeletorData
+        valor={dataEscolhida ?? ""}
+        onMudar={setDataEscolhida}
+        onVerEstado={() => {}}
+        onLimpar={() => setDataEscolhida(undefined)}
+      />
+      {estadoNaData !== null ? (
+        <p aria-live="polite">
+          {estadoNaData.vendido
+            ? `Em ${dataEscolhida}: ${estadoNaData.frase}.`
+            : "Nenhum evento até esta data."}
+        </p>
+      ) : null}
+
+      <LinhaDoTempo eventos={eventos} dataEscolhida={dataEscolhida} />
     </>
   );
 }

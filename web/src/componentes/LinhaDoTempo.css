@@ -64,6 +64,22 @@
   font-size: var(--texto-sm);
 }
 
+/* TP-0073 — atenuação visual de item "depois da data escolhida". Reaproveita
+ * o mesmo token de desabilitado já usado em Paginacao.css/SeletorData.css
+ * (`--cor-desabilitado`), nunca um token novo; o texto "depois da data
+ * escolhida" (abaixo) é a parte que não depende só de cor (G-14). */
+.linha-do-tempo-item--atenuado .linha-do-tempo-tipo,
+.linha-do-tempo-item--atenuado .linha-do-tempo-codigo,
+.linha-do-tempo-item--atenuado .linha-do-tempo-valor,
+.linha-do-tempo-item--atenuado .linha-do-tempo-celula-data {
+  color: var(--cor-desabilitado);
+}
+
+.linha-do-tempo-depois-da-data {
+  color: var(--cor-desabilitado);
+  font-size: var(--texto-sm);
+}
+
 /* >=1024px: grade Data | Vendas | Pagamentos | Transportadora. */
 @media (min-width: 1024px) {
   .linha-do-tempo-cabecalho {
