@@ -75,6 +75,7 @@ export function processarPagamentos(
   // Numeração real no arquivo (inclui registros descartados por erro de
   // sintaxe): a linha 1 é o cabeçalho.
   let sequencia = 1;
+  let ultimaLinhaDescartada: number | undefined;
   // `on_skip` existe em runtime no csv-parse, mas falta nos tipos de `Options`.
   const opcoes: Options & { on_skip?: (erro: unknown) => void } = {
     columns: true,
@@ -84,15 +85,28 @@ export function processarPagamentos(
     // achado `linha_invalida`, sem lançar exceção (RF-02).
     skip_records_with_error: true,
     on_skip: (erro: unknown) => {
+      // `on_skip` pode disparar mais de uma vez para o mesmo registro: só
+      // avança a sequência e registra o achado uma vez por registro
+      // (identificado pela linha de origem informada pelo csv-parse).
+      const linhaOrigem = (erro as { lines?: unknown } | null)?.lines;
+      if (typeof linhaOrigem === "number") {
+        if (linhaOrigem === ultimaLinhaDescartada) return;
+        ultimaLinhaDescartada = linhaOrigem;
+      }
       sequencia += 1;
       const numeroLinha = sequencia;
-      const motivo = erro instanceof Error ? erro.message : String(erro);
+      // Só o código do erro e o número da linha: `erro.message` do csv-parse
+      // pode conter valor de campo do CSV (G-11).
+      const codigo =
+        typeof (erro as { code?: unknown } | null)?.code === "string"
+          ? (erro as { code: string }).code
+          : "DESCONHECIDO";
       achados.push({
         tipo: "linha_invalida",
         fonte: "pagamentos",
         referencia: `linha ${String(numeroLinha)}`,
         regra: REGRA_LINHA_INVALIDA,
-        detalhe: `linha ${String(numeroLinha)} com erro de sintaxe CSV (${motivo})`,
+        detalhe: `linha ${String(numeroLinha)} com erro de sintaxe CSV (${codigo})`,
       });
     },
     on_record: (registro: LinhaPagamentoCsv) => {
@@ -136,7 +150,7 @@ export function processarPagamentos(
         fonte: "pagamentos",
         referencia: identificadorLinha,
         regra: REGRA_LINHA_INVALIDA,
-        detalhe: `valor "${valorBruto}" não é numérico na linha ${String(numeroLinha)}`,
+        detalhe: `valor não é numérico na linha ${String(numeroLinha)}`,
       });
       return;
     }
@@ -148,7 +162,7 @@ export function processarPagamentos(
         fonte: "pagamentos",
         referencia: identificadorLinha,
         regra: REGRA_LINHA_INVALIDA,
-        detalhe: `data_pagamento "${dataPagamentoBruta}" não é uma data válida na linha ${String(numeroLinha)}`,
+        detalhe: `data_pagamento não é uma data válida na linha ${String(numeroLinha)}`,
       });
       return;
     }

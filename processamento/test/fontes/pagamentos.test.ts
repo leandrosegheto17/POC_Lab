@@ -116,6 +116,40 @@ TX-003,PV-000789,300,2024-01-17
     ]);
   });
 
+  it("aspas abertas no início do campo: detalhe só com código do erro e linha, sem valor de campo", () => {
+    const csv = `codigo_transacao,referencia,valor,data_pagamento
+TX-001,PV-000123,150.5,2024-01-15
+TX-002,"SEGREDO-CAMPO,200,2024-01-16
+TX-003,PV-000789,300,2024-01-17
+`;
+
+    const resultado = processarPagamentos(csv, new Set(["123", "789"]));
+
+    const invalidos = resultado.achados.filter(
+      (a) => a.tipo === "linha_invalida",
+    );
+    expect(invalidos).toHaveLength(1);
+    expect(invalidos[0]?.detalhe).toMatch(/linha 3/);
+    expect(invalidos[0]?.detalhe).toMatch(/CSV_[A-Z_]+|INVALID_[A-Z_]+/);
+    expect(JSON.stringify(resultado.achados)).not.toContain("SEGREDO-CAMPO");
+    expect(JSON.stringify(resultado.achados)).not.toContain("TX-002");
+    expect(resultado.eventos[0]).toMatchObject({ codigoEvento: "TX-001" });
+  });
+
+  it("valor e data inválidos não vazam o valor do campo em detalhe", () => {
+    const csv = `codigo_transacao,referencia,valor,data_pagamento
+TX-001,PV-000123,VALOR-SECRETO,2024-01-15
+TX-002,PV-000123,10,DATA-SECRETA
+`;
+
+    const resultado = processarPagamentos(csv, new Set(["123"]));
+
+    expect(resultado.achados).toHaveLength(2);
+    const texto = JSON.stringify(resultado.achados);
+    expect(texto).not.toContain("VALOR-SECRETO");
+    expect(texto).not.toContain("DATA-SECRETA");
+  });
+
   it("referência em texto livre (sem casamento) gera achado sem_identificacao e evento sem vínculo", () => {
     const csv = `codigo_transacao,referencia,valor,data_pagamento
 TX-005,pagamento via boleto,100,2024-01-15
