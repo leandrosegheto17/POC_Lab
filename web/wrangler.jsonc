@@ -16,6 +16,9 @@
       // "database_id" é um placeholder para desenvolvimento local. O ID real do
       // banco D1 remoto é preenchido manualmente na etapa de publicação (fora de
       // escopo da TP-0041) — nenhum segredo/ID real fica neste arquivo.
+      // AÇÃO ÚNICA DO AUTOR (TP-0065, ver web/PUBLICAR.md): antes do primeiro
+      // `pnpm publicar` real, rodar `wrangler d1 create poc-lab` uma única vez e
+      // colar aqui o "database_id" gerado, substituindo "local-dev-placeholder".
       "database_id": "local-dev-placeholder"
     }
   ]

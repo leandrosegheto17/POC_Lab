@@ -10,7 +10,8 @@
     "preparar": "pnpm --filter processamento run preparar",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "publicar": "pnpm preparar && pnpm --filter web run build && pnpm --filter web exec wrangler d1 execute poc-lab --remote --file ../dados/publicacao/leitura.sql --config wrangler.jsonc && pnpm --filter web exec wrangler deploy --config wrangler.jsonc"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
