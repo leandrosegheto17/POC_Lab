@@ -158,6 +158,28 @@ describe("Estado do pedido em uma data — frase", () => {
   });
 });
 
+describe("Estado do pedido em uma data — evento do próprio dia", () => {
+  it("venda em 2026-01-05T10:00Z com data 2026-01-05 entra no estado e não é atenuada", async () => {
+    const resposta = respostaLinhaDoTempoValida() as { eventos: unknown[] };
+    resposta.eventos = [
+      eventoVenda({ momentoFato: "2026-01-05T10:00:00Z" }),
+    ];
+    global.fetch = vi.fn(async () =>
+      respostaFake(async () => resposta),
+    ) as unknown as typeof fetch;
+    const { container } = renderizarPedido();
+    await aguardarCarregado();
+
+    escolherData("2026-01-05");
+
+    expect(fraseResultado(container)).toHaveTextContent(/^Em 2026-01-05: vendido/);
+    expect(
+      screen.queryByText("Nenhum evento até esta data."),
+    ).not.toBeInTheDocument();
+    expect(container.querySelectorAll(".evento--depois")).toHaveLength(0);
+  });
+});
+
 describe("Estado do pedido em uma data — eventos posteriores atenuados", () => {
   it("evento de entrega (posterior à data escolhida) some com texto 'depois da data escolhida'", async () => {
     instalarFetchMock();

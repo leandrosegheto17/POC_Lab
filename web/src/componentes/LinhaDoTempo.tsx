@@ -225,7 +225,7 @@ function CartaoEvento({
   const depoisDaDataEscolhida =
     dataEscolhida !== undefined &&
     dataEscolhida !== "" &&
-    evento.momentoFato > dataEscolhida;
+    evento.momentoFato > `${dataEscolhida}T23:59:59.999Z`;
   const marcas = marcasDoEvento(evento, duplicado, dataLimite);
 
   const classes = ["evento"];

@@ -202,7 +202,11 @@ function DetalheLinhaDoTempo({ dados }: { dados: LinhaDoTempoV1 }) {
     if (!dataEscolhida) {
       return null;
     }
-    return derivarEstado(comoEventosDeDominio(eventos), dataEscolhida);
+    // AAAA-MM-DD vira o fim do dia, para incluir eventos do próprio dia.
+    return derivarEstado(
+      comoEventosDeDominio(eventos),
+      `${dataEscolhida}T23:59:59.999Z`,
+    );
   }, [eventos, dataEscolhida]);
 
   const idsDuplicados = useMemo(() => idsPagamentosDuplicados(dados), [dados]);
