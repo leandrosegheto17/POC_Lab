@@ -28,8 +28,13 @@ export const CAMINHO_BANCO_PADRAO = path.join("dados", "poc_lab.sqlite");
 export const DIR_PUBLICACAO_PADRAO = path.join("dados", "publicacao");
 export const NOME_ARQUIVO_LEITURA_SQL = "leitura.sql";
 
-/** Caminho padrão (relativo ao cwd do processo) do pacote `web`, onde `wrangler` é invocado. */
-export const CAMINHO_WEB_PADRAO = path.join("web");
+/**
+ * Caminho padrão do pacote `web`, onde `wrangler` é invocado — relativo à
+ * raiz do pacote `processamento` (não à raiz do monorepo), já que é este o
+ * cwd real do processo quando rodado via `pnpm --filter processamento run
+ * preparar`.
+ */
+export const CAMINHO_WEB_PADRAO = path.join("..", "web");
 
 /** Resultado de rodar o `wrangler d1 execute` (ou qualquer função que o substitua em teste). */
 export type ResultadoExecucaoWrangler = {
@@ -54,8 +59,8 @@ export function executarWrangler(
 ): ResultadoExecucaoWrangler {
   try {
     const stdout = execFileSync(
-      "wrangler",
-      ["d1", "execute", "poc-lab", "--local", "--file", caminhoArquivo],
+      "pnpm",
+      ["exec", "wrangler", "d1", "execute", "poc-lab", "--local", "--file", path.resolve(caminhoArquivo)],
       { cwd: cwdWeb, encoding: "utf8", shell: true },
     );
     return { codigo: 0, stdout, stderr: "" };

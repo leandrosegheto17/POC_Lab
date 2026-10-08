@@ -10,12 +10,12 @@
     "./publicacao/*.sql": "./src/publicacao/*.sql"
   },
   "scripts": {
-    "baixar-base": "node src/cli/baixar-base.ts",
-    "gerar": "node src/cli/gerar.ts",
-    "importar": "node src/cli/importar.ts",
-    "sugerir": "node src/cli/sugerir.ts",
-    "publicar-dados": "node src/cli/publicar-dados.ts",
-    "preparar": "node src/cli/preparar.ts",
+    "baixar-base": "tsx src/cli/baixar-base.ts",
+    "gerar": "tsx src/cli/gerar.ts",
+    "importar": "tsx src/cli/importar.ts",
+    "sugerir": "tsx src/cli/sugerir.ts",
+    "publicar-dados": "tsx src/cli/publicar-dados.ts",
+    "preparar": "tsx src/cli/preparar.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "tsx": "^4.0.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }
