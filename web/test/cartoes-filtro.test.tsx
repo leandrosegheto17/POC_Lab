@@ -49,7 +49,7 @@ function resumoValido(): unknown {
     idPublicacao: "pub-teste",
     totais: {
       pedidos: cartao(100),
-      // 7 de 100 => 7.0% (fração 0,07 no campo `resultado`).
+      // 7 de 100 => 7,0% (fração 0,07 no campo `resultado`).
       pedidosComDivergencia: cartao(7, 100),
       porTipo: [
         { tipo: "duplicado", cartao: cartao(2, 100) },
@@ -60,7 +60,7 @@ function resumoValido(): unknown {
       ],
       valorEmAberto: cartao(1234.5),
       pagoAMais: cartao(99.9),
-      // 85 de 90 => 94.4%.
+      // 85 de 90 => 94,4%.
       entregasNoPrazo: cartao(85, 90),
     },
   };
@@ -106,7 +106,7 @@ describe("CartoesResumo — estado de sucesso", () => {
       expect(screen.getByText("Com divergência")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("7.0%")).toBeInTheDocument();
+    expect(screen.getByText("7,0%")).toBeInTheDocument();
     expect(screen.getByText("7 de 100 pedidos")).toBeInTheDocument();
 
     expect(screen.getByText("Valor em aberto")).toBeInTheDocument();
@@ -116,7 +116,7 @@ describe("CartoesResumo — estado de sucesso", () => {
     expect(screen.getByText(textoMoeda(99.9))).toBeInTheDocument();
 
     expect(screen.getByText("Entregas no prazo")).toBeInTheDocument();
-    expect(screen.getByText("94.4%")).toBeInTheDocument();
+    expect(screen.getByText("94,4%")).toBeInTheDocument();
     expect(screen.getByText("85 de 90")).toBeInTheDocument();
   });
 });
@@ -166,7 +166,7 @@ describe("CartoesResumo — acessibilidade (vitest-axe)", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("7.0%")).toBeInTheDocument();
+      expect(screen.getByText("7,0%")).toBeInTheDocument();
     });
 
     expect(await axe(container)).toHaveNoViolations();

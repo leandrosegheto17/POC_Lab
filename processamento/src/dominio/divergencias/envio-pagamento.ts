@@ -1,6 +1,7 @@
 import type { Evento } from "../evento.js";
 import type { Divergencia } from "../modelo.js";
 import { derivarEstado } from "../estado.js";
+import { formatarDataCurta } from "../formatacao.js";
 
 /**
  * RN-05: pago e não enviado / enviado e não pago, até a `dataCorte` (RN-14).
@@ -39,9 +40,11 @@ export function detectarEnvioPagamento(
   const eventoColeta = filtrados.find((evento) => evento.tipo === "coleta");
 
   if (estado.situacaoPagamento === "quitado" && !estado.coletado) {
+    const ultimoPagamento = eventosPagamento.at(-1);
+
     return {
       tipo: "pago_nao_enviado",
-      motivo: `Pedido quitado (pagamento até ${eventosPagamento.at(-1)?.momentoFato ?? "data não identificada"}) mas sem coleta até a data de corte ${dataCorte} (data limite do pedido: ${eventoVenda?.data_limite ?? "não identificada"})`,
+      motivo: `Pedido quitado (pagamento até ${ultimoPagamento !== undefined ? formatarDataCurta(ultimoPagamento.momentoFato) : "data não identificada"}) mas sem coleta até a data de corte ${formatarDataCurta(dataCorte)} (data limite do pedido: ${eventoVenda !== undefined ? formatarDataCurta(eventoVenda.data_limite) : "não identificada"})`,
       idsEventos: [
         ...(eventoVenda !== undefined ? [eventoVenda.codigoEvento] : []),
         ...eventosPagamento.map((evento) => evento.codigoEvento),
@@ -52,7 +55,7 @@ export function detectarEnvioPagamento(
   if (estado.coletado && estado.situacaoPagamento === "sem_pagamento") {
     return {
       tipo: "enviado_nao_pago",
-      motivo: `Pedido coletado em ${eventoColeta?.momentoFato ?? "data não identificada"} (até a data de corte ${dataCorte}) sem nenhum pagamento vinculado até lá (data limite do pedido: ${eventoVenda?.data_limite ?? "não identificada"})`,
+      motivo: `Pedido coletado em ${eventoColeta !== undefined ? formatarDataCurta(eventoColeta.momentoFato) : "data não identificada"} (até a data de corte ${formatarDataCurta(dataCorte)}) sem nenhum pagamento vinculado até lá (data limite do pedido: ${eventoVenda !== undefined ? formatarDataCurta(eventoVenda.data_limite) : "não identificada"})`,
       idsEventos: [
         ...(eventoVenda !== undefined ? [eventoVenda.codigoEvento] : []),
         ...(eventoColeta !== undefined ? [eventoColeta.codigoEvento] : []),

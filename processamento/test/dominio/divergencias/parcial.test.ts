@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { detectarParcial } from "../../../src/dominio/divergencias/parcial.js";
+import { formatarMoeda } from "../../../src/dominio/formatacao.js";
 
 describe("validação: parcial e duplicado", () => {
   it("0 < pago < devido (um só pagamento) gera achado parcial com motivo citando os valores", () => {
@@ -7,7 +8,7 @@ describe("validação: parcial e duplicado", () => {
 
     expect(achado).toEqual({
       tipo: "parcial",
-      motivo: "pago R$40 de R$100 devido",
+      motivo: `pago ${formatarMoeda(40)} de ${formatarMoeda(100)} devido`,
       idsEventos: ["EVT-1"],
     });
   });

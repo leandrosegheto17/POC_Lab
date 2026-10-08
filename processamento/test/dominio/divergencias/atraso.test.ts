@@ -24,8 +24,17 @@ describe("detectarAtraso (RN-06)", () => {
 
     expect(resultado?.tipo).toBe("entrega_atrasada");
     expect(resultado?.idsEventos).toEqual(["evt-entrega-1"]);
-    expect(resultado?.motivo).toContain("2026-01-12T00:00:00Z");
-    expect(resultado?.motivo).toContain(dataLimite);
+    expect(resultado?.motivo).toContain("2026-01-12");
+    expect(resultado?.motivo).not.toContain("T00:00:00Z");
+    expect(resultado?.motivo).toContain("2026-01-10");
+  });
+
+  it("motivo traz só a data (AAAA-MM-DD), truncando hora e fuso mesmo quando o momentoFato tem horário não-meia-noite (UX-SPEC §4)", () => {
+    const eventoEntrega = construirEventoEntrega("2026-01-12T04:42:22.357Z");
+
+    const resultado = detectarAtraso(dataLimite, eventoEntrega);
+
+    expect(resultado?.motivo).toBe("Entrega em 2026-01-12 após a data limite 2026-01-10");
   });
 
   it("não gera achado quando a entrega ocorre antes da data limite", () => {

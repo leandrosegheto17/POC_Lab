@@ -174,7 +174,7 @@ describe("Indicadores — sucesso", () => {
 
     // Linha principal do bloco de entregas, na tabela de %.
     expect(screen.getByText("Transportadora A / 2026-09")).toBeInTheDocument();
-    expect(screen.getByText("80.0%")).toBeInTheDocument();
+    expect(screen.getByText("80,0%")).toBeInTheDocument();
 
     // Linha "à parte" NÃO entra na tabela de %: vem como parágrafo próprio
     // com o valor bruto, fora das colunas Numerador/Denominador/%.
@@ -239,7 +239,7 @@ describe("Indicadores — sucesso", () => {
 
     // Linha com resultado 0 (não nulo) mostra percentual, não o texto de
     // "sem dados" — distinção entre "zero" e "nulo".
-    expect(screen.getByText("0.0%")).toBeInTheDocument();
+    expect(screen.getByText("0,0%")).toBeInTheDocument();
   });
 });
 

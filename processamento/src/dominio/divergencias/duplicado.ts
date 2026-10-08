@@ -1,6 +1,7 @@
 import type { Divergencia } from "../modelo.js";
 import type { EnvelopeEvento, PayloadPagamentoV1 } from "../evento.js";
 import { arredondarMoeda } from "../valores.js";
+import { formatarMoeda } from "../formatacao.js";
 
 /**
  * Tolerância para considerar um pagamento como "valor integral" em relação
@@ -59,7 +60,7 @@ export function detectarDuplicado(
 
   return {
     tipo: "duplicado",
-    motivo: `pago R$${totalPago.toFixed(2)} em ${pagamentosIntegrais.length} transações, devido R$${valorDevido.toFixed(2)}`,
+    motivo: `pago ${formatarMoeda(totalPago)} em ${String(pagamentosIntegrais.length)} transações, devido ${formatarMoeda(valorDevido)}`,
     idsEventos,
   };
 }

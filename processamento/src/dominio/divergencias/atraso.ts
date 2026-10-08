@@ -1,5 +1,6 @@
 import type { Evento } from "../evento.js";
 import type { Divergencia } from "../modelo.js";
+import { formatarDataCurta } from "../formatacao.js";
 
 /**
  * RN-06: entrega atrasada.
@@ -23,7 +24,7 @@ export function detectarAtraso(
 
   return {
     tipo: "entrega_atrasada",
-    motivo: `Entrega em ${eventoEntrega.momentoFato} após a data limite ${dataLimite}`,
+    motivo: `Entrega em ${formatarDataCurta(eventoEntrega.momentoFato)} após a data limite ${formatarDataCurta(dataLimite)}`,
     idsEventos: [eventoEntrega.codigoEvento],
   };
 }

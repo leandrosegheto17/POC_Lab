@@ -15,8 +15,8 @@ describe("validação: parcial e duplicado", () => {
       expect(achado).toBeDefined();
       expect(achado?.tipo).toBe("duplicado");
       expect(achado?.idsEventos).toEqual(["evt-1", "evt-2"]);
-      expect(achado?.motivo).toContain("200.00");
-      expect(achado?.motivo).toContain("100.00");
+      expect(achado?.motivo).toContain("200,00");
+      expect(achado?.motivo).toContain("100,00");
     });
 
     it("2 transações que somam exatamente ao devido (parcelas, nenhuma integral) → nenhum achado", () => {

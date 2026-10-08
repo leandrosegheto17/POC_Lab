@@ -3,9 +3,13 @@ import type { BlocoIndicador } from "processamento/contrato/indicadores.js";
 import { TabelaDados } from "./TabelaDados.tsx";
 
 const FORMATADOR_NUMERO = new Intl.NumberFormat("pt-BR");
+const FORMATADOR_PERCENTUAL = new Intl.NumberFormat("pt-BR", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
 
 function formatarPercentual(resultado: number): string {
-  return `${(resultado * 100).toFixed(1)}%`;
+  return `${FORMATADOR_PERCENTUAL.format(resultado * 100)}%`;
 }
 
 type IndicadorProps = {

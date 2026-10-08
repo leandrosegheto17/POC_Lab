@@ -1,5 +1,6 @@
 import { calcularQuitacao } from '../quitacao.js';
 import type { Divergencia } from '../modelo.js';
+import { formatarMoeda } from '../formatacao.js';
 
 /**
  * Detecta pagamento parcial (RN-04): 0 < pago < devido.
@@ -25,7 +26,7 @@ export function detectarParcial(
 
   return {
     tipo: 'parcial',
-    motivo: `pago R$${pago} de R$${valorDevido} devido`,
+    motivo: `pago ${formatarMoeda(pago)} de ${formatarMoeda(valorDevido)} devido`,
     idsEventos: pagamentos.map((pagamento) => pagamento.codigoEvento),
   };
 }
