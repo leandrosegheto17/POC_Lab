@@ -21,7 +21,7 @@ export const NOME_RASTREIO_CSV = "rastreio.csv";
 export const NOME_GABARITO_JSON = "gabarito.json";
 
 const CABECALHO_PAGAMENTOS_CSV =
-  "codigo_transacao,referencia,valor,data_pagamento";
+  "codigo_transacao,referencia,valor,data_pagamento,meio_pagamento";
 
 const CABECALHO_RASTREIO_CSV =
   "codigo_evento,codigo_rastreio,pedido_venda,tipo,momento_fato,transportadora";

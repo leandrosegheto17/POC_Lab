@@ -4,6 +4,7 @@ import type {
   PayloadColetaV1,
   PayloadEntregaV1,
   PayloadPagamentoV1,
+  PayloadPagamentoV2,
   PayloadTransporteV1,
   PayloadVendaV1,
 } from "../../src/dominio/evento.js";
@@ -14,6 +15,7 @@ import type {
   TipoDivergencia,
   VinculoFonte,
 } from "../../src/dominio/modelo.js";
+import { calcularQuitacao } from "../../src/dominio/quitacao.js";
 
 const eventoVenda: Evento = {
   fonte: "vendas",
@@ -145,6 +147,102 @@ describe("união discriminada de evento", () => {
       referencia_original: "ref",
     };
     expect(pagamentoInvalido).toBeDefined();
+  });
+});
+
+describe("união discriminada de evento — pagamento v2 (TP-0074, aditivo)", () => {
+  const eventoPagamentoV2: Evento = {
+    fonte: "pagamentos",
+    codigoEvento: "evt-pagamento-v2-1",
+    momentoFato: "2026-01-01T10:06:00Z",
+    tipo: "pagamento",
+    versao_schema: 2,
+    valor: 30,
+    referencia_original: "ref-pedido-1",
+    meio_pagamento: "pix",
+  };
+
+  it("narrowing por tipo/versao_schema distingue pagamento v2 e expõe meio_pagamento", () => {
+    switch (eventoPagamentoV2.tipo) {
+      case "pagamento": {
+        if (eventoPagamentoV2.versao_schema === 2) {
+          const payload: PayloadPagamentoV2 = eventoPagamentoV2;
+          expect(typeof payload.valor).toBe("number");
+          expect(typeof payload.referencia_original).toBe("string");
+          expect(typeof payload.meio_pagamento).toBe("string");
+          expect(payload.meio_pagamento).toBe("pix");
+        } else {
+          throw new Error("esperava versao_schema 2 neste teste");
+        }
+        break;
+      }
+      default:
+        throw new Error(`tipo de evento inesperado: ${String(eventoPagamentoV2.tipo)}`);
+    }
+  });
+
+  it("não aceita meio_pagamento num payload de pagamento v1 (tipo errado)", () => {
+    // @ts-expect-error `meio_pagamento` só existe em PayloadPagamentoV2, não em PayloadPagamentoV1.
+    const pagamentoV1ComMeioPagamento: PayloadPagamentoV1 = {
+      tipo: "pagamento",
+      versao_schema: 1,
+      valor: 10,
+      referencia_original: "ref",
+      meio_pagamento: "pix",
+    };
+    expect(pagamentoV1ComMeioPagamento).toBeDefined();
+  });
+
+  it("mistura de pagamentos v1 e v2 produz o mesmo resultado de quitação que os valores equivalentes em v1", () => {
+    const devido = 200;
+
+    const eventosPagamentoMistos = [
+      {
+        fonte: "pagamentos",
+        codigoEvento: "evt-pg-v1-a",
+        momentoFato: "2026-01-01T10:01:00Z",
+        tipo: "pagamento",
+        versao_schema: 1,
+        valor: 100,
+        referencia_original: "ref-pedido-1",
+      } satisfies Evento,
+      {
+        fonte: "pagamentos",
+        codigoEvento: "evt-pg-v1-b",
+        momentoFato: "2026-01-01T10:02:00Z",
+        tipo: "pagamento",
+        versao_schema: 1,
+        valor: 50,
+        referencia_original: "ref-pedido-1",
+      } satisfies Evento,
+      {
+        fonte: "pagamentos",
+        codigoEvento: "evt-pg-v2-a",
+        momentoFato: "2026-01-01T10:03:00Z",
+        tipo: "pagamento",
+        versao_schema: 2,
+        valor: 30,
+        referencia_original: "ref-pedido-1",
+        meio_pagamento: "pix",
+      } satisfies Evento,
+      {
+        fonte: "pagamentos",
+        codigoEvento: "evt-pg-v2-b",
+        momentoFato: "2026-01-01T10:04:00Z",
+        tipo: "pagamento",
+        versao_schema: 2,
+        valor: 20,
+        referencia_original: "ref-pedido-1",
+        meio_pagamento: "cartao",
+      } satisfies Evento,
+    ];
+
+    const valoresExtraidos = eventosPagamentoMistos.map((evento) => evento.valor);
+
+    const resultadoMisto = calcularQuitacao(devido, valoresExtraidos);
+    const resultadoReferencia = calcularQuitacao(devido, [100, 50, 30, 20]);
+
+    expect(resultadoMisto).toEqual(resultadoReferencia);
   });
 });
 

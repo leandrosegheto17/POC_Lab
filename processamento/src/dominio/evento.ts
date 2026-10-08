@@ -14,15 +14,30 @@ export type PayloadVendaV1 = {
 /**
  * Payload de um pagamento, versão de schema 1.
  *
- * Nota: uma v2 com `meio_pagamento` é tarefa futura — não implementada aqui.
- * A união de payload abaixo (`PayloadEvento`) é aditiva, então a v2 pode ser
- * acrescentada como mais um membro da união sem alterar os existentes.
+ * Nota: a v2 com `meio_pagamento` existe como `PayloadPagamentoV2`, abaixo.
+ * A união de payload (`PayloadEvento`) é aditiva: a v2 entra como mais um
+ * membro da união sem alterar esta variante v1.
  */
 export type PayloadPagamentoV1 = {
   tipo: "pagamento";
   versao_schema: 1;
   valor: number;
   referencia_original: string;
+};
+
+/**
+ * Payload de um pagamento, versão de schema 2.
+ *
+ * Aditiva em relação a `PayloadPagamentoV1`: mesmos campos, mais
+ * `meio_pagamento`. O consumidor de saldo/quitação (RN-02, `quitacao.ts`)
+ * não precisa distinguir v1 de v2 — ambos expõem `valor` como número.
+ */
+export type PayloadPagamentoV2 = {
+  tipo: "pagamento";
+  versao_schema: 2;
+  valor: number;
+  referencia_original: string;
+  meio_pagamento: string;
 };
 
 /**
@@ -63,6 +78,7 @@ export type PayloadEntregaV1 = {
 export type PayloadEvento =
   | PayloadVendaV1
   | PayloadPagamentoV1
+  | PayloadPagamentoV2
   | PayloadColetaV1
   | PayloadTransporteV1
   | PayloadEntregaV1;

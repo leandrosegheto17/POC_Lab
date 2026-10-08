@@ -10,6 +10,7 @@ import { problema } from "./erros.js";
 import { handlerResumo } from "./rotas/resumo.js";
 import { rotaDivergencias } from "./rotas/divergencias.js";
 import { rotaLinhaDoTempo } from "./rotas/linha-do-tempo.js";
+import { rotaLinhaDoTempoV2 } from "./rotas/linha-do-tempo-v2.js";
 import { handlerIndicadores } from "./rotas/indicadores.js";
 import { handlerQualidade } from "./rotas/qualidade.js";
 
@@ -28,6 +29,10 @@ app.get("/api/v1/indicadores", handlerIndicadores);
 app.get("/api/v1/qualidade", handlerQualidade);
 app.route("/", rotaDivergencias);
 app.route("/", rotaLinhaDoTempo);
+// TP-0077 — única rota existente sob /api/v2 (CRÍTICO: nenhum prefixo
+// genérico /api/v2/* é registrado; qualquer outro caminho sob /api/v2/ cai
+// no app.notFound abaixo, TP-0042).
+app.route("/", rotaLinhaDoTempoV2);
 
 // Qualquer método diferente de GET/HEAD sob /api/* → 405 com `Allow`.
 // Hono deriva HEAD do GET automaticamente, por isso não aparece aqui.

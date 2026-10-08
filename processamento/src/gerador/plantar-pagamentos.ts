@@ -24,6 +24,19 @@ export const PROPORCAO_REPETIDO = 0.03;
 export const PROPORCAO_LINHA_INVALIDA = 0.03;
 export const PROPORCAO_FORA_DO_PADRAO = 0.05;
 
+/**
+ * Fração das linhas finais de `pagamentos.csv` (TP-0075) que recebe um valor
+ * de `meio_pagamento` (coluna opcional, aditiva — ver `PayloadPagamentoV2`
+ * em `dominio/evento.ts`). Aplicada por igual a QUALQUER linha final, sem
+ * distinção entre linha "limpa" e linha já alterada por algum dos casos
+ * plantados acima — por isso o sorteio roda só no final desta função, depois
+ * de todo o plantio já ter sido aplicado sobre `linhas`.
+ */
+export const PROPORCAO_COM_MEIO_PAGAMENTO = 0.4;
+
+/** Vocabulário fixo sorteado para a coluna `meio_pagamento` (TP-0075). */
+const MEIOS_PAGAMENTO = ["pix", "boleto", "cartao"] as const;
+
 /** Fração do valor devido usada na transação única do caso "parcial" (RN-04). */
 const FRACAO_PAGAMENTO_PARCIAL = 0.6;
 
@@ -96,6 +109,20 @@ function formatarLinhaCsv(
   dataPagamento: string,
 ): string {
   return `${codigoTransacao},${referencia},${formatarValor(valor)},${dataPagamento}`;
+}
+
+/**
+ * Sorteia, a partir do PRNG recebido, se uma linha final recebe
+ * `meio_pagamento` e, em caso positivo, qual dos 3 valores do vocabulário
+ * fixo (TP-0075). Devolve `null` quando a linha não recebe o campo (fica
+ * vazio no CSV, decodificado como v1 pelo adaptador).
+ */
+function sortearMeioPagamento(prng: () => number): string | null {
+  if (prng() >= PROPORCAO_COM_MEIO_PAGAMENTO) {
+    return null;
+  }
+  const indice = Math.floor(prng() * MEIOS_PAGAMENTO.length);
+  return MEIOS_PAGAMENTO[indice] as string;
 }
 
 /** Embaralha uma lista de forma determinística (Fisher-Yates) a partir do PRNG recebido, sem mutar a lista original. */
@@ -299,6 +326,23 @@ export function plantarCasosPagamento(
     }
     registrarGabarito(pedido.idPedido, "fora_padrao");
   }
+
+  // meio_pagamento (TP-0075): sorteado por igual sobre todas as linhas
+  // finais (base + plantadas), DEPOIS de todo o plantio acima já ter sido
+  // aplicado — cada linha final recebe uma 5ª coluna, vazia quando o sorteio
+  // não a seleciona. O sorteio é indexado por `codigo_transacao` (não 1
+  // sorteio por linha física): assim, as 2 linhas físicas do caso
+  // "repetido" (mesmo codigo_transacao de propósito) sempre recebem o MESMO
+  // valor, preservando a igualdade esperada entre as 2 ocorrências.
+  const meioPagamentoPorTransacao = new Map<string, string | null>();
+  linhas = linhas.map((linha) => {
+    const codigoTransacao = linha.split(",")[0] ?? "";
+    if (!meioPagamentoPorTransacao.has(codigoTransacao)) {
+      meioPagamentoPorTransacao.set(codigoTransacao, sortearMeioPagamento(prng));
+    }
+    const meioPagamento = meioPagamentoPorTransacao.get(codigoTransacao) ?? null;
+    return `${linha},${meioPagamento ?? ""}`;
+  });
 
   return { linhasCsv: linhas, gabarito };
 }

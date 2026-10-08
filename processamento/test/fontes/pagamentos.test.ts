@@ -159,4 +159,76 @@ TX-008,PV-000123,-50,2024-01-16
     // fora do padrão não impede a resolução de RN-09.
     expect(resultado.vinculos).toHaveLength(2);
   });
+
+  it("linha com meio_pagamento preenchido gera evento pagamento v2 com o campo (TP-0075)", () => {
+    const csv = `codigo_transacao,referencia,valor,data_pagamento,meio_pagamento
+TX-009,PV-000123,150.5,2024-01-15,pix
+`;
+    const codigosConhecidos = new Set(["123"]);
+
+    const resultado = processarPagamentos(csv, codigosConhecidos);
+
+    expect(resultado.achados).toEqual([]);
+    expect(resultado.eventos).toEqual([
+      {
+        fonte: "pagamentos",
+        codigoEvento: "TX-009",
+        momentoFato: new Date("2024-01-15").toISOString(),
+        tipo: "pagamento",
+        versao_schema: 2,
+        valor: 150.5,
+        referencia_original: "PV-000123",
+        meio_pagamento: "pix",
+      },
+    ]);
+  });
+
+  it("linha com meio_pagamento vazio (coluna presente, sem valor) gera evento pagamento v1 sem o campo (TP-0075)", () => {
+    const csv = `codigo_transacao,referencia,valor,data_pagamento,meio_pagamento
+TX-010,PV-000123,150.5,2024-01-15,
+`;
+    const codigosConhecidos = new Set(["123"]);
+
+    const resultado = processarPagamentos(csv, codigosConhecidos);
+
+    expect(resultado.achados).toEqual([]);
+    expect(resultado.eventos).toEqual([
+      {
+        fonte: "pagamentos",
+        codigoEvento: "TX-010",
+        momentoFato: new Date("2024-01-15").toISOString(),
+        tipo: "pagamento",
+        versao_schema: 1,
+        valor: 150.5,
+        referencia_original: "PV-000123",
+      },
+    ]);
+    expect(resultado.eventos[0]).not.toHaveProperty("meio_pagamento");
+  });
+
+  it("CSV misto (algumas linhas com meio_pagamento, outras sem) gera a versão correta para cada linha sem erro (TP-0075)", () => {
+    const csv = `codigo_transacao,referencia,valor,data_pagamento,meio_pagamento
+TX-011,PV-000123,100,2024-01-15,boleto
+TX-012,PV-000456,200,2024-01-16,
+TX-013,PV-000789,300,2024-01-17,cartao
+`;
+    const codigosConhecidos = new Set(["123", "456", "789"]);
+
+    const resultado = processarPagamentos(csv, codigosConhecidos);
+
+    expect(resultado.achados).toEqual([]);
+    expect(resultado.eventos).toHaveLength(3);
+    expect(resultado.eventos[0]).toMatchObject({
+      codigoEvento: "TX-011",
+      versao_schema: 2,
+      meio_pagamento: "boleto",
+    });
+    expect(resultado.eventos[1]).toMatchObject({ codigoEvento: "TX-012", versao_schema: 1 });
+    expect(resultado.eventos[1]).not.toHaveProperty("meio_pagamento");
+    expect(resultado.eventos[2]).toMatchObject({
+      codigoEvento: "TX-013",
+      versao_schema: 2,
+      meio_pagamento: "cartao",
+    });
+  });
 });

@@ -489,6 +489,47 @@ describe("plantarCasosPagamento", () => {
   });
 });
 
+describe("meio_pagamento (TP-0075)", () => {
+  const PEDIDOS_GRANDE = construirPedidosFixtureGrande(100);
+
+  it("com a semente padrão, uma fração determinística das linhas finais recebe meio_pagamento e a fração complementar fica vazia", () => {
+    const { plantio } = executarFluxoComPlantio(PEDIDOS_GRANDE, 20261007);
+
+    const comMeioPagamento = plantio.linhasCsv.filter(
+      (linha) => (linha.split(",")[4] ?? "") !== "",
+    );
+    const semMeioPagamento = plantio.linhasCsv.filter(
+      (linha) => (linha.split(",")[4] ?? "") === "",
+    );
+
+    expect(comMeioPagamento.length).toBeGreaterThan(0);
+    expect(semMeioPagamento.length).toBeGreaterThan(0);
+    for (const linha of comMeioPagamento) {
+      expect(["pix", "boleto", "cartao"]).toContain(linha.split(",")[4]);
+    }
+  });
+
+  it("2 execuções com a mesma semente produzem o mesmo CSV byte a byte, incluindo a coluna meio_pagamento", () => {
+    const resultado1 = executarFluxoComPlantio(PEDIDOS_GRANDE, 20261007);
+    const resultado2 = executarFluxoComPlantio(PEDIDOS_GRANDE, 20261007);
+
+    expect(resultado1.plantio.linhasCsv).toEqual(resultado2.plantio.linhasCsv);
+  });
+
+  it('caso "registro repetido": as 2 linhas duplicadas têm o mesmo valor de meio_pagamento, pois compartilham o mesmo codigo_transacao', () => {
+    const { plantio } = executarFluxoComPlantio(PEDIDOS_GRANDE, 20261007);
+
+    const entradas = plantio.gabarito.filter((entrada) => entrada.tipo === "registro_repetido");
+    expect(entradas.length).toBeGreaterThan(0);
+
+    for (const entrada of entradas) {
+      const linhas = linhasDoPedido(plantio.linhasCsv, entrada.pedido_venda);
+      expect(linhas.length).toBeGreaterThanOrEqual(2);
+      expect(linhas[0]?.[4]).toBe(linhas[1]?.[4]);
+    }
+  });
+});
+
 /**
  * Fixture grande (100 pedidos "limpos", todos COM envio) usada pelos testes
  * de `plantarCasosRastreio` (TP-0026): precisa ser grande o suficiente para

@@ -20,14 +20,17 @@ import type { AchadoQualidade, VinculoFonte } from "../dominio/modelo.js";
  * Linha crua do CSV de pagamentos, já convertida para objeto pelas colunas
  * do cabeçalho. Colunas obrigatórias podem vir ausentes/vazias quando a
  * linha é malformada — por isso tudo é opcional aqui; a validação de
- * obrigatoriedade acontece em `processarPagamentos`. Colunas extras (ex.
- * `meio_pagamento`, prevista para um lote futuro) são ignoradas.
+ * obrigatoriedade acontece em `processarPagamentos`. `meio_pagamento`
+ * (TP-0075) é opcional: quando presente e não vazia, o evento gerado é
+ * `PayloadPagamentoV2`; quando ausente/vazia, é `PayloadPagamentoV1` — ver
+ * `dominio/evento.ts`.
  */
 type LinhaPagamentoCsv = {
   codigo_transacao?: string;
   referencia?: string;
   valor?: string;
   data_pagamento?: string;
+  meio_pagamento?: string;
   [coluna: string]: string | undefined;
 };
 
@@ -91,6 +94,7 @@ export function processarPagamentos(
     const referencia = linha.referencia?.trim();
     const valorBruto = linha.valor?.trim();
     const dataPagamentoBruta = linha.data_pagamento?.trim();
+    const meioPagamento = linha.meio_pagamento?.trim();
 
     if (!codigoTransacao || !referencia || !valorBruto || !dataPagamentoBruta) {
       achados.push({
@@ -159,15 +163,26 @@ export function processarPagamentos(
       });
     }
 
-    const evento: Evento = {
-      fonte: "pagamentos",
-      codigoEvento: codigoTransacao,
-      momentoFato: dataPagamento.toISOString(),
-      tipo: "pagamento",
-      versao_schema: 1,
-      valor,
-      referencia_original: referencia,
-    };
+    const evento: Evento = meioPagamento
+      ? {
+          fonte: "pagamentos",
+          codigoEvento: codigoTransacao,
+          momentoFato: dataPagamento.toISOString(),
+          tipo: "pagamento",
+          versao_schema: 2,
+          valor,
+          referencia_original: referencia,
+          meio_pagamento: meioPagamento,
+        }
+      : {
+          fonte: "pagamentos",
+          codigoEvento: codigoTransacao,
+          momentoFato: dataPagamento.toISOString(),
+          tipo: "pagamento",
+          versao_schema: 1,
+          valor,
+          referencia_original: referencia,
+        };
     eventos.push(evento);
 
     const resultadoCasamento = casarReferencia(referencia, codigosConhecidos);
