@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 import "./TabelaDados.css";
 
 type TabelaDadosProps = {
@@ -12,6 +12,13 @@ type TabelaDadosProps = {
   /** Rótulo do contêiner rolável; default cobre o caso comum de rolagem
    * horizontal em telas estreitas. */
   rotuloRegiao?: string;
+  /**
+   * Ref opcional para o `<caption>` (TP-0060) — usada por telas que
+   * precisam mover o foco de teclado para ele programaticamente (ex.: ao
+   * trocar de página). Quando fornecida, o `<caption>` recebe
+   * `tabIndex={-1}` (focável só via `.focus()`, não pelo Tab).
+   */
+  refCaption?: Ref<HTMLTableCaptionElement>;
 };
 
 // TP-0054 — tabela de dados genérica e acessível.
@@ -25,6 +32,7 @@ export function TabelaDados({
   cabecalhos,
   children,
   rotuloRegiao = "Tabela com rolagem horizontal",
+  refCaption,
 }: TabelaDadosProps) {
   return (
     <div
@@ -34,7 +42,9 @@ export function TabelaDados({
       aria-label={rotuloRegiao}
     >
       <table className="tabela-dados">
-        <caption>{caption}</caption>
+        <caption ref={refCaption} tabIndex={refCaption ? -1 : undefined}>
+          {caption}
+        </caption>
         <thead>
           <tr>
             {cabecalhos.map((cabecalho) => (
