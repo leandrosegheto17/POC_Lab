@@ -341,3 +341,27 @@ APROVADA — G-12/G-08 cumpridos (sem HTML bruto, sem rede/log/segredo/dependên
 
 ## TP-0066 — DevSecOps — 2026-10-08
 APROVADA — 0 críticos, 0 não críticos; sem segredo (G-01), sem nome de terceiros (G-11), sem dependência nova, e o script `dev` usa `vite dev` sem host exposto (só localhost).
+
+## RTP-0011 — DevSecOps — 2026-10-08
+APROVADA; 0 críticos, 1 observação baixa (spread literal/createElement contornam o seletor, sem RTP); Foo e div com dangerouslySetInnerHTML falham, div sem prop passa, regra vale em todo .tsx/.jsx, fronteiras intactas.
+
+## RTP-0020 — DevSecOps — 2026-10-08
+APROVADA com débito - CSV malformado nunca vira pagamento válido nem aborta, sem any/I-O/dependência nova; 0 críticos, 2 baixos (erro.message do csv-parse expõe trecho do campo em `detalhe`; aspas abertas engolem linhas) -> RTP-0048 a abrir.
+
+## RTP-0039 — DevSecOps — 2026-10-08
+APROVADA — sem regressão de segurança em 94 arquivos (eslint.config/lockfile/deps intocados, 0 eslint-disable em src, nada em src/worker lê o arquivo de problemas plantados, sem padrões de risco novos); 0 críticos, 0 novos não críticos (RTP-0046 cobre a regra de fronteira).
+
+## RTP-0041 — DevSecOps — 2026-10-08
+APROVADA em segurança; 0 críticos, 0 não críticos; ALTER estático e idempotente, modelo só por parâmetro e fora dos documentos publicados, event store e esquema v1 intactos, sem dependência nova.
+
+## RTP-0042 — DevSecOps — 2026-10-08
+APROVADA em segurança; erros.ts não expõe stack/exceção/valor (só nome de campo), sem any/@ts-ignore, testes não enfraquecidos, sem dependência/lockfile; 0 críticos, 0 não críticos novos (1 observação informativa).
+
+## RTP-0043 — DevSecOps — 2026-10-08
+APROVADA; 0 achados; só teste alterado, dados sintéticos, sem asserção afrouxada e sem dependência nova.
+
+## RTP-0044 — DevSecOps — 2026-10-08
+RTP-0044 APROVADA em seguranca; 0 achados; foco e ref local, sem fetch/HTML dinamico/dependencia nova, params da URL seguem validados.
+
+## RTP-0045 — DevSecOps — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico informativo (sem RTP); .dev.vars.*, .env.local e .env.production ignorados, .env.example rastreado, nenhum segredo rastreado nem no histórico recente.
