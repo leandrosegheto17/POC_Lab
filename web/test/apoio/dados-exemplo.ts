@@ -47,76 +47,110 @@ export const DADOS_EXEMPLO: TabelasParaPublicacao = {
     { codigo: "PED-000002", fonte: "pedido", id_pedido: "PED-000002" },
   ],
 
+  // `dados` de cada linha é o payload v1 real do evento (`dominio/evento.ts`),
+  // igual ao que `importacao/importar.ts` grava na coluna `dados` do event
+  // store — necessário para que as rotas (TP-0046/48) consigam montar a
+  // resposta v1 de verdade a partir desta fixture.
   linha_do_tempo: [
     {
       id_pedido: "PED-000001",
       posicao: 0,
-      codigo_evento: "pedido_criado",
+      codigo_evento: "VENDA-0001",
       fonte: "vendas",
-      tipo: "fato",
-      momento_fato: "2026-01-01T10:00:00Z",
+      tipo: "venda",
+      momento_fato: "2026-01-01T10:00:00.000Z",
       versao_schema: 1,
-      dados: "{}",
+      dados: JSON.stringify({
+        tipo: "venda",
+        versao_schema: 1,
+        valor_devido: 100,
+        data_limite: "2026-01-10T00:00:00.000Z",
+        transportadora: "Transportadora 1",
+      }),
       fora_de_ordem: 0,
     },
     {
       id_pedido: "PED-000001",
       posicao: 1,
-      codigo_evento: "pagamento_recebido",
+      codigo_evento: "PAG-0001",
       fonte: "pagamentos",
-      tipo: "fato",
-      momento_fato: "2026-01-05T10:00:00Z",
+      tipo: "pagamento",
+      momento_fato: "2026-01-05T10:00:00.000Z",
       versao_schema: 1,
-      dados: "{}",
+      dados: JSON.stringify({
+        tipo: "pagamento",
+        versao_schema: 1,
+        valor: 100,
+        referencia_original: "PV-000001",
+      }),
       fora_de_ordem: 0,
     },
     {
       id_pedido: "PED-000002",
       posicao: 0,
-      codigo_evento: "pedido_criado",
+      codigo_evento: "VENDA-0002",
       fonte: "vendas",
-      tipo: "fato",
-      momento_fato: "2026-02-01T10:00:00Z",
+      tipo: "venda",
+      momento_fato: "2026-02-01T10:00:00.000Z",
       versao_schema: 1,
-      dados: "{}",
+      dados: JSON.stringify({
+        tipo: "venda",
+        versao_schema: 1,
+        valor_devido: 250.5,
+        data_limite: "2026-02-15T00:00:00.000Z",
+        transportadora: "Transportadora 2",
+      }),
       fora_de_ordem: 0,
     },
   ],
 
-  // 5 linhas para o mesmo id_pedido (PED-000002), uma por `tipo` distinto —
-  // a PK de `divergencia` é `(tipo, id_pedido)`. Suficiente para simular
-  // mais de uma "página" nos testes de paginação das rotas futuras (a
-  // paginação em si é lógica da rota, não deste arquivo).
+  // 5 linhas para o mesmo id_pedido (PED-000002), uma por `tipo` real de
+  // `TipoDivergencia` (`dominio/modelo.ts`) — a PK de `divergencia` é
+  // `(tipo, id_pedido)`. `eventos` é o JSON de `{tipo, data, fonte, codigo}`
+  // que a projeção real (`publicacao/divergencias.ts`) produz, não uma
+  // lista de strings cruas — necessário para passar em
+  // `EsquemaRespostaDivergencias`/`EsquemaEventoDivergencia` (TP-0030).
   divergencia: [
     {
-      tipo: "valor_divergente",
+      tipo: "duplicado",
       id_pedido: "PED-000002",
-      motivo: "Valor devido não bate entre vendas e pagamentos.",
-      eventos: "[\"EV-0001\"]",
+      motivo: "Duas transações de valor integral pagaram mais que o devido.",
+      eventos: JSON.stringify([
+        { tipo: "pagamento", data: "2026-02-03T10:00:00.000Z", fonte: "pagamentos", codigo: "PAG-0002" },
+        { tipo: "pagamento", data: "2026-02-04T10:00:00.000Z", fonte: "pagamentos", codigo: "PAG-0003" },
+      ]),
     },
     {
-      tipo: "data_divergente",
+      tipo: "parcial",
       id_pedido: "PED-000002",
-      motivo: "Data limite informada por fontes diferentes não coincide.",
-      eventos: "[\"EV-0002\"]",
+      motivo: "Pago R$100 de R$250,5 devido.",
+      eventos: JSON.stringify([
+        { tipo: "pagamento", data: "2026-02-03T10:00:00.000Z", fonte: "pagamentos", codigo: "PAG-0002" },
+      ]),
     },
     {
-      tipo: "fonte_duplicada",
+      tipo: "pago_nao_enviado",
       id_pedido: "PED-000002",
-      motivo: "Mesmo evento relatado por duas fontes distintas.",
-      eventos: "[\"EV-0003\", \"EV-0004\"]",
+      motivo: "Pedido quitado sem evento de coleta até a data de corte.",
+      eventos: JSON.stringify([
+        { tipo: "venda", data: "2026-02-01T10:00:00.000Z", fonte: "vendas", codigo: "VENDA-0002" },
+      ]),
     },
     {
-      tipo: "status_inconsistente",
+      tipo: "enviado_nao_pago",
       id_pedido: "PED-000002",
-      motivo: "Situação de pagamento conflita entre fontes.",
-      eventos: "[\"EV-0005\"]",
+      motivo: "Evento de coleta sem nenhum pagamento vinculado.",
+      eventos: JSON.stringify([
+        { tipo: "coleta", data: "2026-02-05T10:00:00.000Z", fonte: "rastreio", codigo: "RS-000002" },
+      ]),
     },
     {
-      tipo: "documento_ausente",
+      tipo: "entrega_atrasada",
       id_pedido: "PED-000002",
-      motivo: "Documento de referência citado, mas não encontrado.",
-      eventos: "[\"EV-0006\"]",
+      motivo: "Entrega em 2026-02-20 após a data limite 2026-02-15.",
+      eventos: JSON.stringify([
+        { tipo: "entrega", data: "2026-02-20T10:00:00.000Z", fonte: "rastreio", codigo: "RS-000002" },
+      ]),
     },
   ],
 

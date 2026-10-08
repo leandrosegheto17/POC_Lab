@@ -7,13 +7,27 @@
 import { Hono } from "hono";
 import { cabecalhos } from "./cabecalhos.js";
 import { problema } from "./erros.js";
+import { handlerResumo } from "./rotas/resumo.js";
+import { rotaDivergencias } from "./rotas/divergencias.js";
+import { rotaLinhaDoTempo } from "./rotas/linha-do-tempo.js";
+import { handlerIndicadores } from "./rotas/indicadores.js";
+import { handlerQualidade } from "./rotas/qualidade.js";
 
-const app = new Hono();
+const app = new Hono<{ Bindings: { DB: D1Database } }>();
 
 // Cabeçalhos de segurança/cache em toda resposta — registrado primeiro,
 // para envolver qualquer resposta produzida mais abaixo (incluindo as de
 // erro do onError/notFound).
 app.use("*", cabecalhos);
+
+// Rotas de negócio (Lote 9) — registradas ANTES do catch-all de método não
+// permitido abaixo, para que POST/PUT/etc. nessas rotas caiam no 405 e não
+// no 404 genérico (ordem de registro importa no Hono).
+app.get("/api/v1/resumo", handlerResumo);
+app.get("/api/v1/indicadores", handlerIndicadores);
+app.get("/api/v1/qualidade", handlerQualidade);
+app.route("/", rotaDivergencias);
+app.route("/", rotaLinhaDoTempo);
 
 // Qualquer método diferente de GET/HEAD sob /api/* → 405 com `Allow`.
 // Hono deriva HEAD do GET automaticamente, por isso não aparece aqui.
