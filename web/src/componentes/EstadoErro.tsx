@@ -1,3 +1,4 @@
+import { useRef, type RefObject } from "react";
 import { IconeErro } from "./icones/IconeErro.tsx";
 
 type EstadoErroProps = {
@@ -11,23 +12,31 @@ type EstadoErroProps = {
    * segundo `role="alert"` aninhado seria redundante/competiria com ela.
    */
   interrompe?: boolean;
+  /** Região de conteúdo da tela-mãe (precisa de tabIndex=-1) que recebe o foco. */
+  regiaoFoco?: RefObject<HTMLElement | null>;
 };
 
 // TP-0053 — estado de erro.
 //
-// Devolução de foco ao container no "Tentar de novo" (TP-0053) desativada —
-// POC não precisa de suporte a leitor de tela.
+// "Tentar de novo" devolve o foco à região de conteúdo (a externa, se a
+// tela-mãe passar `regiaoFoco`; senão o próprio container, com tabIndex=-1) e
+// chama o callback; a tela-mãe então troca para `EstadoCarregando`, e a região
+// aria-live reanuncia "Carregando…".
 export function EstadoErro({
   mensagem,
   onTentarDeNovo,
   interrompe = true,
+  regiaoFoco,
 }: EstadoErroProps) {
+  const ref = useRef<HTMLDivElement>(null);
+
   function aoClicarTentarDeNovo() {
+    (regiaoFoco?.current ?? ref.current)?.focus();
     onTentarDeNovo();
   }
 
   return (
-    <div role={interrompe ? "alert" : undefined}>
+    <div ref={ref} tabIndex={-1} role={interrompe ? "alert" : undefined}>
       <IconeErro />
       <span>{mensagem}</span>
       <button

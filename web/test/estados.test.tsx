@@ -1,3 +1,4 @@
+import { createRef } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react";
 import { axe } from "vitest-axe";
@@ -104,6 +105,34 @@ describe("EstadoErro", () => {
     fireEvent.click(getByRole("button", { name: "Tentar de novo" }));
 
     expect(onTentarDeNovo).toHaveBeenCalledTimes(1);
+  });
+
+  it("clique em Tentar de novo move o foco para a região (própria)", () => {
+    const { getByRole } = render(
+      <EstadoErro mensagem="Falha ao carregar" onTentarDeNovo={vi.fn()} />,
+    );
+
+    fireEvent.click(getByRole("button", { name: "Tentar de novo" }));
+
+    expect(getByRole("alert")).toHaveFocus();
+  });
+
+  it("clique em Tentar de novo move o foco para a região externa (regiaoFoco)", () => {
+    const ref = createRef<HTMLDivElement>();
+    const { getByRole, getByTestId } = render(
+      <div>
+        <div ref={ref} tabIndex={-1} data-testid="regiao" />
+        <EstadoErro
+          mensagem="Falha ao carregar"
+          onTentarDeNovo={vi.fn()}
+          regiaoFoco={ref}
+        />
+      </div>,
+    );
+
+    fireEvent.click(getByRole("button", { name: "Tentar de novo" }));
+
+    expect(getByTestId("regiao")).toHaveFocus();
   });
 
   it("não quebra com mensagem vazia", () => {
