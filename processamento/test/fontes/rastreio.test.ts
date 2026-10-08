@@ -153,6 +153,26 @@ describe("processarRastreio", () => {
     expect(resultado.vinculos).toEqual([]);
   });
 
+  it("gera linha_invalida (campos_obrigatorios) para linha truncada e processa as seguintes, sem lançar exceção", () => {
+    const csv = [
+      cabecalho,
+      "evt-1,RS-000001,ped-1,coleta",
+      "evt-2,RS-000002,ped-2,entrega,2026-01-02T10:00:00Z,Transportadora Y",
+    ].join("\n");
+
+    const resultado = processarRastreio(csv);
+
+    expect(resultado.achados).toHaveLength(1);
+    expect(resultado.achados[0]).toMatchObject({
+      tipo: "linha_invalida",
+      fonte: "rastreio",
+      regra: "campos_obrigatorios",
+    });
+    expect(resultado.eventos).toHaveLength(1);
+    expect(resultado.eventos[0]!.codigoEvento).toBe("evt-2");
+    expect(resultado.eventos[0]!.ordemChegada).toBe(1);
+  });
+
   it("gera achado registro_repetido para codigo_evento duplicado, sem duplicar vínculo/evento", () => {
     const csv = [
       cabecalho,

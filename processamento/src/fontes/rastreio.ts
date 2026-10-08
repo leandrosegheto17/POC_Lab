@@ -63,6 +63,7 @@ export function processarRastreio(
   const linhas: LinhaRastreioCsv[] = parse(conteudoCsv, {
     columns: true,
     skip_empty_lines: true,
+    relax_column_count: true,
   });
 
   const vinculos: VinculoFonte[] = [];
