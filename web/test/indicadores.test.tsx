@@ -434,6 +434,32 @@ describe("Indicadores — Divergências por tipo", () => {
     );
     expect(itens[0].textContent).toBe("Entrega atrasada4");
   });
+
+  it("rótulo desconhecido vira texto sem link (tabela e lista do celular)", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () =>
+          respostaIndicadoresValida({
+            divergencias: blocoDivergenciasPorTipo({
+              linhas: [
+                linha("duplicado", 2, 3, 0.67),
+                linha("tipo_inexistente", 1, 3, 0.33),
+              ],
+            }),
+          }),
+      }),
+    );
+
+    renderizar();
+    const secao = await secaoDoBloco("Divergências por tipo");
+
+    expect(secao.querySelectorAll("a")).toHaveLength(2); // só "duplicado" (tabela + lista)
+    expect(
+      secao.querySelector('a[href*="tipo_inexistente"]'),
+    ).toBeNull();
+    expect(within(secao).getAllByText("tipo_inexistente")).toHaveLength(2);
+  });
 });
 
 describe("Indicadores — erro 5xx/rede/timeout", () => {

@@ -256,8 +256,22 @@ function EtiquetaOuTexto({ rotulo }: { rotulo: string }) {
   );
 }
 
-function linkDoTipo(rotulo: string): string {
-  return `/?tipo=${encodeURIComponent(rotulo)}`;
+function linkDoTipo(rotulo: string): string | null {
+  return TIPOS_CONHECIDOS.includes(rotulo)
+    ? `/?tipo=${encodeURIComponent(rotulo)}`
+    : null;
+}
+
+/** Link só para tipo da enumeração; rótulo desconhecido vira texto. */
+function TipoComLink({ rotulo }: { rotulo: string }) {
+  const destino = linkDoTipo(rotulo);
+  return destino === null ? (
+    <EtiquetaOuTexto rotulo={rotulo} />
+  ) : (
+    <Link to={destino}>
+      <EtiquetaOuTexto rotulo={rotulo} />
+    </Link>
+  );
 }
 
 /**
@@ -291,9 +305,7 @@ export function BlocoDivergenciasPorTipo({ bloco }: { bloco: BlocoIndicador }) {
           {ordenadas.map((linha) => (
             <tr key={linha.rotulo}>
               <td>
-                <Link to={linkDoTipo(linha.rotulo)}>
-                  <EtiquetaOuTexto rotulo={linha.rotulo} />
-                </Link>
+                <TipoComLink rotulo={linha.rotulo} />
               </td>
               <td className="num">{formatarNumero(linha.numerador)}</td>
             </tr>
@@ -304,9 +316,7 @@ export function BlocoDivergenciasPorTipo({ bloco }: { bloco: BlocoIndicador }) {
       <ul className="indicador__lista-tipos indicador__so-celular">
         {ordenadas.map((linha) => (
           <li key={linha.rotulo}>
-            <Link to={linkDoTipo(linha.rotulo)}>
-              <EtiquetaOuTexto rotulo={linha.rotulo} />
-            </Link>
+            <TipoComLink rotulo={linha.rotulo} />
             <span className="mono">{formatarNumero(linha.numerador)}</span>
           </li>
         ))}
