@@ -323,7 +323,7 @@ describe("LinhaDoTempo — depois da data escolhida", () => {
     const { container } = render(
       <LinhaDoTempo
         eventos={[eventoVenda(), eventoPagamento()]}
-        dataEscolhida="2026-10-01T23:59:59.999Z"
+        dataEscolhida="2026-10-01"
       />,
     );
 
@@ -336,6 +336,16 @@ describe("LinhaDoTempo — depois da data escolhida", () => {
     expect(pagamento.querySelector(".evento__linha--pc")).toBeNull();
     expect(pagamento.querySelector(".evento__linha--celular")).toBeNull();
     expect(screen.getAllByText("depois da data escolhida")).toHaveLength(1);
+  });
+
+  it("evento no próprio dia escolhido (AAAA-MM-DD) não é atenuado", () => {
+    const { container } = render(
+      <LinhaDoTempo eventos={[eventoVenda()]} dataEscolhida="2026-10-01" />,
+    );
+
+    const venda = obrigatorio(cartoes(container)[0], "cartão de venda");
+    expect(venda).not.toHaveClass("evento--depois");
+    expect(screen.queryByText("depois da data escolhida")).toBeNull();
   });
 });
 
