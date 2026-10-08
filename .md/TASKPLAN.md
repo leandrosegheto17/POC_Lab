@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-08 12:35
+Atualizado: 2026-10-08 12:45
 
-Resumo: Não executada 22 · Em execução 3 · Executada (aguarda teste) 18 · Testada (aguarda segurança) 64 · total 107
+Resumo: Não executada 27 · Em execução 3 · Executada (aguarda teste) 8 · Testada (aguarda segurança) 74 · total 112
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -17,29 +17,29 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 2 | TP-0002 | executor | ✔ | ESLint 9 com fronteiras de módulo e proibições | Lote 1 | TP-0001 | Em execução |
 | 3 | TP-0003 | executor | ✔ | Pacote web vazio: Vite, React 19, React Router, Vitest jsdom, Testing Library, vitest-axe | Lote 1 | TP-0001 | Testada (aguarda segurança) |
 | 4 | TP-0004 | executor | ✔ | CLI baixar-base com URL fixada em commit e SHA-256 | Lote 1 | TP-0001 | Testada (aguarda segurança) |
-| 5 | TP-0005 | executor | ✔ | CI no GitHub Actions | Lote 1 | TP-0002, TP-0003, TP-0004 | Executada (aguarda teste) |
+| 5 | TP-0005 | executor | ✔ | CI no GitHub Actions | Lote 1 | TP-0002, TP-0003, TP-0004 | Testada (aguarda segurança) |
 | 6 | TP-0006 | executor | ✔ | Contrato de evento v1 e tipos do modelo comum | Lote 2 | TP-0001 | Testada (aguarda segurança) |
 | 7 | TP-0007 | executor | ✔ | RN-07 ordenação canônica dos eventos | Lote 2 | TP-0006 | Testada (aguarda segurança) |
 | 8 | TP-0008 | executor | ✔ | RN-01 valor devido do pedido | Lote 2 | TP-0006 | Testada (aguarda segurança) |
 | 9 | TP-0009 | executor | ✔ | RN-02 quitação e saldo do pedido | Lote 2 | TP-0006 | Testada (aguarda segurança) |
-| 10 | TP-0010 | executor | ✔ | RN-09 normalização e casamento da referência de pagamento | Lote 2 | TP-0006 | Executada (aguarda teste) |
+| 10 | TP-0010 | executor | ✔ | RN-09 normalização e casamento da referência de pagamento | Lote 2 | TP-0006 | Testada (aguarda segurança) |
 | 11 | TP-0011 | executor | ✔ | RN-10 valores fora do padrão | Lote 2 | TP-0006 | Executada (aguarda teste) |
 | 12 | TP-0012 | executor | ✔ | Estado derivado do pedido até uma data | Lote 3 | TP-0007, TP-0009 | Testada (aguarda segurança) |
 | 13 | TP-0013 | executor | ✔ | RN-08 eventos recebidos fora de ordem | Lote 3 | TP-0007 | Testada (aguarda segurança) |
 | 14 | TP-0014 | executor | ✔ | RN-03 pagamento duplicado | Lote 3 | TP-0009 | Testada (aguarda segurança) |
 | 15 | TP-0015 | executor | ✔ | RN-04 pagamento parcial | Lote 3 | TP-0009 | Testada (aguarda segurança) |
-| 16 | TP-0016 | executor | ✔ | RN-05 pago e não enviado / enviado e não pago, com data de corte RN-14 | Lote 3 | TP-0012 | Executada (aguarda teste) |
+| 16 | TP-0016 | executor | ✔ | RN-05 pago e não enviado / enviado e não pago, com data de corte RN-14 | Lote 3 | TP-0012 | Testada (aguarda segurança) |
 | 17 | TP-0017 | executor | ✔ | RN-06 entrega atrasada | Lote 3 | TP-0006 | Executada (aguarda teste) |
 | 18 | TP-0018 | executor | ✔ | Schema do event store e repositório SQLite idempotente | Lote 4 | TP-0006 | Testada (aguarda segurança) |
 | 19 | TP-0019 | executor | ✔ | Leitura somente leitura da base de vendas e normalização das datas | Lote 4 | TP-0004, TP-0006 | Testada (aguarda segurança) |
 | 20 | TP-0020 | executor | ✔ | Adaptador de vendas: vínculos, evento venda e achados | Lote 4 | TP-0008, TP-0011, TP-0019 | Testada (aguarda segurança) |
 | 21 | TP-0021 | executor | ✔ | Adaptador de pagamentos.csv | Lote 4 | TP-0010, TP-0011 | Testada (aguarda segurança) |
-| 22 | TP-0022 | executor | ✔ | Adaptador de rastreio.csv | Lote 4 | TP-0006 | Executada (aguarda teste) |
+| 22 | TP-0022 | executor | ✔ | Adaptador de rastreio.csv | Lote 4 | TP-0006 | Testada (aguarda segurança) |
 | 23 | TP-0023 | executor | ✔ | Gerador base: PRNG com semente, pedidos limpos, pagamentos.csv sem problemas e CLI gerar | Lote 5 | TP-0019 | Testada (aguarda segurança) |
 | 24 | TP-0024 | executor | ✔ | Gerador base: rastreio.csv sem problemas | Lote 5 | TP-0023 | Testada (aguarda segurança) |
 | 25 | TP-0025 | executor | ✔ | Gerador: plantar casos de pagamento | Lote 5 | TP-0023 | Testada (aguarda segurança) |
 | 26 | TP-0026 | executor | ✔ | Gerador: plantar casos de rastreio | Lote 5 | TP-0024 | Testada (aguarda segurança) |
-| 27 | TP-0027 | executor | ✔ | Caso de uso importar com identidade própria e CLI | Lote 5 | TP-0018, TP-0020, TP-0021, TP-0022 | Executada (aguarda teste) |
+| 27 | TP-0027 | executor | ✔ | Caso de uso importar com identidade própria e CLI | Lote 5 | TP-0018, TP-0020, TP-0021, TP-0022 | Testada (aguarda segurança) |
 | 28 | TP-0028 | executor | ✔ | Lista de divergências do pedido e teste de M1 contra o gabarito | Lote 5 | TP-0014, TP-0015, TP-0016, TP-0017, TP-0025, TP-0026, TP-0027 | Executada (aguarda teste) |
 | 29 | TP-0029 | executor | ✔ | Contrato base da API: erro RFC 9457, paginação, parâmetros e normalização do código | Lote 6 | TP-0006 | Testada (aguarda segurança) |
 | 30 | TP-0030 | executor | ✔ | Esquemas de resposta v1: resumo, divergências e linha do tempo | Lote 6 | TP-0029 | Testada (aguarda segurança) |
@@ -49,20 +49,20 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 34 | TP-0034 | executor | ✔ | Totais do resumo no domínio (cartões da T1) | Lote 7 | TP-0033 | Testada (aguarda segurança) |
 | 35 | TP-0035 | executor | ✔ | Projeção de pedido_resumo e vinculo_codigo | Lote 7 | TP-0027, TP-0029, TP-0032 | Testada (aguarda segurança) |
 | 36 | TP-0036 | executor | ✔ | Projeção de linha_do_tempo | Lote 7 | TP-0013, TP-0027, TP-0032 | Testada (aguarda segurança) |
-| 37 | TP-0037 | executor | ✔ | Projeção de divergencia | Lote 7 | TP-0028, TP-0032 | Executada (aguarda teste) |
+| 37 | TP-0037 | executor | ✔ | Projeção de divergencia | Lote 7 | TP-0028, TP-0032 | Testada (aguarda segurança) |
 | 38 | TP-0038 | executor | ✔ | Projeção do documento qualidade | Lote 7 | TP-0013, TP-0027, TP-0031, TP-0032 | Executada (aguarda teste) |
 | 39 | TP-0039 | executor | ✔ | Projeção dos documentos resumo e indicadores | Lote 7 | TP-0030, TP-0031, TP-0032, TP-0033, TP-0034 | Executada (aguarda teste) |
 | 40 | TP-0040 | executor | ✔ | Escritor do arquivo leitura.sql | Lote 8 | TP-0032 | Testada (aguarda segurança) |
 | 41 | TP-0041 | executor | ✔ | Esqueleto do Worker e pnpm dev com site + API | Lote 8 | TP-0003 | Testada (aguarda segurança) |
 | 42 | TP-0042 | executor | ✔ | Erros centrais e cabeçalhos da API | Lote 8 | TP-0029, TP-0041 | Testada (aguarda segurança) |
 | 43 | TP-0043 | executor | ✔ | D1 de teste sobre node:sqlite | Lote 8 | TP-0040, TP-0041 | Testada (aguarda segurança) |
-| 44 | TP-0044 | executor | ✔ | CLI publicar-dados: escreve leitura.sql e carrega o D1 local | Lote 8 | TP-0035, TP-0036, TP-0037, TP-0038, TP-0039, TP-0040, TP-0041 | Executada (aguarda teste) |
+| 44 | TP-0044 | executor | ✔ | CLI publicar-dados: escreve leitura.sql e carrega o D1 local | Lote 8 | TP-0035, TP-0036, TP-0037, TP-0038, TP-0039, TP-0040, TP-0041 | Testada (aguarda segurança) |
 | 45 | TP-0045 | executor | ✔ | pnpm preparar de ponta a ponta | Lote 8 | TP-0004, TP-0024, TP-0025, TP-0026, TP-0027, TP-0044 | Executada (aguarda teste) |
 | 46 | TP-0046 | executor | ✔ | Endpoint GET /api/v1/resumo | Lote 9 | TP-0030, TP-0042, TP-0043 | Testada (aguarda segurança) |
 | 47 | TP-0047 | executor | ✔ | Endpoint GET /api/v1/divergencias | Lote 9 | TP-0030, TP-0042, TP-0043 | Testada (aguarda segurança) |
 | 48 | TP-0048 | executor | ✔ | Endpoint GET /api/v1/pedidos/{codigo}/linha-do-tempo | Lote 9 | TP-0030, TP-0042, TP-0043 | Testada (aguarda segurança) |
 | 49 | TP-0049 | executor | ✔ | Endpoint GET /api/v1/indicadores | Lote 9 | TP-0031, TP-0042, TP-0043 | Testada (aguarda segurança) |
-| 50 | TP-0050 | executor | ✔ | Endpoint GET /api/v1/qualidade | Lote 9 | TP-0031, TP-0042, TP-0043 | Executada (aguarda teste) |
+| 50 | TP-0050 | executor | ✔ | Endpoint GET /api/v1/qualidade | Lote 9 | TP-0031, TP-0042, TP-0043 | Testada (aguarda segurança) |
 | 51 | TP-0051 | executor | ✔ | Tokens do Modelo B e fontes auto-hospedadas | Lote 10 | TP-0003 | Testada (aguarda segurança) |
 | 52 | TP-0052 | executor | ✔ | clienteApi e gancho useConsulta | Lote 10 | TP-0003, TP-0029 | Testada (aguarda segurança) |
 | 53 | TP-0053 | executor | ✔ | Componentes de estado | Lote 10 | TP-0003 | Em execução |
@@ -90,33 +90,38 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 75 | TP-0075 | executor | ✔ | Gerador e adaptador de pagamentos com meio_pagamento opcional | Lote 17 | TP-0021, TP-0025, TP-0074 | Testada (aguarda segurança) |
 | 76 | TP-0076 | executor | ✔ | Contrato: esquema da linha do tempo v2 | Lote 17 | TP-0030, TP-0074 | Testada (aguarda segurança) |
 | 77 | TP-0077 | executor | ✔ | Endpoint GET /api/v2/pedidos/{codigo}/linha-do-tempo | Lote 17 | TP-0048, TP-0076 | Testada (aguarda segurança) |
-| 78 | TP-0078 | executor | ✔ | Teste validação: contrato v1 e v2 e demonstração no README | Lote 17 | TP-0075, TP-0077 | Executada (aguarda teste) |
+| 78 | TP-0078 | executor | ✔ | Teste validação: contrato v1 e v2 e demonstração no README | Lote 17 | TP-0075, TP-0077 | Testada (aguarda segurança) |
 | 79 | TP-0079 | executor | ✔ | Tabela cache_ia no event store | Lote 18 | TP-0018 | Testada (aguarda segurança) |
 | 80 | TP-0080 | executor | ✔ | RN-11 conferência da sugestão | Lote 18 | TP-0009 | Testada (aguarda segurança) |
 | 81 | TP-0081 | executor | ✔ | Porta ProvedorSugestao, provedor falso e caso de uso sugerir | Lote 18 | TP-0027, TP-0079, TP-0080 | Testada (aguarda segurança) |
 | 82 | TP-0082 | executor | ✔ | Provedor de IA via fetch | Lote 18 | TP-0081 | Testada (aguarda segurança) |
-| 83 | TP-0083 | executor | ✔ | CLI sugerir no preparar | Lote 18 | TP-0045, TP-0081 | Executada (aguarda teste) |
+| 83 | TP-0083 | executor | ✔ | CLI sugerir no preparar | Lote 18 | TP-0045, TP-0081 | Testada (aguarda segurança) |
 | 84 | TP-0084 | executor | ✔ | Projeção: sugestões no documento qualidade | Lote 18 | TP-0038, TP-0081 | Executada (aguarda teste) |
 | 85 | TP-0085 | executor | ✔ | T4: seção "Sugestões da IA" | Lote 18 | TP-0064, TP-0084 | Executada (aguarda teste) |
 | 86 | RTP-0001 | executor | ✔ | Corrigir erros de typecheck em processamento/test/dominio/evento.test.ts após pagamento v2 | Refatoração Lote-17 | TP-0074 | Não executada |
 | 87 | RTP-0002 | executor | ✔ | Deixar pnpm typecheck verde no pacote processamento (tsconfig base e testes) | Refatoração Lote-1 | TP-0001 | Não executada |
 | 88 | RTP-0011 | executor | ✔ | Cobrir dangerouslySetInnerHTML em componentes JSX customizados no ESLint | Refatoração Lote-1 | TP-0002 | Não executada |
-| 89 | RTP-0003 | executor | ✔ | Trocar a URL placeholder do link 'Como foi feito' pelo repositório real | Refatoração Lote-11 | TP-0055 | Não executada |
-| 90 | RTP-0018 | executor | ✔ | Teste axe do CampoBusca dentro da Casca | Refatoração Lote-11 | TP-0057 | Não executada |
-| 91 | RTP-0004 | executor | ✔ | Teste de Cache-Control no 200 de GET /api/v1/resumo | Refatoração Lote-9 | TP-0046 | Não executada |
-| 92 | RTP-0014 | executor | ✔ | Teste de rota: % e ; em código inválido devolvem 400 parametro_invalido | Refatoração Lote-9 | TP-0048 | Não executada |
-| 93 | RTP-0022 | executor | ✔ | Cobrir Cache-Control e HEAD de /api/v1/indicadores na app real | Refatoração Lote-9 | TP-0049 | Não executada |
-| 94 | RTP-0005 | executor | ✔ | LinhaDoTempo: texto 'chegou fora de ordem' e valor em mono na grade (achado QA TP-0061) | Refatoração Lote-13 | TP-0061 | Não executada |
-| 95 | RTP-0017 | executor | ✔ | Validar /?tipo= do bloco Divergências por tipo contra TipoDivergencia | Refatoração Lote-13 | TP-0063 | Não executada |
-| 96 | RTP-0006 | executor | ✔ | Nomear teste de ordenação como 'validação: ordenação' (G-07) | Refatoração Lote-2 | TP-0007 | Não executada |
-| 97 | RTP-0019 | executor | ✔ | Quitação: tolerância de R$ 0,01 robusta a ponto flutuante | Refatoração Lote-2 | TP-0009 | Não executada |
-| 98 | RTP-0007 | executor | ✔ | Endurecer asserções do teste de leitura-vendas (curto/longo e somente leitura) | Refatoração Lote-4 | TP-0019 | Não executada |
-| 99 | RTP-0020 | executor | ✔ | Pagamentos: aspas quebradas no CSV viram linha_invalida sem abortar | Refatoração Lote-4 | TP-0021 | Não executada |
-| 100 | RTP-0008 | executor | ✔ | rastreio.csv: repassar 'Transportadora N' em vez do código cru de ShipVia | Refatoração Lote-5 | TP-0024 | Não executada |
-| 101 | RTP-0009 | executor | ✔ | Tolerância de R$ 0,01 em conferirSugestao sensível a ponto flutuante | Refatoração Lote-18 | TP-0080 | Não executada |
-| 102 | RTP-0021 | executor | ✔ | Timeout na chamada do provedor de IA | Refatoração Lote-18 | TP-0082 | Não executada |
-| 103 | RTP-0010 | executor | ✔ | Ajustar web/tsconfig.json para o typecheck do Worker (tipos Cloudflare e extensão .ts) | Refatoração Lote-8 | TP-0041 | Não executada |
-| 104 | RTP-0012 | executor | ✔ | clienteApi: 5xx sem corpo RFC 9457 deve mostrar a mensagem de indisponível | Refatoração Lote-10 | TP-0052 | Não executada |
-| 105 | RTP-0013 | executor | ✔ | T2: incluir eventos do próprio dia escolhido no estado em uma data | Refatoração Lote-16 | TP-0073 | Não executada |
-| 106 | RTP-0015 | executor | ✔ | T1 paginação: foco no caption e anúncio 'página X de Y' | Refatoração Lote-12 | TP-0060 | Não executada |
-| 107 | RTP-0016 | executor | ✔ | Tipar os casos negativos de qualidade em respostas-v1.test.ts | Refatoração Lote-6 | TP-0031 | Não executada |
+| 89 | RTP-0023 | executor | ✔ | Confirmar execução verde do CI no GitHub | Refatoração Lote-1 | TP-0005 | Não executada |
+| 90 | RTP-0003 | executor | ✔ | Trocar a URL placeholder do link 'Como foi feito' pelo repositório real | Refatoração Lote-11 | TP-0055 | Não executada |
+| 91 | RTP-0018 | executor | ✔ | Teste axe do CampoBusca dentro da Casca | Refatoração Lote-11 | TP-0057 | Não executada |
+| 92 | RTP-0004 | executor | ✔ | Teste de Cache-Control no 200 de GET /api/v1/resumo | Refatoração Lote-9 | TP-0046 | Não executada |
+| 93 | RTP-0014 | executor | ✔ | Teste de rota: % e ; em código inválido devolvem 400 parametro_invalido | Refatoração Lote-9 | TP-0048 | Não executada |
+| 94 | RTP-0022 | executor | ✔ | Cobrir Cache-Control e HEAD de /api/v1/indicadores na app real | Refatoração Lote-9 | TP-0049 | Não executada |
+| 95 | RTP-0025 | executor | ✔ | Cobrir Cache-Control e HEAD sem corpo em /api/v1/qualidade | Refatoração Lote-9 | TP-0050 | Não executada |
+| 96 | RTP-0005 | executor | ✔ | LinhaDoTempo: texto 'chegou fora de ordem' e valor em mono na grade (achado QA TP-0061) | Refatoração Lote-13 | TP-0061 | Não executada |
+| 97 | RTP-0017 | executor | ✔ | Validar /?tipo= do bloco Divergências por tipo contra TipoDivergencia | Refatoração Lote-13 | TP-0063 | Não executada |
+| 98 | RTP-0006 | executor | ✔ | Nomear teste de ordenação como 'validação: ordenação' (G-07) | Refatoração Lote-2 | TP-0007 | Não executada |
+| 99 | RTP-0019 | executor | ✔ | Quitação: tolerância de R$ 0,01 robusta a ponto flutuante | Refatoração Lote-2 | TP-0009 | Não executada |
+| 100 | RTP-0007 | executor | ✔ | Endurecer asserções do teste de leitura-vendas (curto/longo e somente leitura) | Refatoração Lote-4 | TP-0019 | Não executada |
+| 101 | RTP-0020 | executor | ✔ | Pagamentos: aspas quebradas no CSV viram linha_invalida sem abortar | Refatoração Lote-4 | TP-0021 | Não executada |
+| 102 | RTP-0026 | executor | ✔ | Rastreio: linha com número de colunas diferente do cabeçalho não aborta a importação | Refatoração Lote-4 | TP-0022 | Não executada |
+| 103 | RTP-0008 | executor | ✔ | rastreio.csv: repassar 'Transportadora N' em vez do código cru de ShipVia | Refatoração Lote-5 | TP-0024 | Não executada |
+| 104 | RTP-0009 | executor | ✔ | Tolerância de R$ 0,01 em conferirSugestao sensível a ponto flutuante | Refatoração Lote-18 | TP-0080 | Não executada |
+| 105 | RTP-0021 | executor | ✔ | Timeout na chamada do provedor de IA | Refatoração Lote-18 | TP-0082 | Não executada |
+| 106 | RTP-0027 | executor | ✔ | Passo 4 do preparar: mensagem desatualizada e ordem não testada | Refatoração Lote-18 | TP-0083 | Não executada |
+| 107 | RTP-0010 | executor | ✔ | Ajustar web/tsconfig.json para o typecheck do Worker (tipos Cloudflare e extensão .ts) | Refatoração Lote-8 | TP-0041 | Não executada |
+| 108 | RTP-0012 | executor | ✔ | clienteApi: 5xx sem corpo RFC 9457 deve mostrar a mensagem de indisponível | Refatoração Lote-10 | TP-0052 | Não executada |
+| 109 | RTP-0013 | executor | ✔ | T2: incluir eventos do próprio dia escolhido no estado em uma data | Refatoração Lote-16 | TP-0073 | Não executada |
+| 110 | RTP-0015 | executor | ✔ | T1 paginação: foco no caption e anúncio 'página X de Y' | Refatoração Lote-12 | TP-0060 | Não executada |
+| 111 | RTP-0016 | executor | ✔ | Tipar os casos negativos de qualidade em respostas-v1.test.ts | Refatoração Lote-6 | TP-0031 | Não executada |
+| 112 | RTP-0024 | executor | ✔ | Teste de ordenação secundária por tipo em divergencias | Refatoração Lote-7 | TP-0037 | Não executada |

@@ -194,3 +194,33 @@ APROVADA — 25/25 testes de indicadores (axe com 4 seções ok, resultado nulo 
 
 ## TP-0082 — QA — 2026-10-08
 APROVADA; 0 críticos, 1 não crítico (sem timeout no fetch, RTP-0021); 10/10 testes com fetch falso, aceite e G-01/G-09 verificados.
+
+## TP-0005 — QA — 2026-10-08
+TP-0005 APROVADA por revisão estática do ci.yml (todos os itens do aceite presentes, 0 críticos, 1 não crítico: execução real verde no GitHub ainda não comprovada; RTP-0023).
+
+## TP-0010 — QA — 2026-10-08
+APROVADA — 11/11 testes passando, aceite RN-09 cumprido, 0 achados críticos e 0 não críticos; evidência: vitest referencia.test.ts.
+
+## TP-0016 — QA — 2026-10-08
+APROVADA — 8/8 testes, aceite RN-05/RN-14 coberto, 0 críticos / 0 não críticos, função pura sem I/O.
+
+## TP-0022 — QA — 2026-10-08
+APROVADA, 0 críticos / 1 não crítico (linha com colunas faltando aborta o parse em vez de virar `linha_invalida`; RTP-0026); 9/9 testes passam.
+
+## TP-0027 — QA — 2026-10-08
+APROVADA; 0 críticos, 0 não críticos; importar.test.ts 2/2 (idempotência e convergência), sem UPDATE/DELETE, transação com rollback.
+
+## TP-0037 — QA — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico (falta teste da ordenação secundária por tipo, RTP-0024); 4/4 testes passando, sem risco de segurança.
+
+## TP-0044 — QA — 2026-10-08
+APROVADA, 0 críticos e 0 não críticos; integracao/publicacao.test.ts 5/5, wrangler só `--local` com cwd em web, erro propagado com stdout/stderr.
+
+## TP-0050 — QA — 2026-10-08
+TP-0050 APROVADA — 3/3 testes OK, aceite (200 validado com 7 achados; ausente → 500) cumprido; 0 críticos, 1 não crítico (teste sem asserção de Cache-Control/HEAD sem corpo); RTP-0025.
+
+## TP-0078 — QA — 2026-10-08
+TP-0078 APROVADA; 0 críticos, 0 não críticos; contrato-v1-v2 3/3 e telas v1 (pedido, estado-em-data) 26/26 verdes, README com os 2 curl e sem pendência de v2.
+
+## TP-0083 — QA — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico (mensagem desatualizada "CLI sugerir ainda não existe" no passo 4 sem chave + ordem não asserida em teste; RTP-0027); evidência: preparar.test.ts 8/8 verde e `pnpm sugerir` sem chave exit 0.
