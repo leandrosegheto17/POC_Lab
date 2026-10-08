@@ -15,7 +15,7 @@ export type EntradaGabarito = {
  * indentação fixa de 2 espaços e terminando em `\n`.
  *
  * Função pura: não lê nem escreve nada em disco (quem grava em
- * `dados/gerado/gabarito.json` é a CLI, via `node:fs`).
+ * `dados/gerado/problemas-plantados.json` é a CLI, via `node:fs`).
  */
 export function escreverGabarito(problemas: EntradaGabarito[]): string {
   const ordenados = [...problemas].sort((a, b) => {
