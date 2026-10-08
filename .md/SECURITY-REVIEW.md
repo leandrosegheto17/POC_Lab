@@ -173,3 +173,63 @@ APROVADA em segurança; 0 críticos, 0 não críticos; sem sinks de HTML, sem lo
 
 ## TP-0062 — DevSecOps — 2026-10-08
 APROVADA — 0 críticos, 0 não críticos; codigo com encodeURIComponent, render só por JSX, 404/400 com texto fixo sem detalhe técnico, sem dado pessoal.
+
+## TP-0063 — DevSecOps — 2026-10-08
+APROVADA — 0 críticos, 1 não crítico (link de tipo sem validação contra enumeração, sem risco de injeção; RTP-0017); G-12 ok, sem dado pessoal.
+
+## TP-0064 — DevSecOps — 2026-10-08
+APROVADA em segurança — 0 críticos, 0 não críticos; textos da API só via JSX (G-12), links com encodeURIComponent, sem dependência nova.
+
+## TP-0065 — DevSecOps — 2026-10-08
+APROVADA; 0 críticos, 0 não críticos; sem segredo/binding novo, nenhum deploy no CI, `_headers` e cabeçalhos do link publicado conferem, erros RFC 9457 sem vazamento.
+
+## TP-0067 — DevSecOps — 2026-10-08
+OK, 0 críticos e 0 não críticos; G-11 e G-01 preservados, sem segredo nem payload de injeção nos exemplos, licenças MIT/OFL presentes; sem RTP.
+
+## TP-0068 — DevSecOps — 2026-10-08
+APROVADA — função pura sem I/O/segredo/log/dependência nova, sem dado pessoal; 0 achados.
+
+## TP-0069 — DevSecOps — 2026-10-08
+APROVADA — 0 críticos, 0 não críticos; função pura sem I/O/log/dependência, RN-11 respeitada, sem dado pessoal.
+
+## TP-0070 — DevSecOps — 2026-10-08
+APROVADA em segurança — 0 críticos/0 não críticos; blocos novos só agregam valores/datas, sem dado sensível, rota, dependência ou log novo.
+
+## TP-0071 — DevSecOps — 2026-10-08
+APROVADA — renderização só por JSX (sem HTML injetado, fetch direto, log ou dependência nova), dados agregados sem dado pessoal; 0 críticos, 0 não críticos.
+
+## TP-0072 — DevSecOps — 2026-10-08
+OK — componente de UI sem I/O, sem dependência nova, sem sink perigoso nem dado sensível; 0 críticos, 0 não críticos.
+
+## TP-0073 — DevSecOps — 2026-10-08
+APROVADA em segurança; 0 críticos, 0 não críticos novos; sem nova superfície de rede, sem injeção/XSS, sem dependência nova.
+
+## TP-0074 — DevSecOps — 2026-10-08
+APROVADA em segurança; 0 críticos, 0 não críticos; tipo puro aditivo, G-02/G-15/G-17 respeitados, sem dado pessoal.
+
+## TP-0075 — DevSecOps — 2026-10-08
+OK — 0 críticos, 0 não críticos; PRNG determinístico (G-10), campo aditivo sem influência em RN-09/RN-10/vínculo (G-04, ADR-006), gravação parametrizada, sem dependência nova.
+
+## TP-0076 — DevSecOps — 2026-10-08
+OK; 0 críticos, 0 não críticos; v1 intocada (G-21), sem passthrough, sem segredo/dependência nova.
+
+## TP-0077 — DevSecOps — 2026-10-08
+APROVADA - rota v2 reusa consultas parametrizadas, entrada validada, esquema remove campos extras e só uma rota existe em /api/v2; 0 críticos, 0 não críticos.
+
+## TP-0078 — DevSecOps — 2026-10-08
+TP-0078 segurança APROVADA; 0 críticos, 0 não críticos; teste compara v1 por igualdade profunda + esquema, README só com dado sintético, sem segredo/dependência/dado pessoal.
+
+## TP-0079 — DevSecOps — 2026-10-08
+APROVADA — 0 críticos, 0 não críticos; cache_ia aditiva, SQL parametrizado, sem UPDATE/DELETE, sem segredo/dado pessoal.
+
+## TP-0080 — DevSecOps — 2026-10-08
+APROVADA em segurança; 0 críticos, 1 não crítico (RTP-0009 existente); função pura, falha fechada, sem superfície de segurança.
+
+## TP-0081 — DevSecOps — 2026-10-08
+APROVADA em segurança — dados mínimos à IA, saída validada contra candidatos e RN-11, sem segredo, rede ou escrita de vínculo; 0 críticos, 0 não críticos.
+
+## TP-0082 — DevSecOps — 2026-10-08
+OK; 0 críticos, 1 não crítico (sem timeout no fetch, RTP-0021); chave só de env, URL fixa (sem SSRF), texto como dado e saída restrita a `candidatos.includes`.
+
+## TP-0083 — DevSecOps — 2026-10-08
+APROVADA em segurança; 0 críticos, 1 não crítico (mensagem desatualizada/ordem sem teste, coberto por RTP-0027); evidência: chave só em process.env, nunca logada/gravada, sem chave nada é escrito, sem uso em web/CI.

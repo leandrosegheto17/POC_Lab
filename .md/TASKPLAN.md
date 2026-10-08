@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-08 13:09
+Atualizado: 2026-10-08 13:11
 
-Resumo: Não executada 37 · Em execução 3 · Testada (aguarda segurança) 22 · Aprovada 60 · total 122
+Resumo: Não executada 37 · Em execução 3 · Testada (aguarda segurança) 2 · Aprovada 80 · total 122
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -75,27 +75,27 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 60 | TP-0060 | executor | ✔ | Tela T1: paginação na URL | Lote 12 | TP-0059 | Aprovada |
 | 61 | TP-0061 | executor | ✔ | Componente LinhaDoTempo (grade no PC, cartões no celular) | Lote 13 | TP-0054 | Aprovada |
 | 62 | TP-0062 | executor | ✔ | Tela T2 Linha do tempo do pedido (sem estado em data) | Lote 13 | TP-0030, TP-0052, TP-0053, TP-0055, TP-0061 | Aprovada |
-| 63 | TP-0063 | executor | ✔ | Tela T3 Indicadores (Must) | Lote 13 | TP-0031, TP-0052, TP-0053, TP-0054, TP-0055 | Testada (aguarda segurança) |
-| 64 | TP-0064 | executor | ✔ | Tela T4 Qualidade dos dados | Lote 13 | TP-0031, TP-0052, TP-0053, TP-0054, TP-0055 | Testada (aguarda segurança) |
-| 65 | TP-0065 | executor | ✔ | pnpm publicar: D1 remoto + Worker, e conferência do link | Lote 14 | TP-0045, TP-0046, TP-0047, TP-0048, TP-0049, TP-0050, TP-0057, TP-0060, TP-0062, TP-0063, TP-0064 | Testada (aguarda segurança) |
+| 63 | TP-0063 | executor | ✔ | Tela T3 Indicadores (Must) | Lote 13 | TP-0031, TP-0052, TP-0053, TP-0054, TP-0055 | Aprovada |
+| 64 | TP-0064 | executor | ✔ | Tela T4 Qualidade dos dados | Lote 13 | TP-0031, TP-0052, TP-0053, TP-0054, TP-0055 | Aprovada |
+| 65 | TP-0065 | executor | ✔ | pnpm publicar: D1 remoto + Worker, e conferência do link | Lote 14 | TP-0045, TP-0046, TP-0047, TP-0048, TP-0049, TP-0050, TP-0057, TP-0060, TP-0062, TP-0063, TP-0064 | Aprovada |
 | 66 | TP-0066 | executor | ✔ | README: o que é, como rodar, mapa de decisões e fora de propósito | Lote 14 | TP-0045 | Em execução |
-| 67 | TP-0067 | executor | ✔ | README da API e avisos de licença | Lote 14 | TP-0046, TP-0047, TP-0048, TP-0049, TP-0050, TP-0051 | Testada (aguarda segurança) |
-| 68 | TP-0068 | executor | ✔ | Domínio: tempo médio pedido→envio e envio→entrega | Lote 15 | TP-0033 | Testada (aguarda segurança) |
-| 69 | TP-0069 | executor | ✔ | Domínio: valor pago × valor devido, total e por situação | Lote 15 | TP-0033 | Testada (aguarda segurança) |
-| 70 | TP-0070 | executor | ✔ | Projeção: os 2 blocos novos no documento indicadores | Lote 15 | TP-0039, TP-0068, TP-0069 | Testada (aguarda segurança) |
-| 71 | TP-0071 | executor | ✔ | T3: seções dos indicadores complementares | Lote 15 | TP-0063, TP-0070 | Testada (aguarda segurança) |
-| 72 | TP-0072 | executor | ✔ | Componente SeletorData | Lote 16 | TP-0051 | Testada (aguarda segurança) |
-| 73 | TP-0073 | executor | ✔ | T2: estado do pedido em uma data | Lote 16 | TP-0012, TP-0062, TP-0072 | Testada (aguarda segurança) |
-| 74 | TP-0074 | executor | ✔ | Domínio: pagamento v2 com meio_pagamento | Lote 17 | TP-0009 | Testada (aguarda segurança) |
-| 75 | TP-0075 | executor | ✔ | Gerador e adaptador de pagamentos com meio_pagamento opcional | Lote 17 | TP-0021, TP-0025, TP-0074 | Testada (aguarda segurança) |
-| 76 | TP-0076 | executor | ✔ | Contrato: esquema da linha do tempo v2 | Lote 17 | TP-0030, TP-0074 | Testada (aguarda segurança) |
-| 77 | TP-0077 | executor | ✔ | Endpoint GET /api/v2/pedidos/{codigo}/linha-do-tempo | Lote 17 | TP-0048, TP-0076 | Testada (aguarda segurança) |
-| 78 | TP-0078 | executor | ✔ | Teste validação: contrato v1 e v2 e demonstração no README | Lote 17 | TP-0075, TP-0077 | Testada (aguarda segurança) |
-| 79 | TP-0079 | executor | ✔ | Tabela cache_ia no event store | Lote 18 | TP-0018 | Testada (aguarda segurança) |
-| 80 | TP-0080 | executor | ✔ | RN-11 conferência da sugestão | Lote 18 | TP-0009 | Testada (aguarda segurança) |
-| 81 | TP-0081 | executor | ✔ | Porta ProvedorSugestao, provedor falso e caso de uso sugerir | Lote 18 | TP-0027, TP-0079, TP-0080 | Testada (aguarda segurança) |
-| 82 | TP-0082 | executor | ✔ | Provedor de IA via fetch | Lote 18 | TP-0081 | Testada (aguarda segurança) |
-| 83 | TP-0083 | executor | ✔ | CLI sugerir no preparar | Lote 18 | TP-0045, TP-0081 | Testada (aguarda segurança) |
+| 67 | TP-0067 | executor | ✔ | README da API e avisos de licença | Lote 14 | TP-0046, TP-0047, TP-0048, TP-0049, TP-0050, TP-0051 | Aprovada |
+| 68 | TP-0068 | executor | ✔ | Domínio: tempo médio pedido→envio e envio→entrega | Lote 15 | TP-0033 | Aprovada |
+| 69 | TP-0069 | executor | ✔ | Domínio: valor pago × valor devido, total e por situação | Lote 15 | TP-0033 | Aprovada |
+| 70 | TP-0070 | executor | ✔ | Projeção: os 2 blocos novos no documento indicadores | Lote 15 | TP-0039, TP-0068, TP-0069 | Aprovada |
+| 71 | TP-0071 | executor | ✔ | T3: seções dos indicadores complementares | Lote 15 | TP-0063, TP-0070 | Aprovada |
+| 72 | TP-0072 | executor | ✔ | Componente SeletorData | Lote 16 | TP-0051 | Aprovada |
+| 73 | TP-0073 | executor | ✔ | T2: estado do pedido em uma data | Lote 16 | TP-0012, TP-0062, TP-0072 | Aprovada |
+| 74 | TP-0074 | executor | ✔ | Domínio: pagamento v2 com meio_pagamento | Lote 17 | TP-0009 | Aprovada |
+| 75 | TP-0075 | executor | ✔ | Gerador e adaptador de pagamentos com meio_pagamento opcional | Lote 17 | TP-0021, TP-0025, TP-0074 | Aprovada |
+| 76 | TP-0076 | executor | ✔ | Contrato: esquema da linha do tempo v2 | Lote 17 | TP-0030, TP-0074 | Aprovada |
+| 77 | TP-0077 | executor | ✔ | Endpoint GET /api/v2/pedidos/{codigo}/linha-do-tempo | Lote 17 | TP-0048, TP-0076 | Aprovada |
+| 78 | TP-0078 | executor | ✔ | Teste validação: contrato v1 e v2 e demonstração no README | Lote 17 | TP-0075, TP-0077 | Aprovada |
+| 79 | TP-0079 | executor | ✔ | Tabela cache_ia no event store | Lote 18 | TP-0018 | Aprovada |
+| 80 | TP-0080 | executor | ✔ | RN-11 conferência da sugestão | Lote 18 | TP-0009 | Aprovada |
+| 81 | TP-0081 | executor | ✔ | Porta ProvedorSugestao, provedor falso e caso de uso sugerir | Lote 18 | TP-0027, TP-0079, TP-0080 | Aprovada |
+| 82 | TP-0082 | executor | ✔ | Provedor de IA via fetch | Lote 18 | TP-0081 | Aprovada |
+| 83 | TP-0083 | executor | ✔ | CLI sugerir no preparar | Lote 18 | TP-0045, TP-0081 | Aprovada |
 | 84 | TP-0084 | executor | ✔ | Projeção: sugestões no documento qualidade | Lote 18 | TP-0038, TP-0081 | Testada (aguarda segurança) |
 | 85 | TP-0085 | executor | ✔ | T4: seção "Sugestões da IA" | Lote 18 | TP-0064, TP-0084 | Testada (aguarda segurança) |
 | 86 | RTP-0001 | executor | ✔ | Corrigir erros de typecheck em processamento/test/dominio/evento.test.ts após pagamento v2 | Refatoração Lote-17 | TP-0074 | Não executada |
