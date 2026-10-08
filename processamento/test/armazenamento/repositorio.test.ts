@@ -1,6 +1,8 @@
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { criarRepositorio } from "../../src/armazenamento/repositorio.js";
 
@@ -204,5 +206,57 @@ describe("cache_ia", () => {
       resposta: "resposta-1",
       criadoEm: "2026-01-01T10:00:00Z",
     });
+  });
+});
+
+describe("migração do cache_ia em banco legado (RTP-0047)", () => {
+  let pasta: string;
+
+  beforeEach(() => {
+    pasta = mkdtempSync(join(tmpdir(), "poc-lab-repo-"));
+  });
+
+  afterEach(() => {
+    rmSync(pasta, { recursive: true, force: true });
+  });
+
+  it("adiciona a coluna modelo (NULL), preserva os dados antigos e reabrir não falha", () => {
+    const caminho = join(pasta, "legado.db");
+    const legado = new DatabaseSync(caminho);
+    legado.exec(
+      `CREATE TABLE cache_ia (chave TEXT PRIMARY KEY, resposta TEXT NOT NULL, criado_em TEXT NOT NULL)`,
+    );
+    legado
+      .prepare(`INSERT INTO cache_ia (chave, resposta, criado_em) VALUES (?, ?, ?)`)
+      .run("hash-antigo", "resposta-antiga", "2025-12-01T09:00:00Z");
+    legado.close();
+
+    const repositorio = criarRepositorio(caminho);
+    const colunas = repositorio.db
+      .prepare(`PRAGMA table_info(cache_ia)`)
+      .all() as unknown as { name: string }[];
+    const linha = repositorio.db
+      .prepare(`SELECT chave, resposta, criado_em, modelo FROM cache_ia`)
+      .all();
+    repositorio.db.close();
+
+    expect(colunas.map((c) => c.name)).toContain("modelo");
+    expect(linha).toHaveLength(1);
+    expect({ ...(linha[0] as object) }).toEqual({
+      chave: "hash-antigo",
+      resposta: "resposta-antiga",
+      criado_em: "2025-12-01T09:00:00Z",
+      modelo: null,
+    });
+
+    let reaberto: ReturnType<typeof criarRepositorio> | undefined;
+    expect(() => {
+      reaberto = criarRepositorio(caminho);
+    }).not.toThrow();
+    expect(reaberto?.obterCache("hash-antigo")).toEqual({
+      resposta: "resposta-antiga",
+      criadoEm: "2025-12-01T09:00:00Z",
+    });
+    reaberto?.db.close();
   });
 });
