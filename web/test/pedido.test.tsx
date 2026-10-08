@@ -51,8 +51,14 @@ function respostaLinhaDoTempoValida(opcoes?: {
         { fonte: "pagamentos", codigo: "TX-88812" },
         { fonte: "rastreio", codigo: "RS-5521" },
       ],
-      devido: 150,
-      pago: 150,
+      // Valores do cabeçalho deliberadamente diferentes de 150 (o valor dos
+      // eventos de venda/pagamento abaixo) — mesma lógica do comentário em
+      // `eventoVenda`: evita que o cabeçalho e um evento da linha do tempo
+      // produzam o mesmo texto "R$ 150,00" e tornem a asserção ambígua
+      // (`getByText` falha com "found multiple elements" quando dois
+      // elementos distintos têm o mesmo texto).
+      devido: 300,
+      pago: 300,
       dataLimite: "2026-01-20T00:00:00Z",
       divergencias: opcoes?.divergencias ?? [],
     },
@@ -140,7 +146,7 @@ describe("Pedido — sucesso", () => {
     expect(screen.getByText("10248")).toBeInTheDocument();
     expect(screen.getByText("TX-88812")).toBeInTheDocument();
     expect(screen.getByText("RS-5521")).toBeInTheDocument();
-    expect(screen.getByText(/R\$\s*150,00/)).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s*300,00/)).toBeInTheDocument();
     expect(screen.getByText(/2026-01-20/)).toBeInTheDocument();
 
     // `LinhaDoTempo` recebeu os eventos do mock (códigos de evento,

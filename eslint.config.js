@@ -188,11 +188,21 @@ export default tseslint.config(
               message: "web/worker não importa node:* fora de test/ (G-03).",
             },
             {
+              // Nota (verificação 2026-10-08): o pacote `ignore` (usado pelo
+              // ESLint para `no-restricted-imports`/`group`) segue a mesma
+              // semântica do .gitignore: um padrão sem barra como
+              // "processamento" trata o nome como um ancestral inteiramente
+              // ignorado, e um ancestral ignorado não pode ser
+              // "reincluído" por negação de um filho (mesma regra do
+              // .gitignore: "it is not possible to re-include a file if a
+              // parent directory of that file is excluded"). Isso fazia a
+              // negação de `processamento/contrato/**` nunca valer para
+              // imports reais como `processamento/contrato/erro.js` — a
+              // entrada bare "processamento" foi removida por isso.
               group: [
                 "**/processamento/**",
                 "!**/processamento/src/dominio/**",
                 "!**/processamento/src/contrato/**",
-                "processamento",
                 "processamento/*",
                 "!processamento/dominio",
                 "!processamento/dominio/**",
@@ -229,11 +239,15 @@ export default tseslint.config(
               message: "web/src não importa node:* fora de test/ (G-03).",
             },
             {
+              // Mesma nota de 2026-10-08 do bloco web/worker acima: a
+              // entrada bare "processamento" foi removida porque quebrava
+              // as negações de `processamento/contrato/**` e
+              // `processamento/dominio/**` (quirk de ancestral ignorado do
+              // pacote `ignore`/semântica .gitignore).
               group: [
                 "**/processamento/**",
                 "!**/processamento/src/dominio/**",
                 "!**/processamento/src/contrato/**",
-                "processamento",
                 "processamento/*",
                 "!processamento/dominio",
                 "!processamento/dominio/**",

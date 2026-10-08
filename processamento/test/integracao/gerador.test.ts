@@ -403,9 +403,14 @@ describe("plantarCasosPagamento", () => {
     }
 
     for (const entrada of plantio.gabarito.filter((item) => item.tipo === "linha_invalida")) {
+      // A transação original (válida, que quita o pedido) é preservada —
+      // só é ACRESCENTADA uma transação extra corrompida (verificação de
+      // 2026-10-08: ver `plantar-pagamentos.ts`), por isso aqui espera-se
+      // pelo menos 2 linhas, sendo 1 inválida e 1 válida.
       const linhas = linhasDoPedido(plantio.linhasCsv, entrada.pedido_venda);
-      expect(linhas).toHaveLength(1);
-      expect(Number.isFinite(Number(linhas[0]?.[2]))).toBe(false);
+      expect(linhas.length).toBeGreaterThanOrEqual(2);
+      expect(linhas.some((partes) => !Number.isFinite(Number(partes[2])))).toBe(true);
+      expect(linhas.some((partes) => Number.isFinite(Number(partes[2])))).toBe(true);
     }
 
     for (const entrada of plantio.gabarito.filter((item) => item.tipo === "valor_fora_do_padrao")) {
@@ -457,24 +462,34 @@ describe("plantarCasosPagamento", () => {
     );
     expect(entradasSemIdentificacao.length).toBeGreaterThan(0);
 
-    let encontrouTextoLivre = false;
-    let encontrouDoisCodigos = false;
+    // Verificação de 2026-10-08: os 2 casos agora ACRESCENTAM uma transação
+    // extra sem identificação (em vez de substituir a original, que quita o
+    // pedido — ver `plantar-pagamentos.ts`), por isso aqui a busca é pelo
+    // conteúdo da própria referência, não mais pelo pedido específico:
+    // "texto livre" usa sempre o mesmo texto genérico (sem nenhum código
+    // `PV-`); "dois códigos" sempre começa com o `PV-` do próprio pedido
+    // seguido de outro `PV-`.
+    const linhasTextoLivre = plantio.linhasCsv.filter(
+      (linha) => (linha.split(",")[1]?.match(/PV-\d{6}/g) ?? []).length === 0,
+    );
+    const linhasDoisCodigos = plantio.linhasCsv.filter(
+      (linha) => (linha.split(",")[1]?.match(/PV-\d{6}/g) ?? []).length === 2,
+    );
 
-    for (const entrada of entradasSemIdentificacao) {
-      const linhas = linhasDoPedido(plantio.linhasCsv, entrada.pedido_venda);
-      expect(linhas).toHaveLength(1);
-      const referencia = linhas[0]?.[1] ?? "";
-      const quantidadeCodigos = (referencia.match(/PV-\d{6}/g) ?? []).length;
+    expect(linhasTextoLivre.length).toBeGreaterThan(0);
+    expect(linhasDoisCodigos.length).toBeGreaterThan(0);
 
-      if (quantidadeCodigos === 0) {
-        encontrouTextoLivre = true;
-      } else if (quantidadeCodigos === 2) {
-        encontrouDoisCodigos = true;
-      }
+    // Cada linha de "dois códigos" começa com o PV- do pedido dono dela, e
+    // esse pedido está mesmo marcado como "sem_identificacao" no gabarito.
+    const pedidosSemIdentificacao = new Set(
+      entradasSemIdentificacao.map((entrada) => entrada.pedido_venda),
+    );
+    for (const linha of linhasDoisCodigos) {
+      const referencia = linha.split(",")[1] ?? "";
+      const primeiroCodigo = referencia.match(/PV-(\d{6})/);
+      const idPedido = primeiroCodigo ? String(Number(primeiroCodigo[1])) : "";
+      expect(pedidosSemIdentificacao.has(idPedido)).toBe(true);
     }
-
-    expect(encontrouTextoLivre).toBe(true);
-    expect(encontrouDoisCodigos).toBe(true);
   });
 
   it("é determinístico: mesma semente produz mesmos pedidos sorteados e mesmo gabarito, byte a byte", () => {

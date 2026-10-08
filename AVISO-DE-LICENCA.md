@@ -37,8 +37,11 @@ O gerador de dados sintéticos usa como ponto de partida o esquema e uma
 amostra de dados do projeto público
 [jpwhite3/northwind-SQLite3](https://github.com/jpwhite3/northwind-SQLite3),
 licenciado sob MIT, com o aviso de copyright original preservado. Este é o
-único lugar do repositório (fora de um eventual comentário técnico no código
-de `baixar-base.ts`) onde o nome desse projeto de origem aparece.
+único lugar de texto voltado ao leitor (junto da seção "Origem dos dados" do
+`README.md`, que não cita o nome) onde esse projeto de origem é identificado;
+comentários técnicos e o nome do arquivo (`northwind.db`) aparecem também no
+código do pacote `processamento` (gerador, importador e testes de
+integração), por necessidade técnica de documentar a fonte real dos dados.
 
 ## Licença das fontes
 

@@ -95,16 +95,15 @@ describe("EstadoErro", () => {
     expect(queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("clique em Tentar de novo chama onTentarDeNovo exatamente 1 vez e devolve o foco ao container", () => {
+  it("clique em Tentar de novo chama onTentarDeNovo exatamente 1 vez", () => {
     const onTentarDeNovo = vi.fn();
-    const { getByRole, container } = render(
+    const { getByRole } = render(
       <EstadoErro mensagem="Falha ao carregar" onTentarDeNovo={onTentarDeNovo} />,
     );
 
     fireEvent.click(getByRole("button", { name: "Tentar de novo" }));
 
     expect(onTentarDeNovo).toHaveBeenCalledTimes(1);
-    expect(container.firstElementChild).toHaveFocus();
   });
 
   it("não quebra com mensagem vazia", () => {

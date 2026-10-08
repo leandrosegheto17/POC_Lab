@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { lerBaseDeVendas, type PedidoVendas } from "../fontes/leitura-vendas.js";
+import { calcularDivergenciasNaturais } from "../gerador/divergencias-naturais.js";
 import { escreverGabarito, type EntradaGabarito } from "../gerador/gabarito.js";
 import { pedidosLimpos } from "../gerador/gerar.js";
 import { gerarPagamentos } from "../gerador/pagamentos.js";
@@ -98,8 +99,35 @@ export function gerarConteudo(
   // gerarPagamentos, plantarCasosPagamento, gerarRastreio e
   // plantarCasosRastreio — nessa ordem.
   const pagamentosPlantados = plantarCasosPagamento(limpos, pagamentosGerados.linhasCsv, prng);
+  // Pedidos já usados por algum caso de pagamento (TP-0025) não podem também
+  // receber um caso de rastreio (TP-0026): ver comentário em
+  // `gerador/plantar-rastreio.ts` (verificação de 2026-10-08, TP-0028).
+  const pedidosUsadosPagamento = new Set(
+    pagamentosPlantados.gabarito.map((entrada) => entrada.pedido_venda),
+  );
   const rastreioGerado = gerarRastreio(limpos, prng);
-  const rastreioPlantado = plantarCasosRastreio(limpos, rastreioGerado.linhasCsv, prng);
+  const rastreioPlantado = plantarCasosRastreio(
+    limpos,
+    rastreioGerado.linhasCsv,
+    prng,
+    pedidosUsadosPagamento,
+  );
+
+  // Verificação de 2026-10-08 (TP-0028): além das divergências plantadas
+  // acima, alguns pedidos "limpos" já ficam organicamente divergentes só
+  // pela combinação dataEnvio/dataLimite da base real (ex. dataEnvio
+  // ausente, ou posterior à própria dataLimite) — ver
+  // `gerador/divergencias-naturais.ts` para as regras de exclusão por tipo.
+  const pedidosSemEntregaOuJaAtrasadaNoRastreio = new Set(
+    rastreioPlantado.gabarito
+      .filter((entrada) => entrada.tipo === "pago_nao_enviado" || entrada.tipo === "entrega_atrasada")
+      .map((entrada) => entrada.pedido_venda),
+  );
+  const divergenciasNaturais = calcularDivergenciasNaturais(
+    limpos,
+    pedidosUsadosPagamento,
+    pedidosSemEntregaOuJaAtrasadaNoRastreio,
+  );
 
   return {
     pagamentosCsv: montarConteudoPagamentosCsv(pagamentosPlantados.linhasCsv),
@@ -107,6 +135,7 @@ export function gerarConteudo(
     gabaritoJson: montarConteudoGabaritoJson([
       ...pagamentosPlantados.gabarito,
       ...rastreioPlantado.gabarito,
+      ...divergenciasNaturais,
     ]),
   };
 }

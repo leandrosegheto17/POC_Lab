@@ -44,9 +44,15 @@ app.route("/", rotaLinhaDoTempoV2);
 // lista GET/HEAD — uma requisição GET para uma rota ainda inexistente
 // continua caindo em `app.notFound` (404 `rota_nao_encontrada`), nunca
 // aqui.
-app.on(["POST", "PUT", "PATCH", "DELETE", "OPTIONS"], "/api/*", (c) => {
-  c.header("Allow", "GET, HEAD");
-  return problema("metodo_nao_permitido", 405);
+app.on(["POST", "PUT", "PATCH", "DELETE", "OPTIONS"], "/api/*", () => {
+  // `problema()` devolve uma `Response` nova própria — setar o cabeçalho
+  // nela diretamente (setar via `c.header()` antes de `return problema(...)`
+  // não funciona: o `Response` retornado pelo handler substitui `c.res`
+  // por completo, descartando qualquer cabeçalho setado via `c.header()`
+  // no mesmo handler).
+  const resposta = problema("metodo_nao_permitido", 405);
+  resposta.headers.set("Allow", "GET, HEAD");
+  return resposta;
 });
 
 // Rota desconhecida sob /api/ → 404 rota_nao_encontrada.

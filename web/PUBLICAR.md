@@ -16,7 +16,7 @@ executa, nesta ordem fixa:
 1. `preparar` (pacote `processamento`, TP-0045) — regenera os dados de
    demonstração e escreve `dados/publicacao/leitura.sql`.
 2. `vite build` (pacote `web`) — gera os assets estáticos em `web/dist/client`.
-3. `wrangler d1 execute poc-lab --remote --file ../dados/publicacao/leitura.sql`
+3. `wrangler d1 execute poc-lab --remote --file ../processamento/dados/publicacao/leitura.sql`
    (rodando no contexto do pacote `web`, onde vive `wrangler.jsonc`) — carrega
    o SQL de leitura no banco D1 **remoto**.
 4. `wrangler deploy` (idem, contexto do pacote `web`) — publica o Worker +
@@ -39,10 +39,11 @@ vez, manualmente, pelo autor:
    `wrangler`; nenhum token é escrito em arquivo do repositório.
 2. **`wrangler d1 create poc-lab`** — cria o banco D1 remoto, uma única vez.
    O comando devolve um `database_id` real; copie esse valor para
-   `web/wrangler.jsonc`, substituindo o placeholder `"local-dev-placeholder"`
-   no campo `database_id` (dentro de `d1_databases`). O `database_id` é um
-   identificador, não um segredo (G-01), mas ainda assim só existe depois
-   desta etapa manual — nunca é inventado.
+   `web/wrangler.jsonc`, no campo `database_id` (dentro de `d1_databases`). O
+   `database_id` é um identificador, não um segredo (G-01), mas ainda assim só
+   existe depois desta etapa manual — nunca é inventado. Esta etapa já foi
+   feita: o `database_id` em `web/wrangler.jsonc` é o valor real devolvido
+   pelo `wrangler d1 create poc-lab` do autor.
 3. **Configurar um alerta de uso/orçamento no painel do Cloudflare** —
    lembrete de custo (SDD §7, "Custo como risco de disponibilidade"), para
    notificar o autor caso o uso do D1/Workers saia do esperado para uma POC.

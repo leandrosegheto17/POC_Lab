@@ -90,7 +90,11 @@ function resolverIdPedido(db: DatabaseSync, codigoVenda: string): string | undef
 }
 
 describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → divergências) contra o gabarito", () => {
-  it("acha 100% dos casos plantados de RN-03 a RN-06 e nenhum falso positivo", () => {
+  // Timeout maior que o padrão (5s): pipeline completo (gerar → importar →
+  // divergências) sobre a base real inteira (~16 mil pedidos) é pesado —
+  // mesmo padrão já usado em `test/integracao/qualidade.test.ts`
+  // (verificação de 2026-10-08).
+  it("acha 100% dos casos plantados de RN-03 a RN-06 e nenhum falso positivo", { timeout: 300_000 }, () => {
     const pedidosVendas = lerBaseDeVendas(CAMINHO_BASE);
     const { pagamentosCsv, rastreioCsv, gabaritoJson } = gerarConteudo(
       pedidosVendas,
@@ -192,64 +196,69 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
     expect(falsosPositivos).toEqual([]);
   });
 
-  it("pedido com caso plantado de pagamento E de rastreio simultaneamente tem ambos os tipos na lista calculada", () => {
-    const pedidosVendas = lerBaseDeVendas(CAMINHO_BASE);
-    const { pagamentosCsv, rastreioCsv, gabaritoJson } = gerarConteudo(
-      pedidosVendas,
-      SEMENTE_PADRAO,
-    );
-    const gabaritoCompleto = JSON.parse(gabaritoJson) as Array<{
-      pedido_venda: string;
-      tipo: string;
-    }>;
+  // Timeout maior que o padrão (5s), mesma razão do teste anterior.
+  it(
+    "pedido com caso plantado de pagamento E de rastreio simultaneamente tem ambos os tipos na lista calculada",
+    { timeout: 300_000 },
+    () => {
+      const pedidosVendas = lerBaseDeVendas(CAMINHO_BASE);
+      const { pagamentosCsv, rastreioCsv, gabaritoJson } = gerarConteudo(
+        pedidosVendas,
+        SEMENTE_PADRAO,
+      );
+      const gabaritoCompleto = JSON.parse(gabaritoJson) as Array<{
+        pedido_venda: string;
+        tipo: string;
+      }>;
 
-    const porPedidoVenda = new Map<string, Set<string>>();
-    for (const entrada of gabaritoCompleto) {
-      if (!TIPOS_DIVERGENCIA.has(entrada.tipo)) {
-        continue;
+      const porPedidoVenda = new Map<string, Set<string>>();
+      for (const entrada of gabaritoCompleto) {
+        if (!TIPOS_DIVERGENCIA.has(entrada.tipo)) {
+          continue;
+        }
+        const conjunto = porPedidoVenda.get(entrada.pedido_venda) ?? new Set<string>();
+        conjunto.add(entrada.tipo);
+        porPedidoVenda.set(entrada.pedido_venda, conjunto);
       }
-      const conjunto = porPedidoVenda.get(entrada.pedido_venda) ?? new Set<string>();
-      conjunto.add(entrada.tipo);
-      porPedidoVenda.set(entrada.pedido_venda, conjunto);
-    }
 
-    const comDoisTipos = [...porPedidoVenda.entries()].filter(([, tipos]) => tipos.size >= 2);
+      const comDoisTipos = [...porPedidoVenda.entries()].filter(([, tipos]) => tipos.size >= 2);
 
-    if (comDoisTipos.length === 0) {
-      // Pools de pagamento e rastreio são sorteados de forma independente
-      // (ver `plantar-rastreio.ts`): nesta semente pode não haver colisão.
-      // Sem caso de borda para exercitar, o teste não falha — apenas não
-      // cobre esta combinação específica nesta rodada.
-      return;
-    }
-
-    const codigosConhecidos = construirCodigosConhecidos(
-      pedidosVendas.map((pedido) => pedido.idPedido),
-    );
-    const repositorio = criarRepositorio(":memory:");
-    importar(repositorio, {
-      vendas: pedidosVendas,
-      pagamentosCsv,
-      rastreioCsv,
-      codigosConhecidos,
-    });
-    const db = repositorio.db;
-
-    const linhaMaximo = db.prepare(`SELECT MAX(momento_fato) AS maximo FROM evento`).get() as {
-      maximo: string;
-    };
-    const dataCorte = linhaMaximo.maximo;
-
-    for (const [codigoVenda, tiposEsperados] of comDoisTipos) {
-      const idPedido = resolverIdPedido(db, codigoVenda);
-      expect(idPedido).toBeDefined();
-      const eventos = buscarEventosDoPedido(db, idPedido as string);
-      const divergencias = calcularDivergencias(eventos, dataCorte);
-      const tiposCalculados = new Set(divergencias.map((d) => d.tipo));
-
-      for (const tipo of tiposEsperados) {
-        expect(tiposCalculados.has(tipo)).toBe(true);
+      if (comDoisTipos.length === 0) {
+        // Pools de pagamento e rastreio são sorteados de forma independente
+        // (ver `plantar-rastreio.ts`): nesta semente pode não haver colisão.
+        // Sem caso de borda para exercitar, o teste não falha — apenas não
+        // cobre esta combinação específica nesta rodada.
+        return;
       }
-    }
-  });
+
+      const codigosConhecidos = construirCodigosConhecidos(
+        pedidosVendas.map((pedido) => pedido.idPedido),
+      );
+      const repositorio = criarRepositorio(":memory:");
+      importar(repositorio, {
+        vendas: pedidosVendas,
+        pagamentosCsv,
+        rastreioCsv,
+        codigosConhecidos,
+      });
+      const db = repositorio.db;
+
+      const linhaMaximo = db.prepare(`SELECT MAX(momento_fato) AS maximo FROM evento`).get() as {
+        maximo: string;
+      };
+      const dataCorte = linhaMaximo.maximo;
+
+      for (const [codigoVenda, tiposEsperados] of comDoisTipos) {
+        const idPedido = resolverIdPedido(db, codigoVenda);
+        expect(idPedido).toBeDefined();
+        const eventos = buscarEventosDoPedido(db, idPedido as string);
+        const divergencias = calcularDivergencias(eventos, dataCorte);
+        const tiposCalculados = new Set(divergencias.map((d) => d.tipo));
+
+        for (const tipo of tiposEsperados) {
+          expect(tiposCalculados.has(tipo)).toBe(true);
+        }
+      }
+    },
+  );
 });

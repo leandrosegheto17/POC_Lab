@@ -27,6 +27,13 @@ export function BlocoAchado({ titulo, achado }: BlocoAchadoProps) {
           <TabelaDados
             caption={titulo}
             cabecalhos={["Fonte", "Referência", "Detalhe"]}
+            // T4 renderiza um `BlocoAchado` por tipo (até 7 na mesma página);
+            // sem um rótulo que incorpore `titulo`, todas as regiões
+            // roláveis compartilhariam o mesmo `aria-label` padrão de
+            // `TabelaDados` ("Tabela com rolagem horizontal"), violando a
+            // regra `landmark-unique` do axe (landmarks com o mesmo papel
+            // precisam de nome acessível distinto).
+            rotuloRegiao={`Tabela com rolagem horizontal: ${titulo}`}
           >
             {achado.exemplos.map((exemplo, indice) => (
               <tr key={`${exemplo.fonte}-${exemplo.referencia}-${indice}`}>

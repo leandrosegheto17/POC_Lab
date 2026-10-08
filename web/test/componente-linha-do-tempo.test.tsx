@@ -13,6 +13,16 @@ const FORMATADOR_MOEDA = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
+// `Intl.NumberFormat('pt-BR', { style: 'currency' })` separa "R$" do valor
+// com um espaço não separável (U+00A0), não um espaço comum. O normalizador
+// padrão do Testing Library colapsa esse caractere para um espaço comum ao
+// ler o texto do DOM, mas NÃO normaliza a string do matcher — por isso
+// comparar direto contra `FORMATADOR_MOEDA.format(...)` nunca bate. Esta
+// função aplica a mesma normalização ao texto esperado antes da asserção.
+function textoMoedaNormalizado(valor: number): string {
+  return FORMATADOR_MOEDA.format(valor).replace(/\s+/g, " ");
+}
+
 function eventoVenda(overrides: Partial<EventoV1 & { tipo: "venda" }> = {}): EventoV1 {
   return {
     fonte: "vendas",
@@ -132,7 +142,7 @@ describe("LinhaDoTempo — conteúdo de cada item", () => {
     expect(screen.getAllByText("Vendas")).toHaveLength(2);
     expect(document.querySelector(".etiqueta-fonte")).toHaveTextContent("Vendas");
     expect(screen.getByText("venda-001")).toBeInTheDocument();
-    expect(screen.getByText(FORMATADOR_MOEDA.format(150.5))).toBeInTheDocument();
+    expect(screen.getByText(textoMoedaNormalizado(150.5))).toBeInTheDocument();
   });
 
   it("evento de pagamento: 'Pagamento', EtiquetaFonte 'Pagamentos', código e valor em mono", () => {
@@ -143,7 +153,7 @@ describe("LinhaDoTempo — conteúdo de cada item", () => {
     expect(screen.getAllByText("Pagamentos")).toHaveLength(2);
     expect(document.querySelector(".etiqueta-fonte")).toHaveTextContent("Pagamentos");
     expect(screen.getByText("pagamento-001")).toBeInTheDocument();
-    expect(screen.getByText(FORMATADOR_MOEDA.format(150.5))).toBeInTheDocument();
+    expect(screen.getByText(textoMoedaNormalizado(150.5))).toBeInTheDocument();
   });
 
   it("evento de coleta/transporte/entrega: EtiquetaFonte 'Transportadora', sem célula de valor", () => {
@@ -160,7 +170,7 @@ describe("LinhaDoTempo — conteúdo de cada item", () => {
     expect(document.querySelectorAll(".etiqueta-fonte")).toHaveLength(3);
 
     // Nenhum valor monetário é exibido para esses três tipos.
-    expect(screen.queryByText(FORMATADOR_MOEDA.format(150.5))).not.toBeInTheDocument();
+    expect(screen.queryByText(textoMoedaNormalizado(150.5))).not.toBeInTheDocument();
   });
 
   it("'chegou fora de ordem' aparece só quando chegouForaDeOrdem é true", () => {

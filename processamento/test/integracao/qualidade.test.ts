@@ -51,65 +51,91 @@ describe.skipIf(!baseDisponivel)("montarDocumentoQualidade (pipeline completo, b
     return montarDocumentoQualidade(repositorio.db);
   }
 
-  it("devolve exatamente os 7 tipos de TipoAchado, cada um uma única vez", () => {
-    const documento = montarDocumento();
+  it(
+    "devolve exatamente os 7 tipos de TipoAchado, cada um uma única vez",
+    () => {
+      const documento = montarDocumento();
 
-    expect(documento.achados).toHaveLength(7);
-    expect(new Set(documento.achados.map((a) => a.tipo)).size).toBe(7);
-    expect(documento.achados.map((a) => a.tipo)).toEqual([
-      "fora_de_ordem",
-      "sem_identificacao",
-      "registro_repetido",
-      "linha_invalida",
-      "valor_fora_do_padrao",
-      "formato_data",
-      "pedido_sem_envio",
-    ]);
-  });
+      expect(documento.achados).toHaveLength(7);
+      expect(new Set(documento.achados.map((a) => a.tipo)).size).toBe(7);
+      expect(documento.achados.map((a) => a.tipo)).toEqual([
+        "fora_de_ordem",
+        "sem_identificacao",
+        "registro_repetido",
+        "linha_invalida",
+        "valor_fora_do_padrao",
+        "formato_data",
+        "pedido_sem_envio",
+      ]);
+    },
+    // Pipeline completo sobre a base real: bem acima do timeout padrão de 5s
+    // do vitest (mesmo padrão de `test/integracao/preparar.test.ts`).
+    { timeout: 300_000 },
+  );
 
-  it("formato_data e pedido_sem_envio: contagens reais da base (15.452 e 21)", () => {
-    const documento = montarDocumento();
+  it(
+    "formato_data e pedido_sem_envio: contagens reais da base (15.452 e 21)",
+    () => {
+      const documento = montarDocumento();
 
-    const formatoData = documento.achados.find((a) => a.tipo === "formato_data");
-    const pedidoSemEnvio = documento.achados.find((a) => a.tipo === "pedido_sem_envio");
+      const formatoData = documento.achados.find((a) => a.tipo === "formato_data");
+      const pedidoSemEnvio = documento.achados.find((a) => a.tipo === "pedido_sem_envio");
 
-    expect(formatoData?.contagem).toBe(15_452);
-    expect(formatoData?.exemplos.length).toBeLessThanOrEqual(10);
-    expect(pedidoSemEnvio?.contagem).toBe(21);
-    expect(pedidoSemEnvio?.exemplos.length).toBeLessThanOrEqual(10);
-  });
+      expect(formatoData?.contagem).toBe(15_452);
+      expect(formatoData?.exemplos.length).toBeLessThanOrEqual(10);
+      expect(pedidoSemEnvio?.contagem).toBe(21);
+      expect(pedidoSemEnvio?.exemplos.length).toBeLessThanOrEqual(10);
+    },
+    { timeout: 300_000 },
+  );
 
-  it("linha_invalida não inclui mais os casos de formato_data/pedido_sem_envio (vendas.ts agora grava com os tipos dedicados); reflete só linhas malformadas plantadas por outras fontes (pagamentos/rastreio)", () => {
-    const documento = montarDocumento();
+  it(
+    "linha_invalida não inclui mais os casos de formato_data/pedido_sem_envio (vendas.ts agora grava com os tipos dedicados); reflete só linhas malformadas plantadas por outras fontes (pagamentos/rastreio)",
+    () => {
+      const documento = montarDocumento();
 
-    const linhaInvalida = documento.achados.find((a) => a.tipo === "linha_invalida");
-    // Sem garantia de quantidade exata/mínima aqui: depende só do que
-    // pagamentos.ts/rastreio.ts plantam como linha malformada, não mais dos
-    // pedidos de vendas (que agora saem como formato_data/pedido_sem_envio).
-    expect(linhaInvalida?.contagem).toBeGreaterThanOrEqual(0);
-    expect(linhaInvalida?.exemplos.length).toBeLessThanOrEqual(10);
-  });
+      const linhaInvalida = documento.achados.find((a) => a.tipo === "linha_invalida");
+      // Sem garantia de quantidade exata/mínima aqui: depende só do que
+      // pagamentos.ts/rastreio.ts plantam como linha malformada, não mais dos
+      // pedidos de vendas (que agora saem como formato_data/pedido_sem_envio).
+      expect(linhaInvalida?.contagem).toBeGreaterThanOrEqual(0);
+      expect(linhaInvalida?.exemplos.length).toBeLessThanOrEqual(10);
+    },
+    { timeout: 300_000 },
+  );
 
-  it("fora_de_ordem é recalculado (não lido de achado_qualidade, que nunca grava esse tipo) e não lança ao validar contra o esquema", () => {
-    const documento = montarDocumento();
+  it(
+    "fora_de_ordem é recalculado (não lido de achado_qualidade, que nunca grava esse tipo) e não lança ao validar contra o esquema",
+    () => {
+      const documento = montarDocumento();
 
-    const foraDeOrdem = documento.achados.find((a) => a.tipo === "fora_de_ordem");
-    expect(foraDeOrdem).toBeDefined();
-    expect(foraDeOrdem!.contagem).toBeGreaterThanOrEqual(0);
-    expect(foraDeOrdem!.exemplos.length).toBeLessThanOrEqual(10);
-  });
+      const foraDeOrdem = documento.achados.find((a) => a.tipo === "fora_de_ordem");
+      expect(foraDeOrdem).toBeDefined();
+      expect(foraDeOrdem!.contagem).toBeGreaterThanOrEqual(0);
+      expect(foraDeOrdem!.exemplos.length).toBeLessThanOrEqual(10);
+    },
+    { timeout: 300_000 },
+  );
 
-  it("nenhum tipo tem mais de 10 exemplos, mesmo quando a contagem é muito maior", () => {
-    const documento = montarDocumento();
+  it(
+    "nenhum tipo tem mais de 10 exemplos, mesmo quando a contagem é muito maior",
+    () => {
+      const documento = montarDocumento();
 
-    for (const achado of documento.achados) {
-      expect(achado.exemplos.length).toBeLessThanOrEqual(10);
-    }
-  });
+      for (const achado of documento.achados) {
+        expect(achado.exemplos.length).toBeLessThanOrEqual(10);
+      }
+    },
+    { timeout: 300_000 },
+  );
 
-  it("ia.utilizada é false e ia.sugestoes é array vazio", () => {
-    const documento = montarDocumento();
+  it(
+    "ia.utilizada é false e ia.sugestoes é array vazio",
+    () => {
+      const documento = montarDocumento();
 
-    expect(documento.ia).toEqual({ utilizada: false, sugestoes: [] });
-  });
+      expect(documento.ia).toEqual({ utilizada: false, sugestoes: [] });
+    },
+    { timeout: 300_000 },
+  );
 });

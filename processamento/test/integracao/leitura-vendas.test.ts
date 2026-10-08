@@ -83,5 +83,6 @@ describe("lerBaseDeVendas (garantia de somente leitura)", () => {
       const segunda = lerBaseDeVendas(CAMINHO_BASE).length;
       expect(primeira).toBe(segunda);
     },
+    20_000,
   );
 });

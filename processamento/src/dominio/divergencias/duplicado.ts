@@ -1,5 +1,6 @@
 import type { Divergencia } from "../modelo.js";
 import type { EnvelopeEvento, PayloadPagamentoV1 } from "../evento.js";
+import { arredondarMoeda } from "../valores.js";
 
 /**
  * Tolerância para considerar um pagamento como "valor integral" em relação
@@ -35,7 +36,8 @@ export function detectarDuplicado(
 ): Divergencia | undefined {
   const pagamentosIntegrais = pagamentos.filter(
     (pagamento) =>
-      Math.abs(pagamento.valor - valorDevido) <= TOLERANCIA_VALOR_INTEGRAL,
+      Math.abs(arredondarMoeda(pagamento.valor - valorDevido)) <=
+      TOLERANCIA_VALOR_INTEGRAL,
   );
 
   if (pagamentosIntegrais.length < 2) {

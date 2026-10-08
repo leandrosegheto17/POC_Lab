@@ -12,12 +12,15 @@
   background: var(--cor-superficie);
   border: 1px solid var(--cor-borda);
   border-radius: var(--raio);
-  padding: var(--espaco-4);
+  padding: var(--espaco-5);
 }
 
 .cartao-resumo-titulo {
   font-size: var(--texto-sm);
+  font-weight: 600;
   color: var(--cor-texto-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .cartao-resumo-valor {
@@ -45,8 +48,11 @@
 
 .filtro-tipo legend {
   font-size: var(--texto-sm);
+  font-weight: 600;
   color: var(--cor-texto-2);
   padding: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .filtro-tipo-opcoes {

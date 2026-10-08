@@ -41,7 +41,11 @@ function criarDiretorioTemporario(prefixo: string): string {
 afterEach(() => {
   while (diretoriosTemporarios.length > 0) {
     const caminho = diretoriosTemporarios.pop()!;
-    rmSync(caminho, { recursive: true, force: true });
+    // `maxRetries`/`retryDelay`: no Windows, o SO pode levar um instante
+    // para liberar o handle do arquivo do banco mesmo após `db.close()`
+    // (visto em execução real deste teste) — tenta novamente em vez de
+    // falhar com EPERM na primeira tentativa.
+    rmSync(caminho, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 });
 
@@ -73,45 +77,57 @@ function montarOpcoesIsoladas() {
 }
 
 describe.skipIf(!baseDisponivel)("executarPreparar (pipeline completo, base real)", () => {
-  it("encadeia os 5 passos sem lançar erro, mede o tempo e devolve o resumo da importação", async () => {
-    const { opcoes } = montarOpcoesIsoladas();
+  it(
+    "encadeia os 5 passos sem lançar erro, mede o tempo e devolve o resumo da importação",
+    async () => {
+      const { opcoes } = montarOpcoesIsoladas();
 
-    const resumo = await executarPreparar(opcoes);
+      const resumo = await executarPreparar(opcoes);
 
-    expect(resumo.tempoSegundos).toBeGreaterThan(0);
-    expect(Number.isFinite(resumo.tempoSegundos)).toBe(true);
+      expect(resumo.tempoSegundos).toBeGreaterThan(0);
+      expect(Number.isFinite(resumo.tempoSegundos)).toBe(true);
 
-    for (const fonte of ["vendas", "pagamentos", "rastreio"] as const) {
-      expect(resumo.resumoImportacao[fonte]).toMatchObject({
-        lidas: expect.any(Number),
-        novas: expect.any(Number),
-        jaExistentes: expect.any(Number),
-        rejeitadas: expect.any(Number),
-      });
-    }
+      for (const fonte of ["vendas", "pagamentos", "rastreio"] as const) {
+        expect(resumo.resumoImportacao[fonte]).toMatchObject({
+          lidas: expect.any(Number),
+          novas: expect.any(Number),
+          jaExistentes: expect.any(Number),
+          rejeitadas: expect.any(Number),
+        });
+      }
 
-    // Sem OPENAI_API_KEY no ambiente isolado: passo de sugestão pulado.
-    expect(resumo.sugestao.pular).toBe(true);
-    expect(resumo.sugestao.mensagem).toMatch(/sem sugestão/i);
-  });
+      // Sem OPENAI_API_KEY no ambiente isolado: passo de sugestão pulado.
+      expect(resumo.sugestao.pular).toBe(true);
+      expect(resumo.sugestao.mensagem).toMatch(/sem sugestão/i);
+    },
+    // Pipeline completo (baixar-base/gerar/importar/publicar-dados) contra a
+    // base real: bem acima do timeout padrão de 5s do vitest (mesma
+    // necessidade dos testes "TP-0083, pipeline completo" abaixo, que já
+    // usam este mesmo valor).
+    300_000,
+  );
 
-  it("duas execuções produzem o mesmo leitura.sql byte a byte", async () => {
-    const primeira = montarOpcoesIsoladas();
-    await executarPreparar(primeira.opcoes);
-    const sqlPrimeira = await readFile(
-      path.join(primeira.dirPublicacao, "leitura.sql"),
-      "utf-8",
-    );
+  it(
+    "duas execuções produzem o mesmo leitura.sql byte a byte",
+    async () => {
+      const primeira = montarOpcoesIsoladas();
+      await executarPreparar(primeira.opcoes);
+      const sqlPrimeira = await readFile(
+        path.join(primeira.dirPublicacao, "leitura.sql"),
+        "utf-8",
+      );
 
-    const segunda = montarOpcoesIsoladas();
-    await executarPreparar(segunda.opcoes);
-    const sqlSegunda = await readFile(
-      path.join(segunda.dirPublicacao, "leitura.sql"),
-      "utf-8",
-    );
+      const segunda = montarOpcoesIsoladas();
+      await executarPreparar(segunda.opcoes);
+      const sqlSegunda = await readFile(
+        path.join(segunda.dirPublicacao, "leitura.sql"),
+        "utf-8",
+      );
 
-    expect(sqlSegunda).toBe(sqlPrimeira);
-  });
+      expect(sqlSegunda).toBe(sqlPrimeira);
+    },
+    300_000,
+  );
 });
 
 describe("decidirSugerir (TP-0045, passo 4 isolado)", () => {
@@ -224,6 +240,11 @@ describe("executarSugerir (TP-0083)", () => {
       .prepare(`SELECT COUNT(*) AS total FROM cache_ia`)
       .get() as { total: number };
     expect(linhaCache.total).toBe(1);
+
+    // Fecha a conexão da fixture (a de `executarSugerir` já se fecha
+    // sozinha) — sem isso, o `rmSync` do `afterEach` falha com EPERM no
+    // Windows por handle aberto no arquivo do banco.
+    repositorioFixture.db.close();
   });
 });
 
@@ -242,6 +263,10 @@ describe("executarPreparar + passo 4 (TP-0083, pipeline completo, base real)", (
       expect(resumo.sugestao.pular).toBe(false);
       expect(resumo.sugestao.mensagem).toMatch(/concluída/i);
     },
+    // Pipeline completo contra a base real (download/import): bem acima do
+    // timeout padrão de 5s do vitest, mesma necessidade dos 2 testes
+    // "pipeline completo, base real" de TP-0045 acima.
+    300_000,
   );
 
   it.skipIf(!baseDisponivel)(
@@ -256,6 +281,9 @@ describe("executarPreparar + passo 4 (TP-0083, pipeline completo, base real)", (
         .prepare(`SELECT COUNT(*) AS total FROM cache_ia`)
         .get() as { total: number };
       expect(linhaCache.total).toBe(0);
+
+      repositorioVerificacao.db.close();
     },
+    300_000,
   );
 });

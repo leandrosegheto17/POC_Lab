@@ -234,6 +234,12 @@ export async function executarPreparar(opcoes: OpcoesPreparar = {}): Promise<Res
     rastreioCsv: rastreioCsvLido,
     codigosConhecidos,
   });
+  // Fecha esta conexão assim que o passo 3 termina — os passos 4
+  // (`executarSugerir`) e 5 (`publicarDados`) abrem as suas próprias sobre o
+  // mesmo `caminhoBanco`. Sem isso, em Windows o handle aberto trava o
+  // `rmSync` do diretório temporário do banco nos testes de integração
+  // (visto em TP-0083, `test/integracao/preparar.test.ts`).
+  repositorio.db.close();
   console.log(`[3/5] Importação concluída em "${caminhoBanco}".`);
 
   // --- passo 4: sugerir (porta de IA, TP-0083) --------------------------------

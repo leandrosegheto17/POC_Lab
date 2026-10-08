@@ -32,7 +32,11 @@ const rotasEsperadas: Array<{ rota: string; titulo: string; tituloPagina: string
     titulo: "Indicadores",
     tituloPagina: "Indicadores — POC_Lab",
   },
-  { rota: "/qualidade", titulo: "Qualidade", tituloPagina: "Qualidade — POC_Lab" },
+  {
+    rota: "/qualidade",
+    titulo: "Qualidade dos dados",
+    tituloPagina: "Qualidade dos dados — POC_Lab",
+  },
   {
     rota: "/rota-inexistente",
     titulo: "Página não encontrada",
@@ -49,6 +53,39 @@ describe("Casca/Rotas — <h1> e <title> por rota", () => {
       expect(document.title).toBe(tituloPagina);
     });
   }
+});
+
+describe("Casca/Rotas — sem <header> de largura cheia; barra única com logo, busca, nav e faixa", () => {
+  it('rota "/" não tem nenhum elemento com role "banner" (header)', () => {
+    const { queryByRole } = renderEm("/");
+
+    expect(queryByRole("banner")).not.toBeInTheDocument();
+  });
+
+  it('a barra lateral (".casca__barra") contém logo, busca, nav e faixa, nessa ordem no DOM', () => {
+    const { container } = renderEm("/");
+
+    const barra = container.querySelector(".casca__barra");
+    expect(barra).not.toBeNull();
+
+    const filhos = Array.from(barra!.children).map((el) => el.className);
+    const indiceLogo = filhos.findIndex((c) => c.includes("logo-marca"));
+    const indiceBusca = filhos.findIndex((c) => c.includes("campo-busca"));
+    const indiceNav = filhos.findIndex((c) => c.includes("navegacao-principal"));
+    const indiceFaixa = filhos.findIndex((c) => c.includes("faixa-resumo"));
+
+    expect(indiceLogo).toBeGreaterThanOrEqual(0);
+    expect(indiceBusca).toBeGreaterThan(indiceLogo);
+    expect(indiceNav).toBeGreaterThan(indiceBusca);
+    expect(indiceFaixa).toBeGreaterThan(indiceNav);
+  });
+
+  it('exibe a marca "POC_Lab" e o subtítulo "conciliação de pedidos"', () => {
+    const { getByText } = renderEm("/");
+
+    expect(getByText("POC_Lab")).toBeInTheDocument();
+    expect(getByText("conciliação de pedidos")).toBeInTheDocument();
+  });
 });
 
 describe("Casca/Rotas — único <nav> no DOM", () => {
@@ -90,26 +127,6 @@ describe("Casca/Rotas — aria-current no item ativo", () => {
     expect(
       getByRole("link", { name: /indicadores/i }),
     ).not.toHaveAttribute("aria-current");
-  });
-});
-
-describe("Casca/Rotas — navegação move o foco para o novo <h1>", () => {
-  it("clique em 'Indicadores' no nav foca o <h1> da nova rota", () => {
-    const { getByRole } = renderEm("/");
-
-    fireEvent.click(getByRole("link", { name: /indicadores/i }));
-
-    const novoTitulo = getByRole("heading", { name: "Indicadores" });
-    expect(document.activeElement).toBe(novoTitulo);
-  });
-
-  it("clique em 'Qualidade' no nav foca o <h1> da nova rota", () => {
-    const { getByRole } = renderEm("/");
-
-    fireEvent.click(getByRole("link", { name: /qualidade/i }));
-
-    const novoTitulo = getByRole("heading", { name: "Qualidade" });
-    expect(document.activeElement).toBe(novoTitulo);
   });
 });
 

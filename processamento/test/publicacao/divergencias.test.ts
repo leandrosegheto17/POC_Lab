@@ -32,6 +32,24 @@ function eventoVenda(codigoEvento: string, idPedido: string, valorDevido: number
   };
 }
 
+function eventoColeta(codigoEvento: string, idPedido: string, momentoFato: string): EventoParaInserir {
+  return {
+    fonte: "rastreio",
+    codigoEvento,
+    idPedido,
+    tipo: "coleta",
+    momentoFato,
+    ordemChegada: 3,
+    versaoSchema: 1,
+    dados: JSON.stringify({
+      tipo: "coleta",
+      versao_schema: 1,
+      transportadora: "Transportadora X",
+      codigo_rastreio: codigoEvento,
+    }),
+  };
+}
+
 function eventoPagamento(
   codigoEvento: string,
   idPedido: string,
@@ -87,6 +105,9 @@ describe("montarDivergencias", () => {
     repositorio.inserirEvento(eventoVenda("VEN-002", "PED-000002", 100));
     repositorio.inserirEvento(
       eventoPagamento("PAG-003", "PED-000002", 100, "2024-01-02T10:00:00Z"),
+    );
+    repositorio.inserirEvento(
+      eventoColeta("COL-002", "PED-000002", "2024-01-03T10:00:00Z"),
     );
 
     const linhas = montarDivergencias(repositorio.db, DATA_CORTE);

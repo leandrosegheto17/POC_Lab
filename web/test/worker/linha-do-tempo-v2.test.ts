@@ -10,6 +10,7 @@
 // `node:fs`/`node:sqlite` só são lidos aqui porque este arquivo vive em
 // `web/test/` (mesma exceção documentada em `web/test/apoio/d1-teste.ts`).
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { DatabaseSync } from "node:sqlite";
 
 import { Hono } from "hono";
@@ -28,9 +29,12 @@ interface CorpoErroTeste {
   status: number;
 }
 
+// Verificação (2026-10-08): `import.meta.resolve` não existe no `import.meta`
+// sintético que o Vite injeta sob o pool de testes do Vitest; ver nota
+// equivalente em `web/test/apoio/fixture.ts` e `web/test/worker/linha-do-tempo.test.ts`.
 function lerDdl(): string {
-  const caminhoDdl = import.meta.resolve("processamento/publicacao/leitura-d1.sql");
-  return readFileSync(new URL(caminhoDdl), "utf8");
+  const caminhoDdl = createRequire(import.meta.url).resolve("processamento/publicacao/leitura-d1.sql");
+  return readFileSync(caminhoDdl, "utf8");
 }
 
 const ID_PEDIDO = "PED-200001";

@@ -321,6 +321,7 @@ describe("Qualidade — erro 5xx/rede", () => {
           title: "Erro interno",
           status: 500,
           detail: "Falha ao gerar relatório.",
+          codigo: "erro_interno",
         }),
       }),
     );
@@ -403,12 +404,19 @@ describe("Qualidade — Sugestões da IA (TP-0085)", () => {
     renderizar();
 
     await waitFor(() => {
-      expect(screen.getByText("PAG-100")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { level: 2, name: "Sugestões da IA" }),
+      ).toBeInTheDocument();
     });
 
     const secaoIa = screen
       .getByRole("heading", { level: 2, name: "Sugestões da IA" })
       .closest("section") as HTMLElement;
+
+    // "PAG-100" também aparece no exemplo da seção "Pagamentos sem
+    // identificação" da mesma fixture — escopar a esta seção evita
+    // ambiguidade (`within`, não `screen`).
+    expect(within(secaoIa).getByText("PAG-100")).toBeInTheDocument();
 
     expect(
       within(secaoIa).getByRole("columnheader", { name: "Pagamento" }),
@@ -595,7 +603,9 @@ describe("Qualidade — acessibilidade (vitest-axe)", () => {
     const { container } = renderizar();
 
     await waitFor(() => {
-      expect(screen.getByText("PAG-100")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { level: 2, name: "Sugestões da IA" }),
+      ).toBeInTheDocument();
     });
 
     expect(await axe(container)).toHaveNoViolations();

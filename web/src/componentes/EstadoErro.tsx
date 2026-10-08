@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import { IconeErro } from "./icones/IconeErro.tsx";
 
 type EstadoErroProps = {
@@ -16,35 +15,19 @@ type EstadoErroProps = {
 
 // TP-0053 — estado de erro.
 //
-// Fluxo esperado de "Tentar de novo" (a troca de componente NÃO é feita
-// aqui, é responsabilidade da tela-mãe):
-//   1. Usuário clica em "Tentar de novo".
-//   2. Este componente devolve o foco ao próprio container (via ref +
-//      tabIndex={-1} + .focus()) ANTES/junto de disparar `onTentarDeNovo`.
-//   3. `onTentarDeNovo` dispara a nova chamada (hook `useConsulta`/
-//      `clienteApi` — fora de escopo aqui).
-//   4. A tela-mãe substitui este componente por `EstadoCarregando` dentro da
-//      MESMA região `aria-live` externa que já envolve ambos, e essa região
-//      anuncia "Carregando…" automaticamente porque o foco já estava
-//      posicionado nela quando a troca ocorreu.
+// Devolução de foco ao container no "Tentar de novo" (TP-0053) desativada —
+// POC não precisa de suporte a leitor de tela.
 export function EstadoErro({
   mensagem,
   onTentarDeNovo,
   interrompe = true,
 }: EstadoErroProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
   function aoClicarTentarDeNovo() {
-    containerRef.current?.focus();
     onTentarDeNovo();
   }
 
   return (
-    <div
-      ref={containerRef}
-      tabIndex={-1}
-      role={interrompe ? "alert" : undefined}
-    >
+    <div role={interrompe ? "alert" : undefined}>
       <IconeErro />
       <span>{mensagem}</span>
       <button type="button" onClick={aoClicarTentarDeNovo}>

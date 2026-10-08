@@ -1,12 +1,13 @@
 import { z } from "zod";
 
 /**
- * Normaliza um código de pedido informado pelo usuário: remove espaços
- * nas extremidades, colapsa espaços internos repetidos em um único
- * espaço e converte para caixa alta.
+ * Normaliza um código de pedido informado pelo usuário: remove todos os
+ * espaços (nas extremidades e internos, incluindo sequências repetidas)
+ * e converte para caixa alta, para bater com o código armazenado sem
+ * espaços (ex.: "PED-000001").
  */
 export function normalizarCodigo(codigo: string): string {
-  return codigo.trim().replace(/\s+/g, " ").toUpperCase();
+  return codigo.trim().replace(/\s+/g, "").toUpperCase();
 }
 
 /**

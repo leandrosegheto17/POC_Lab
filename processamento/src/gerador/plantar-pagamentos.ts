@@ -44,7 +44,7 @@ const FRACAO_PAGAMENTO_PARCIAL = 0.6;
 const FATOR_VALOR_FORA_DO_PADRAO = 2.5;
 
 /** Texto genérico usado na referência do caso "texto livre" (RN-09): sem nenhum código `PV-` reconhecível. */
-const TEXTO_REFERENCIA_LIVRE = "pagamento via boleto";
+export const TEXTO_REFERENCIA_LIVRE = "pagamento via boleto";
 
 /** Valor não numérico usado para corromper a linha do caso "linha inválida". */
 const VALOR_NAO_NUMERICO = "N/A";
@@ -259,35 +259,46 @@ export function plantarCasosPagamento(
     registrarGabarito(pedido.idPedido, "enviado_nao_pago");
   }
 
-  // Referência em texto livre (RN-09): substitui a referência por um texto
-  // genérico sem nenhum código reconhecível.
+  // Referência em texto livre (RN-09): mantém a transação original (válida,
+  // quitando o pedido) intocada e ACRESCENTA uma transação extra com
+  // referência em texto genérico sem nenhum código reconhecível — em vez de
+  // substituir a linha original, para não apagar a quitação do pedido (que
+  // criaria uma divergência RN-05 "enviado_nao_pago" não plantada quando o
+  // pedido também tem rastreio; achado de verificação de 2026-10-08,
+  // TP-0028).
   for (const pedido of grupos.texto_livre) {
-    const referencia = referenciaDoPedido(pedido.idPedido);
-    linhas = linhas.map((linha) => {
-      const partes = linha.split(",");
-      if (partes[1] !== referencia) {
-        return linha;
-      }
-      return [partes[0], TEXTO_REFERENCIA_LIVRE, partes[2], partes[3]].join(",");
-    });
+    const dataPagamento = pedido.dataPedido.iso;
+    linhas.push(
+      formatarLinhaCsv(
+        formatarCodigoTransacao(proximoTransacaoSeq),
+        TEXTO_REFERENCIA_LIVRE,
+        calcularValorDevido(pedido.itens),
+        dataPagamento,
+      ),
+    );
+    proximoTransacaoSeq += 1;
     registrarGabarito(pedido.idPedido, "texto_livre");
   }
 
-  // Referência com dois códigos (RN-09): substitui a referência por um
-  // texto contendo 2 códigos PV- reconhecíveis (o do próprio pedido e o de
-  // outro pedido existente).
+  // Referência com dois códigos (RN-09): mesma lógica acima — ACRESCENTA uma
+  // transação extra com referência contendo 2 códigos PV- reconhecíveis (o
+  // do próprio pedido e o de outro pedido existente), sem tocar na
+  // transação original que já quita o pedido.
   for (const pedido of grupos.dois_codigos) {
     const referencia = referenciaDoPedido(pedido.idPedido);
     const outroPedido = pedidos.find((candidato) => candidato.idPedido !== pedido.idPedido) ?? pedido;
     const referenciaComDoisCodigos = `${referencia} ${referenciaDoPedido(outroPedido.idPedido)}`;
+    const dataPagamento = pedido.dataPedido.iso;
 
-    linhas = linhas.map((linha) => {
-      const partes = linha.split(",");
-      if (partes[1] !== referencia) {
-        return linha;
-      }
-      return [partes[0], referenciaComDoisCodigos, partes[2], partes[3]].join(",");
-    });
+    linhas.push(
+      formatarLinhaCsv(
+        formatarCodigoTransacao(proximoTransacaoSeq),
+        referenciaComDoisCodigos,
+        calcularValorDevido(pedido.itens),
+        dataPagamento,
+      ),
+    );
+    proximoTransacaoSeq += 1;
     registrarGabarito(pedido.idPedido, "dois_codigos");
   }
 
@@ -301,28 +312,33 @@ export function plantarCasosPagamento(
     registrarGabarito(pedido.idPedido, "repetido");
   }
 
-  // Linha inválida: corrompe a linha colocando um valor não numérico no
-  // campo `valor`.
+  // Linha inválida: mantém a transação original (válida, quitando o
+  // pedido) intocada e ACRESCENTA uma transação extra corrompida, com um
+  // valor não numérico no campo `valor` — em vez de corromper a única linha
+  // existente, para não apagar a quitação do pedido (mesma razão do caso
+  // "texto livre"/"dois códigos" acima; verificação de 2026-10-08, TP-0028).
   for (const pedido of grupos.linha_invalida) {
     const referencia = referenciaDoPedido(pedido.idPedido);
-    const indice = linhas.findIndex((linha) => linha.split(",")[1] === referencia);
-    if (indice !== -1) {
-      const partes = (linhas[indice] as string).split(",");
-      linhas[indice] = [partes[0], partes[1], VALOR_NAO_NUMERICO, partes[3]].join(",");
-    }
+    const dataPagamento = pedido.dataPedido.iso;
+    linhas.push(
+      [formatarCodigoTransacao(proximoTransacaoSeq), referencia, VALOR_NAO_NUMERICO, dataPagamento].join(","),
+    );
+    proximoTransacaoSeq += 1;
     registrarGabarito(pedido.idPedido, "linha_invalida");
   }
 
-  // Pagamento fora do padrão (RN-10): altera o valor da linha para mais de
-  // 2x o valor devido do pedido.
+  // Pagamento fora do padrão (RN-10): colapsa todas as linhas desse pedido
+  // (idem acima) em UMA única linha com valor alterado para mais de 2x o
+  // valor devido do pedido.
   for (const pedido of grupos.fora_padrao) {
     const referencia = referenciaDoPedido(pedido.idPedido);
     const valorDevido = calcularValorDevido(pedido.itens);
-    const indice = linhas.findIndex((linha) => linha.split(",")[1] === referencia);
-    if (indice !== -1) {
-      const partes = (linhas[indice] as string).split(",");
+    const linhaOriginal = linhas.find((linha) => linha.split(",")[1] === referencia);
+    linhas = linhas.filter((linha) => linha.split(",")[1] !== referencia);
+    if (linhaOriginal) {
+      const partes = linhaOriginal.split(",");
       const valorForaDoPadrao = arredondarMoeda(valorDevido * FATOR_VALOR_FORA_DO_PADRAO);
-      linhas[indice] = [partes[0], partes[1], formatarValor(valorForaDoPadrao), partes[3]].join(",");
+      linhas.push([partes[0], partes[1], formatarValor(valorForaDoPadrao), partes[3]].join(","));
     }
     registrarGabarito(pedido.idPedido, "fora_padrao");
   }

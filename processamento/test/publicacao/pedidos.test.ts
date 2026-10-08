@@ -130,10 +130,10 @@ describe("montarPedidosEVinculos", () => {
     repositorio.inserirPedido("PED-000003");
     repositorio.inserirPedido("PED-000004");
     repositorio.inserirVinculoFonte("vendas", "PV-000001", "PED-000003");
-    repositorio.inserirVinculoFonte("vendas", "pv-1", "PED-000004");
+    repositorio.inserirVinculoFonte("vendas", "pv-000001", "PED-000004");
 
     expect(() => montarPedidosEVinculos(repositorio.db)).toThrowError(
-      /PV-000001.*PED-000003.*pv-1.*PED-000004|pv-1.*PED-000004.*PV-000001.*PED-000003/s,
+      /PV-000001.*PED-000003.*pv-000001.*PED-000004|pv-000001.*PED-000004.*PV-000001.*PED-000003/s,
     );
   });
 

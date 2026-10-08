@@ -50,3 +50,20 @@ a {
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+/* UX-SPEC §3 (complemento 2026-10-08) — mapeamento da escala para h1/h2,
+ * que faltava e caía no padrão do navegador em vez da escala do design
+ * system. */
+h1 {
+  font-family: var(--fonte-texto);
+  font-weight: 700;
+  font-size: var(--texto-2xl);
+  line-height: 1.2;
+}
+
+h2 {
+  font-family: var(--fonte-texto);
+  font-weight: 700;
+  font-size: var(--texto-xl);
+  line-height: 1.3;
+}

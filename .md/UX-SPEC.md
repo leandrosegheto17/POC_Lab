@@ -4,6 +4,26 @@
 > Mudança desta rodada: o site deixa de ler JSON estáticos e passa a consumir a **API de leitura** (`/api/v1`). Mudam: paginação e filtro de T1 (agora no servidor), busca (resolvida pela API), estados de carregamento/erro (§4, com tabela de respostas da API) e restrições técnicas (§7). Telas, design system, acessibilidade e responsividade continuam os mesmos.
 > Ajuste visual do `/definir` Loop C (2026-10-07): o usuário escolheu a direção visual **Modelo B — Painel de operações (escuro)**. Mudam a §3 (tokens, fontes, componentes visuais) e a §6 (menu lateral no PC, barra de abas no celular), com reflexos pequenos na §2 (cartões de resumo e chips na T1), §5 (contraste conferido) e §7 (fontes auto-hospedadas). Fluxos, estados e API não mudam.
 > Persona das telas: analista de conciliação (fictícia). Público real: avaliador. Telas simples, legíveis, só leitura, em português (pt-BR). "Front elaborado" está fora do escopo.
+> Complemento 2026-10-08 (achado ao comparar o entregue com o mockup aprovado "B · Divergências · PC"): a §3 ficou subespecificada em dois pontos — qual elemento usa qual item da escala tipográfica (título/rótulos) e o ritmo vertical entre blocos de página — e a implementação (`web/src/estilos/base.css`, `casca.css`) não preencheu a lacuna com um padrão equivalente. Mudam só trechos da §3 (tipografia e espaçamento); fluxos, cores e demais seções não mudam.
+> Complemento 2026-10-08 (2ª rodada, causa raiz da divergência acima): o Frontend estava seguindo só o texto deste documento porque o mockup nunca tinha sido listado nele como referência obrigatória. Nova **§0** lista a URL do canvas e o artboard de cada tela; em aparência visual, o mockup passa a valer mais que o texto das §2/§3/§6 em caso de conflito.
+
+## 0. Mockup aprovado (referência obrigatória de layout)
+
+> Complemento 2026-10-08 (achado ao comparar o entregue com o mockup aprovado "B · Divergências · PC" — ver nota da §3): o Frontend vinha seguindo só o texto deste documento e perdeu detalhes visuais que só estão no mockup (ex.: caixa alta espaçada nos rótulos, ritmo vertical entre blocos). A partir desta rodada, **o mockup é fonte obrigatória de layout, junto com este documento — não opcional, não "referência de inspiração"**. Em caso de conflito entre o texto da §2/§3/§6 e o mockup, o mockup vence para aparência visual (cor, espaçamento, tipografia, disposição); este documento vence para comportamento, dados e acessibilidade (o mockup é estático).
+
+**Canvas com todos os artboards:** `https://claude.ai/artifact/2pKjXUg3q3pCRBHJ1VjDsG`
+
+Artboards aprovados (prefixo `B_`, Modelo B — Painel de operações escuro, escolhido em 2026-10-07). Os prefixos `A_` e `C_` no mesmo canvas são variantes **descartadas**: não usar como referência.
+
+| Tela | Artboard PC | Artboard celular |
+|---|---|---|
+| T1 Divergências | `B_Divergencias_PC` | `B_Divergencias_Mobile` |
+| T2 Linha do tempo do pedido | `B_LinhaDoTempo_PC` | `B_LinhaDoTempo_Mobile` |
+| T3 Indicadores | `B_Indicadores_PC` | `B_Indicadores_Mobile` |
+| T4 Qualidade dos dados | `B_Qualidade_PC` | `B_Qualidade_Mobile` |
+| T5 Página não encontrada | `B_NaoEncontrada_PC` | — (mesmo layout, reflow) |
+
+Antes de implementar ou revisar qualquer tela, o Frontend deve abrir o artboard correspondente no canvas acima e conferir: cor e contraste exatos, tipografia (fonte, peso, tamanho, caixa alta/baixa), espaçamento entre blocos, disposição dos componentes. Dúvida entre o artboard e o texto deste documento sobre aparência: perguntar antes de decidir por conta própria.
 
 ## 1. Fluxos de Tela
 
@@ -117,7 +137,7 @@ Para cada tipo de achado (seção <h2>):
 
 ## 3. Design System
 
-Direção visual: **Modelo B — Painel de operações (escuro)**, escolhida pelo usuário em 2026-10-07 (referência: artboards "B" aprovados por ele). Tema único escuro; alternância claro/escuro fica fora de propósito. Não há design system prévio: **todos os componentes abaixo são novos** (marcados `[novo]`). CSS puro, tokens em `web/src/estilos/tokens.css`; sem biblioteca de componentes nem de ícones.
+Direção visual: **Modelo B — Painel de operações (escuro)**, escolhida pelo usuário em 2026-10-07 (referência obrigatória: artboards "B" do mockup aprovado, §0). Tema único escuro; alternância claro/escuro fica fora de propósito. Não há design system prévio: **todos os componentes abaixo são novos** (marcados `[novo]`). CSS puro, tokens em `web/src/estilos/tokens.css`; sem biblioteca de componentes nem de ícones.
 
 **Cores** (contraste calculado pela fórmula de luminância relativa do WCAG 2.2; texto exige ≥ 4,5:1, componente de UI e foco ≥ 3:1):
 
@@ -153,7 +173,17 @@ Aliases de estado: `EstadoErro` usa a paleta de "Pago duas vezes" e `EstadoVazio
 
 **Tipografia** — **Manrope** para texto (pesos 400, 600, 700) e **JetBrains Mono** para códigos (pedido, transação, rastreio), datas, valores e contagens (400, 600). **Decisão: auto-hospedadas**, em `woff2` (fonte variável, subconjunto latino, que cobre o pt-BR) em `web/src/estilos/fontes/`, declaradas por `@font-face` no CSS (o Vite publica com nome versionado). Motivos: o CSP do site é `default-src 'self'` (SDD §7) e uma fonte de CDN externo exigiria afrouxá-lo; evita requisição a terceiro em cada visita; funciona sem rede no `pnpm dev`; não adiciona dependência npm (G-17). Custo zero: as duas fontes são de licença SIL OFL 1.1, e o texto da licença acompanha os arquivos e é citado no aviso de licença do repositório. `font-display: swap`; reserva: `system-ui, sans-serif` e `ui-monospace, monospace`. Base 16 px, altura de linha 1,5, escala 0,875 / 1 / 1,25 / 1,5 / 2 rem; números com `tabular-nums`.
 
+**Mapeamento da escala para elementos (complemento 2026-10-08, Loop C — faltava no rascunho original e `web/src/estilos/base.css` não tinha regra própria para título/seções, caindo no padrão do navegador em vez da escala acima):**
+| Elemento | Fonte/peso/tamanho | Observação |
+|---|---|---|
+| `<h1>` (título da página) | Manrope 700, `--texto-2xl` (2 rem), altura de linha 1,2 | Hoje sem regra própria em `base.css`: usa o padrão do navegador (que coincide em tamanho, mas não deve ficar implícito) |
+| `<h2>` (seções de T3/T4) | Manrope 700, `--texto-xl` (1,5 rem), altura de linha 1,3 | Idem |
+| Rótulo de cartão (`.cartao-resumo-titulo`), cabeçalho de tabela (`th`), legenda de chip/campo (`legend`), texto secundário em geral | Manrope 600, `--texto-sm`, **maiúsculas, `letter-spacing: 0.04em`** | Detalhe do artboard "B" aprovado ("labels em caixa alta espaçada") nunca registrado nesta rodada; aplica-se a todo uso de `--cor-texto-2` como rótulo (não ao texto corrido secundário, ex. base dos cartões, que permanece caixa normal) |
+| Valor de cartão (`.cartao-resumo-valor`) | JetBrains Mono 600, `--texto-xl` | Já implementado conforme a escala |
+
 **Espaçamento e forma:** 4 / 8 / 12 / 16 / 24 / 32 px; raio 6 px (cartões, campos, botões) e 999 px (chips, etiquetas); menu lateral 15 rem; conteúdo até 72 rem.
+
+**Ritmo vertical entre blocos da página (complemento 2026-10-08 — mesma lacuna):** `base.css` zera a margem de `h1`/`p`/listas (reset global), e nenhuma regra devolve espaçamento entre os blocos de nível de página (título, cartões de resumo, chips de filtro, tabela/conteúdo principal) — hoje eles ficam colados uns nos outros. Regra: todo bloco de nível de página (direto dentro de `.casca__conteudo`) usa `--espaco-6` (32 px) de espaço vertical entre si — ex. `.casca__conteudo > * + * { margin-top: var(--espaco-6); }`, ou equivalente com `gap` se a página passar a usar um contêiner flex/grid vertical. Isso vale para T1 (h1 → `CartoesResumo` → `FiltroTipo` → tabela/paginação) e para o mesmo padrão nas demais telas.
 
 **Ícones:** SVG próprios em linha (traço 1,5 px, 20 px), sempre `aria-hidden="true"` e ao lado de texto visível; nenhum controle é só ícone.
 

@@ -52,10 +52,18 @@ export async function executarSugerir(
   const provedor = opcoes.provedor ?? criarProvedorOpenAI();
   const modelo = ambiente.OPENAI_MODELO || MODELO_PADRAO;
 
-  const resultados = await sugerir(repositorio, provedor, {
-    ...opcoes.opcoesSugerir,
-    modelo: opcoes.opcoesSugerir?.modelo ?? modelo,
-  });
+  let resultados: ResultadoSugestao[];
+  try {
+    resultados = await sugerir(repositorio, provedor, {
+      ...opcoes.opcoesSugerir,
+      modelo: opcoes.opcoesSugerir?.modelo ?? modelo,
+    });
+  } finally {
+    // Fecha a conexão aberta por esta função (nunca a de quem a chamou) —
+    // em Windows, um handle aberto trava `rmSync` do diretório temporário
+    // do banco (visto em teste de integração, TP-0083).
+    repositorio.db.close();
+  }
 
   console.log(
     `Sugestão concluída: ${resultados.length} pagamento(s) sem identificação avaliado(s).`,

@@ -4,8 +4,8 @@
 -- script possa ser reaplicado do zero a cada publicação (idempotente por
 -- substituição total, diferente do event store local em
 -- armazenamento/schema.sql, que é aditivo via `CREATE TABLE IF NOT EXISTS`).
--- Sem `BEGIN`/`COMMIT`: a transação, se houver, é responsabilidade de quem
--- aplica o script, não deste arquivo.
+-- Sem comando de transação neste arquivo: a transação, se houver, é
+-- responsabilidade de quem aplica o script, não deste DDL.
 
 DROP TABLE IF EXISTS pedido_resumo;
 CREATE TABLE pedido_resumo (

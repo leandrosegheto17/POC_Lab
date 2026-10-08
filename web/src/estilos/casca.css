@@ -1,11 +1,19 @@
-/* TP-0055 — layout da casca do app (link "pular para o conteúdo",
- * cabeçalho e navegação principal) e seu comportamento responsivo.
- * Mobile-first, breakpoints em 1024px (menu lateral vs. barra de abas) e
- * altura 480px (barra de abas deixa de ser fixa em telas muito baixas).
+/* TP-0055 (reestruturado para bater com o mockup/Modelo B) — layout da
+ * casca do app (link "pular para o conteúdo", barra única com
+ * logo+busca+navegação+faixa de resumo, e conteúdo principal) e seu
+ * comportamento responsivo. Mobile-first, breakpoints em 1024px (menu
+ * lateral vs. cabeçalho + barra de abas) e altura 480px (a barra de abas
+ * deixa de ser fixa em telas muito baixas).
  *
- * Importante: a troca entre menu lateral (>=1024px) e barra de abas
- * inferior (<1024px) é o MESMO elemento <nav> (NavegacaoPrincipal) só
- * reposicionado via @media — nunca há JS decidindo isso.
+ * Importante: `.casca__barra` (logo, busca, nav, faixa — ver Casca.tsx)
+ * é o único agrupamento desses 4 elementos no DOM, em qualquer largura de
+ * tela; não existe duplicata. A troca de disposição entre menu lateral
+ * (>=1024px) e cabeçalho + barra de abas inferior (<1024px) é só CSS —
+ * nunca há JS decidindo isso. Dentro de `.casca__barra`, o <nav>
+ * (NavegacaoPrincipal) é o MESMO elemento <nav> único do DOM: em <1024px
+ * ele sai do fluxo normal (`position: fixed`) e vira a barra de abas no
+ * rodapé da tela; em >=1024px ele continua dentro de `.casca__barra`,
+ * ocupando o espaço vertical entre a busca e a faixa de resumo.
  */
 
 .casca {
@@ -14,19 +22,18 @@
   min-height: 100vh;
 }
 
-.casca__cabecalho {
+/* Barra única (mobile-first): cabeçalho no topo, não fixo, com logo, busca
+ * e a faixa de resumo empilhados (UX-SPEC §6 — "< 1024 px"). O <nav> mora
+ * aqui também no DOM, mas sai do fluxo via `position: fixed` (ver regra
+ * mobile de `.navegacao-principal` abaixo), então não ocupa espaço visual
+ * dentro desta barra nem desloca a faixa de resumo. */
+.casca__barra {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
   gap: var(--espaco-3);
   padding: var(--espaco-3) var(--espaco-4);
   border-bottom: 1px solid var(--cor-divisoria);
-}
-
-.casca__corpo {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+  box-sizing: border-box;
 }
 
 .casca__conteudo {
@@ -40,6 +47,14 @@
   margin: 0 auto;
   width: 100%;
   scroll-padding-bottom: 56px;
+}
+
+/* UX-SPEC §3 (complemento 2026-10-08) — ritmo vertical entre blocos de
+ * nível de página (título, cartões de resumo, chips de filtro,
+ * tabela/conteúdo principal): sem esta regra eles ficam colados, porque
+ * base.css zera a margem de h1/p/listas. */
+.casca__conteudo > * + * {
+  margin-top: var(--espaco-6);
 }
 
 /* Link "Pular para o conteúdo": fora da tela até receber foco. */
@@ -65,6 +80,55 @@
   border: 1px solid var(--cor-borda);
   border-radius: var(--raio);
   z-index: 200;
+}
+
+/* Logo/marca do produto, no topo de `.casca__barra` em qualquer largura. */
+.logo-marca {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-2);
+}
+
+.logo-marca__selo {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: var(--raio);
+  background: var(--cor-destaque);
+  color: var(--cor-sobre-destaque);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: var(--texto-sm);
+}
+
+.logo-marca__texto {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.logo-marca__nome {
+  font-weight: 800;
+  font-size: var(--texto-lg);
+  color: var(--cor-texto);
+}
+
+.logo-marca__subtitulo {
+  font-size: var(--texto-sm);
+  color: var(--cor-texto-2);
+}
+
+/* Faixa de resumo ("Dados sintéticos..."): sempre o último item de
+ * `.casca__barra` no DOM; em >=1024px o <nav> (flex: 1, ver abaixo) ocupa
+ * todo o espaço vertical restante da coluna, então esta faixa já fica
+ * encostada embaixo sem precisar de margem extra. */
+.faixa-resumo {
+  margin: 0;
+  font-size: var(--texto-sm);
+  color: var(--cor-texto-2);
+  line-height: var(--altura-linha);
 }
 
 /* Navegação principal — mobile-first: barra de abas fixa no rodapé. */
@@ -114,24 +178,40 @@
   border-top: 3px solid var(--cor-destaque);
 }
 
-/* >=1024px: o mesmo <nav> passa a ser o menu lateral fixo à esquerda. */
+/* >=1024px: uma única coluna lateral fixa (menu lateral do mockup) com
+ * logo, busca, navegação e faixa de resumo, nessa ordem visual — sem
+ * nenhum header de largura cheia acima do conteúdo. */
 @media (min-width: 1024px) {
-  .casca__corpo {
+  .casca {
     flex-direction: row;
   }
 
-  .navegacao-principal {
+  .casca__barra {
     position: sticky;
     top: 0;
-    left: auto;
-    right: auto;
-    bottom: auto;
     height: 100vh;
     width: var(--largura-menu-lateral);
     flex-shrink: 0;
+    gap: var(--espaco-5);
+    padding: var(--espaco-5) var(--espaco-3);
     background: var(--cor-lateral);
-    border-top: none;
+    border-bottom: none;
     border-right: 1px solid var(--cor-divisoria);
+    overflow-y: auto;
+  }
+
+  /* O mesmo <nav> passa a viver dentro de `.casca__barra`, crescendo para
+   * ocupar o espaço entre a busca e a faixa de resumo. */
+  .navegacao-principal {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    height: auto;
+    width: auto;
+    flex: 1;
+    background: transparent;
+    border-top: none;
   }
 
   .navegacao-principal__lista {
@@ -164,15 +244,15 @@
 
 /* Telas muito baixas (altura <= 480px, ex. celular em paisagem): a barra
  * de abas fixa comeria espaço vertical demais. Ela deixa de ser `fixed` e
- * passa a fazer parte do fluxo normal do documento. Mantemos a ordem no
- * DOM (nav antes de main, ver Casca.tsx) para não alterar a ordem de tab
- * do teclado — só a posição VISUAL muda, via `order` do flex, para o nav
- * aparecer depois do conteúdo principal. */
+ * passa a fazer parte do fluxo normal de `.casca__barra`, reordenada
+ * (`order`) para o final (depois da faixa de resumo) — mantendo a ordem
+ * no DOM (ver Casca.tsx) para não alterar a ordem de tab do teclado; só a
+ * posição VISUAL muda. */
 @media (max-height: 480px) and (max-width: 1023px) {
   .navegacao-principal {
     position: static;
     height: auto;
-    order: 2;
+    order: 4;
   }
 
   .navegacao-principal__lista {
@@ -180,22 +260,36 @@
   }
 
   .casca__conteudo {
-    order: 1;
     padding-bottom: var(--espaco-4);
     scroll-padding-bottom: 0;
   }
 }
 
-/* TP-0057 — campo de busca de pedido: montado uma única vez dentro do
- * slot `slotBusca` de Casca.tsx (header). Layout em linha (rótulo visível
- * + input + botão) com quebra para a mensagem de erro; mobile-first já
- * cabe bem no cabeçalho estreito do celular por flex-wrap, sem precisar de
- * uma segunda instância para o menu lateral (>=1024px). */
+/* TP-0057 — campo de busca de pedido: montado uma única vez dentro de
+ * `.casca__barra` (ver Casca.tsx). Layout em linha (rótulo visível acima
+ * do input + botão) com quebra para a mensagem de erro; cabe tanto no
+ * cabeçalho estreito do celular quanto na coluna lateral estreita do PC,
+ * sem precisar de uma segunda instância. */
 .campo-busca {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--espaco-2);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.campo-busca__rotulo {
+  flex-basis: 100%;
+  font-size: var(--texto-sm);
+  color: var(--cor-texto-2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.campo-busca__input {
+  flex: 1;
+  min-width: 0;
 }
 
 .campo-busca__erro {

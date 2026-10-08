@@ -18,7 +18,17 @@
 // `processamento/package.json`, em vez de caminho relativo entre pacotes —
 // assim o caminho não depende de a estrutura de diretórios de `processamento`
 // não mudar.
+//
+// Verificação (2026-10-08): sob o pool de testes do Vitest (transformado via
+// `vite-node`/SSR), `import.meta.resolve` chega como `undefined` no módulo
+// transformado (`__vite_ssr_import_meta__.resolve is not a function`) — Vite
+// não implementa esse método no objeto `import.meta` sintético que injeta.
+// `createRequire(import.meta.url).resolve(...)` faz a mesma resolução pelo
+// campo `exports` de `processamento/package.json`, mas por `node:module`
+// (não passa pela transformação de `import.meta` do Vite), e funciona tanto
+// em teste quanto em execução Node direta.
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { DatabaseSync } from "node:sqlite";
 
 import { escreverSqlPublicacao } from "processamento/publicacao/escritor-sql.js";
@@ -27,10 +37,10 @@ import { D1Teste } from "./d1-teste.js";
 import { DADOS_EXEMPLO } from "./dados-exemplo.js";
 
 function lerDdl(): string {
-  const caminhoDdl = import.meta.resolve(
+  const caminhoDdl = createRequire(import.meta.url).resolve(
     "processamento/publicacao/leitura-d1.sql",
   );
-  return readFileSync(new URL(caminhoDdl), "utf8");
+  return readFileSync(caminhoDdl, "utf8");
 }
 
 /**

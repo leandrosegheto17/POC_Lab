@@ -1,10 +1,17 @@
 // TP-0072 — SeletorData: <input type="date"> controlado com <label>,
 // botões "Ver estado" e "Limpar" (este com aria-disabled quando vazio, não
 // disabled nativo), e ausência de violações de acessibilidade (axe).
-import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import { SeletorData } from "../src/componentes/SeletorData.tsx";
+
+// `vitest.config`/`vite.config` não habilita `globals: true`, então o
+// auto-cleanup do @testing-library/react (que depende de um `afterEach`
+// global) não dispara sozinho entre os testes deste arquivo — sem isso, o
+// DOM acumula uma instância de <SeletorData> por teste e `getByRole`
+// encontra múltiplos elementos. Cleanup explícito por teste.
+afterEach(cleanup);
 
 function renderSeletor(valor: string) {
   const onMudar = vi.fn();

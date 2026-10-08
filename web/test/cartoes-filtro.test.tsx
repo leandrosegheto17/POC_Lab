@@ -19,6 +19,17 @@ const FORMATADOR_MOEDA = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
+/**
+ * `screen.getByText` normaliza o texto do DOM (colapsa espaços, inclusive o
+ * espaço não separável ` ` que o `Intl.NumberFormat` pt-BR usa entre
+ * "R$" e o valor, para um espaço comum), mas NÃO normaliza a string do
+ * matcher — então comparar direto com `FORMATADOR_MOEDA.format(...)` (que
+ * mantém o ` `) nunca bate. Aplicamos a mesma normalização aqui.
+ */
+function textoMoeda(valor: number): string {
+  return FORMATADOR_MOEDA.format(valor).replace(/ /g, " ");
+}
+
 /** Objeto mínimo válido contra `EsquemaCartao` (processamento/contrato/resumo.ts). */
 function cartao(numerador: number, denominador = 1): unknown {
   return {
@@ -99,12 +110,10 @@ describe("CartoesResumo — estado de sucesso", () => {
     expect(screen.getByText("7 de 100 pedidos")).toBeInTheDocument();
 
     expect(screen.getByText("Valor em aberto")).toBeInTheDocument();
-    expect(
-      screen.getByText(FORMATADOR_MOEDA.format(1234.5)),
-    ).toBeInTheDocument();
+    expect(screen.getByText(textoMoeda(1234.5))).toBeInTheDocument();
 
     expect(screen.getByText("Pago a mais")).toBeInTheDocument();
-    expect(screen.getByText(FORMATADOR_MOEDA.format(99.9))).toBeInTheDocument();
+    expect(screen.getByText(textoMoeda(99.9))).toBeInTheDocument();
 
     expect(screen.getByText("Entregas no prazo")).toBeInTheDocument();
     expect(screen.getByText("94.4%")).toBeInTheDocument();

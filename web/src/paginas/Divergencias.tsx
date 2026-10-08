@@ -148,24 +148,8 @@ export function Divergencias() {
     }
   }, [estadoConsulta]);
 
-  // Foco no `<caption>` ao trocar de PÁGINA (diferente do foco no `<h1>` na
-  // troca de ROTA, de `useFocoNoTitulo`): só move o foco quando o `tipo`
-  // continua o mesmo e a `pagina` mudou desde a última vez que o foco foi
-  // movido — isso evita mover o foco quando a troca de FILTRO reseta a
-  // página para 1 na mesma navegação (nesse caso o foco já vai para o
-  // `<h1>`, não duplica para o `<caption>`).
-  const ultimoFocoRef = useRef({ tipo: tipoValido, pagina });
-  useEffect(() => {
-    if (estadoConsulta.status !== "sucesso") {
-      return;
-    }
-    const anterior = ultimoFocoRef.current;
-    const soAPaginaMudou = anterior.tipo === tipoValido && anterior.pagina !== pagina;
-    if (soAPaginaMudou) {
-      refCaption.current?.focus();
-    }
-    ultimoFocoRef.current = { tipo: tipoValido, pagina };
-  }, [estadoConsulta, tipoValido, pagina]);
+  // Foco no `<caption>` ao trocar de PÁGINA (TP-0055) desativado — POC não
+  // precisa de suporte a leitor de tela.
 
   function aoMudarFiltro(tipo: string) {
     const novosParametros = new URLSearchParams(searchParams);

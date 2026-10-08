@@ -22,7 +22,7 @@
 
 .tabela-dados th,
 .tabela-dados td {
-  padding: var(--espaco-2) var(--espaco-4);
+  padding: var(--espaco-3) var(--espaco-4);
   border-bottom: 1px solid var(--cor-divisoria);
   text-align: left;
 }
@@ -30,6 +30,8 @@
 .tabela-dados th {
   color: var(--cor-texto-2);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .tabela-dados tbody tr:last-child td {

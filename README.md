@@ -21,6 +21,11 @@ Três comandos, nesta ordem:
 Não precisa de conta na Cloudflare nem de chave de API (`OPENAI_API_KEY`) para
 rodar localmente.
 
+## Versão publicada
+
+A versão publicada (site + API, ver `web/PUBLICAR.md`) está em
+<https://poc-lab.leandrosegheto17.workers.dev>.
+
 ## Mapa de decisões
 
 Cada linha é um ADR, em `.md/adr/`. Os substituídos estão marcados.

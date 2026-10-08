@@ -56,6 +56,7 @@ export function Indicador({
       <TabelaDados
         caption={`Detalhamento — ${bloco.titulo}`}
         cabecalhos={["Rótulo", "Numerador", "Denominador", "%"]}
+        rotuloRegiao={`Tabela com rolagem horizontal — ${bloco.titulo}`}
       >
         {linhasTabela.map((linha, indice) => (
           <tr key={`${bloco.chave}-${indice}`}>

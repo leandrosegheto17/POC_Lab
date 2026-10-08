@@ -27,6 +27,7 @@
 // nenhuma tarefa do contrato v2 (TP-0074 a TP-0077), então os dois testes de
 // tela continuam válidos sem qualquer alteração em `web/src/`.
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { DatabaseSync } from "node:sqlite";
 
 import { Hono } from "hono";
@@ -40,9 +41,12 @@ import { D1Teste } from "../apoio/d1-teste.js";
 import { rotaLinhaDoTempo } from "../../worker/rotas/linha-do-tempo.ts";
 import { rotaLinhaDoTempoV2 } from "../../worker/rotas/linha-do-tempo-v2.ts";
 
+// Verificação (2026-10-08): `import.meta.resolve` não existe no `import.meta`
+// sintético que o Vite injeta sob o pool de testes do Vitest; ver nota
+// equivalente em `web/test/apoio/fixture.ts` e `web/test/worker/linha-do-tempo.test.ts`.
 function lerDdl(): string {
-  const caminhoDdl = import.meta.resolve("processamento/publicacao/leitura-d1.sql");
-  return readFileSync(new URL(caminhoDdl), "utf8");
+  const caminhoDdl = createRequire(import.meta.url).resolve("processamento/publicacao/leitura-d1.sql");
+  return readFileSync(caminhoDdl, "utf8");
 }
 
 function criarD1TesteLocal(tabelas: TabelasParaPublicacao): D1Teste {

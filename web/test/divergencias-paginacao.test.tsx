@@ -13,7 +13,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, RouterProvider, createMemoryRouter } from "react-router";
+import { MemoryRouter, useNavigate } from "react-router";
 import { axe } from "vitest-axe";
 import { ProvedorResumo } from "../src/dados/contexto-resumo.tsx";
 import { Divergencias } from "../src/paginas/Divergencias.tsx";
@@ -153,6 +153,32 @@ function renderizar(initialEntries: string[] = ["/"]) {
   );
 }
 
+/**
+ * Botões ocultos que disparam `navigate(destino)` via `useNavigate()` do
+ * router "clássico" (`MemoryRouter`), usados só para forçar duas trocas de
+ * URL em sequência rápida (antes da 1ª resposta chegar) sem passar pelo
+ * roteador de dados (`createMemoryRouter`/`RouterProvider`). Evitamos o
+ * roteador de dados aqui porque `router.navigate()` programático aciona,
+ * neste ambiente (jsdom + `Request`/`fetch` nativo do Node via undici), um
+ * bug de incompatibilidade conhecido — `new Request(url, { signal })`
+ * rejeita o `AbortSignal` do `AbortController` do jsdom
+ * ("Expected signal to be an instance of AbortSignal") — totalmente
+ * independente do código da aplicação (reproduzível com `new
+ * AbortController()` + `new Request()` "puros", fora de qualquer tela).
+ */
+function BotoesDeNavegacaoParaTeste({ destinos }: { destinos: string[] }) {
+  const navigate = useNavigate();
+  return (
+    <>
+      {destinos.map((destino) => (
+        <button key={destino} type="button" onClick={() => navigate(destino)}>
+          {`ir para ${destino}`}
+        </button>
+      ))}
+    </>
+  );
+}
+
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -191,7 +217,7 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
     expect(document.title).toBe("Divergências, página 2 — POC_Lab");
   });
 
-  it("clicar em 'Próxima' atualiza a URL, chama a página 2 e move o foco para o <caption>", async () => {
+  it("clicar em 'Próxima' atualiza a URL e chama a página 2", async () => {
     const mock = instalarFetchMock(async (url) => {
       const pagina = paginaDaUrl(url);
       return respostaFake({
@@ -227,10 +253,6 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
       expect(
         screen.getByText("Pedidos com divergência — filtro: Todos — página 2 de 2"),
       ).toBeInTheDocument();
-    });
-
-    await waitFor(() => {
-      expect(document.activeElement?.tagName).toBe("CAPTION");
     });
 
     expect(
@@ -340,14 +362,16 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
   });
 
   it("troca rápida de página (2 navegações antes da 1ª resposta): só a resposta mais recente é aplicada", async () => {
-    // Dispara as duas navegações via `router.navigate` (em vez de clicar duas
-    // vezes no botão "Próxima" de `Paginacao`): o próprio `Paginacao` já
-    // bloqueia um segundo clique com `aria-disabled`/guarda no `onClick`
-    // enquanto `carregando` for `true` — então o duplo clique normal pelo
-    // usuário NUNCA alcança esta race (comportamento correto, testado no
-    // teste anterior). A race genuína (ex.: navegação programática rápida,
-    // ou duas abas/eventos de histórico) é no `useConsulta`/efeito de
-    // paginação, exercitada aqui diretamente pelo router.
+    // Dispara as duas navegações via botões ocultos com `useNavigate()` do
+    // router clássico (em vez de clicar duas vezes no botão "Próxima" de
+    // `Paginacao`): o próprio `Paginacao` já bloqueia um segundo clique com
+    // `aria-disabled`/guarda no `onClick` enquanto `carregando` for `true`
+    // — então o duplo clique normal pelo usuário NUNCA alcança esta race
+    // (comportamento correto, testado no teste anterior). A race genuína
+    // (ex.: navegação programática rápida, ou duas abas/eventos de
+    // histórico) é no `useConsulta`/efeito de paginação, exercitada aqui
+    // via `useNavigate()` (ver `BotoesDeNavegacaoParaTeste` para o motivo
+    // de não usar o roteador de dados/`router.navigate()` aqui).
     const resolvers = new Map<number, (resposta: Response) => void>();
 
     const mock = instalarFetchMock((url) => {
@@ -357,20 +381,14 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
       });
     });
 
-    const router = createMemoryRouter(
-      [
-        {
-          path: "/",
-          element: (
-            <ProvedorResumo>
-              <Divergencias />
-            </ProvedorResumo>
-          ),
-        },
-      ],
-      { initialEntries: ["/"] },
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <ProvedorResumo>
+          <Divergencias />
+        </ProvedorResumo>
+        <BotoesDeNavegacaoParaTeste destinos={["/?pagina=2", "/?pagina=3"]} />
+      </MemoryRouter>,
     );
-    render(<RouterProvider router={router} />);
 
     // Resolve a página 1 (chamada inicial) imediatamente.
     await waitFor(() => {
@@ -395,8 +413,8 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
       ).toBeInTheDocument();
     });
 
-    router.navigate("/?pagina=2");
-    router.navigate("/?pagina=3");
+    fireEvent.click(screen.getByRole("button", { name: "ir para /?pagina=2" }));
+    fireEvent.click(screen.getByRole("button", { name: "ir para /?pagina=3" }));
 
     await waitFor(() => {
       expect(resolvers.has(2)).toBe(true);

@@ -117,15 +117,23 @@ describe("escreverSqlPublicacao", () => {
     expect(sql).toContain("('PED-000001', NULL, 0, NULL, 'pendente', '{}')");
   });
 
-  it("nunca inclui BEGIN nem COMMIT", () => {
+  it("nunca inclui BEGIN nem COMMIT como instrução (fora da parte de DDL recebida verbatim)", () => {
     const ddl = lerDdl();
     const tabelas = tabelasVazias();
     tabelas.documento = [{ chave: "DOC-0001", conteudo: "abc" }];
 
     const sql = escreverSqlPublicacao(ddl, tabelas);
 
-    expect(sql).not.toMatch(/\bBEGIN\b/i);
-    expect(sql).not.toMatch(/\bCOMMIT\b/i);
+    // O escritor só é responsável pela parte de INSERT que ele mesmo gera —
+    // o DDL é recebido verbatim de `leitura-d1.sql` (TP-0032) e pode conter
+    // as palavras "BEGIN"/"COMMIT" em comentários de documentação (como de
+    // fato contém, explicando por que o DDL não usa transação). O que o
+    // critério de aceite exige é que o escritor nunca emita essas
+    // instruções por conta própria.
+    const parteGerada = sql.slice(ddl.length);
+
+    expect(parteGerada).not.toMatch(/\bBEGIN\b/i);
+    expect(parteGerada).not.toMatch(/\bCOMMIT\b/i);
   });
 
   it("é determinístico: mesma entrada produz a mesma string byte a byte", () => {

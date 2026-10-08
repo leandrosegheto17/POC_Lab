@@ -15,18 +15,13 @@ import type { EntradaGabarito } from "./gabarito.js";
  * (`ORDEM_TIPOS_PARTICAO`), a fração correspondente — nenhum pedido recebe
  * mais de 1 tipo de caso de rastreio.
  *
- * Decisão de coerência com o plantio de pagamento (TP-0025): esta função não
- * tem acesso ao gabarito de pagamento (é pura e não conhece
- * `plantarCasosPagamento`). Como `cli/gerar.ts` encadeia uma ÚNICA instância
- * do PRNG através de `gerarPagamentos` → `plantarCasosPagamento` →
- * `gerarRastreio` → `plantarCasosRastreio`, cada etapa consome números em
- * sequência e sorteia subconjuntos do pool de pedidos "limpos" de forma
- * independente a cada chamada de `embaralhar`. Na prática, isso já produz
- * subconjuntos predominantemente diferentes entre pagamento e rastreio (as
- * proporções de cada etapa somam uma fração minoritária do total). Não há
- * filtragem explícita de pedidos "reservados" por `plantarCasosPagamento`
- * porque esta função não recebe esse gabarito — decisão aceita como não
- * bloqueante, conforme o próprio enunciado da tarefa.
+ * Coerência com o plantio de pagamento (TP-0025, verificação de 2026-10-08):
+ * `pedidosExcluidos` (4º parâmetro) recebe os ids dos pedidos já usados por
+ * `plantarCasosPagamento`, para que nenhum pedido receba simultaneamente um
+ * caso de pagamento (que altera sua `situacaoPagamento`) e um caso de
+ * rastreio que pressupõe outra situação (ex. "pago_nao_enviado" pressupõe
+ * pedido quitado) — sem essa exclusão, a base real produzia falso negativo
+ * na comparação com o gabarito (TP-0028).
  */
 export const PROPORCAO_PAGO_NAO_ENVIADO = 0.05;
 export const PROPORCAO_ENTREGA_ATRASADA = 0.05;
@@ -76,9 +71,24 @@ function embaralhar<T>(itens: T[], prng: () => number): T[] {
   return copia;
 }
 
-/** Pedidos elegíveis a receber caso de rastreio: só os que têm `dataEnvio` (e, portanto, linhas em `rastreio.csv`). */
-function pedidosElegiveis(pedidos: PedidoVendas[]): PedidoVendas[] {
-  return pedidos.filter((pedido) => pedido.dataEnvio !== null);
+/**
+ * Pedidos elegíveis a receber caso de rastreio: só os que têm `dataEnvio`
+ * (e, portanto, linhas em `rastreio.csv`) e que NÃO foram usados por
+ * `plantarCasosPagamento` (TP-0025) — `pedidosExcluidos` chega com os ids dos
+ * pedidos já reservados para algum caso de pagamento. Sem essa exclusão, um
+ * pedido poderia receber simultaneamente um caso de pagamento que altera sua
+ * `situacaoPagamento` (ex. "enviado_nao_pago"/"duplicado"/"parcial") E um
+ * caso de rastreio que pressupõe outra situação (ex. "pago_nao_enviado"
+ * pressupõe pedido quitado) — produzindo falso negativo na divergência
+ * calculada (RN-05) contra o gabarito (TP-0028), já observado na base real.
+ */
+function pedidosElegiveis(
+  pedidos: PedidoVendas[],
+  pedidosExcluidos: Set<string>,
+): PedidoVendas[] {
+  return pedidos.filter(
+    (pedido) => pedido.dataEnvio !== null && !pedidosExcluidos.has(pedido.idPedido),
+  );
 }
 
 /**
@@ -134,8 +144,9 @@ export function plantarCasosRastreio(
   pedidos: PedidoVendas[],
   linhasCsvBase: string[],
   prng: () => number,
+  pedidosExcluidos: Set<string> = new Set(),
 ): ResultadoPlantioRastreio {
-  const elegiveis = pedidosElegiveis(pedidos);
+  const elegiveis = pedidosElegiveis(pedidos, pedidosExcluidos);
   const grupos = particionarPedidos(elegiveis, prng);
   let linhas = linhasCsvBase.slice();
   const gabarito: EntradaGabarito[] = [];
@@ -192,10 +203,15 @@ export function plantarCasosRastreio(
     registrarGabarito(pedido.idPedido, "fora_de_ordem");
   }
 
-  // Linha inválida: corrompe a primeira linha do pedido colocando um `tipo`
-  // fora do enum coleta/transporte/entrega.
+  // Linha inválida: corrompe a linha de `transporte` do pedido (nunca a de
+  // `coleta`) colocando um `tipo` fora do enum coleta/transporte/entrega —
+  // corromper a de `coleta` faria essa linha ser rejeitada na importação,
+  // apagando o `coletado` do pedido e produzindo uma divergência RN-05
+  // "pago_nao_enviado" não plantada (verificação de 2026-10-08, TP-0028).
+  // `transporte` não é lido por nenhuma regra de divergência, então
+  // corrompê-la é seguro.
   for (const pedido of grupos.linha_invalida) {
-    const indice = encontrarIndiceLinha(linhas, pedido.idPedido);
+    const indice = encontrarIndiceLinha(linhas, pedido.idPedido, (partes) => partes[3] === "transporte");
     if (indice !== -1) {
       const partes = (linhas[indice] as string).split(",");
       partes[3] = VALOR_TIPO_INVALIDO;

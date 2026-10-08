@@ -118,7 +118,18 @@ export function publicarDados(
   const deps = { ...DEPENDENCIAS_PADRAO, ...dependencias };
 
   const repositorio = deps.criarRepositorio(args.caminhoBanco);
-  const sql = montarSqlPublicacao(repositorio.db, { semente: args.semente });
+  let sql: string;
+  try {
+    sql = montarSqlPublicacao(repositorio.db, { semente: args.semente });
+  } finally {
+    // Fecha esta conexão assim que a leitura termina — em Windows, um
+    // handle aberto no arquivo do banco trava o `rmSync` do diretório
+    // temporário nos testes de integração que encadeiam este passo dentro
+    // de `executarPreparar` (TP-0045/TP-0083, `test/integracao/preparar.test.ts`),
+    // mesma convenção já aplicada ao passo 3 (`criarRepositorio`/`importar`)
+    // e ao passo 4 (`executarSugerir`).
+    repositorio.db.close();
+  }
 
   deps.criarDiretorio(args.diretorioPublicacao);
   const caminhoArquivo = path.join(args.diretorioPublicacao, NOME_ARQUIVO_LEITURA_SQL);
