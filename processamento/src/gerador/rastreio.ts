@@ -1,4 +1,5 @@
 import type { PedidoVendas } from "../fontes/leitura-vendas.js";
+import { construirMapaTransportadoras } from "../fontes/vendas.js";
 
 /**
  * Tipos de evento de rastreio gerados por pedido, sempre na mesma ordem
@@ -70,10 +71,9 @@ function formatarLinhaCsv(
  * - `pedido_venda` é o `idPedido` do pedido, sem formatação adicional (ao
  *   contrário da `referencia` de `pagamentos.csv`, que é prefixada com
  *   `PV-` — não há exigência equivalente aqui).
- * - `transportadora` é repassada exatamente como vem em `pedido.transportadora`
- *   (código cru de `ShipVia`, sem tradução para nome) — traduzir para um nome
- *   de transportadora é responsabilidade de outra camada (RN de TP-0020);
- *   esta função não reinterpreta nem reescreve esse valor.
+ * - `transportadora` é traduzida para `Transportadora N` com o mesmo mapa de
+ *   `fontes/vendas.ts` (RTP-0008), construído sobre a lista completa de
+ *   pedidos; o código cru de `ShipVia` nunca chega ao CSV.
  * - Nenhum problema de rastreio (atraso, evento fora de ordem, etc.) é
  *   plantado aqui — isso é responsabilidade de uma tarefa futura. Esta
  *   função só produz a base "limpa".
@@ -91,6 +91,7 @@ export function gerarRastreio(
   prng: () => number,
 ): ResultadoGeracaoRastreio {
   const linhasCsv: string[] = [];
+  const mapaTransportadoras = construirMapaTransportadoras(pedidos);
   let rastreioSeq = 0;
   let eventoSeq = 0;
 
@@ -132,7 +133,7 @@ export function gerarRastreio(
           pedido.idPedido,
           tipo,
           momentoFato,
-          pedido.transportadora,
+          mapaTransportadoras.get(pedido.transportadora) ?? "",
         ),
       );
     }

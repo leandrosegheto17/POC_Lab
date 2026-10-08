@@ -241,7 +241,7 @@ describe("gerarRastreio", () => {
     ]);
   });
 
-  it("não usa nenhum nome real de transportadora: repassa o código cru do pedido", () => {
+  it("não usa nenhum nome real de transportadora: repassa Transportadora N", () => {
     const pedido = construirPedidoComEnvioFixture(
       "20007",
       "1997-07-04T00:00:00.000Z",
@@ -253,7 +253,8 @@ describe("gerarRastreio", () => {
 
     for (const linha of linhasCsv) {
       const partes = linha.split(",");
-      expect(partes[5]).toBe("3");
+      expect(partes[5]).toMatch(/^Transportadora \d+$/);
+      expect(partes[5]).toBe("Transportadora 1");
     }
   });
 

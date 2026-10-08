@@ -47,7 +47,7 @@ const REGRA_SEM_DATA_ENVIO =
  * mesmo mapeamento; o mesmo código cru sempre vira o mesmo número dentro de
  * uma mesma chamada.
  */
-function construirMapaTransportadoras(
+export function construirMapaTransportadoras(
   pedidos: PedidoVendas[],
 ): Map<string, string> {
   const mapa = new Map<string, string>();
