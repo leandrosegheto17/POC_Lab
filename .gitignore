@@ -2,3 +2,6 @@ dados/
 .env
 .wrangler/
 node_modules/
+dist/
+.claude/skills/*/package-lock.json
+.claude/skills/*/.temp-*.js
