@@ -61,6 +61,13 @@ const SELETORES_PREPARE = [
   },
 ];
 
+// G-12 — `react/no-danger` só vê elementos DOM nativos; este seletor pega a
+// prop também em componente JSX customizado (`<Foo dangerouslySetInnerHTML />`).
+const SELETOR_DANGER = {
+  selector: 'JSXAttribute[name.name="dangerouslySetInnerHTML"]',
+  message: "dangerouslySetInnerHTML é proibido, mesmo em componente customizado (G-12).",
+};
+
 export default tseslint.config(
   {
     ignores: [
@@ -338,6 +345,7 @@ export default tseslint.config(
           message: "só código em test/ pode citar o gabarito (G-04/RN-13).",
         },
         ...SELETORES_PREPARE,
+        SELETOR_DANGER,
       ],
     },
   },
@@ -349,7 +357,7 @@ export default tseslint.config(
   {
     files: ["**/test/**/*.{ts,tsx,js,jsx}", "**/*.test.*", "**/*.spec.*"],
     rules: {
-      "no-restricted-syntax": ["error", ...SELETORES_PREPARE],
+      "no-restricted-syntax": ["error", ...SELETORES_PREPARE, SELETOR_DANGER],
     },
   },
 
