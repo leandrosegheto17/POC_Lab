@@ -386,3 +386,9 @@ RTP-0044 APROVADA; 0 críticos, 1 não crítico (falta teste de erro seguido de 
 
 ## RTP-0045 — QA — 2026-10-08
 APROVADA; 0 críticos, 1 não crítico (comentário fora de escopo no commit, sem impacto); .dev.vars.* ignorado, .env.example rastreado, nenhum legítimo ignorado.
+
+## RTP-0047 — QA — 2026-10-08
+APROVADA; 0 críticos, 0 não críticos; teste de migração de cache_ia legado passa (14/14), typecheck e lint ok, sem resíduo no repo.
+
+## RTP-0048 — QA — 2026-10-08
+APROVADA; 0 críticos, 0 não críticos; detalhe só com código e linha (inclusive valor/data), sequência deduplicada por erro.lines (confirmado com o csv-parse real), 13 testes, typecheck e lint ok.
