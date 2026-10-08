@@ -13,6 +13,7 @@ import { fireEvent, render } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { axe } from "vitest-axe";
 import { CampoBusca } from "../src/componentes/CampoBusca.tsx";
+import { Casca } from "../src/componentes/Casca.tsx";
 
 const navegarMock = vi.fn();
 
@@ -185,6 +186,34 @@ describe("CampoBusca — acessibilidade (vitest-axe)", () => {
 
     fireEvent.click(getByRole("button", { name: "Buscar" }));
 
+    expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+// RTP-0018 — CampoBusca dentro da Casca (slotBusca), como no app real.
+describe("CampoBusca dentro da Casca — acessibilidade (vitest-axe)", () => {
+  function renderCasca() {
+    return render(
+      <MemoryRouter>
+        <Casca slotBusca={<CampoBusca />} />
+      </MemoryRouter>,
+    );
+  }
+
+  it("sem 'Informe um código': nenhuma violação e role=search uma única vez", async () => {
+    const { container, getAllByRole } = renderCasca();
+
+    expect(getAllByRole("search")).toHaveLength(1);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("com 'Informe um código': nenhuma violação e role=search uma única vez", async () => {
+    const { container, getAllByRole, getByRole, getByText } = renderCasca();
+
+    fireEvent.click(getByRole("button", { name: "Buscar" }));
+    expect(getByText("Informe um código")).toBeInTheDocument();
+
+    expect(getAllByRole("search")).toHaveLength(1);
     expect(await axe(container)).toHaveNoViolations();
   });
 });
