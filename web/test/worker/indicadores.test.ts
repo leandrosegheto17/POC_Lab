@@ -1,14 +1,11 @@
 // TP-0049 — Rota `GET /api/v1/indicadores`.
 //
-// Monta uma instância `Hono()` local, só para este teste, registrando
-// `handlerIndicadores` isoladamente — a app real (`worker/index.ts`) só
-// registra as rotas de negócio depois que todas as tarefas do lote (TP-0046
-// a TP-0050) terminarem, para evitar edição concorrente do mesmo arquivo.
-import { Hono } from "hono";
+// RTP-0022 — usa a app real de `worker/index.ts` (rota já registrada e
+// cabeçalhos centrais aplicados), não uma instância Hono local.
 import { describe, expect, it } from "vitest";
 
 import { EsquemaRespostaIndicadores } from "processamento/contrato/indicadores.js";
-import { handlerIndicadores } from "../../worker/rotas/indicadores.ts";
+import appReal from "../../worker/index.ts";
 import { criarD1Teste } from "../apoio/fixture.ts";
 import type { D1Teste } from "../apoio/d1-teste.ts";
 
@@ -39,13 +36,7 @@ function criarD1ComIndicadores(): D1Teste {
 }
 
 function montarApp() {
-  const app = new Hono<{ Bindings: { DB: D1Teste } }>();
-  app.get("/api/v1/indicadores", (c) =>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- D1Teste
-    // implementa o subconjunto usado de D1Database (ver apoio/d1-teste.ts).
-    handlerIndicadores(c as any),
-  );
-  return app;
+  return appReal;
 }
 
 describe("GET /api/v1/indicadores", () => {
@@ -56,6 +47,7 @@ describe("GET /api/v1/indicadores", () => {
     const resposta = await app.request("/api/v1/indicadores", {}, { DB: db });
 
     expect(resposta.status).toBe(200);
+    expect(resposta.headers.get("Cache-Control")).toBe("public, max-age=60");
     const corpo = await resposta.json();
     const validacao = EsquemaRespostaIndicadores.safeParse(corpo);
     expect(validacao.success).toBe(true);
@@ -83,7 +75,7 @@ describe("GET /api/v1/indicadores", () => {
       { DB: db },
     );
 
-    expect(resposta.status).not.toBe(405);
-    expect(resposta.status).toBeLessThan(500);
+    expect(resposta.status).toBe(200);
+    expect(await resposta.text()).toBe("");
   });
 });
