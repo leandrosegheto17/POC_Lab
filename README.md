@@ -50,9 +50,6 @@ Itens previstos no `PRD.md`, ainda não implementados nesta fase. Cada um fica
 para depois da entrega Must, seguindo a ordem de corte do projeto (ADR-001), e
 é removido desta lista quando for implementado:
 
-- **Indicadores complementares** (tempo médio pedido→envio/envio→entrega, valor
-  pago x valor devido) — fica para depois da entrega Must, seguindo a ordem de
-  corte do projeto (ADR-001).
 - **Estado do pedido numa data específica** — fica para depois da entrega
   Must, seguindo a ordem de corte do projeto (ADR-001).
 - **Contrato de API v2** — fica para depois da entrega Must, seguindo a ordem

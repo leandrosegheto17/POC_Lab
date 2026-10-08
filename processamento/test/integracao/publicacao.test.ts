@@ -97,6 +97,39 @@ describe("montarSqlPublicacao", () => {
 
     expect(sqlA).toBe(sqlB);
   });
+
+  /**
+   * TP-0070 — Fim a fim: o documento `indicadores` publicado no SQL final
+   * contém os 2 blocos Must (TP-0033) + os 2 blocos novos do Lote 15
+   * (TP-0068, TP-0069), na ordem fixa esperada. Extrai o JSON da tupla
+   * `('indicadores', '<conteudo>')` dentro do `INSERT INTO documento` (via
+   * regex sobre a string SQL — `escritor-sql.ts` gera um único `INSERT` com
+   * várias tuplas separadas por vírgula/quebra de linha, não um `INSERT` por
+   * linha; não há parser de SQL disponível aqui). A classe `(?:[^']|'')*`
+   * cobre eventuais aspas simples escapadas (dobradas) dentro do conteúdo,
+   * mesma convenção de `escaparValor`.
+   */
+  it("o documento 'indicadores' no SQL final contém as 4 chaves de bloco, na ordem fixa", () => {
+    const repositorio = montarRepositorioComFixture();
+
+    const sql = montarSqlPublicacao(repositorio.db, { semente: 20261007 });
+
+    const correspondencia = sql.match(/\('indicadores', '((?:[^']|'')*)'\)/);
+    expect(correspondencia).not.toBeNull();
+
+    const conteudoEscapado = correspondencia![1];
+    // `escritor-sql.ts` escapa aspas simples dobrando-as (convenção SQL) —
+    // desfaz antes de fazer `JSON.parse`.
+    const conteudoJson = conteudoEscapado.replace(/''/g, "'");
+    const indicadores = JSON.parse(conteudoJson) as Array<{ chave: string }>;
+
+    expect(indicadores.map((bloco) => bloco.chave)).toEqual([
+      "entregas_no_prazo",
+      "divergencias_por_tipo",
+      "tempoMedioPedidoEnvioEntrega",
+      "valorPagoVsDevido",
+    ]);
+  });
 });
 
 describe("publicarDados / executarWrangler", () => {

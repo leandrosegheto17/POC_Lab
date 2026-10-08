@@ -64,6 +64,55 @@ function respostaIndicadoresValida(opcoes?: {
   ];
 }
 
+// TP-0071 — os 2 blocos complementares (`tempoMedioPedidoEnvioEntrega` e
+// `valorPagoVsDevido`, publicados pela TP-0070). Nenhum dos dois tem
+// `aParte` — todas as linhas entram na tabela de % normalmente.
+function blocoTempoMedio(opcoes?: { linhas?: LinhaMock[] }): unknown {
+  return {
+    chave: "tempoMedioPedidoEnvioEntrega",
+    titulo: "Tempo médio pedido→envio e envio→entrega",
+    formula: "soma de dias entre as datas ÷ contagem de pedidos elegíveis, por etapa",
+    linhas: opcoes?.linhas ?? [
+      linha("pedido→envio", 120, 40, 3),
+      linha("envio→entrega", 80, 40, 2),
+    ],
+    aParte: false,
+  };
+}
+
+function blocoValorPagoVsDevido(opcoes?: { linhas?: LinhaMock[] }): unknown {
+  return {
+    chave: "valorPagoVsDevido",
+    titulo: "Valor pago × valor devido",
+    formula: "Σ pago ÷ Σ devido",
+    linhas: opcoes?.linhas ?? [
+      linha("Total", 900, 1000, 0.9),
+      linha("sem_pagamento", 0, 100, 0),
+      linha("parcial", 200, 300, 0.6667),
+      linha("quitado", 600, 600, 1),
+      linha("excedente", 100, 0, null),
+    ],
+    aParte: false,
+  };
+}
+
+// Resposta com os 4 blocos (os 2 Must + os 2 complementares), na mesma
+// ordem publicada pela API (TP-0070): entregas, divergências, tempo médio,
+// valor pago × devido.
+function respostaComplementaresValida(opcoes?: {
+  entregas?: unknown;
+  divergencias?: unknown;
+  tempoMedio?: unknown;
+  valorPagoVsDevido?: unknown;
+}): unknown {
+  return [
+    opcoes?.entregas ?? blocoEntregasNoPrazo(),
+    opcoes?.divergencias ?? blocoDivergenciasPorTipo(),
+    opcoes?.tempoMedio ?? blocoTempoMedio(),
+    opcoes?.valorPagoVsDevido ?? blocoValorPagoVsDevido(),
+  ];
+}
+
 function respostaFake(opcoes: {
   ok: boolean;
   status?: number;
@@ -302,6 +351,105 @@ describe("Indicadores — carregando", () => {
     expect(
       container.querySelector("[aria-busy='true']"),
     ).toBeInTheDocument();
+  });
+});
+
+describe("Indicadores — complementares (TP-0071)", () => {
+  it("desenha as 4 seções (2 Must + 2 complementares) pelo mesmo componente Indicador, na ordem recebida da API", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () => respostaComplementaresValida(),
+      }),
+    );
+
+    renderizar();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", {
+          level: 2,
+          name: "Tempo médio pedido→envio e envio→entrega",
+        }),
+      ).toBeInTheDocument();
+    });
+
+    const titulos = [
+      "Entregas no prazo por transportadora e mês",
+      "Divergências por tipo",
+      "Tempo médio pedido→envio e envio→entrega",
+      "Valor pago × valor devido",
+    ];
+
+    const cabecalhos = screen.getAllByRole("heading", { level: 2 });
+    expect(cabecalhos).toHaveLength(4);
+    expect(cabecalhos.map((cabecalho) => cabecalho.textContent)).toEqual(
+      titulos,
+    );
+
+    // Fórmula e uma linha de cada bloco novo, confirmando que título/fórmula/
+    // linhas vêm do bloco correto (não de um bloco vizinho).
+    expect(
+      screen.getByText(
+        "soma de dias entre as datas ÷ contagem de pedidos elegíveis, por etapa",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("pedido→envio")).toBeInTheDocument();
+    expect(screen.getByText("envio→entrega")).toBeInTheDocument();
+
+    expect(screen.getByText("Σ pago ÷ Σ devido")).toBeInTheDocument();
+    expect(screen.getByText("Total")).toBeInTheDocument();
+    expect(screen.getByText("quitado")).toBeInTheDocument();
+  });
+
+  it("linha com resultado nulo (denominador 0) entre os blocos complementares mostra o texto genérico de 'sem dados', sem NaN/erro", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () =>
+          respostaComplementaresValida({
+            valorPagoVsDevido: blocoValorPagoVsDevido({
+              linhas: [
+                linha("Total", 900, 1000, 0.9),
+                linha("excedente", 100, 0, null),
+              ],
+            }),
+          }),
+      }),
+    );
+
+    renderizar();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { level: 2, name: "Valor pago × valor devido" }),
+      ).toBeInTheDocument();
+    });
+
+    // "excedente" tem denominador 0 — mesmo texto alternativo default do
+    // componente `Indicador` (nenhuma tela passa `textoSemDados` específico
+    // para este bloco), sem criar lógica nova de formatação.
+    expect(screen.getByText("sem dados suficientes")).toBeInTheDocument();
+    expect(screen.queryByText("NaN%")).not.toBeInTheDocument();
+  });
+
+  it("sucesso com as 4 seções não tem violação de acessibilidade (axe)", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () => respostaComplementaresValida(),
+      }),
+    );
+
+    const { container } = renderizar();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { level: 2, name: "Valor pago × valor devido" }),
+      ).toBeInTheDocument();
+    });
+
+    expect(await axe(container)).toHaveNoViolations();
   });
 });
 

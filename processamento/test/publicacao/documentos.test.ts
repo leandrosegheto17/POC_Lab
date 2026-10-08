@@ -8,10 +8,17 @@ import { totaisResumo, type DivergenciaComPedido } from "../../src/dominio/totai
 import {
   indicadorEntregasNoPrazo,
   indicadorDivergenciasPorTipo,
+  calcularTempoMedioPedidoEnvioEntrega,
+  calcularValorPagoVsDevido,
   type PedidoParaIndicadorEntrega,
+  type PedidoParaIndicadorTempoMedio,
+  type PedidoParaIndicadorValorPagoVsDevido,
 } from "../../src/dominio/indicadores.js";
 import { EsquemaResumo } from "../../src/contrato/resumo.js";
-import { EsquemaRespostaIndicadores } from "../../src/contrato/indicadores.js";
+import {
+  EsquemaRespostaIndicadores,
+  EsquemaBlocoIndicador,
+} from "../../src/contrato/indicadores.js";
 
 /**
  * TP-0039 — Testes de `montarDocumentoResumo`/`montarDocumentoIndicadores`
@@ -243,5 +250,101 @@ describe("montarDocumentoIndicadores", () => {
     blocoDominio.linhas.forEach((linhaDominio, indice) => {
       expect(resultado.linhas[indice].rotulo).toBe(linhaDominio.rotulos.join(" / "));
     });
+  });
+});
+
+/**
+ * TP-0070 — Os 2 blocos novos do Lote 15 (`calcularTempoMedioPedidoEnvioEntrega`,
+ * TP-0068, e `calcularValorPagoVsDevido`, TP-0069) entram como itens novos da
+ * lista de `montarDocumentoIndicadores`, na ordem fixa: Must primeiro
+ * (entregas no prazo, divergências por tipo), depois tempo médio, depois
+ * valor pago×devido (mesma ordem usada em `publicacao/publicar.ts`).
+ *
+ * Nota de regressão (confirmada por leitura, não por execução): o teste de
+ * contrato do TP-0049 (`web/test/worker/indicadores.test.ts`) monta sua
+ * própria fixture de D1 com um documento `indicadores` independente deste
+ * módulo e não foi alterado — ele só valida `EsquemaRespostaIndicadores`
+ * contra o conteúdo gravado na fixture, sem depender de quantos/quais blocos
+ * `montarDocumentoIndicadores` produz em produção. Como o esquema v1
+ * (`contrato/indicadores.ts`) continua "lista genérica de blocos", sem campo
+ * novo, esse teste continua verde sem qualquer alteração nele.
+ */
+describe("montarDocumentoIndicadores — blocos novos do Lote 15 (TP-0070)", () => {
+  function construirQuatroBlocosFixture() {
+    const pedidosEntrega: PedidoParaIndicadorEntrega[] = [
+      {
+        transportadora: "Transportadora 1",
+        dataLimite: "2026-01-10",
+        eventoEntrega: { momento_fato: "2026-01-05T10:00:00Z" },
+      },
+      { transportadora: "Transportadora 2", dataLimite: "2026-01-10" },
+    ];
+    const divergencias: DivergenciaComPedido[] = [
+      {
+        tipo: "parcial",
+        motivo: "pago menor que devido",
+        idsEventos: ["EV-1"],
+        idPedido: "PED-000001",
+      },
+    ];
+    const pedidosTempoMedio: PedidoParaIndicadorTempoMedio[] = [
+      { dataPedido: "2026-01-01", dataEnvio: "2026-01-04", dataEntrega: "2026-01-09" },
+      { dataPedido: "2026-01-02", dataEnvio: "2026-01-03" },
+    ];
+    const pedidosValorPagoVsDevido: PedidoParaIndicadorValorPagoVsDevido[] = [
+      { devido: 100, pago: 40, situacao: "parcial" },
+      { devido: 200, pago: 200, situacao: "quitado" },
+    ];
+
+    const blocoEntregasNoPrazo = indicadorEntregasNoPrazo(pedidosEntrega);
+    const blocoDivergenciasPorTipo = indicadorDivergenciasPorTipo(divergencias);
+    const blocoTempoMedio = calcularTempoMedioPedidoEnvioEntrega(pedidosTempoMedio);
+    const blocoValorPagoVsDevido = calcularValorPagoVsDevido(pedidosValorPagoVsDevido);
+
+    return {
+      blocos: [
+        blocoEntregasNoPrazo,
+        blocoDivergenciasPorTipo,
+        blocoTempoMedio,
+        blocoValorPagoVsDevido,
+      ],
+    };
+  }
+
+  it("monta uma lista com os 4 blocos, cada um passando em EsquemaBlocoIndicador, na ordem fixa esperada", () => {
+    const { blocos } = construirQuatroBlocosFixture();
+
+    const documento = montarDocumentoIndicadores(blocos);
+
+    expect(documento).toHaveLength(4);
+    for (const bloco of documento) {
+      expect(EsquemaBlocoIndicador.safeParse(bloco).success).toBe(true);
+    }
+
+    expect(documento.map((bloco) => bloco.chave)).toEqual([
+      "entregas_no_prazo",
+      "divergencias_por_tipo",
+      "tempoMedioPedidoEnvioEntrega",
+      "valorPagoVsDevido",
+    ]);
+  });
+
+  it("o esquema v1 (EsquemaRespostaIndicadores) continua aceitando a lista de 4 blocos sem lançar", () => {
+    const { blocos } = construirQuatroBlocosFixture();
+
+    const documento = montarDocumentoIndicadores(blocos);
+
+    expect(() => EsquemaRespostaIndicadores.parse(documento)).not.toThrow();
+  });
+
+  it("é determinístico: 2 chamadas com a mesma entrada produzem a mesma lista, mesma ordem, bytes idênticos", () => {
+    const { blocos: blocosA } = construirQuatroBlocosFixture();
+    const { blocos: blocosB } = construirQuatroBlocosFixture();
+
+    const documentoA = montarDocumentoIndicadores(blocosA);
+    const documentoB = montarDocumentoIndicadores(blocosB);
+
+    expect(documentoA).toEqual(documentoB);
+    expect(JSON.stringify(documentoA)).toBe(JSON.stringify(documentoB));
   });
 });

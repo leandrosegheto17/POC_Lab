@@ -10,7 +10,13 @@ import { montarDocumentoQualidade } from "./qualidade.js";
 import { montarDocumentoResumo, montarDocumentoIndicadores } from "./documentos.js";
 import { escreverSqlPublicacao, type LinhaTabela, type TabelasParaPublicacao } from "./escritor-sql.js";
 import { totaisResumo, type DivergenciaComPedido, type PedidoParaTotais } from "../dominio/totais.js";
-import { indicadorEntregasNoPrazo, type PedidoParaIndicadorEntrega } from "../dominio/indicadores.js";
+import {
+  indicadorEntregasNoPrazo,
+  calcularTempoMedioPedidoEnvioEntrega,
+  calcularValorPagoVsDevido,
+  type PedidoParaIndicadorEntrega,
+  type PedidoParaIndicadorTempoMedio,
+} from "../dominio/indicadores.js";
 
 /**
  * TP-0044 — Monta o SQL completo de publicação (DDL + dados) a partir do
@@ -39,21 +45,36 @@ function calcularDataCorte(db: DatabaseSync): string {
   return linha.momento ?? "";
 }
 
-/** Informações extraídas da linha do tempo de um pedido, necessárias para o indicador de entregas no prazo. */
+/**
+ * Informações extraídas da linha do tempo de um pedido, necessárias para o
+ * indicador de entregas no prazo (`transportadora`/`dataLimite`/
+ * `momentoEntrega`) e para o indicador de tempo médio pedido→envio e
+ * envio→entrega (`momentoPedido`/`momentoEnvio`/`momentoEntrega` — reaproveita
+ * `momentoEntrega`, já extraído para o primeiro indicador).
+ *
+ * `momentoEnvio` vem do evento `coleta` (fonte `rastreio`): é o momento em
+ * que a transportadora retira o pedido, proxy de "envio" — não há um tipo de
+ * evento literal `"envio"` em `dominio/evento.ts`; a cadeia de rastreio é
+ * `coleta` → `transporte` → `entrega`, e `coleta` é a etapa que marca o
+ * pedido como enviado.
+ */
 type InfoEntregaPedido = {
   transportadora?: string;
   dataLimite?: string;
   momentoEntrega?: string;
+  momentoPedido?: string;
+  momentoEnvio?: string;
 };
 
 type DadosVendaPayload = { transportadora?: string; data_limite?: string };
 
 /**
  * A partir da projeção `linha_do_tempo` (já montada), extrai por pedido a
- * `transportadora`/`dataLimite` (do evento `venda`) e o `momento_fato` do
- * evento `entrega` (quando existir) — sem reconsultar o banco, já que essas
- * informações já estão disponíveis em `dados` (JSON do payload do evento,
- * gravado verbatim pela importação).
+ * `transportadora`/`dataLimite` (do evento `venda`), o `momento_fato` do
+ * evento `venda` (data do pedido), o `momento_fato` do evento `coleta` (data
+ * de envio) e o `momento_fato` do evento `entrega` (quando existir) — sem
+ * reconsultar o banco, já que essas informações já estão disponíveis em
+ * `dados` (JSON do payload do evento, gravado verbatim pela importação).
  */
 function extrairInfoEntregaPorPedido(
   linhaDoTempo: { id_pedido: string; tipo: string; momento_fato: string; dados: string }[],
@@ -67,6 +88,9 @@ function extrairInfoEntregaPorPedido(
       const payload = JSON.parse(linha.dados) as DadosVendaPayload;
       info.transportadora = payload.transportadora;
       info.dataLimite = payload.data_limite;
+      info.momentoPedido = linha.momento_fato;
+    } else if (linha.tipo === "coleta") {
+      info.momentoEnvio = linha.momento_fato;
     } else if (linha.tipo === "entrega") {
       info.momentoEntrega = linha.momento_fato;
     }
@@ -89,6 +113,29 @@ function montarPedidosParaIndicadorEntrega(
       dataLimite: info?.dataLimite ?? pedido.data_limite ?? "",
       eventoEntrega:
         info?.momentoEntrega !== undefined ? { momento_fato: info.momentoEntrega } : undefined,
+    };
+  });
+}
+
+/**
+ * Monta a lista de `PedidoParaIndicadorTempoMedio` (`dominio/indicadores.ts`,
+ * TP-0068), um item por pedido de `pedidoResumo`. Um pedido sem `momentoPedido`
+ * (não deveria ocorrer — todo pedido tem evento `venda`) usa string vazia, na
+ * mesma convenção de `momentoEntregaPedido ?? ""` já usada para o indicador de
+ * entregas no prazo; pedidos sem envio/entrega simplesmente não preenchem
+ * `dataEnvio`/`dataEntrega`, deixando a função de domínio excluí-los do
+ * denominador correspondente.
+ */
+function montarPedidosParaIndicadorTempoMedio(
+  pedidoResumo: { id_pedido: string }[],
+  infoPorPedido: Map<string, InfoEntregaPedido>,
+): PedidoParaIndicadorTempoMedio[] {
+  return pedidoResumo.map((pedido) => {
+    const info = infoPorPedido.get(pedido.id_pedido);
+    return {
+      dataPedido: info?.momentoPedido ?? "",
+      dataEnvio: info?.momentoEnvio,
+      dataEntrega: info?.momentoEntrega,
     };
   });
 }
@@ -138,6 +185,18 @@ export function montarSqlPublicacao(db: DatabaseSync, args: { semente: number })
   );
   const blocoEntregasNoPrazo = indicadorEntregasNoPrazo(pedidosParaIndicadorEntrega);
 
+  const pedidosParaIndicadorTempoMedio = montarPedidosParaIndicadorTempoMedio(
+    pedidoResumo,
+    infoEntregaPorPedido,
+  );
+  const blocoTempoMedio = calcularTempoMedioPedidoEnvioEntrega(pedidosParaIndicadorTempoMedio);
+
+  // `pedidosParaTotais` já tem exatamente a forma de
+  // `PedidoParaIndicadorValorPagoVsDevido` (devido/pago/situacao), com
+  // `idPedido` extra — `calcularValorPagoVsDevido` ignora campos extras
+  // (RN-11), então é reaproveitada sem remapear.
+  const blocoValorPagoVsDevido = calcularValorPagoVsDevido(pedidosParaTotais);
+
   const totais = totaisResumo(pedidosParaTotais, divergenciasComPedido, blocoEntregasNoPrazo);
 
   const resumo = montarDocumentoResumo({
@@ -147,7 +206,15 @@ export function montarSqlPublicacao(db: DatabaseSync, args: { semente: number })
     conteudoParaHash: { totais, blocoEntregasNoPrazo, qualidade },
   });
 
-  const indicadores = montarDocumentoIndicadores([blocoEntregasNoPrazo, totais.porTipo]);
+  // Ordem fixa (determinismo, RNF-05; UX-SPEC T3): blocos Must primeiro
+  // (entregas no prazo, divergências por tipo), depois os 2 blocos novos do
+  // Lote 15 (TP-0068, TP-0069), nesta ordem.
+  const indicadores = montarDocumentoIndicadores([
+    blocoEntregasNoPrazo,
+    totais.porTipo,
+    blocoTempoMedio,
+    blocoValorPagoVsDevido,
+  ]);
 
   const documento: LinhaTabela[] = [
     { chave: "resumo", conteudo: JSON.stringify(resumo) },
