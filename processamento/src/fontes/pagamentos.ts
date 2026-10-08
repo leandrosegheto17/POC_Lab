@@ -72,10 +72,32 @@ export function processarPagamentos(
   const achados: AchadoQualidade[] = [];
   const codigosTransacaoVistos = new Set<string>();
 
+  // Numeração real no arquivo (inclui registros descartados por erro de
+  // sintaxe): a linha 1 é o cabeçalho.
+  let sequencia = 1;
   const linhas = parse(conteudoCsv, {
     columns: true,
     skip_empty_lines: true,
     trim: true,
+    // Erro de sintaxe CSV (ex. aspas quebradas) descarta só o registro e vira
+    // achado `linha_invalida`, sem lançar exceção (RF-02).
+    skip_records_with_error: true,
+    on_skip: (erro: unknown) => {
+      sequencia += 1;
+      const numeroLinha = sequencia;
+      const motivo = erro instanceof Error ? erro.message : String(erro);
+      achados.push({
+        tipo: "linha_invalida",
+        fonte: "pagamentos",
+        referencia: `linha ${numeroLinha}`,
+        regra: REGRA_LINHA_INVALIDA,
+        detalhe: `linha ${numeroLinha} com erro de sintaxe CSV (${motivo})`,
+      });
+    },
+    on_record: (registro: LinhaPagamentoCsv) => {
+      sequencia += 1;
+      return { ...registro, __linha: String(sequencia) };
+    },
     // Uma linha com menos colunas que o cabeçalho (ex. coluna faltando no
     // final) não deve lançar exceção e abortar o parsing do arquivo inteiro
     // — ela é tratada abaixo como achado `linha_invalida`, preservando RF-02
@@ -83,10 +105,8 @@ export function processarPagamentos(
     relax_column_count: true,
   }) as LinhaPagamentoCsv[];
 
-  linhas.forEach((linha, indice) => {
-    // +1 porque o índice é 0-based, +1 porque a linha 1 do arquivo é o
-    // cabeçalho: a primeira linha de dados é a linha 2 do arquivo.
-    const numeroLinha = indice + 2;
+  linhas.forEach((linha) => {
+    const numeroLinha = Number(linha.__linha);
     const identificadorLinha =
       linha.codigo_transacao?.trim() || `linha ${numeroLinha}`;
 
@@ -152,7 +172,9 @@ export function processarPagamentos(
     // valorDevido neutraliza a checagem de limite máximo de
     // `verificarPagamento` (nenhum valor finito é maior que 2 * Infinity),
     // isolando só a checagem de "maior que zero" sem reimplementá-la aqui.
-    const achadoValor = verificarPagamento(valor, Number.POSITIVE_INFINITY);
+    // (Infinity passou a ser rejeitado por `verificarPagamento` (RTP-0036);
+    // `Number.MAX_VALUE / 2` mantém o mesmo efeito: limite 2x = MAX_VALUE.)
+    const achadoValor = verificarPagamento(valor, Number.MAX_VALUE / 2);
     if (achadoValor) {
       achados.push({
         tipo: "valor_fora_do_padrao",

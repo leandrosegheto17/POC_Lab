@@ -93,6 +93,29 @@ TX-004,PV-000456,200,2024-01-16
     expect(resultado.eventos[0]).toMatchObject({ codigoEvento: "TX-004" });
   });
 
+  it("linha com aspas quebradas gera achado linha_invalida, sem exceção, e processa as demais linhas", () => {
+    const csv = `codigo_transacao,referencia,valor,data_pagamento
+TX-001,PV-000123,150.5,2024-01-15
+TX-002,PV-"000456,200,2024-01-16
+TX-003,PV-000789,300,2024-01-17
+`;
+    const codigosConhecidos = new Set(["123", "456", "789"]);
+
+    const resultado = processarPagamentos(csv, codigosConhecidos);
+
+    expect(resultado.achados).toEqual([
+      expect.objectContaining({
+        tipo: "linha_invalida",
+        fonte: "pagamentos",
+        referencia: "linha 3",
+      }),
+    ]);
+    expect(resultado.eventos.map((e) => e.codigoEvento)).toEqual([
+      "TX-001",
+      "TX-003",
+    ]);
+  });
+
   it("referência em texto livre (sem casamento) gera achado sem_identificacao e evento sem vínculo", () => {
     const csv = `codigo_transacao,referencia,valor,data_pagamento
 TX-005,pagamento via boleto,100,2024-01-15
