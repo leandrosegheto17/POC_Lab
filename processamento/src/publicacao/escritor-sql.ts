@@ -85,13 +85,18 @@ function escaparValor(valor: unknown): string {
     return "NULL";
   }
   if (typeof valor === "number") {
+    if (!Number.isFinite(valor)) {
+      throw new Error(`escritor-sql: valor não suportado (número não finito: ${String(valor)})`);
+    }
     return String(valor);
   }
   if (typeof valor === "boolean") {
     return valor ? "1" : "0";
   }
-  const texto = String(valor);
-  return `'${texto.replace(/'/g, "''")}'`;
+  if (typeof valor !== "string") {
+    throw new Error(`escritor-sql: valor não suportado (tipo ${typeof valor})`);
+  }
+  return `'${valor.replace(/'/g, "''")}'`;
 }
 
 /** Formata uma linha como tupla `(v1, v2, ...)`, na ordem fixa de `colunas`. */

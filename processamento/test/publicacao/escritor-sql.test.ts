@@ -29,6 +29,26 @@ function tabelasVazias(): TabelasParaPublicacao {
   };
 }
 
+describe("escreverSqlPublicacao — valores inválidos (RTP-0037)", () => {
+  it.each([
+    ["NaN", Number.NaN],
+    ["Infinity", Number.POSITIVE_INFINITY],
+    ["-Infinity", Number.NEGATIVE_INFINITY],
+    ["objeto", { a: 1 }],
+    ["array", [1, 2]],
+  ])("rejeita %s com erro claro", (_nome, valor) => {
+    const tabelas = tabelasVazias();
+    tabelas.documento = [{ chave: "k", conteudo: valor }];
+    expect(() => escreverSqlPublicacao("", tabelas)).toThrow(/valor não suportado/);
+  });
+
+  it("valores válidos seguem inalterados", () => {
+    const tabelas = tabelasVazias();
+    tabelas.documento = [{ chave: "o'k", conteudo: null }];
+    expect(escreverSqlPublicacao("", tabelas)).toContain("('o''k', NULL)");
+  });
+});
+
 describe("escreverSqlPublicacao", () => {
   it("tabela com poucas linhas gera um único INSERT", () => {
     const ddl = lerDdl();
