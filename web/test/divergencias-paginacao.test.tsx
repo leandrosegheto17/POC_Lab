@@ -399,6 +399,53 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
     expect(regiaoViva).toHaveTextContent("1 de 100 divergências, página 2 de 2");
   });
 
+  it("após erro ao trocar de página, a próxima resposta com sucesso (outro filtro) não move o foco ao caption (RTP-0044)", async () => {
+    const mock = instalarFetchMock((url) => {
+      if (paginaDaUrl(url) === 2) {
+        return respostaFake({ ok: false, status: 500 });
+      }
+      return respostaFake({
+        ok: true,
+        json: () =>
+          Promise.resolve(respostaDivergenciasValida({
+            dados: [divergenciaValida("PED-1", "duplicado")],
+            pagina: 1,
+            total: 100,
+            totalPaginas: 2,
+          })),
+      });
+    });
+
+    const { container } = renderizar();
+
+    await waitFor(() => {
+      expect(screen.getByText("Filtro: Todos · página 1 de 2")).toBeInTheDocument();
+    });
+
+    fireEvent.click(
+      formaCompleta(container).getByRole("button", { name: "Próxima" }),
+    );
+
+    await waitFor(() => {
+      expect(chamadasDeDivergencias(mock).some((url) => url.includes("pagina=2"))).toBe(
+        true,
+      );
+    });
+    // Dá tempo de a resposta de erro ser processada.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    fireEvent.click(screen.getByRole("radio", { name: /Pagamento parcial/ }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Filtro: Pagamento parcial · página 1 de 2"),
+      ).toBeInTheDocument();
+    });
+    expect(document.activeElement).not.toBe(
+      screen.getByText("Filtro: Pagamento parcial · página 1 de 2"),
+    );
+  });
+
   it("troca rápida de página (2 navegações antes da 1ª resposta): só a resposta mais recente é aplicada", async () => {
     // Dispara as duas navegações via botões ocultos com `useNavigate()` do
     // router clássico (em vez de clicar duas vezes no botão "Próxima" de

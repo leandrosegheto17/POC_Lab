@@ -203,7 +203,16 @@ export function Divergencias() {
     }
   }, [ultimaResposta]);
 
+  // Erro na consulta cancela o pedido de foco: a próxima resposta de sucesso
+  // (retry ou outro filtro) não deve mover o foco ao `<caption>` (RTP-0044).
+  useEffect(() => {
+    if (estadoConsulta.status === "erro") {
+      focoPendente.current = false;
+    }
+  }, [estadoConsulta]);
+
   function aoMudarFiltro(tipo: string) {
+    focoPendente.current = false;
     const novosParametros = new URLSearchParams(searchParams);
     if (tipo === VALOR_TODOS) {
       novosParametros.delete("tipo");
