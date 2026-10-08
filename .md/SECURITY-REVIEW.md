@@ -239,3 +239,105 @@ APROVADA; 0 críticos, 0 não críticos novos (G-09/G-21/RN-11 confirmados, SQL 
 
 ## TP-0085 — DevSecOps — 2026-10-08
 APROVADA em segurança; 0 críticos, 0 não críticos novos (README coberto por RTP-0033); XSS ok (só JSX + zod safeParse, sem dangerouslySetInnerHTML, link com encodeURIComponent), sem chamada à IA pelo site.
+
+## RTP-0001 — DevSecOps — 2026-10-08
+OK; 0 críticos/0 não críticos; diff só em teste de tipagem, src e contratos intactos, sem segredo ou dado sensível.
+
+## RTP-0002 — DevSecOps — 2026-10-08
+APROVADA, 0 achados; `!` em referencia.ts e provedor-openai.ts protegidos por checagem/zod, strict e noUncheckedIndexedAccess mantidos, testes não enfraquecidos.
+
+## RTP-0003 — DevSecOps — 2026-10-08
+APROVADA; 0 achados; link externo com rel noopener noreferrer, URL fixa em HTTPS, G-11 respeitada (sem nome de empresa).
+
+## RTP-0004 — DevSecOps — 2026-10-08
+APROVADA, 0 achados; mudança só de teste (resumo.test.ts), sem src/worker, dependência ou segredo; asserção de Cache-Control adicionada.
+
+## RTP-0005 — DevSecOps — 2026-10-08
+APROVADA em segurança; 0 críticos, 0 não críticos; só JSX, sem innerHTML/eval/console/fetch, sem dependência nova nem segredo.
+
+## RTP-0006 — DevSecOps — 2026-10-08
+APROVADA; 0 achados; mudança só no título do describe, sem src, sem dependência nova, sem asserção afrouxada.
+
+## RTP-0007 — DevSecOps — 2026-10-08
+APROVADA; 0 achados; só teste alterado, escrita em conexão readOnly provada falhando (G-05), sem src/dependência/dado novo.
+
+## RTP-0008 — DevSecOps — 2026-10-08
+RTP-0008 segurança APROVADA; coluna só sai como Transportadora N, sem vazamento de nome cru, determinismo preservado; 0 críticos, 0 RTP novas.
+
+## RTP-0009 — DevSecOps — 2026-10-08
+APROVADA; 0 achados; NaN/undefined/Infinity falham fechado, tolerância 0,01 sem brecha, sem I/O/segredo/dependência nova.
+
+## RTP-0010 — DevSecOps — 2026-10-08
+APROVADA; sem afrouxar strict, sem dependencia/lockfile novo, sem exposicao de env pelo vite; 0 criticos, 0 nao criticos.
+
+## RTP-0012 — DevSecOps — 2026-10-08
+RTP-0012 segurança APROVADA; 5xx fora do RFC 9457 devolve só constante estática, sem corpo/detail/status/código, sem HTML interpretado, timers e listeners limpos, sem dependência nova; 0 achados.
+
+## RTP-0013 — DevSecOps — 2026-10-08
+APROVADA em segurança; 0 achados; data só concatenada e comparada, sem URL/HTML/API, sem fetch ou dependência nova.
+
+## RTP-0014 — DevSecOps — 2026-10-08
+APROVADA; 0 críticos, 0 não críticos; mudança só de teste, % e ; rejeitados pela lista de permissão do regex antes de qualquer consulta ao D1.
+
+## RTP-0015 — DevSecOps — 2026-10-08
+RTP-0015 segurança OK; anúncio só com números da resposta validada e rótulos fixos, `pagina` da URL validada por regex, sem fetch, dependência nem HTML dinâmico; 0 achados.
+
+## RTP-0016 — DevSecOps — 2026-10-08
+APROVADA; 0 críticos e 0 não críticos; mudança só de teste, casos negativos ainda rejeitados pelo esquema, sem src nem dependência nova e sem asserção afrouxada.
+
+## RTP-0018 — DevSecOps — 2026-10-08
+APROVADA; 0 críticos/0 não críticos; mudança só em teste (busca.test.tsx), sem src, dependência ou segredo, sem asserção afrouxada.
+
+## RTP-0019 — DevSecOps — 2026-10-08
+APROVADA - domínio puro sem I/O, log, segredo ou dependência nova; 0 críticos, 0 não críticos (NaN/Infinity nunca viram quitado; 0,011 segue na RTP-0040).
+
+## RTP-0021 — DevSecOps — 2026-10-08
+RTP-0021 APROVADA em segurança — timeout elimina espera pendurada, chave não vaza, URL fixa, erro vira null, timeoutMs inválido falha fechado; 0 achados, sem dependência nova.
+
+## RTP-0022 — DevSecOps — 2026-10-08
+APROVADA; 0 críticos/0 não críticos; mudança só de teste, sem src/dependência/segredo e com asserções mais estritas.
+
+## RTP-0024 — DevSecOps — 2026-10-08
+OK; 0 críticos, 0 não críticos; só teste (+37 linhas), fixture sintética, sem src/dependência nova, sem asserção afrouxada.
+
+## RTP-0025 — DevSecOps — 2026-10-08
+APROVADA, 0 críticos/0 não críticos; mudança só em teste, sem src/dependência/segredo novos e asserções mais estritas.
+
+## RTP-0026 — DevSecOps — 2026-10-08
+APROVADA — relax_column_count não deixa linha malformada virar evento (faltantes viram linha_invalida, extras ignorados sem vazar), sem I/O/log/dependência nova; 0 achados críticos.
+
+## RTP-0027 — DevSecOps — 2026-10-08
+APROVADA — chave só testada por existência e nunca impressa, sem processo, rede ou dependência nova; 0 achados críticos, 0 não críticos.
+
+## RTP-0028 — DevSecOps — 2026-10-08
+OK, 0 críticos e 0 não críticos novos; `conferida`/`motivo` recalculados pela regra de domínio, resposta da IA aceita só se igual a candidato do banco, sem escrita de vínculo, SQL parametrizado, sem segredo e sem dependência nova.
+
+## RTP-0031 — DevSecOps — 2026-10-08
+APROVADA — só teste alterado, G-04 e G-11 respeitados, sem src nem dependência nova, sem asserção afrouxada; 0 achados.
+
+## RTP-0032 — DevSecOps — 2026-10-08
+APROVADA; 0 críticos, 0 novos não críticos; só teste, fixture sintética, sem src/dependência nova, sem asserção afrouxada, determinismo preservado.
+
+## RTP-0033 — DevSecOps — 2026-10-08
+APROVADA, 0 críticos e 0 não críticos; só texto no README, sem segredos (G-01) e sem nomes de terceiros no trecho novo (G-11); o texto sobre IA bate com o ADR-010.
+
+## RTP-0034 — DevSecOps — 2026-10-08
+APROVADA com débito baixo; 0 críticos, 1 não crítico (.dev.vars.* não ignorado, RTP-0045); .env.*, .dev.vars ignorados, .env.example rastreado, nenhum segredo rastreado.
+
+## RTP-0036 — DevSecOps — 2026-10-08
+RTP-0036 APROVADA em segurança; função pura sem imports/I/O/log/dependência nova, mensagem só com valor numérico; 0 achados.
+
+## RTP-0037 — DevSecOps — 2026-10-08
+APROVADA; 0 críticos/0 não críticos; escapa `'`, rejeita não finito e não primitivo sem eco de dado, módulo puro sem arquivo parcial.
+
+## RTP-0038 — DevSecOps — 2026-10-08
+RTP-0038 APROVADA em segurança; 0 achados; sem shell, argumentos em array, sempre --local sem credencial/env, falha segura se o bin faltar, conexão fechada em finally.
+
+## TP-0002 — DevSecOps — 2026-10-08
+APROVADA — 0 críticos, 2 não críticos já cobertos (RTP-0011 react/no-danger em componente customizado; RTP-0039 backlog de lint); proibições G-02/G-03/G-04/G-08/G-12 confirmadas via eslint --stdin.
+
+## TP-0053 — DevSecOps — 2026-10-08
+APROVADA — G-12/G-08 cumpridos (sem HTML bruto, sem rede/log/segredo/dependência nova, rodada 2 sem nova superfície); 0 críticos, 0 não críticos; só cuidado informativo com `href` de `EstadoVazio` nas telas.
+
+## TP-0066 — DevSecOps — 2026-10-08
+APROVADA — 0 críticos, 0 não críticos; sem segredo (G-01), sem nome de terceiros (G-11), sem dependência nova, e o script `dev` usa `vite dev` sem host exposto (só localhost).
