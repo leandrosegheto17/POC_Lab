@@ -8,6 +8,7 @@
  * `TASK.md` §1 "pnpm test roda antes baixar-base".
  */
 import { existsSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { lerBaseDeVendas } from "../../src/fontes/leitura-vendas.ts";
@@ -32,14 +33,9 @@ describe.skipIf(!baseDisponivel)("lerBaseDeVendas (base real)", () => {
     const longo = pedidos.filter((pedido) => pedido.dataPedido.formato === "longo").length;
     const outros = pedidos.length - curto - longo;
 
-    if (curto !== 830 || longo !== 15_452 || outros !== 0) {
-      console.warn(
-        `Achado a investigar: contagem de classificação de data divergiu do esperado ` +
-          `(esperado 830 curto + 15.452 longo + 0 outros; obtido ${curto} curto + ${longo} longo + ${outros} outros).`,
-      );
-    }
-
-    expect(curto + longo + outros).toBe(pedidos.length);
+    expect(curto).toBe(830);
+    expect(longo).toBe(15_452);
+    expect(outros).toBe(0);
   });
 
   it("identifica os pedidos sem data de envio (dataEnvio null)", () => {
@@ -68,21 +64,20 @@ describe.skipIf(!baseDisponivel)("lerBaseDeVendas (base real)", () => {
 describe("lerBaseDeVendas (garantia de somente leitura)", () => {
   it(
     baseDisponivel
-      ? "não lança e não grava nada na base real ao ler (round-trip de leitura)"
+      ? "uma escrita numa conexão somente leitura da base real falha"
       : "é pulado sem a base real baixada (pnpm baixar-base)",
     () => {
       if (!baseDisponivel) {
         return;
       }
-      // Garantia por código (ver leitura-vendas.ts): a conexão é aberta com
-      // `readOnly: true` e o módulo só emite `SELECT`. Aqui confirmamos que
-      // duas leituras seguidas da mesma base produzem exatamente o mesmo
-      // total de pedidos, o que não seria o caso se a leitura tivesse
-      // qualquer efeito colateral de escrita sobre a própria base.
-      const primeira = lerBaseDeVendas(CAMINHO_BASE).length;
-      const segunda = lerBaseDeVendas(CAMINHO_BASE).length;
-      expect(primeira).toBe(segunda);
+      const conexao = new DatabaseSync(CAMINHO_BASE, { readOnly: true });
+      try {
+        expect(() => conexao.exec("CREATE TABLE teste_escrita (id INTEGER)")).toThrow(
+          /readonly/i,
+        );
+      } finally {
+        conexao.close();
+      }
     },
-    20_000,
   );
 });
