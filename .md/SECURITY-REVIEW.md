@@ -374,3 +374,6 @@ APROVADA; 0 críticos, 0 não críticos; detalhe de linha_invalida/valor/data s�
 
 ## RTP-0023 — DevSecOps — 2026-10-08
 APROVADA — ci.yml inalterado pela tarefa, permissões mínimas (contents: read), sem segredos, actions fixadas por SHA; 0 achados.
+
+## RTP-0046 — DevSecOps — 2026-10-08
+APROVADA — exceção GERACAO restrita ao nome novo, nome antigo e leitura fora de test/ seguem barrados, sem dependência nem segredo novos; 0 críticos, 0 novos não críticos.

@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-08 17:53
+Atualizado: 2026-10-08 17:57
 
-Resumo: Não executada 1 · Testada (aguarda segurança) 1 · Aprovada 133 · total 135
+Resumo: Não executada 1 · Aprovada 134 · total 135
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -108,7 +108,7 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 93 | RTP-0039 | executor | ✔ | Zerar o backlog do pnpm lint do código dos lotes 2+ | Refatoração Lote-1 | TP-0002 | Aprovada |
 | 94 | RTP-0045 | executor | ✔ | Ignorar variantes .dev.vars.* no .gitignore | Refatoração Lote-1 | RTP-0034 | Aprovada |
 | 95 | BK-0002 | coordenador | ✔ | Aprovar a mudança em GUARDRAILS.md G-04 (citar problemas-plantados.json), que é do Gestor; | — | — | Aprovada |
-| 96 | RTP-0046 | executor | ✔ | Alinhar a nomenclatura gabarito/problemas-plantados nos docs e na regra de fronteira | Refatoração Lote-1 | BK-0002, RTP-0039 | Testada (aguarda segurança) |
+| 96 | RTP-0046 | executor | ✔ | Alinhar a nomenclatura gabarito/problemas-plantados nos docs e na regra de fronteira | Refatoração Lote-1 | BK-0002, RTP-0039 | Aprovada |
 | 97 | RTP-0049 | executor | ✔ | Dar timeout explícito ao teste da regra de fronteira do gabarito | Refatoração Lote-1 | RTP-0046 | Não executada |
 | 98 | RTP-0003 | executor | ✔ | Trocar a URL placeholder do link 'Como foi feito' pelo repositório real | Refatoração Lote-11 | TP-0055 | Aprovada |
 | 99 | RTP-0018 | executor | ✔ | Teste axe do CampoBusca dentro da Casca | Refatoração Lote-11 | TP-0057 | Aprovada |
