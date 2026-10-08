@@ -61,6 +61,15 @@ describe("conferirSugestao (RN-11)", () => {
     expect(resultado.conferida).toBe(true);
   });
 
+  it("borda: saldo 0,30 e valor 0,31 (ruído de ponto flutuante) é compatível", () => {
+    const resultado = conferirSugestao(
+      { devido: 0.3, pago: 0, dataPedido: "2026-01-10" },
+      { valor: 0.31, dataPagamento: "2026-01-15" },
+    );
+
+    expect(resultado.conferida).toBe(true);
+  });
+
   it("borda: diferença de R$ 0,011 é incompatível", () => {
     const resultado = conferirSugestao(
       { devido: 100, pago: 40, dataPedido: "2026-01-10" },

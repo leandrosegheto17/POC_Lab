@@ -55,7 +55,9 @@ export function conferirSugestao(
 
   const saldoEmAberto = devido - pago;
   const diferencaValor = Math.abs(saldoEmAberto - valor);
-  const valorCompativel = diferencaValor <= TOLERANCIA_VALOR;
+  // Remove o ruído de ponto flutuante (ex.: |0,3 - 0,31| = 0,010000000000000009)
+  // sem arredondar a centavos, para que 0,011 continue incompatível.
+  const valorCompativel = Number(diferencaValor.toPrecision(12)) <= TOLERANCIA_VALOR;
 
   const dataCompativel = dataPagamento >= dataPedido;
 
