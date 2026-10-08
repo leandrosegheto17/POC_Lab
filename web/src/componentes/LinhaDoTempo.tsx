@@ -151,7 +151,7 @@ function marcasDoEvento(
     marcas.push({ variante: "ruim", texto: "duplicado" });
   }
   if (evento.chegouForaDeOrdem) {
-    marcas.push({ variante: "alerta", texto: "fora de ordem" });
+    marcas.push({ variante: "alerta", texto: "chegou fora de ordem" });
   }
   if (evento.tipo === "entrega" && dataLimite !== undefined) {
     marcas.push(
@@ -169,7 +169,7 @@ function DetalhePc({ evento }: { evento: EventoV1 }) {
   if (evento.tipo === "venda") {
     return (
       <span className="evento__linha evento__linha--pc">
-        {formatarMoeda(evento.valor_devido)}
+        <span className="mono">{formatarMoeda(evento.valor_devido)}</span>
       </span>
     );
   }
@@ -177,7 +177,7 @@ function DetalhePc({ evento }: { evento: EventoV1 }) {
     return (
       <span className="evento__linha evento__linha--pc">
         <span className="mono">{evento.codigoEvento}</span> ·{" "}
-        {formatarMoeda(evento.valor)}
+        <span className="mono">{formatarMoeda(evento.valor)}</span>
       </span>
     );
   }

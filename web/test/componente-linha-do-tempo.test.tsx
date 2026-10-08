@@ -174,6 +174,9 @@ describe("LinhaDoTempo — conteúdo dos cartões", () => {
     expect(cartao.querySelector(".evento__linha--pc")).toHaveTextContent(
       /^R\$ 150,50$/,
     );
+    expect(
+      cartao.querySelector(".evento__linha--pc .mono"),
+    ).toHaveTextContent(/^R\$ 150,50$/);
     expect(cartao.querySelector(".evento__linha--celular")).toHaveTextContent(
       "#10248 · R$ 150,50",
     );
@@ -188,6 +191,9 @@ describe("LinhaDoTempo — conteúdo dos cartões", () => {
     const linhaPc = cartao.querySelector(".evento__linha--pc");
     expect(linhaPc).toHaveTextContent("TX-88812 · R$ 150,50");
     expect(linhaPc?.querySelector(".mono")).toHaveTextContent("TX-88812");
+    const monos = linhaPc?.querySelectorAll(".mono") ?? [];
+    expect(monos).toHaveLength(2);
+    expect(monos[1]).toHaveTextContent(/^R\$ 150,50$/);
     expect(cartao.querySelector(".evento__linha--celular")).toHaveTextContent(
       "TX-88812 · R$ 150,50",
     );
@@ -247,11 +253,10 @@ describe("LinhaDoTempo — marcas no título", () => {
       />,
     );
 
-    const marcas = screen.getAllByText("fora de ordem");
+    const marcas = screen.getAllByText("chegou fora de ordem");
     expect(marcas).toHaveLength(1);
     expect(marcas[0]).toHaveAttribute("data-variante", "alerta");
     expect(marcas[0].closest(".evento")).toBe(cartoes(container)[0]);
-    expect(container).not.toHaveTextContent("chegou fora de ordem");
   });
 
   it("'duplicado' (ruim) e cartão vermelho só nos ids informados", () => {
