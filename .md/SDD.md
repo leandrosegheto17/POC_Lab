@@ -21,7 +21,7 @@ flowchart LR
     BV[(base de vendas .db<br/>somente leitura)] --> GER[gerador com semente]
     GER --> CSV1[pagamentos.csv]
     GER --> CSV2[rastreio.csv]
-    GER --> GAB[(gabarito.json<br/>só testes)]
+    GER --> GAB[(problemas-plantados.json<br/>gabarito, só testes)]
     BV --> AV[adaptador vendas]
     CSV1 --> AP[adaptador pagamentos]
     CSV2 --> AR[adaptador rastreio]
@@ -55,17 +55,17 @@ Repositório em **pnpm workspace com 2 pacotes** (ADR-008). O Worker fica no pac
 | `processamento/src/armazenamento/` | Event store local: repositório `node:sqlite`, `schema.sql`, inserções idempotentes (`ON CONFLICT DO NOTHING`) | `dominio` |
 | `processamento/src/importacao/` | Caso de uso `importar`: chama os 3 adaptadores **explicitamente**, grava, devolve contagens por fonte (lidas, novas, já existentes, rejeitadas) | `fontes`, `armazenamento` |
 | `processamento/src/publicacao/` | Lê o event store, aplica o domínio e escreve `dados/publicacao/leitura.sql` (DDL do D1 + `INSERT` em lotes); contém `leitura-d1.sql` (schema do D1) | `dominio`, `contrato`, `armazenamento` |
-| `processamento/src/gerador/` | Gera `pagamentos.csv`, `rastreio.csv` e `gabarito.json` com PRNG com semente (mulberry32, sem biblioteca) | `fontes/vendas` (leitura) |
+| `processamento/src/gerador/` | Gera `pagamentos.csv`, `rastreio.csv` e `problemas-plantados.json` (o gabarito) com PRNG com semente (mulberry32, sem biblioteca) | `fontes/vendas` (leitura) |
 | `processamento/src/ia/` | Porta `ProvedorSugestao`, provedor falso (testes), provedor OpenAI via `fetch`, cache e teto (RF-10, Could). Só local | `dominio`, `armazenamento` |
 | `processamento/src/cli/` | `baixar-base`, `gerar`, `importar`, `sugerir`, `publicar-dados` (escreve o SQL e carrega o D1 local), `preparar` (encadeia tudo) | todos acima |
 | `web/worker/` | **API de leitura** (Hono): rotas GET, validação de entrada por zod, consultas D1 parametrizadas, erros RFC 9457, cabeçalhos de segurança. Serve os static assets do site | `dominio`, `contrato`, binding `DB` (D1) |
 | `web/src/` | SPA Vite + React: Divergências, Linha do tempo, Indicadores, Qualidade. Lê só a API (`/api/v1`) e valida as respostas com o mesmo contrato zod | `dominio`, `contrato` |
 
-Regra de dependência (ESLint `no-restricted-imports`): `dominio` não importa nada; `contrato` só `dominio` e `zod`; `web/worker` e `web/src` só `dominio` e `contrato` (nunca `armazenamento`, `fontes`, `importacao`, `gerador`, `ia`, `cli`, `publicacao`, nem `node:*` fora de `test/`); `web/src` não importa `web/worker`; **nenhum código fora de `test/` lê o gabarito** (RN-13).
+Regra de dependência (ESLint `no-restricted-imports`): `dominio` não importa nada; `contrato` só `dominio` e `zod`; `web/worker` e `web/src` só `dominio` e `contrato` (nunca `armazenamento`, `fontes`, `importacao`, `gerador`, `ia`, `cli`, `publicacao`, nem `node:*` fora de `test/`); `web/src` não importa `web/worker`; **nenhum código fora de `test/` lê o gabarito (`problemas-plantados.json`)** (RN-13).
 
 **Fluxo de preparação** (`pnpm preparar`, determinístico, estimado em 1–2 min, RNF-07 ≤ 5 min):
 1. `baixar-base`: baixa o `.db` de URL fixada em commit e confere SHA-256. Fica em `dados/origem/` (fora do git).
-2. `gerar --semente 20261007`: escreve `dados/gerado/pagamentos.csv`, `rastreio.csv`, `gabarito.json`.
+2. `gerar --semente 20261007`: escreve `dados/gerado/pagamentos.csv`, `rastreio.csv`, `problemas-plantados.json`.
 3. `importar`: grava `dados/poc_lab.sqlite`; repetir é idempotente (RF-02).
 4. `sugerir` (só se `OPENAI_API_KEY` existir; senão "sem sugestão" e segue).
 5. `publicar-dados`: escreve `dados/publicacao/leitura.sql` e o carrega no D1 local (`wrangler d1 execute poc-lab --local --file`, sem conta).
