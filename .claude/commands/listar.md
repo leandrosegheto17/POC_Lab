@@ -21,7 +21,9 @@ fila: o `TASKPLAN.md` já vem com as dependências antes dos dependentes.
 arquivos de `.md/.taskplan/`, como no `/executar`.
 
 1. Se `.md/TASKPLAN.md` não existir, informe que não há plano de execução (rode
-   `/organizar`; antes dele, `/planejar` e `/definir`) e pare.
+   `/organizar`; antes dele, `/planejar` e `/definir`) e pare. Se existir, rode antes
+   `python .claude/scripts/taskplan.py consolidar` (grava no `TASK.md`/`TASKPLAN.md` os Status que uma rodada
+   interrompida deixou só nos arquivos das tarefas — é a única escrita deste comando, e só atualiza o que já estava decidido).
 2. Leia o `.md/TASKPLAN.md` inteiro: linha `Resumo:` e a tabela
    `| # | Tarefa | Plano | Título | Lote | Dep | Estado |`. O `#` é a numeração e a
    ordem oficial; `Tarefa` é o ID (`TP-0000`, `RTP-0000`, ou `T-001 (TP-0001)` em
@@ -54,6 +56,11 @@ da lista as `Aprovada` e as `Dividida` cujas partes estejam todas `Aprovada`; um
 Tarefa `Bloqueada` mostra `—` nas três colunas: o `TASKPLAN.md` não guarda até que
 etapa ela chegou; o motivo está no arquivo `.taskplan`.
 
+**Despriorizada** (decisão sua, via `/despriorizar`): a tarefa **continua em aberto** e **aparece sempre no fim da lista** (o
+`TASKPLAN.md` já a coloca lá, com o `BK-`/`SPK-` que só ela espera logo antes). Classificação "despriorizada"; nunca é
+elegível. Na `Observação`, o motivo (campo `motivo` do Status no `TASK.md`, se houver) e a lembrança de que a versão de
+distribuição exige a tarefa `Aprovada`. Tarefa que depende de despriorizada fica "aguardando `<ID>` (despriorizada)".
+
 **Ordem**: **exatamente a do `TASKPLAN.md`** (coluna `#`) — não reordene nem renumere. A fila já é mantida na ordem
 possível de execução pelo `taskplan.py` (`gerar`, `bloquear`, `desbloquear`, `status`) e é a mesma que o
 `/executar` segue: dependências antes dos dependentes; **bloqueada que nenhuma tarefa em aberto espera** vai
@@ -81,6 +88,7 @@ com o `BK-` logo antes dela (BK primeiro, bloqueada depois). Este comando é som
   dependência está `Bloqueada`, diga "aguardando `<ID>` (bloqueada)" — o
   `/executar --continuar` pula essa tarefa até o bloqueio ser tratado.
 - **Bloqueada**: Estado `Bloqueada`.
+- **Despriorizada**: Estado `Despriorizada` (ver acima). Estado na tabela: `Despriorizada`; `Exe`/`QA`/`Sec` `—`.
 - **Do coordenador**: `BK-`/`SPK-` em aberto (Agente `coordenador`): não são do Executor; classifique como
   "do coordenador (com o usuário)" e mostre o que ela destrava (as tarefas que listam o ID na coluna Dep).
 

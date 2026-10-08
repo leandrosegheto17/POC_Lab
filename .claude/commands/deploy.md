@@ -26,6 +26,9 @@ preparação de projeto, feita uma vez.
 
 ## 2. Determinar o que vai ser publicado
 
+Antes de olhar os lotes, rode `python .claude/scripts/taskplan.py consolidar` para o `TASK.md`/`TASKPLAN.md`
+refletirem os Status que uma rodada de `/executar`, `/testar` ou `/validar` deixou só nos arquivos das tarefas.
+
 O lote nomeado em `$ARGUMENTS`, ou — se vazio — todos os lotes
 com todas as tarefas `QA ✔ · Sec ✔` (produzido pelo `/executar`) que ainda não
 aparecem como publicados em `.md/DEPLOY.md`.
@@ -53,6 +56,11 @@ Com a confirmação limpa: **dispare** `validador` (chapéu DevOps:
 lotes desta chamada — **sem pausa**.
 
 ## 5. Deploy em produção
+
+**Tarefas despriorizadas** (`/despriorizar`): staging (a versão de teste) pode sair sem elas, mas a **versão de distribuição
+não**. Antes de perguntar sobre produção, rode `python .claude/scripts/taskplan.py fila --bloqueios` e liste as linhas
+`DESPRIORIZADA`. Havendo qualquer uma, **não publique em produção**: mostre a lista, diga que cada uma precisa voltar
+(`/despriorizar --desfazer <ID>`) e ficar `Aprovada` (`/executar` → `/testar` → `/validar`) antes, e **pare**.
 
 **Pare sempre aqui**, mesmo com tudo limpo. Pergunte explicitamente ao usuário se
 quer publicar este conjunto em produção agora. Só com confirmação explícita,

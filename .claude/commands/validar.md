@@ -1,129 +1,75 @@
 ---
-description: Aciona o agente Validador (chapéus QA e DevSecOps), que também resolve sozinho a checagem estrutural do lote (sem reabrir o Coordenador) sobre um lote com todas as tarefas Concluída. Marca o lote como Validado (ou Validado com ressalvas); achado simples/débito baixo-médio vira tarefa em Refatoração Lote-X ao final da fila, sem parar — só achado crítico, ou inconsistência estrutural que exija redesenho, para o comando (e aí sim escala ao Coordenador). --continuar encadeia todos os lotes já prontos, sem esperar; combine com /loop para checar periodicamente. Não publica nada.
-argument-hint: [vazio = próximo lote elegível | nome do lote = valida esse lote | --continuar [N] = encadeia lotes já prontos]
+description: Etapa 3 do fluxo — aciona o agente Validador no chapéu DevSecOps para validar a segurança das tarefas já testadas (estado Testada/aguarda segurança), em sequência, contra o plano de validação de segurança de .md/.taskplan/<ID>.md; grava o resultado no arquivo da tarefa. Dá o OK (Sec ✔ = tarefa Aprovada), devolve ao /executar em achado crítico ou abre RTP em achado não crítico. Não implementa nem testa e não chama outro comando. Sem argumento pega a próxima tarefa elegível; --tarefa <ID> valida só essa; --lote N e --continuar [N] [--nocontext] [--nocommit] [--paralelo [N]] [--lotes-distintos] encadeiam as tarefas. Durante a rodada só o arquivo de cada tarefa é escrito; TASK.md e TASKPLAN.md são consolidados no fim. Não dispara /deploy sozinho.
+argument-hint: [vazio = próxima tarefa | --tarefa <ID> | --lote N | --continuar [N] [--nocontext] [--nocommit] [--paralelo [N]] [--lotes-distintos]]
 ---
 
-# Comando `/validar` — Validador (QA + DevSecOps + checagem estrutural)
+# Comando `/validar` — etapa 3: DevSecOps
 
-A lógica deste comando está definida em `.claude/EXECUTION-FLOW.md` (Comando 2) —
-leia esse arquivo agora, antes de fazer qualquer outra coisa, se ainda não o tiver
-em contexto. Ele por sua vez assume o que está declarado em
-`.claude/agents/validador.md`, `.claude/agents/coordenador.md` e em
-`PIPELINE-CONVENTIONS.md`.
-
-**Nota importante**: a checagem estrutural (Seção 4) não dispara mais o
-`coordenador` por rotina — o próprio `validador` confirma o fechamento do lote e
-cria a `Refatoração Lote-X` quando precisa, na mesma chamada. Reabrir o
-Coordenador por essa confirmação de rotina custava contexto (ele entra com escopo
-limpo — ver `PIPELINE-CONVENTIONS.md` §2) sem agregar nada que o Validador já não
-soubesse. O `coordenador` só volta a ser acionado (via `BLOCKERS.md`) quando a
-checagem encontrar uma inconsistência real que exija redesenho de
-dependência/decomposição — não para confirmar o óbvio.
-
-**O usuário é o orquestrador.** Este comando roda a validação de um lote (ou de
-todos os já prontos, em `--continuar`) e para — não dispara `/executar` (em caso
-de reprovação crítica) nem `/deploy` (em caso de aprovação) automaticamente.
+A lógica do fluxo está em `.claude/EXECUTION-FLOW.md` (Comando 1) e a mecânica
+comum em `.claude/commands/executar.md` — **leia o `executar.md` agora** se ainda não o
+tiver em contexto (e o `testar.md`, de onde vem o limite de devoluções). Este comando é o
+`/executar` com **a etapa trocada**: tudo o que está lá sobre modos e flags (`--tarefa`, `--lote`,
+`--continuar`, `--nocontext`, `--nocommit`, `--paralelo`), checagem de contexto, `taskplan.py`
+(`iniciar`/`concluir`/`consolidar`), reserva por sessão, onde o código roda (worktree em `--tarefa`,
+`main` em `--continuar`), rodada paralela (Seção 3e: até 20 tarefas ao mesmo tempo), bloqueio
+(Seção 6) e abertura de tarefa nova (Seção 5) vale **igual aqui**, com as diferenças abaixo.
+Agente: `validador` no chapéu DevSecOps (`.claude/agents/validador.md`). **Nunca chama
+`/executar` nem `/testar`.**
 
 Argumento recebido (pode estar vazio): $ARGUMENTS
 
-## 0. Modo de execução
+**Acionado pelo `/desenvolver`** (orquestrador sem supervisão): não pare para perguntar nada ao usuário — onde o
+comando perguntaria (assumir reserva velha, retomar bloqueada, argumento ambíguo), **pule a tarefa** e registre
+no resumo; ao terminar, devolva só o resumo curto (o que fechou, devolveu e bloqueou) e **não** sugira próximo
+comando: o controle volta ao `/desenvolver`.
 
-Interprete `$ARGUMENTS`:
+## Diferenças em relação ao `/executar`
 
-- **Vazio, ou nome de um lote**: modo padrão — processa um único lote e para ao
-  final.
-- **`--continuar [N]`**: depois de fechar um lote (Seção 5), volta à Seção 1 para
-  o próximo lote já pronto (até N, ou sem limite), sem pausar. Se não houver
-  nenhum lote pronto no momento — no início ou entre uma rodada e outra — **não é
-  erro**: informe e encerre normalmente. Este comando nunca fica esperando um
-  lote ficar pronto; para checar de novo em alguns minutos sem o usuário acionar
-  manualmente, combine com o skill `/loop` (ex.: `/loop 5m /validar --continuar`),
-  que cuida do reagendamento — uma validação em andamento nunca é interrompida no
-  meio por causa do intervalo.
+- **Pré-requisito**: a tarefa tem de ter `QA ✔` (seção 5 aprovada) e diff recuperável
+  (`python .claude/scripts/taskplan.py diff <ID>`). Sem isso, pare e sugira `/testar --tarefa <ID>`.
+- **Fila**: `python .claude/scripts/taskplan.py proxima --etapa sec [--lote N] [--pular ID,ID]` (com
+  `--paralelo N`: `--n N`, e `--lotes-distintos` quando pedido). Elegível = estado `Testada (aguarda segurança)` ou
+  `Em validação de segurança` (retomada), com plano, sem reserva de outra sessão. **Dependências não
+  são checadas**; `BK-`/`SPK-` nunca.
+- **`--tarefa <ID>`**: tarefa fora desses estados (ainda sem `QA ✔`, já `Aprovada`,
+  `Bloqueada`…) — explique o estado e o comando certo, e **pare**. Worktree:
+  `execucao/validar-<ID>`, criada a partir da `main`.
+- **Início e fim**: `iniciar <ID> <token> --etapa "Em DevSecOps"` e, no fim, `concluir <ID> <token>
+  sec-ok` (ou `devolvida`). Nada de `TASK.md`/`TASKPLAN.md` na rodada; `consolidar` ao encerrar a chamada.
 
-## 1. Determinar o lote-alvo
+**Despriorizada** (`/despriorizar`) é ignorada: não entra na fila (`proxima`), e `--tarefa <ID>` sobre ela explica e **para**. O estado anterior é preservado e volta com `/despriorizar --desfazer`.
 
-O lote nomeado em `$ARGUMENTS`, ou o primeiro lote com **todas** as tarefas
-`Concluída` no `TASK.md` e ainda sem veredito de `QA-REPORT.md`/
-`SECURITY-REVIEW.md` para o estado atual das tarefas (ou com veredito antigo,
-anterior a uma reabertura/correção).
+## Ciclo da tarefa
 
-Se nenhum lote atende a esse critério: informe que não há lote pronto para validar
-(algum ainda tem tarefa pendente — sugira `/listar` para ver o estado geral) e
-pare (em modo padrão) ou encerre normalmente (em `--continuar`, ver Seção 0).
+1. **Contexto, `iniciar`** como no `executar.md` (Seções 0 e 3-0), com `--etapa "Em DevSecOps"`.
+2. **Dispare `validador`** (`subagent_type: validador`, `run_in_background: false`) focado no
+   chapéu DevSecOps, **só nesta tarefa**: skills `static-security-analysis`,
+   `security-requirement-validation`, `sensitive-data-exposure-check`, `compliance-validation`
+   (quando houver dado pessoal) e `security-report-drafting`. Ele **lê o
+   `.md/.taskplan/<ID>.md`** (plano de validação de segurança, resultado da execução e do QA) e o
+   diff da tarefa (`python .claude/scripts/taskplan.py diff <ID>`; com arquivo compartilhado, leia-o junto
+   com a lista de `## 4`), executa o plano e **escreve o resultado em `## 6. Resultado do DevSecOps`**
+   (veredito, o que foi verificado, achados com severidade; `### Rodada n` em revalidação), e, como última
+   linha da seção, `Resumo para o relatório: <uma linha>` (o `consolidar` monta a entrada de
+   `.md/SECURITY-REVIEW.md`; **o agente não edita esse arquivo**). **Não altera código da tarefa e não grava status.** Peça o
+   **retorno em até 4 linhas** (OK/DEVOLVIDA/BLOQUEIO, achados em contagem) e **não releia a seção 6**.
+3. **Resultado** (`concluir`):
+   - **OK de segurança** (sem achado alto/crítico, compliance obrigatório atendido):
+     `concluir <ID> <token> sec-ok` — `Concluída · QA ✔ · Sec ✔`; a tarefa fica **`Aprovada`** e libera
+     as dependentes (que o `/executar` passa a enxergar como elegíveis).
+   - **Achado crítico** (severidade alta/crítica, ou compliance obrigatório não atendido):
+     `concluir <ID> <token> devolvida --motivo "<resumo>"` — Status `Em andamento`, achados em
+     `## Achados` (e na seção 6). O próximo `/executar` a pega e, depois, ela passa de novo por
+     `/testar` e `/validar`. O script conta a devolução, somada às do `/testar` (limite de 2; na 3ª ele
+     responde `LIMITE` e é bloqueio crítico — `testar.md`, Seção 3d).
+   - **Achado não crítico** (baixa/média, débito): `sec-ok` e o `validador` abre uma
+     **`RTP-0000`** (`executar.md`, Seção 5a), conferida com `taskplan.py tarefa <RTP>`.
+4. **Commit** (padrão): o que a validação produziu (seção 6, RTP) com a mensagem
+   `<ID>: segurança aprovada|devolvida`, pelas regras de onde o código roda. Com `--nocommit`, não commite.
 
-## 2. Validação funcional (chapéu QA do Validador)
+## Fim
 
-1. **Anuncie** que vai validar o lote-alvo.
-2. **Dispare** `validador` (`subagent_type: validador`, `run_in_background: false`)
-   com o prompt focado no chapéu QA: as 5 skills de validação
-   (`acceptance-criteria-validation`, `cross-platform-integration-testing`,
-   `bug-documentation`, `non-functional-validation`, `qa-report-drafting`) sobre
-   **todas** as tarefas do lote-alvo.
-3. **Aprovado / Aprovado com ressalvas**: siga para a Seção 3.
-4. **Reprovação de alguma tarefa** — o `validador` classifica cada uma no
-   `QA-REPORT.md` (ver `validador.md`):
-   - **Crítica** (compromete o critério de aceite central, exige mudança de
-     escopo/arquitetura, ou quebra algo de que outra tarefa do lote depende):
-     volte a(s) tarefa(s) reprovada(s) — e o que depende delas no lote — para
-     `Em andamento` no `TASK.md`. **Pare aqui.** Apresente o motivo (do
-     `QA-REPORT.md`) e informe que o próximo passo é rodar `/executar` sobre esse
-     lote.
-   - **Simples** (ajuste pontual de baixo esforço que não compromete o critério
-     de aceite central nem bloqueia outra tarefa do lote): **não pare** — a
-     tarefa continua `Concluída`, siga para a Seção 3; a correção é agendada na
-     Seção 4 como tarefa em `Refatoração Lote-X`.
-
-## 3. Auditoria de segurança (chapéu DevSecOps do Validador)
-
-1. **Dispare** `validador` de novo, agora focado no chapéu DevSecOps (as 5 skills
-   de auditoria, além do SAST) sobre o lote-alvo → `SECURITY-REVIEW.md`.
-2. **Sem achado bloqueante** (nada alto/crítico em aberto, compliance obrigatório
-   atendido — inclui débito de baixa/média severidade): siga para a Seção 4; o
-   débito vira tarefa em `Refatoração Lote-X` lá, não fica só como nota no
-   relatório.
-3. **Achado bloqueante** (severidade alta/crítica, ou compliance obrigatório não
-   atendido): **pare**. Explique o achado e informe que o próximo passo é rodar
-   `/executar` sobre a tarefa afetada (campo "Escala para" do `validador.md`).
-
-## 4. Checagem estrutural (o próprio Validador, sem dispatch)
-
-Sem disparar outro agente: com o `TASK.md` e os relatórios que acabou de produzir
-(`QA-REPORT.md`, `SECURITY-REVIEW.md`), o próprio `validador` confirma o
-fechamento do lote.
-
-1. Confirme: toda tarefa `Concluída`, nenhuma dependência da Seção 4 órfã/
-   inconsistente relativa a este lote, nenhuma tarefa `Bloqueada` sem resolução.
-2. **Se as Seções 2 ou 3 produziram reprovação simples/débito não bloqueante**:
-   crie (ou adicione tarefa a) o lote `Refatoração Lote-X` na Seção 3 do
-   `TASK.md` (X = o lote-alvo atual), posicionado depois de todos os lotes
-   existentes na ordem de execução — uma tarefa por achado, referenciando a
-   entrada do `QA-REPORT.md`/`SECURITY-REVIEW.md` que a originou. O lote-alvo
-   **não** é reaberto por causa disso. (Uso restrito das skills de decomposição
-   — `task-decomposition`, `dependency-sequencing`, `task-md-drafting` — só para
-   esta tarefa pontual, nunca para redecompor um lote inteiro; ver
-   `validador.md`.)
-3. **Consistente** (mecânico, sem necessidade de redesenho): siga para a
-   Seção 5.
-4. **Inconsistência que exige redesenho de dependência/decomposição real** (não
-   é mera confirmação de rotina): **só aqui** volte a depender de outro agente —
-   **pare**, registre em `BLOCKERS.md` escalando para `coordenador`
-   (PIPELINE-CONVENTIONS.md §4), e informe se é correção direta no `TASK.md` ou
-   pendência de implementação (volta para `/executar` depois de resolvido).
-
-## 5. Encerramento
-
-Apresente o resumo do lote: veredito QA, veredito DevSecOps, checagem estrutural,
-e as tarefas criadas em `Refatoração Lote-X`, se houver. Informe que o lote está
-`Validado` (ou `Validado com ressalvas`, se houve achado simples roteado) e que o
-próximo passo disponível é `/deploy`. **Não dispare o `/deploy` automaticamente.**
-
-- Modo padrão: **pare aqui**.
-- `--continuar [N]`: volte à Seção 0/1 para o próximo lote, conforme descrito lá.
-
-## 6. Bloqueio
-
-Além dos pontos de parada específicos acima, se surgir uma entrada nova `Aberto`
-em `.md/BLOCKERS.md` durante qualquer dispatch: **pare**, explique quem reportou,
-o quê, e o campo "Escala para" — a decisão de como seguir é do usuário. Isso vale
-igual em `--continuar`.
+Rode `taskplan.py consolidar` (também monta a entrada de `SECURITY-REVIEW.md` a partir da linha `Resumo para o relatório:`). Resumo curto por tarefa: veredito, achados, RTP criadas, estado agora.
+No modo contínuo, o resumo final traz: aprovadas (`Sec ✔`), devolvidas ao `/executar` (ID + motivo),
+bloqueadas, RTP abertas, puladas e **se algum lote ficou todo pronto para `/deploy`**. Termine sugerindo
+`/executar` (se houve devolução ou há novas elegíveis) ou `/deploy`. Nunca dispare `/deploy`.

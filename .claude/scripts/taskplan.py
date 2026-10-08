@@ -6,9 +6,14 @@ Uso (a partir da raiz do projeto):
   python .claude/scripts/taskplan.py gerar              # reconstrói o TASKPLAN.md a partir do TASK.md e de .md/.taskplan/
   python .claude/scripts/taskplan.py set ID ESTADO      # troca só o estado de uma linha (ID: TP-0001, RTP-0003, SPK-0001, BK-0002, T-001)
   python .claude/scripts/taskplan.py estados            # lista os estados válidos
-  python .claude/scripts/taskplan.py proxima [--lote N] [--pular ID,ID] [--n K]   # próxima(s) tarefa(s) elegível(is) do Executor
-  python .claude/scripts/taskplan.py reservar ID TOKEN [--assumir]   # reserva por sessão (OK | OCUPADA)
+  python .claude/scripts/taskplan.py proxima [--etapa exe|qa|sec] [--lote N] [--pular ID,ID] [--n K] [--lotes-distintos]   # próxima(s) tarefa(s) elegível(is) da etapa (padrão exe)
+  python .claude/scripts/taskplan.py reservar ID TOKEN [--assumir] [--etapa "Em execução|Em QA|Em DevSecOps"]   # reserva por sessão (OK | OCUPADA)
   python .claude/scripts/taskplan.py etapa ID TOKEN "Em execução|Em QA|Em DevSecOps"
+  python .claude/scripts/taskplan.py iniciar ID TOKEN [--etapa "Em execução|Em QA|Em DevSecOps"] [--snap]   # reservar + etapa + status local (+ snapshot "antes")
+  python .claude/scripts/taskplan.py concluir ID TOKEN executada|qa-ok|sec-ok|devolvida [--snap] [--motivo "..."]   # status local + libera a reserva (+ snapshot "depois"; devolução conta)
+  python .claude/scripts/taskplan.py diff ID                          # diff da tarefa (snapshot antes..depois; senão commits que começam pelo ID)
+  python .claude/scripts/taskplan.py fila [--bloqueios]               # /desenvolver: tamanho das filas exe/qa/sec, travadas e impressão digital do estado
+  python .claude/scripts/taskplan.py consolidar                        # grava os Status locais no TASK.md, anexa os resumos de QA/Sec aos relatórios e regera o TASKPLAN.md (fim da rodada)
   python .claude/scripts/taskplan.py liberar ID Livre|Concluída|Bloqueada
   python .claude/scripts/taskplan.py status ID "<texto do Status>"    # grava o Status (TASK.md ou arquivo BK) e o estado no TASKPLAN.md
   python .claude/scripts/taskplan.py proximo-id RTP|BK|SPK|TP       # próximo ID livre do prefixo
@@ -21,6 +26,8 @@ Uso (a partir da raiz do projeto):
         # registra a entrada em .md/BLOCKERS.md E abre um BK-nnnn (ou SPK-nnnn, spike) em .md/.taskplan com a descrição do que
         # fazer; põe o BK/SPK na Dep da tarefa ID, marca a tarefa Bloqueada e reordena o TASKPLAN.md. ID "-" = sem tarefa afetada.
   python .claude/scripts/taskplan.py desbloquear BK-nnnn|SPK-nnnn "<resolução>"   # fecha o BK/SPK e a entrada do BLOCKERS.md, devolve as tarefas à fila e reordena
+  python .claude/scripts/taskplan.py despriorizar ID [--motivo "..."]   # decisão do usuário: vai para o fim da lista e é ignorada por executar/testar/validar; a versão de distribuição exige tê-la Aprovada
+  python .claude/scripts/taskplan.py repriorizar ID                   # desfaz: restaura o Status que a tarefa tinha
   python .claude/scripts/taskplan.py ordenar                          # /organizar --ordenar: só reordena o TASKPLAN.md (fila final) e relata
   python .claude/scripts/taskplan.py migrar [--confirmar] [--sem-git]  # /organizar --migrar (ver abaixo). Sem --confirmar é só relatório.
 
@@ -41,6 +48,10 @@ Objetivo: o /executar não lê o TASK.md inteiro. Toda leitura passa pelo TASKPL
 .md/.taskplan/<ID>.md; toda escrita no TASK.md é feita aqui, só na linha afetada.
 
 O TASK.md continua sendo a fonte de verdade do Status das tarefas; o TASKPLAN.md é a visão ordenada.
+DURANTE UMA RODADA (/executar, /testar, /validar) nada disso é reescrito: o estado vive só no arquivo da tarefa
+(.md/.taskplan/<ID>.md, linhas `Reserva:` e `Status-local:`), que `proxima`/`tarefa` leem por cima do TASKPLAN.md.
+`consolidar` (fim da rodada, ou antes de /listar e /deploy) grava os Status locais no TASK.md e regera o TASKPLAN.md.
+A raiz do projeto é a da árvore principal (git-common-dir), mesmo quando o script roda numa worktree.
 Bloqueios (BK) e spikes abertos durante a execução (SPK) vivem em .md/.taskplan/BK-0000.md / SPK-0000.md e também têm entrada em .md/BLOCKERS.md (que continua sendo escrito). `gerar` deriva o estado do Status e da linha
 `Reserva:` do arquivo da tarefa (a reserva, quando ativa, tem prioridade).
 
@@ -63,7 +74,25 @@ try:
 except Exception:
     pass
 
-ROOT = os.getcwd()
+CWD = os.getcwd()
+
+
+def _raiz():
+    """Raiz da árvore principal: estado/reservas vivem lá, mesmo que o script rode numa worktree."""
+    env = os.environ.get('TASKPLAN_ROOT')
+    if env:
+        return env
+    try:
+        r = subprocess.run(['git', 'rev-parse', '--git-common-dir'], cwd=CWD, capture_output=True, text=True)
+        gd = os.path.abspath(os.path.join(CWD, r.stdout.strip()))
+        if r.returncode == 0 and os.path.basename(gd) == '.git':
+            return os.path.dirname(gd)
+    except Exception:
+        pass
+    return CWD
+
+
+ROOT = _raiz()
 MD = os.path.join(ROOT, '.md')
 TASK = os.path.join(MD, 'TASK.md')
 PLANDIR = os.path.join(MD, '.taskplan')
@@ -81,11 +110,18 @@ ESTADOS = [
     'Aprovada',
     'Bloqueada',
     'Dividida',
+    'Despriorizada',
 ]
+# estados elegíveis por etapa do /executar (exe), /testar (qa) e /validar (sec); inclui o em-curso (retomada)
+ETAPAS_ELEG = {
+    'exe': ('Não executada', 'Em execução'),
+    'qa': ('Executada (aguarda teste)', 'Em teste'),
+    'sec': ('Testada (aguarda segurança)', 'Em validação de segurança'),
+}
 ID_RE = re.compile(r'\b(?:RTP-\d+[a-z]*|SPK-\d+[a-z]*|TP-\d+[a-z]*|BK-\d+|T-\d+)\b')
 STD_RE = re.compile(r'^(?:RTP|SPK|TP)-\d+[a-z]*$')
 LEGADO_T_RE = re.compile(r'^T-\d+[a-z]*$')
-STATUS_RE = re.compile(r'\|\s*(?=[*_`]*(?:Concluída|Pendente|Em andamento|Bloqueada|Dividida|Aguardando))')
+STATUS_RE = re.compile(r'\|\s*(?=[*_`]*(?:Concluída|Pendente|Em andamento|Bloqueada|Dividida|Despriorizada|Aguardando))')
 COORD = ('BK-', 'SPK-')  # tarefas do Coordenador (com o usuário); as demais são do Executor
 
 
@@ -286,7 +322,29 @@ def reserva(key):
     return None, True
 
 
+LOCAL = 'Status-local:'
+
+
+def status_local(key):
+    """Status gravado só no arquivo da tarefa durante a rodada (None = não há)."""
+    p = os.path.join(PLANDIR, key + '.md')
+    if not os.path.exists(p):
+        return None
+    with open(p, encoding='utf-8') as f:
+        for n, l in enumerate(f):
+            if l.startswith(LOCAL):
+                return l.split(':', 1)[1].strip()
+            if n > 15:
+                break
+    return None
+
+
 def estado(t):
+    loc = status_local(t['key'])
+    if loc is not None:
+        t = dict(t, status=loc)
+    if re.sub(r'^[*_`\s]+', '', t['status']).startswith('Despriorizada'):
+        return 'Despriorizada'  # decisão do usuário: vale mesmo sobre reserva velha
     rv, _ = reserva(t['key'])
     if rv:
         if rv.startswith('Em execução'):
@@ -378,12 +436,37 @@ def reordenar_bloqueios(tasks):
     return out
 
 
+def reordenar_despriorizadas(tasks):
+    """Despriorizada vai para o fim da fila (depois das bloqueadas), com o BK/SPK que só ela espera logo antes."""
+    est = {t['key']: estado(t) for t in tasks}
+    desp = [t for t in tasks if est[t['key']] == 'Despriorizada']
+    if not desp:
+        return tasks
+    dk = {t['key'] for t in desp}
+    abertas = {t['key'] for t in tasks if est[t['key']] != 'Aprovada'}
+    esperados = {}
+    for t in tasks:
+        if t['key'] in abertas:
+            for d in t['dep']:
+                if d.startswith(COORD) and d in abertas:
+                    esperados.setdefault(d, set()).add(t['key'])
+    acompanha = {b for b, ks in esperados.items() if ks and ks <= dk}
+    base = [t for t in tasks if t['key'] not in dk and t['key'] not in acompanha]
+    fim = []
+    for t in desp:
+        for b in tasks:
+            if b['key'] in acompanha and t['key'] in esperados.get(b['key'], ()) and b not in fim:
+                fim.append(b)
+        fim.append(t)
+    return base + fim + [b for b in tasks if b['key'] in acompanha and b not in fim]
+
+
 def agora():
     return datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
 
 
 def gerar():
-    tasks = reordenar_bloqueios(ordenar(read_tasks()))
+    tasks = reordenar_despriorizadas(reordenar_bloqueios(ordenar(read_tasks())))
     rows, cont = [], {e: 0 for e in ESTADOS}
     for n, t in enumerate(tasks, 1):
         e = estado(t)
@@ -408,7 +491,7 @@ def gerar():
         '',
         'Resumo: ' + ' · '.join('%s %d' % (e, cont[e]) for e in ESTADOS if cont[e]) + ' · total %d' % len(tasks),
         '',
-        'Estados: ' + ' → '.join(ESTADOS[:7]) + ' (e, à parte, Bloqueada e Dividida). '
+        'Estados: ' + ' → '.join(ESTADOS[:7]) + ' (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). '
         '`Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).',
         '',
         '| # | Tarefa | Agente | Plano | Título | Lote | Dep | Estado |',
@@ -502,12 +585,13 @@ def task_crlf():
 
 class Lock:
     """Trava por tarefa: mkdir é atômico."""
-    def __init__(self, key):
+    def __init__(self, key, tentativas=50):
         self.d = os.path.join(PLANDIR, '.lock-' + key)
+        self.tentativas = tentativas
 
     def __enter__(self):
         os.makedirs(PLANDIR, exist_ok=True)
-        for _ in range(50):
+        for _ in range(self.tentativas):
             try:
                 os.mkdir(self.d)
                 return self
@@ -572,6 +656,41 @@ def set_reserva(key, texto):
     write_lines(p, lines)
 
 
+def set_cab(key, prefixo, valor):
+    """Grava (ou remove, se valor for None) uma linha `prefixo valor` no cabeçalho do arquivo da tarefa."""
+    p = plan_path(key)
+    if not os.path.exists(p):
+        return False
+    with Lock(key):
+        lines = read_lines(p)
+        for n, l in enumerate(lines[:16]):
+            if l.startswith(prefixo):
+                if valor is None:
+                    del lines[n]
+                else:
+                    lines[n] = '%s %s' % (prefixo, valor)
+                break
+        else:
+            if valor is None:
+                return True
+            pos = next((n + 1 for n, l in enumerate(lines[:16]) if l.startswith('Reserva:')), 3 if len(lines) > 3 else len(lines))
+            lines.insert(pos, '%s %s' % (prefixo, valor))
+        write_lines(p, lines)
+    return True
+
+
+def get_cab(key, prefixo):
+    p = plan_path(key)
+    if not os.path.exists(p):
+        return None
+    for n, l in enumerate(read_lines(p)):
+        if l.startswith(prefixo):
+            return l.split(':', 1)[1].strip()
+        if n > 16:
+            break
+    return None
+
+
 def taskplan_rows():
     """Linhas do TASKPLAN.md como dicts (sem ler o TASK.md)."""
     rows = []
@@ -586,6 +705,11 @@ def taskplan_rows():
             rows.append({'n': int(c[0]), 'id': c[ix['tarefa']].split(' ')[0], 'key': key,
                          'plano': c[ix['plano']] == '✔', 'titulo': c[ix['titulo']], 'lote': c[ix['lote']],
                          'dep': [norm(x) for x in ID_RE.findall(c[ix['dep']])], 'estado': c[ix['estado']]})
+    for r in rows:  # estado vivo: reserva e Status-local do arquivo da tarefa valem mais que a linha do TASKPLAN
+        rv, _ = reserva(r['key'])
+        loc = status_local(r['key'])
+        if loc is not None or (rv and rv.startswith(('Em execução', 'Em QA', 'Em DevSecOps'))):
+            r['estado'] = estado({'key': r['key'], 'status': ''})
     return rows
 
 
@@ -605,24 +729,14 @@ def lote_casa(lote, n):
 
 
 # ----------------------------------------------------------------- comandos
-def cmd_proxima(args):
-    lote, pular, k = None, set(), 1
-    i = 0
-    while i < len(args):
-        if args[i] == '--lote':
-            lote = args[i + 1]; i += 2
-        elif args[i] == '--pular':
-            pular = {norm(x) for x in args[i + 1].split(',') if x}; i += 2
-        elif args[i] == '--n':
-            k = int(args[i + 1]); i += 2
-        else:
-            i += 1
+def _elegiveis(etapa, lote=None, pular=(), k=1, distintos=False):
+    """Tarefas elegíveis da etapa (exe|qa|sec) na ordem da fila + contagem dos motivos de exclusão."""
+    usados = set()
     rows = taskplan_rows()
     by = {r['key']: r for r in rows}
     out, motivos = [], {'sem plano': 0, 'dependência aberta': 0, 'reservada': 0, 'bloqueada/dividida': 0,
-                        'do coordenador (BK/SPK)': 0, 'outros': 0}
-    ELEG = ('Não executada', 'Em execução', 'Executada (aguarda teste)', 'Testada (aguarda segurança)',
-            'Em teste', 'Em validação de segurança')
+                        'do coordenador (BK/SPK)': 0, 'despriorizada': 0, 'outros': 0}
+    ELEG = ETAPAS_ELEG[etapa]
     for r in rows:
         if r['estado'] in ('Aprovada',):
             continue
@@ -630,8 +744,13 @@ def cmd_proxima(args):
             continue
         if r['key'] in pular:
             continue
+        if distintos and r['lote'] in usados:  # no máximo uma tarefa por lote (paralelismo seguro)
+            continue
         if r['key'].startswith(COORD):
             motivos['do coordenador (BK/SPK)'] += 1
+            continue
+        if r['estado'] == 'Despriorizada':
+            motivos['despriorizada'] += 1
             continue
         if r['estado'] in ('Bloqueada', 'Dividida'):
             motivos['bloqueada/dividida'] += 1
@@ -642,7 +761,8 @@ def cmd_proxima(args):
         if not r['plano']:
             motivos['sem plano'] += 1
             continue
-        if any(not (d in by and resolvida(by[d], by)) for d in r['dep'] if d in by):
+        # só a execução espera as dependências; teste e segurança operam sobre código já executado
+        if etapa == 'exe' and any(not (d in by and resolvida(by[d], by)) for d in r['dep'] if d in by):
             motivos['dependência aberta'] += 1
             continue
         ri = reserva_info(r['key'])
@@ -650,19 +770,75 @@ def cmd_proxima(args):
             motivos['reservada'] += 1
             continue
         out.append(r)
+        usados.add(r['lote'])
         if len(out) >= k:
             break
+    return out, motivos, rows
+
+
+def cmd_proxima(args):
+    lote, pular, k, etapa, distintos = None, set(), 1, 'exe', False
+    i = 0
+    while i < len(args):
+        if args[i] == '--lotes-distintos':
+            distintos = True; i += 1
+        elif args[i] == '--etapa':
+            etapa = args[i + 1]; i += 2
+            if etapa not in ETAPAS_ELEG:
+                sys.exit('etapa inválida: %r (válidas: exe, qa, sec)' % etapa)
+        elif args[i] == '--lote':
+            lote = args[i + 1]; i += 2
+        elif args[i] == '--pular':
+            pular = {norm(x) for x in args[i + 1].split(',') if x}; i += 2
+        elif args[i] == '--n':
+            k = int(args[i + 1]); i += 2
+        else:
+            i += 1
+    out, motivos, _ = _elegiveis(etapa, lote, pular, k, distintos)
     for r in out:
-        print('%s\t%s\t%s\t%s\t%s' % (r['id'], r['key'], r['estado'], r['lote'], r['titulo']))
+        print('%s	%s	%s	%s	%s' % (r['id'], r['key'], r['estado'], r['lote'], r['titulo']))
     if not out:
-        print('NENHUMA\t' + '; '.join('%s: %d' % kv for kv in motivos.items() if kv[1]))
+        print('NENHUMA	' + '; '.join('%s: %d' % kv for kv in motivos.items() if kv[1]))
+
+
+def cmd_fila(args):
+    """Uma linha para o /desenvolver decidir o que rodar e se houve progresso."""
+    import hashlib
+    cont, mot, rows = {}, {}, None
+    for et in ('exe', 'qa', 'sec'):
+        out, motivos, rows = _elegiveis(et, k=10 ** 9)
+        cont[et] = len(out)
+        mot[et] = motivos
+    abertos = [r for r in rows if r['estado'] != 'Aprovada']
+    bloq = [r for r in abertos if r['estado'] == 'Bloqueada']
+    coord = [r for r in abertos if r['key'].startswith(COORD)]
+    desp = [r for r in abertos if r['estado'] == 'Despriorizada']
+    reservadas = sum(m['reservada'] for m in mot.values())
+    semplano = mot['exe']['sem plano'] + mot['qa']['sem plano'] + mot['sec']['sem plano']
+    h = hashlib.md5('|'.join('%s:%s' % (r['key'], r['estado']) for r in rows).encode('utf-8')).hexdigest()[:12]
+    print('FILA exe=%d qa=%d sec=%d | bloqueadas=%d despriorizadas=%d bk_spk_abertos=%d reservadas=%d sem_plano=%d | aprovadas=%d total=%d | estado=%s' % (
+        cont['exe'], cont['qa'], cont['sec'], len(bloq), len(desp), len(coord), reservadas, semplano,
+        len(rows) - len(abertos), len(rows), h))
+    if '--bloqueios' in args:
+        for r in coord:
+            print('BK/SPK	%s	%s' % (r['id'], r['titulo']))
+        for r in bloq:
+            print('BLOQUEADA\t%s\t%s' % (r['id'], r['titulo']))
+        for r in desp:
+            print('DESPRIORIZADA\t%s\t%s' % (r['id'], r['titulo']))
 
 
 def cmd_reservar(args):
     i, token, assumir = args[0], args[1], '--assumir' in args
+    etapa = args[args.index('--etapa') + 1] if '--etapa' in args else 'Em execução'
+    if etapa not in ('Em execução', 'Em QA', 'Em DevSecOps'):
+        sys.exit('etapa inválida')
     key = norm(i)
     if not os.path.exists(plan_path(key)):
         sys.exit('SEM PLANO: %s' % plan_path(key))
+    if any(r['key'] == key and r['estado'] == 'Despriorizada' for r in taskplan_rows()):
+        print('DESPRIORIZADA\t%s\tignorada por executar/testar/validar; use `repriorizar` para voltar' % key)
+        sys.exit(4)
     with Lock(key):
         ri = reserva_info(key)
         if ri and ri[0] in ('Em execução', 'Em QA', 'Em DevSecOps') and ri[1] != token:
@@ -670,7 +846,7 @@ def cmd_reservar(args):
                 print('OCUPADA\t%s\tsessão %s\tatualizado %s' % (ri[0], ri[1], ri[2]))
                 sys.exit(2)
         t = now()
-        set_reserva(key, 'Em execução — sessão %s — desde %s — atualizado %s' % (token, t, t))
+        set_reserva(key, '%s — sessão %s — desde %s — atualizado %s' % (etapa, token, t, t))
     ri = reserva_info(key)  # confere
     if ri[1] != token:
         print('OCUPADA\toutra sessão assumiu')
@@ -692,8 +868,7 @@ def cmd_etapa(args):
             if l.startswith('Reserva:') and 'desde ' in l:
                 desde = [x.strip()[6:] for x in l.split('—') if x.strip().startswith('desde ')][0]
         set_reserva(key, '%s — sessão %s — desde %s — atualizado %s' % (etapa, token, desde or now(), now()))
-    novo = {'Em execução': 'Em execução', 'Em QA': 'Em teste', 'Em DevSecOps': 'Em validação de segurança'}[etapa]
-    set_estado(key, novo)
+    # o estado vivo vem da Reserva (lida por cima do TASKPLAN.md); o TASKPLAN.md só é regerado no consolidar
 
 
 def cmd_liberar(args):
@@ -709,6 +884,18 @@ def cmd_liberar(args):
 def cmd_status(args):
     i, texto = args[0], args[1]
     key = norm(i)
+    sync = '--sync' in args[2:]
+    ehbk = key.startswith('BK-') or (key.startswith('SPK-') and _linha_tarefa(key) is None)
+    if not sync and not ehbk and os.path.exists(plan_path(key)):
+        # durante a rodada o Status vive só no arquivo da tarefa; TASK.md e TASKPLAN.md ficam para o `consolidar`
+        set_cab(key, LOCAL, texto.replace('\n', ' '))
+        print('Status de %s gravado (local; rode `consolidar` no fim)' % i)
+        return
+    with Lock('_TASK', 300):
+        _status_sync(i, key, texto)
+
+
+def _status_sync(i, key, texto):
     hit = {'status': ''}
     so_arquivo = key.startswith('BK-') or (key.startswith('SPK-') and _linha_tarefa(key) is None)
     if so_arquivo:  # bloqueio/spike aberto na execução: o Status vive no arquivo dele
@@ -738,6 +925,7 @@ def cmd_status(args):
         pre, _ = split_status(lines[hit['line']])
         lines[hit['line']] = pre + ' ' + texto.replace('|', '/').replace('\n', ' ') + ' |'
         write_lines(TASK, lines, task_crlf())
+        set_cab(key, LOCAL, None)  # o TASK.md voltou a ser a verdade
     t = {'id': i, 'key': key, 'status': texto, 'dep': []}
     mexe_em_bloqueio = so_arquivo or estado(t) == 'Bloqueada' or \
         re.sub(r'^[*_`\s]+', '', hit['status']).startswith('Bloqueada')
@@ -750,6 +938,57 @@ def cmd_status(args):
             except SystemExit:
                 pass
     print('Status de %s gravado' % i)
+
+
+DESP_PREFIXO = 'Despriorizada · antes: '
+DESP_MOTIVO = ' · motivo: '
+
+
+def cmd_despriorizar(args):
+    """despriorizar ID [--motivo "..."]: a tarefa fica Despriorizada (fim da lista; ignorada por /executar, /testar, /validar)."""
+    i, key = args[0], norm(args[0])
+    motivo = args[args.index('--motivo') + 1] if '--motivo' in args else ''
+    if key.startswith('BK-'):
+        sys.exit('BK não é tarefa: despriorize a tarefa que ele bloqueia')
+    t = next((x for x in read_tasks() if x['key'] == key), None)
+    if t is None:
+        sys.exit('tarefa %s não encontrada na Seção 3 do TASK.md' % i)
+    atual = status_local(key) or t['status']
+    if re.sub(r'^[*_`\s]+', '', atual).startswith('Despriorizada'):
+        print('JA DESPRIORIZADA\t%s' % key)
+        return
+    est = estado(t)
+    if est == 'Aprovada':
+        sys.exit('%s já está Aprovada: nada a despriorizar' % key)
+    if est == 'Dividida':
+        sys.exit('%s foi dividida: despriorize as partes' % key)
+    ri = reserva_info(key)
+    if ri and ri[0] in ('Em execução', 'Em QA', 'Em DevSecOps'):
+        sys.exit('OCUPADA\t%s\t%s (sessão %s): espere a etapa terminar ou libere a reserva' % (key, ri[0], ri[1]))
+    antes = re.sub(r'\s+', ' ', atual.replace('|', '/')).strip() or 'Pendente'
+    texto = DESP_PREFIXO + antes + ((DESP_MOTIVO + motivo.replace('|', '/').replace('\n', ' ')) if motivo else '')
+    _status_sync(i, key, texto)
+    gerar()
+    dependentes = [x['key'] for x in read_tasks() if key in x['dep'] and estado(x) != 'Aprovada']
+    print('DESPRIORIZADA\t%s (estava: %s)' % (key, est))
+    if dependentes:
+        print('ATENCAO: ficam esperando %s as tarefas: %s' % (key, ', '.join(dependentes)))
+
+
+def cmd_repriorizar(args):
+    i, key = args[0], norm(args[0])
+    t = next((x for x in read_tasks() if x['key'] == key), None)
+    if t is None:
+        sys.exit('tarefa %s não encontrada na Seção 3 do TASK.md' % i)
+    atual = re.sub(r'^[*_`\s]+', '', status_local(key) or t['status'])
+    if not atual.startswith('Despriorizada'):
+        sys.exit('%s não está despriorizada' % key)
+    antes = 'Pendente'
+    if atual.startswith(DESP_PREFIXO):
+        antes = atual[len(DESP_PREFIXO):].split(DESP_MOTIVO)[0].strip() or 'Pendente'
+    _status_sync(i, key, antes)
+    gerar()
+    print('REPRIORIZADA\t%s\tStatus restaurado: %s' % (key, antes))
 
 
 def proximo_id(pref):
@@ -942,6 +1181,7 @@ def cmd_bloquear(args):
         if os.path.exists(plan_path(key)):
             with Lock(key):
                 set_reserva(key, 'Bloqueada')
+            set_cab(key, LOCAL, None)  # o Status oficial (Bloqueada) acabou de ir para o TASK.md
     gerar()
     print('%s\t%s\t%s\tescala para %s\tBLOCKERS.md: %s' % (bid, plan_path(bid), ('bloqueia ' + key) if key else 'sem tarefa afetada',
                                                          o['escala'], cab.split(' (')[0]))
@@ -979,6 +1219,7 @@ def cmd_desbloquear(args):
         if os.path.exists(plan_path(k)):
             with Lock(k):
                 set_reserva(k, 'Livre')
+            set_cab(k, LOCAL, None)
     with Lock(bid):  # o próprio BK/SPK deixa de estar "em execução" antes de a fila ser regerada
         set_reserva(bid, 'Concluída')
     gerar()
@@ -1007,6 +1248,177 @@ def cmd_ordenar(args):
         print('Sem arquivo em .md/.taskplan (rode /organizar): ' + ', '.join(sem_plano[:10]))
     print('Primeira elegível para o /executar:')
     cmd_proxima(['--n', '1'])
+
+
+def _git(args, env=None, check=True):
+    r = subprocess.run(['git'] + args, cwd=CWD, env=env, capture_output=True, text=True, encoding='utf-8', errors='replace')
+    if check and r.returncode != 0:
+        sys.exit('git %s falhou: %s' % (' '.join(args), r.stderr.strip()))
+    return r
+
+
+def _snapshot():
+    """Hash de uma árvore com o estado atual do diretório de trabalho (inclui arquivos novos), sem commit e
+    sem tocar no índice real: usa um índice temporário dentro do .git."""
+    gd = os.path.abspath(os.path.join(CWD, _git(['rev-parse', '--git-dir']).stdout.strip()))
+    idx = os.path.join(gd, 'taskplan-snap-index')
+    env = dict(os.environ, GIT_INDEX_FILE=idx)
+    try:
+        _git(['read-tree', 'HEAD'], env=env, check=False)  # sem HEAD: índice vazio
+        _git(['add', '-A'], env=env)
+        return _git(['write-tree'], env=env).stdout.strip()
+    finally:
+        try:
+            os.remove(idx)
+        except OSError:
+            pass
+
+
+EXCLUI_DIFF = [':(exclude).md/.taskplan', ':(exclude).md/TASKPLAN.md']
+
+
+def cmd_iniciar(args):
+    i, token = args[0], args[1]
+    key = norm(i)
+    o = args[2:]
+    etapa = o[o.index('--etapa') + 1] if '--etapa' in o else 'Em execução'
+    cmd_reservar([i, token, '--etapa', etapa] + (['--assumir'] if '--assumir' in o else []))
+    cmd_etapa([i, token, etapa])
+    if etapa == 'Em execução':
+        set_cab(key, LOCAL, 'Em andamento')
+        if '--snap' in o:
+            set_cab(key, 'Snapshot:', _snapshot())  # só o "antes"; o concluir acrescenta o "depois"
+    print('INICIADA %s (%s)' % (key, etapa))
+
+
+RESULTADOS = {
+    'executada': 'Concluída · aguarda QA',
+    'qa-ok': 'Concluída · QA ✔',
+    'sec-ok': 'Concluída · QA ✔ · Sec ✔',
+    'devolvida': 'Em andamento',
+}
+
+
+def cmd_concluir(args):
+    i, token, res = args[0], args[1], args[2]
+    key = norm(i)
+    o = args[3:]
+    if res not in RESULTADOS:
+        sys.exit('resultado inválido: %r (válidos: %s)' % (res, ', '.join(RESULTADOS)))
+    ri = reserva_info(key)
+    if not ri or ri[1] != token:
+        sys.exit('RESERVA PERDIDA (sessão %s)' % (ri[1] if ri else '-'))
+    if res == 'devolvida':
+        n = int(get_cab(key, 'Devoluções:') or 0) + 1
+        if n > 2:
+            print('LIMITE\t%s\t%d devoluções: 3ª é bloqueio crítico (use `bloquear`); status inalterado' % (key, n))
+            sys.exit(3)
+        set_cab(key, 'Devoluções:', str(n))
+        motivo = o[o.index('--motivo') + 1] if '--motivo' in o else ''
+        print('DEVOLUCAO\t%s\t%d de 2%s' % (key, n, ('\t' + motivo) if motivo else ''))
+    if res == 'executada' and '--snap' in o:
+        antes = (get_cab(key, 'Snapshot:') or '').split('..')[0]
+        if antes:
+            set_cab(key, 'Snapshot:', '%s..%s' % (antes, _snapshot()))
+    set_cab(key, LOCAL, RESULTADOS[res])
+    with Lock(key):
+        set_reserva(key, 'Livre')
+    print('CONCLUIDA\t%s\t%s' % (key, RESULTADOS[res]))
+
+
+def cmd_diff(args):
+    key = norm(args[0])
+    snap = get_cab(key, 'Snapshot:')
+    if snap and '..' in snap and all(snap.split('..')):
+        a, b = snap.split('..')
+        sys.stdout.write(_git(['diff', a, b, '--'] + ['.'] + EXCLUI_DIFF).stdout)
+        return
+    hs = _git(['log', '--format=%H', '--extended-regexp', '--grep', '^%s[: ]' % re.escape(key)], check=False).stdout.split()
+    if not hs:
+        sys.exit('SEM DIFF: %s não tem snapshot nem commit que comece pelo ID' % key)
+    for h in reversed(hs):
+        sys.stdout.write(_git(['show', h, '--format=commit %h %s', '--'] + ['.'] + EXCLUI_DIFF).stdout)
+
+
+RESUMO = 'Resumo para o relatório:'
+RELATORIOS = [  # (regex do cabeçalho da seção no arquivo da tarefa, arquivo, rótulo)
+    (r'^## 5\.', 'QA-REPORT.md', 'QA'),
+    (r'^## 6\.', 'SECURITY-REVIEW.md', 'DevSecOps'),
+]
+
+
+def _resumo_da_secao(lines, rx):
+    """Última linha `Resumo para o relatório:` da seção cujo cabeçalho casa com rx (None se não houver)."""
+    dentro, achado = False, None
+    for l in lines:
+        if l.startswith('## '):
+            dentro = bool(re.match(rx, l))
+        elif dentro and l.strip().startswith(RESUMO):
+            achado = l.strip()[len(RESUMO):].strip()
+    return achado or None
+
+
+def _anexar_relatorios():
+    """O QA e o DevSecOps escrevem só no arquivo da tarefa (inclusive a linha `Resumo para o relatório:`);
+    aqui as entradas de QA-REPORT.md e SECURITY-REVIEW.md são montadas de uma vez, sem escrita concorrente."""
+    if not os.path.isdir(PLANDIR):
+        return 0
+    novos = {arq: [] for _, arq, _ in RELATORIOS}
+    for f in sorted(os.listdir(PLANDIR)):
+        if not f.endswith('.md') or f.startswith('BK-'):
+            continue
+        lines = read_lines(os.path.join(PLANDIR, f))
+        for rx, arq, rot in RELATORIOS:
+            res = _resumo_da_secao(lines, rx)
+            if res:
+                novos[arq].append((f[:-3], rot, res))
+    n = 0
+    for arq, itens in novos.items():
+        p = os.path.join(MD, arq)
+        atual = ler_raw(p) if os.path.exists(p) else '# %s\n' % arq[:-3]
+        nl = '\r\n' if '\r\n' in atual else '\n'
+        add = [(k, rot, res) for k, rot, res in itens if res not in atual]
+        if add:
+            hoje = datetime.date.today().isoformat()
+            bloco = ''.join('%s## %s — %s — %s%s%s%s' % (nl, k, rot, hoje, nl, res, nl) for k, rot, res in add)
+            gravar_raw(p, atual.rstrip('\r\n') + nl + bloco)
+            n += len(add)
+    return n
+
+
+def cmd_consolidar(args):
+    """Grava os Status locais no TASK.md (uma leitura/escrita só) e regera o TASKPLAN.md."""
+    locais = {}
+    if os.path.isdir(PLANDIR):
+        for f in os.listdir(PLANDIR):
+            if f.endswith('.md') and not f.startswith('BK-'):
+                key = f[:-3]
+                loc = status_local(key)
+                if loc is not None:
+                    locais[key] = loc
+    gravados, ficaram = 0, []
+    if locais and os.path.exists(TASK):
+        lines = read_lines(TASK)
+        feitos = set()
+        for t in tabelas():
+            for r in t['rows']:
+                k = norm(r['id'])
+                if k in locais:
+                    pre, _ = split_status(lines[r['line']])
+                    lines[r['line']] = pre + ' ' + locais[k].replace('|', '/').replace('\n', ' ') + ' |'
+                    feitos.add(k)
+        if feitos:
+            write_lines(TASK, lines, task_crlf())
+        for k in locais:
+            if k in feitos:
+                set_cab(k, LOCAL, None)
+                gravados += 1
+            else:
+                ficaram.append(k)
+    rels = _anexar_relatorios()
+    gerar()
+    print('CONSOLIDADO: %d status gravado(s) no TASK.md%s; %d entrada(s) nova(s) em QA-REPORT.md/SECURITY-REVIEW.md' % (
+        gravados, ('; sem linha no TASK.md (mantidos locais): ' + ', '.join(ficaram)) if ficaram else '', rels))
 
 
 def cmd_tarefa(args):
@@ -1283,26 +1695,38 @@ def cmd_migrar(args):
 
 
 # ----------------------------------------------------------------- entrada
-if __name__ == '__main__':
-    a = sys.argv[1:]
+ESCREVE_TASK = {'consolidar', 'gerar', 'set', 'nova', 'deps-substituir', 'ordenar', 'bloquear', 'desbloquear'}
+
+
+def despachar(a):
     cmd = a[0] if a else ''
     if cmd == 'migrar':
         cmd_migrar(a[1:])
     elif cmd == 'gerar':
         gerar()
+    elif cmd == 'consolidar':
+        cmd_consolidar(a[1:])
     elif cmd == 'set' and len(a) == 3:
         set_estado(a[1], a[2])
     elif cmd == 'estados':
         print('\n'.join(ESTADOS))
     elif cmd == 'proxima':
         cmd_proxima(a[1:])
+    elif cmd == 'fila':
+        cmd_fila(a[1:])
     elif cmd == 'reservar' and len(a) >= 3:
         cmd_reservar(a[1:])
     elif cmd == 'etapa' and len(a) == 4:
         cmd_etapa(a[1:])
+    elif cmd == 'iniciar' and len(a) >= 3:
+        cmd_iniciar(a[1:])
+    elif cmd == 'concluir' and len(a) >= 4:
+        cmd_concluir(a[1:])
+    elif cmd == 'diff' and len(a) == 2:
+        cmd_diff(a[1:])
     elif cmd == 'liberar' and len(a) == 3:
         cmd_liberar(a[1:])
-    elif cmd == 'status' and len(a) == 3:
+    elif cmd == 'status' and len(a) >= 3:
         cmd_status(a[1:])
     elif cmd == 'proximo-id':
         cmd_proximo_id(a[1:])
@@ -1316,8 +1740,21 @@ if __name__ == '__main__':
         cmd_bloquear(a[1:])
     elif cmd == 'desbloquear' and len(a) >= 2:
         cmd_desbloquear(a[1:])
+    elif cmd == 'despriorizar' and len(a) >= 2:
+        cmd_despriorizar(a[1:])
+    elif cmd == 'repriorizar' and len(a) == 2:
+        cmd_repriorizar(a[1:])
     elif cmd == 'tarefa' and len(a) == 2:
         cmd_tarefa(a[1:])
     else:
         print(__doc__)
         sys.exit(1)
+
+
+if __name__ == '__main__':
+    a = sys.argv[1:]
+    if a and a[0] in ESCREVE_TASK:  # escritas no TASK.md/TASKPLAN.md são serializadas entre sessões/agentes
+        with Lock('_TASK', 300):
+            despachar(a)
+    else:
+        despachar(a)

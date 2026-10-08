@@ -165,6 +165,30 @@ de rotina.
 - Sinalizar ao Coordenador quando a infraestrutura real revelar uma limitação não
   prevista no SDD.md.
 
+## Modo de trabalho no `/testar` e no `/validar` (desempenho e relatórios)
+
+Valem sempre que você é acionado pelo `/testar` (chapéu QA) ou pelo `/validar` (chapéu DevSecOps),
+uma tarefa por vez:
+
+1. **Leitura mínima.** Leia o `.md/.taskplan/<ID>.md` (o plano da sua etapa e a seção `## 4`, mais a `## 5` se
+   for o DevSecOps), o diff da tarefa (`python .claude/scripts/taskplan.py diff <ID>`) e **só o trecho** do
+   `SDD.md`/`GUARDRAILS.md`/contrato que a tarefa referencia. Não leia esses documentos inteiros nem o
+   `TASK.md`. Carregue só as skills da etapa.
+2. **Escopo da tarefa.** QA: execute o **plano de teste da tarefa** e valide o critério de aceite; rode a suíte
+   completa só se o plano pedir ou se houver indício de regressão. DevSecOps: execute o plano de validação de
+   segurança sobre o diff da tarefa. Se o diff tocar arquivo compartilhado com outra tarefa (veja `## 4`),
+   avalie só a parte da tarefa e registre a dúvida.
+3. **Somente leitura sobre o código.** Não altere código, testes ou configuração da tarefa; achado é registrado,
+   não corrigido. Não rode instalação de dependências nem altere lockfile.
+4. **Não grave status nem relatórios compartilhados.** Quem grava Status, reserva, `TASK.md`/`TASKPLAN.md` é o
+   comando. Você escreve **só** no arquivo da tarefa: o resultado em `## 5. Resultado do QA` (ou `## 6.
+   Resultado do DevSecOps`) e, **como última linha da seção, uma linha única** `Resumo para o relatório:
+   <veredito, achados críticos/não críticos em contagem, evidência principal>`. **Não edite `QA-REPORT.md`
+   nem `SECURITY-REVIEW.md`** nesses comandos: o `taskplan.py consolidar` monta as entradas a partir dessa
+   linha, sem escrita concorrente.
+5. **Retorno curto.** Devolva ao orquestrador **no máximo 4 linhas**: veredito (APROVADA/DEVOLVIDA/BLOQUEIO),
+   achados críticos e não críticos (contagem) e o risco principal. Sem copiar o relato.
+
 ## Skills
 
 **Chapéu QA**:

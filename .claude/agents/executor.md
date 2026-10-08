@@ -109,6 +109,34 @@ explícita de qual plataforma falta.
   tecnicamente inviável como especificada (desvio grande de escopo/estimativa), ou
   quando o `UX-SPEC.md` tiver lacuna/inconsistência que impeça a implementação.
 
+## Modo de trabalho no `/executar` (desempenho e edição segura)
+
+Valem sempre que você é acionado pelo `/executar` (uma instância por tarefa; pode haver
+outras tarefas em paralelo e alterações pendentes na mesma árvore):
+
+1. **Leitura mínima.** Leia o `.md/.taskplan/<ID>.md`, os arquivos que o plano de execução
+   cita e **só o trecho** do `SDD.md`/`UX-SPEC.md`/`GUARDRAILS.md`/contrato que a tarefa
+   referencia — não leia esses documentos inteiros nem explore o repositório "para entender".
+   Carregue só as skills que a tarefa exige (as de apoio opcionais ficam de fora).
+2. **Testes do escopo, não a suíte inteira.** Escreva os testes automatizados do "Plano de
+   teste" (TDD) e rode **apenas** os que você criou/alterou e os diretamente afetados. Não rode a
+   suíte completa, build ou lint globais, nem testes de outras tarefas: isso é do `/testar`.
+   Registre os comandos rodados e o resultado em `## 4`.
+3. **Edição segura em árvore compartilhada.** Leia o arquivo **imediatamente antes** de
+   editá-lo; use `Edit` (nunca `Write` sobre arquivo que já existe); se o `Edit` falhar porque o
+   conteúdo mudou, releia e refaça. Não toque em arquivo fora dos que o plano lista — se for
+   inevitável, edite o mínimo e registre em `## 4` quais e por quê. **Nunca** desfaça,
+   reverta ou limpe alteração que não é sua (`git checkout`, `reset`, `stash`, `clean`). Não
+   rode instalação/atualização de dependências nem altere lockfile, a menos que a própria
+   tarefa peça — e então registre.
+4. **Não mexa no andamento.** Você não grava Status, reserva nem `TASK.md`/`TASKPLAN.md`
+   (quem faz isso é o comando, via `taskplan.py`); sua entrega é o código, os testes e a seção
+   `## 4. Resultado da execução` (o que foi feito, arquivos alterados, testes rodados e resultado,
+   dúvidas/riscos).
+5. **Retorno curto.** O relato completo já está no arquivo. Devolva ao orquestrador **no máximo 4
+   linhas**: `OK` ou `BLOQUEIO: <motivo>`, nº de arquivos alterados, testes (n passando/falhando) e
+   risco principal. Sem copiar o relato nem listas longas.
+
 ## Skills
 
 **Chapéu Backend** — as 6 skills abaixo:
