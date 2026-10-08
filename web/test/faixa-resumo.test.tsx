@@ -67,11 +67,14 @@ describe("FaixaResumo — estado de sucesso", () => {
       </ProvedorResumo>,
     );
 
+    // Ajuste Modelo B (2026-10-08): o texto fica dividido em <span> (data em
+    // mono, separadores aria-hidden), então conferimos o texto do <p>.
     await waitFor(() => {
-      expect(
-        screen.getByText("Dados sintéticos · corte 2026-10-08 · 12.345 pedidos"),
-      ).toBeInTheDocument();
+      expect(document.querySelector(".faixa-resumo")?.textContent).toBe(
+        "Dados sintéticos · corte 2026-10-08 · 12.345 pedidos",
+      );
     });
+    expect(screen.getByText("2026-10-08")).toHaveClass("mono");
   });
 });
 
@@ -157,7 +160,7 @@ describe("ProvedorResumo — uma única chamada por carga do app", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByText(/corte 2026-10-08/)).toHaveLength(2);
+      expect(screen.getAllByText("2026-10-08")).toHaveLength(2);
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -247,7 +250,7 @@ describe("FaixaResumo — acessibilidade (vitest-axe) nos 3 estados", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/corte 2026-10-08/)).toBeInTheDocument();
+      expect(screen.getByText("2026-10-08")).toBeInTheDocument();
     });
 
     const resultados = await axe(container);

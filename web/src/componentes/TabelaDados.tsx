@@ -1,11 +1,20 @@
 import type { ReactNode, Ref } from "react";
 import "./TabelaDados.css";
 
+/**
+ * Cabeçalho de coluna: texto simples ou objeto com opções (ajuste Modelo B,
+ * 2026-10-08). `numerico` alinha à direita com números tabulares (`.num`);
+ * `oculto` deixa o texto do `<th>` só para leitor de tela.
+ */
+export type CabecalhoTabela =
+  | string
+  | { texto: string; numerico?: boolean; oculto?: boolean };
+
 type TabelaDadosProps = {
   /** Legenda da tabela, renderizada em `<caption>` (acessível, não visual-only). */
   caption: ReactNode;
   /** Rótulos das colunas, um `<th scope="col">` por item. */
-  cabecalhos: string[];
+  cabecalhos: CabecalhoTabela[];
   /** Linhas `<tr>` já montadas pela tela consumidora (mantém este componente
    * agnóstico do formato de dados — reutilizável por qualquer tela). */
   children?: ReactNode;
@@ -19,7 +28,17 @@ type TabelaDadosProps = {
    * `tabIndex={-1}` (focável só via `.focus()`, não pelo Tab).
    */
   refCaption?: Ref<HTMLTableCaptionElement>;
+  /** Legenda só para leitor de tela (`.visualmente-oculto`). */
+  legendaOculta?: boolean;
+  /** Sem fundo/borda/raio no contêiner — para tabela dentro de `.cartao`. */
+  semMoldura?: boolean;
+  /** Células mais baixas (th `10px 12px`, td `11px 12px`). */
+  compacta?: boolean;
 };
+
+function normalizar(cabecalho: CabecalhoTabela) {
+  return typeof cabecalho === "string" ? { texto: cabecalho } : cabecalho;
+}
 
 // TP-0054 — tabela de dados genérica e acessível.
 //
@@ -33,25 +52,54 @@ export function TabelaDados({
   children,
   rotuloRegiao = "Tabela com rolagem horizontal",
   refCaption,
+  legendaOculta = false,
+  semMoldura = false,
+  compacta = false,
 }: TabelaDadosProps) {
+  const classeRegiao = [
+    "tabela-dados-regiao",
+    semMoldura ? "tabela-dados-regiao--sem-moldura" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const classeTabela = ["tabela-dados", compacta ? "tabela-dados--compacta" : ""]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div
-      className="tabela-dados-regiao"
+      className={classeRegiao}
       tabIndex={0}
       role="region"
       aria-label={rotuloRegiao}
     >
-      <table className="tabela-dados">
-        <caption ref={refCaption} tabIndex={refCaption ? -1 : undefined}>
+      <table className={classeTabela}>
+        <caption
+          ref={refCaption}
+          tabIndex={refCaption ? -1 : undefined}
+          className={legendaOculta ? "visualmente-oculto" : undefined}
+        >
           {caption}
         </caption>
         <thead>
           <tr>
-            {cabecalhos.map((cabecalho) => (
-              <th key={cabecalho} scope="col">
-                {cabecalho}
-              </th>
-            ))}
+            {cabecalhos.map((item, indice) => {
+              const { texto, numerico, oculto } = normalizar(item);
+
+              return (
+                <th
+                  key={`${texto}-${indice}`}
+                  scope="col"
+                  className={numerico ? "num" : undefined}
+                >
+                  {oculto ? (
+                    <span className="visualmente-oculto">{texto}</span>
+                  ) : (
+                    texto
+                  )}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>{children}</tbody>

@@ -1,24 +1,20 @@
-// TP-0055 — ícone decorativo de link externo (seta saindo de uma caixa),
-// usado no item "Como foi feito ↗" da navegação principal. `aria-hidden`:
-// o `aria-label` do próprio link já descreve que ele abre em nova aba —
-// mesmo padrão de IconeSpinner/IconeVazio/IconeErro (TP-0053).
+// Ajuste Modelo B (2026-10-08) — ícone do item "Como foi feito" (seta
+// saindo da caixa), traço do mockup;
+// tamanho por CSS (.icone-nav: 18px no PC, 20px no celular). `aria-hidden`:
+// o texto do item já comunica o destino.
 export function IconeExterno() {
   return (
     <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
+      className="icone-nav"
+      viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth="2"
+      strokeLinecap="round"
       aria-hidden="true"
     >
-      <path
-        d="M8 5H4.5v10.5H15V12"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M9.5 10.5 16 4M11 4h5v5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14 3h7v7M10 14 21 3" />
+      <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
     </svg>
   );
 }

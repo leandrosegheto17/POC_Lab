@@ -1,7 +1,12 @@
 // TP-0058 — `CartoesResumo`/`FiltroTipo`: 4 cartões (percentual/moeda) com
 // "—"/"indisponível agora" sem resumo; chips em `<fieldset>`/`<legend>`
-// com contagem vinda de `porTipo` só em sucesso, seleção via `checked` +
-// "✓", e `onChange` chamando `aoMudar` com o tipo certo. `vitest-axe` nos
+// com contagem vinda de `porTipo` só em sucesso (e soma em "Todos"),
+// seleção via `checked` + classe (sem "✓", ajuste Modelo B 2026-10-08), e
+// `onChange` chamando `aoMudar` com o tipo certo.
+//
+// Nota: jsdom não aplica o CSS, então o nome acessível dos rádios inclui os
+// dois rótulos (longo do PC e curto do celular, alternados por CSS) — por
+// isso as consultas usam expressão regular. `vitest-axe` nos
 // dois componentes, nos estados de sucesso e sem resumo.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -9,26 +14,6 @@ import { axe } from "vitest-axe";
 import { ProvedorResumo } from "../src/dados/contexto-resumo.tsx";
 import { CartoesResumo } from "../src/componentes/CartoesResumo.tsx";
 import { FiltroTipo, VALOR_TODOS } from "../src/componentes/FiltroTipo.tsx";
-
-// Mesmos formatadores usados dentro de `CartoesResumo` — formatamos os
-// valores esperados aqui em vez de hardcodar string literal, para não
-// depender de qual espaço (normal vs. não separável) o ICU da máquina que
-// roda o teste escolhe para moeda pt-BR.
-const FORMATADOR_MOEDA = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
-
-/**
- * `screen.getByText` normaliza o texto do DOM (colapsa espaços, inclusive o
- * espaço não separável ` ` que o `Intl.NumberFormat` pt-BR usa entre
- * "R$" e o valor, para um espaço comum), mas NÃO normaliza a string do
- * matcher — então comparar direto com `FORMATADOR_MOEDA.format(...)` (que
- * mantém o ` `) nunca bate. Aplicamos a mesma normalização aqui.
- */
-function textoMoeda(valor: number): string {
-  return FORMATADOR_MOEDA.format(valor).replace(/ /g, " ");
-}
 
 /** Objeto mínimo válido contra `EsquemaCartao` (processamento/contrato/resumo.ts). */
 function cartao(numerador: number, denominador = 1): unknown {
@@ -58,8 +43,8 @@ function resumoValido(): unknown {
         { tipo: "enviado_nao_pago", cartao: cartao(3, 100) },
         { tipo: "entrega_atrasada", cartao: cartao(1, 100) },
       ],
-      valorEmAberto: cartao(1234.5),
-      pagoAMais: cartao(99.9),
+      valorEmAberto: cartao(65379257.82),
+      pagoAMais: cartao(412000),
       // 85 de 90 => 94,4%.
       entregasNoPrazo: cartao(85, 90),
     },
@@ -103,21 +88,51 @@ describe("CartoesResumo — estado de sucesso", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Com divergência")).toBeInTheDocument();
+      expect(screen.getByText("7,0% dos pedidos")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("7,0%")).toBeInTheDocument();
-    expect(screen.getByText("7 de 100 pedidos")).toBeInTheDocument();
+    // Com divergência: valor = contagem; base = percentual dos pedidos.
+    expect(screen.getByText("Com divergência")).toBeInTheDocument();
+    expect(screen.getByText("7")).toBeInTheDocument();
 
+    // Moeda: valor compacto em destaque + valor exato na base.
     expect(screen.getByText("Valor em aberto")).toBeInTheDocument();
-    expect(screen.getByText(textoMoeda(1234.5))).toBeInTheDocument();
+    expect(screen.getByText("Em aberto")).toBeInTheDocument();
+    expect(screen.getByText("R$ 65,4 mi")).toBeInTheDocument();
+    expect(
+      screen.getByText("R$ 65.379.257,82 · parciais + não pagos"),
+    ).toBeInTheDocument();
 
-    expect(screen.getByText("Pago a mais")).toBeInTheDocument();
-    expect(screen.getByText(textoMoeda(99.9))).toBeInTheDocument();
+    expect(screen.getAllByText("Pago a mais")).toHaveLength(2);
+    expect(screen.getByText("R$ 412 mil")).toBeInTheDocument();
+    expect(
+      screen.getByText("R$ 412.000,00 · duplicidades"),
+    ).toBeInTheDocument();
 
+    // Entregas no prazo mantém numerador/denominador (requisito mantido).
     expect(screen.getByText("Entregas no prazo")).toBeInTheDocument();
     expect(screen.getByText("94,4%")).toBeInTheDocument();
-    expect(screen.getByText("85 de 90")).toBeInTheDocument();
+    expect(
+      screen.getByText("85 de 90 · ver Indicadores"),
+    ).toBeInTheDocument();
+  });
+
+  it("usa .kpis/.kpi e marca como só-PC os cartões que somem no celular", async () => {
+    mockarSucesso();
+
+    const { container } = render(
+      <ProvedorResumo>
+        <CartoesResumo />
+      </ProvedorResumo>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("94,4%")).toBeInTheDocument();
+    });
+
+    expect(container.querySelector(".kpis")).not.toBeNull();
+    expect(container.querySelectorAll(".kpi")).toHaveLength(4);
+    expect(container.querySelectorAll(".kpi--so-pc")).toHaveLength(2);
   });
 });
 
@@ -166,7 +181,7 @@ describe("CartoesResumo — acessibilidade (vitest-axe)", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("7,0%")).toBeInTheDocument();
+      expect(screen.getByText("7,0% dos pedidos")).toBeInTheDocument();
     });
 
     expect(await axe(container)).toHaveNoViolations();
@@ -199,7 +214,7 @@ describe("FiltroTipo — estrutura", () => {
 
     expect(screen.getByRole("group", { name: "Tipo" })).toBeInTheDocument();
     expect(screen.getAllByRole("radio")).toHaveLength(6);
-    expect(screen.getByRole("radio", { name: /Todos/ })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /^Todos/ })).toBeInTheDocument();
     expect(
       screen.getByRole("radio", { name: /Pago duas vezes/ }),
     ).toBeInTheDocument();
@@ -230,27 +245,34 @@ describe("FiltroTipo — contagem com resumo em sucesso", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("radio", { name: /Pago duas vezes · 2/ }),
+        screen.getByRole("radio", { name: /^Pago duas vezes .* 2$/ }),
       ).toBeInTheDocument();
     });
 
     // Parcial tem contagem 0 (diferente de "sem resumo", que omite o
     // número por completo) — ainda assim mostra "0".
     expect(
-      screen.getByRole("radio", { name: /Pagamento parcial · 0/ }),
+      screen.getByRole("radio", { name: /^Pagamento parcial .* 0$/ }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("radio", { name: /Pago e não enviado · 1/ }),
+      screen.getByRole("radio", { name: /^Pago e não enviado .* 1$/ }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("radio", { name: /Enviado e não pago · 3/ }),
+      screen.getByRole("radio", { name: /^Enviado e não pago .* 3$/ }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("radio", { name: /Entrega atrasada · 1/ }),
+      screen.getByRole("radio", { name: /^Entrega atrasada .* 1$/ }),
     ).toBeInTheDocument();
 
-    // "Todos" nunca mostra contagem.
-    expect(screen.getByRole("radio", { name: "Todos" })).toBeInTheDocument();
+    // "Todos" mostra a soma de porTipo (2 + 0 + 1 + 3 + 1 = 7).
+    expect(
+      screen.getByRole("radio", { name: /^Todos .* 7$/ }),
+    ).toBeInTheDocument();
+    // Contagem em <b>, separada por espaço, sem "·".
+    expect(screen.queryByText(/·/)).not.toBeInTheDocument();
+    expect(
+      document.querySelectorAll("b.filtro-tipo-chip-contagem"),
+    ).toHaveLength(6);
   });
 });
 
@@ -265,12 +287,14 @@ describe("FiltroTipo — sem resumo (carregando/erro)", () => {
     );
 
     expect(
-      screen.getByRole("radio", { name: "Pago duas vezes" }),
+      screen.getByRole("radio", { name: /^Pago duas vezes/ }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("radio", { name: "Pagamento parcial" }),
+      screen.getByRole("radio", { name: /^Pagamento parcial/ }),
     ).toBeInTheDocument();
-    expect(screen.queryByText(/·/)).not.toBeInTheDocument();
+    expect(
+      document.querySelector(".filtro-tipo-chip-contagem"),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -296,7 +320,7 @@ describe("FiltroTipo — seleção e interação", () => {
     expect(aoMudar).toHaveBeenCalledWith("duplicado");
   });
 
-  it("a opção selecionada (via prop valor) tem checked e mostra '✓'", async () => {
+  it("a opção selecionada (via prop valor) tem checked, classe de selecionado e nenhum '✓'", async () => {
     mockarSucesso();
 
     render(
@@ -312,13 +336,14 @@ describe("FiltroTipo — seleção e interação", () => {
     });
 
     expect(
-      screen.getByRole("radio", { name: /Todos/ }),
+      screen.getByRole("radio", { name: /^Todos/ }),
     ).not.toBeChecked();
 
     const labelSelecionado = screen
       .getByRole("radio", { name: /Pagamento parcial/ })
       .closest("label");
-    expect(labelSelecionado?.textContent).toContain("✓");
+    expect(labelSelecionado).toHaveClass("filtro-tipo-chip--selecionado");
+    expect(labelSelecionado?.textContent).not.toContain("✓");
   });
 });
 
@@ -334,7 +359,7 @@ describe("FiltroTipo — acessibilidade (vitest-axe)", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("radio", { name: /Pago duas vezes · 2/ }),
+        screen.getByRole("radio", { name: /^Pago duas vezes .* 2$/ }),
       ).toBeInTheDocument();
     });
 

@@ -9,18 +9,25 @@
 // "string vazia" quando este componente for ligado a um estado de URL por
 // outra tarefa; `"todos"` é um valor explícito e autoexplicativo tanto no
 // código quanto numa eventual querystring.
+//
+// Ajuste Modelo B (2026-10-08, mockup à risca): rádio nativo visível no PC
+// (oculto no celular, onde o chip vira pílula com rolagem horizontal);
+// contagem em <b> com milhar, separada por espaço, inclusive em "Todos"
+// (soma de `porTipo`); sem "✓". Rótulo longo (PC) e curto (celular) em
+// duas <span> alternadas por CSS.
 import "./CartoesResumo.css";
 import { useResumo } from "../dados/contexto-resumo.tsx";
+import { formatarNumero } from "../dados/formatacao.ts";
 
 export const VALOR_TODOS = "todos";
 
-const OPCOES: ReadonlyArray<{ valor: string; rotulo: string }> = [
-  { valor: VALOR_TODOS, rotulo: "Todos" },
-  { valor: "duplicado", rotulo: "Pago duas vezes" },
-  { valor: "parcial", rotulo: "Pagamento parcial" },
-  { valor: "pago_nao_enviado", rotulo: "Pago e não enviado" },
-  { valor: "enviado_nao_pago", rotulo: "Enviado e não pago" },
-  { valor: "entrega_atrasada", rotulo: "Entrega atrasada" },
+const OPCOES: ReadonlyArray<{ valor: string; rotulo: string; curto: string }> = [
+  { valor: VALOR_TODOS, rotulo: "Todos", curto: "Todos" },
+  { valor: "duplicado", rotulo: "Pago duas vezes", curto: "Pago 2×" },
+  { valor: "parcial", rotulo: "Pagamento parcial", curto: "Parcial" },
+  { valor: "pago_nao_enviado", rotulo: "Pago e não enviado", curto: "Não enviado" },
+  { valor: "enviado_nao_pago", rotulo: "Enviado e não pago", curto: "Não pago" },
+  { valor: "entrega_atrasada", rotulo: "Entrega atrasada", curto: "Atrasada" },
 ];
 
 type FiltroTipoProps = {
@@ -33,10 +40,16 @@ export function FiltroTipo({ valor, aoMudar }: FiltroTipoProps) {
   const temResumo = estado === "sucesso" && resumo !== null;
 
   function contagemDoTipo(tipoOpcao: string): number | null {
-    // "Todos" nunca mostra contagem: a aceite só define número ao lado dos
-    // 5 tipos de divergência (vindos de `porTipo`), não de "Todos".
-    if (!temResumo || tipoOpcao === VALOR_TODOS) {
+    if (!temResumo) {
       return null;
+    }
+
+    // "Todos" mostra a soma das contagens por tipo.
+    if (tipoOpcao === VALOR_TODOS) {
+      return resumo.totais.porTipo.reduce(
+        (soma, p) => soma + p.cartao.numerador,
+        0,
+      );
     }
 
     const item = resumo.totais.porTipo.find((p) => p.tipo === tipoOpcao);
@@ -65,17 +78,15 @@ export function FiltroTipo({ valor, aoMudar }: FiltroTipoProps) {
                 checked={selecionada}
                 onChange={() => aoMudar(opcao.valor)}
               />
-              {selecionada && (
-                <span className="filtro-tipo-chip-marca" aria-hidden="true">
-                  ✓
-                </span>
-              )}
-              {opcao.rotulo}
+              <span className="so-pc">{opcao.rotulo}</span>{" "}
+              <span className="so-celular">{opcao.curto}</span>
               {contagem !== null && (
-                <span className="filtro-tipo-chip-contagem">
+                <>
                   {" "}
-                  · {contagem}
-                </span>
+                  <b className="filtro-tipo-chip-contagem">
+                    {formatarNumero(contagem)}
+                  </b>
+                </>
               )}
             </label>
           );

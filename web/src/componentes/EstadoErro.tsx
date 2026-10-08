@@ -30,7 +30,11 @@ export function EstadoErro({
     <div role={interrompe ? "alert" : undefined}>
       <IconeErro />
       <span>{mensagem}</span>
-      <button type="button" onClick={aoClicarTentarDeNovo}>
+      <button
+        type="button"
+        className="botao botao--secundario"
+        onClick={aoClicarTentarDeNovo}
+      >
         Tentar de novo
       </button>
     </div>

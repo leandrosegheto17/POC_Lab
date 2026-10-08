@@ -1,0 +1,146 @@
+/* Ajuste Modelo B (2026-10-08, mockup à risca) — T1 Divergências.
+ * PC (>= 1024px): rótulo + h1, cartões, chips, tabela e paginação.
+ * Celular (< 1024px): h1 com o total à direita, lista de cartões no lugar
+ * da tabela. Espaço entre blocos vem da casca (22px PC / 16px celular). */
+
+/* Topo: rótulo da página colado no h1 (o gap da casca fica entre blocos). */
+.divergencias__topo {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Total dentro do h1: frase completa só para leitor de tela; no celular o
+ * número aparece à direita (aria-hidden, a frase já leva o número). */
+.divergencias__total-numero {
+  display: none;
+}
+
+.divergencias__total {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Bloco de resultado (tabela/lista + paginação). */
+.divergencias__resultado {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Eventos: <details> com <summary> com cara de link. */
+.divergencias__eventos summary {
+  list-style: none;
+  color: var(--cor-link);
+  text-decoration: underline;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.divergencias__eventos summary::-webkit-details-marker {
+  display: none;
+}
+
+.divergencias__eventos summary:hover {
+  color: var(--cor-link-hover);
+}
+
+.divergencias__eventos ul {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--cor-texto-2);
+}
+
+.divergencias__eventos .mono {
+  color: var(--cor-texto);
+}
+
+/* Lista de cartões: só no celular. */
+.divergencias__lista {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .divergencias__titulo {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  /* No celular o total aparece: só o número, mono 14px, à direita. */
+  .divergencias__total-numero {
+    display: inline;
+    font-family: var(--fonte-mono);
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: normal;
+    color: var(--cor-texto-2);
+  }
+
+  .divergencias__resultado {
+    gap: 16px;
+  }
+
+  .divergencias__tabela {
+    display: none;
+  }
+
+  .divergencias__lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .divergencias__cartao {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: var(--cor-superficie);
+    border: 1px solid var(--cor-borda);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--cor-texto);
+    min-width: 0;
+  }
+
+  .divergencias__cartao-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .divergencias__cartao-pedido {
+    font-size: 14px;
+    color: var(--cor-link);
+  }
+
+  .divergencias__cartao-motivo {
+    margin: 0;
+    font-size: 13px;
+  }
+
+  .divergencias__cartao-eventos {
+    font-size: 12px;
+    color: var(--cor-texto-2);
+  }
+
+  .divergencias__cartao-eventos .divergencias__eventos ul {
+    font-size: 12px;
+  }
+}

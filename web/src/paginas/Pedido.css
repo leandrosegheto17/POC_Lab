@@ -1,6 +1,156 @@
-/* TP-0062 — valores monetários e data limite em fonte monoespaçada, mesmo
-   padrão de alinhamento numérico já usado em `LinhaDoTempo.css`/
-   `CartoesResumo.css`/`TabelaDados.css`. */
-.pedido-valores-mono {
+/* TP-0062 / ajuste Modelo B (2026-10-08, mockup à risca) — T2 Linha do
+ * tempo do pedido. Cartões de valor, botões e campos vêm de painel.css;
+ * aqui só o que é desta tela. Breakpoint único: 1024px. */
+
+/* Topo: "← Divergências", h1 + etiquetas, subtítulo. */
+.pedido-topo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pedido-voltar {
+  align-self: flex-start;
+  font-size: 14px;
+}
+
+.pedido-titulo-linha {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pedido-titulo-linha h1 {
+  margin: 0;
+}
+
+.pedido-titulo {
   font-family: var(--fonte-mono);
+  font-weight: 500;
+  font-size: 28px;
+  letter-spacing: 0;
+}
+
+.pedido-etiquetas {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pedido-sistemas {
+  font-size: 12px;
+  color: var(--cor-texto-2);
+}
+
+.pedido-subtitulo {
+  margin: 0;
+  font-size: 14px;
+  color: var(--cor-texto-2);
+}
+
+.pedido-codigo-destaque {
+  color: var(--cor-texto);
+}
+
+/* Corpo (região aria-live): mesmo espaço entre blocos da casca. */
+.pedido-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Cartões de valor (<dl>). */
+.pedido-kpis {
+  margin: 0;
+}
+
+.pedido-kpis.pedido-kpis--pc .kpi {
+  padding: 14px 16px;
+}
+
+.pedido-kpis.pedido-kpis--pc .kpi__valor {
+  font-size: 24px;
+}
+
+.pedido-kpis.pedido-kpis--pc .pedido-valor-data {
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.pedido-kpis.pedido-kpis--celular {
+  display: none;
+}
+
+.kpi__valor.pedido-valor--ruim {
+  color: var(--cor-valor-ruim);
+}
+
+/* Seção "Linha do tempo por sistema". */
+.pedido-secao-linha {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pedido-secao-linha h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.pedido-h2-nota {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--cor-texto-2);
+}
+
+@media (max-width: 1023px) {
+  .pedido-titulo-linha {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .pedido-titulo {
+    font-size: 24px;
+  }
+
+  .pedido-corpo {
+    gap: 16px;
+  }
+
+  .pedido-kpis.pedido-kpis--pc {
+    display: none;
+  }
+
+  .pedido-kpis.pedido-kpis--celular {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pedido-kpis.pedido-kpis--celular .kpi {
+    padding: 10px;
+    gap: 0;
+  }
+
+  .pedido-kpis.pedido-kpis--celular .kpi__valor {
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .pedido-kpis.pedido-kpis--celular .pedido-valor-data {
+    margin-top: 3px;
+    font-size: 13px;
+    font-weight: 400;
+  }
+
+  .pedido-secao-linha {
+    gap: 8px;
+  }
+
+  .pedido-secao-linha h2 {
+    font-size: 17px;
+  }
 }

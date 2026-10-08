@@ -124,23 +124,37 @@ async function aguardarCarregado() {
 }
 
 function escolherData(valor: string) {
-  const campo = screen.getByLabelText("Ver estado em uma data");
+  const campo = screen.getByLabelText("Ver estado em");
   fireEvent.change(campo, { target: { value: valor } });
+}
+
+// Ajuste Modelo B (2026-10-08): a frase fica dentro do cartão do
+// `SeletorData`, com a data em `<span class="mono">` — por isso o texto é
+// conferido no parágrafo inteiro, não com `getByText` (que só olha o texto
+// próprio de cada elemento).
+function fraseResultado(container: HTMLElement): HTMLElement {
+  const paragrafo = container.querySelector<HTMLElement>(
+    ".seletor-data__resultado",
+  );
+  if (!paragrafo) {
+    throw new Error("parágrafo de resultado do SeletorData não encontrado");
+  }
+  return paragrafo;
 }
 
 describe("Estado do pedido em uma data — frase", () => {
   it("data entre coleta e entrega: frase bate com o estado esperado (venda + pagamento parcial + coletado, ainda não em transporte)", async () => {
     instalarFetchMock();
-    renderizarPedido();
+    const { container } = renderizarPedido();
     await aguardarCarregado();
 
     escolherData("2026-01-05");
 
-    expect(
-      screen.getByText(
-        "Em 2026-01-05: vendido, pagamento parcial, coletado, ainda não em transporte.",
-      ),
-    ).toBeInTheDocument();
+    const frase = fraseResultado(container);
+    expect(frase).toHaveTextContent(
+      /^Em 2026-01-05: vendido, pagamento parcial, coletado, ainda não em transporte\.$/,
+    );
+    expect(frase.querySelector(".mono")).toHaveTextContent("2026-01-05");
   });
 });
 
@@ -155,22 +169,20 @@ describe("Estado do pedido em uma data — eventos posteriores atenuados", () =>
     expect(screen.getByText("depois da data escolhida")).toBeInTheDocument();
 
     const itemEntrega = container.querySelector(
-      '[data-fonte="rastreio"].linha-do-tempo-item--atenuado',
+      '[data-fonte="rastreio"].evento--depois',
     );
     expect(itemEntrega).not.toBeNull();
     expect(itemEntrega).toHaveTextContent("depois da data escolhida");
 
     // Eventos até a data escolhida não ficam atenuados.
-    expect(
-      container.querySelectorAll(".linha-do-tempo-item--atenuado"),
-    ).toHaveLength(1);
+    expect(container.querySelectorAll(".evento--depois")).toHaveLength(1);
   });
 });
 
 describe("Estado do pedido em uma data — anterior à venda", () => {
   it("data anterior ao evento de venda: 'Nenhum evento até esta data.', sem frase de estado", async () => {
     instalarFetchMock();
-    renderizarPedido();
+    const { container } = renderizarPedido();
     await aguardarCarregado();
 
     escolherData("2025-12-01");
@@ -178,7 +190,7 @@ describe("Estado do pedido em uma data — anterior à venda", () => {
     expect(
       screen.getByText("Nenhum evento até esta data."),
     ).toBeInTheDocument();
-    expect(screen.queryByText(/^Em 2025-12-01:/)).not.toBeInTheDocument();
+    expect(fraseResultado(container)).not.toHaveTextContent(/^Em 2025-12-01:/);
   });
 });
 
@@ -196,28 +208,24 @@ describe("Estado do pedido em uma data — Limpar", () => {
     expect(
       screen.queryByText("depois da data escolhida"),
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/^Em 2026-01-05:/),
-    ).not.toBeInTheDocument();
+    expect(fraseResultado(container)).toBeEmptyDOMElement();
     expect(
       screen.queryByText("Nenhum evento até esta data."),
     ).not.toBeInTheDocument();
-    expect(
-      container.querySelectorAll(".linha-do-tempo-item--atenuado"),
-    ).toHaveLength(0);
+    expect(container.querySelectorAll(".evento--depois")).toHaveLength(0);
   });
 });
 
 describe("Estado do pedido em uma data — nenhuma chamada extra à API", () => {
   it("usar o seletor de data não dispara nova chamada a fetch (permanece em 1)", async () => {
     const mock = instalarFetchMock();
-    renderizarPedido();
+    const { container } = renderizarPedido();
     await aguardarCarregado();
 
     expect(mock).toHaveBeenCalledTimes(1);
 
     escolherData("2026-01-05");
-    expect(screen.getByText(/^Em 2026-01-05:/)).toBeInTheDocument();
+    expect(fraseResultado(container)).toHaveTextContent(/^Em 2026-01-05:/);
 
     fireEvent.click(screen.getByRole("button", { name: "Limpar" }));
     escolherData("2025-12-01");

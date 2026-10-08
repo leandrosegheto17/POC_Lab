@@ -1,4 +1,7 @@
 // TP-0054 — testes de TabelaDados, EtiquetaTipo, EtiquetaFonte e Paginacao.
+// Ajuste Modelo B (2026-10-08): EtiquetaEstado, props novas de TabelaDados
+// (legendaOculta/semMoldura/compacta/cabeçalho em objeto), selo de fonte e
+// resumo da Paginacao.
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, within } from "@testing-library/react";
 import { axe } from "vitest-axe";
@@ -7,7 +10,15 @@ import {
   EtiquetaTipo,
   type TipoDivergencia,
 } from "../src/componentes/EtiquetaTipo.tsx";
-import { EtiquetaFonte, type Fonte } from "../src/componentes/EtiquetaFonte.tsx";
+import {
+  EtiquetaFonte,
+  rotuloFonte,
+  type Fonte,
+} from "../src/componentes/EtiquetaFonte.tsx";
+import {
+  EtiquetaEstado,
+  type VarianteEstado,
+} from "../src/componentes/EtiquetaEstado.tsx";
 import { Paginacao } from "../src/componentes/Paginacao.tsx";
 
 describe("TabelaDados", () => {
@@ -63,6 +74,64 @@ describe("TabelaDados", () => {
     expect(getByRole("columnheader", { name: "ID" })).toBeInTheDocument();
   });
 
+  it("legendaOculta põe o caption em .visualmente-oculto (continua no DOM)", () => {
+    const { getByText } = render(
+      <TabelaDados caption="Exemplos" cabecalhos={["ID"]} legendaOculta />,
+    );
+
+    const legenda = getByText("Exemplos");
+    expect(legenda.tagName).toBe("CAPTION");
+    expect(legenda).toHaveClass("visualmente-oculto");
+  });
+
+  it("semMoldura e compacta acrescentam as classes de variante", () => {
+    const { container } = render(
+      <TabelaDados caption="T" cabecalhos={["ID"]} semMoldura compacta />,
+    );
+
+    expect(
+      container.querySelector(".tabela-dados-regiao--sem-moldura"),
+    ).not.toBeNull();
+    expect(container.querySelector(".tabela-dados--compacta")).not.toBeNull();
+  });
+
+  it("sem as props novas, não aplica classes de variante nem oculta a legenda", () => {
+    const { container, getByText } = render(
+      <TabelaDados caption="T" cabecalhos={["ID"]} />,
+    );
+
+    expect(
+      container.querySelector(".tabela-dados-regiao--sem-moldura"),
+    ).toBeNull();
+    expect(container.querySelector(".tabela-dados--compacta")).toBeNull();
+    expect(getByText("T")).not.toHaveClass("visualmente-oculto");
+  });
+
+  it("cabeçalho em objeto: numerico → .num; oculto → texto em .visualmente-oculto", () => {
+    const { getByRole } = render(
+      <TabelaDados
+        caption="Entregas"
+        cabecalhos={[
+          "Transportadora",
+          { texto: "Entregas", numerico: true },
+          { texto: "Proporção", oculto: true },
+        ]}
+      />,
+    );
+
+    const numerico = getByRole("columnheader", { name: "Entregas" });
+    expect(numerico).toHaveClass("num");
+    expect(numerico).toHaveAttribute("scope", "col");
+
+    const oculto = getByRole("columnheader", { name: "Proporção" });
+    expect(oculto.querySelector(".visualmente-oculto")?.textContent).toBe(
+      "Proporção",
+    );
+    expect(
+      getByRole("columnheader", { name: "Transportadora" }),
+    ).not.toHaveClass("num");
+  });
+
   it("não tem violações de acessibilidade (vitest-axe)", async () => {
     const { container } = render(
       <TabelaDados caption="Pedidos conciliados" cabecalhos={["ID", "Status"]}>
@@ -79,7 +148,7 @@ describe("TabelaDados", () => {
 
 describe("EtiquetaTipo", () => {
   const casos: Array<[TipoDivergencia, string]> = [
-    ["duplicado", "Pagamento duplicado"],
+    ["duplicado", "Pago duas vezes"],
     ["parcial", "Pagamento parcial"],
     ["pago_nao_enviado", "Pago e não enviado"],
     ["enviado_nao_pago", "Enviado e não pago"],
@@ -108,8 +177,54 @@ describe("EtiquetaTipo", () => {
     expect(variantesEncontradas.size).toBe(6);
   });
 
+  it("cada tipo usa a sua própria paleta (classe etiqueta--<tipo>)", () => {
+    const esperado: Array<[TipoDivergencia, string]> = [
+      ["duplicado", "etiqueta--duplicado"],
+      ["parcial", "etiqueta--parcial"],
+      ["pago_nao_enviado", "etiqueta--pago-nao-enviado"],
+      ["enviado_nao_pago", "etiqueta--enviado-nao-pago"],
+      ["entrega_atrasada", "etiqueta--entrega-atrasada"],
+      ["sem_divergencia", "etiqueta--sem-divergencia"],
+    ];
+
+    for (const [tipo, classe] of esperado) {
+      const { container } = render(<EtiquetaTipo tipo={tipo} />);
+      expect(container.querySelector("span")).toHaveClass("etiqueta", classe);
+    }
+  });
+
   it("não tem violações de acessibilidade (vitest-axe)", async () => {
     const { container } = render(<EtiquetaTipo tipo="duplicado" />);
+
+    expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("EtiquetaEstado", () => {
+  const casos: Array<[VarianteEstado, string, string]> = [
+    ["ok", "no prazo", "etiqueta--ok"],
+    ["alerta", "fora de ordem", "etiqueta--alerta"],
+    ["ruim", "duplicado", "etiqueta--ruim"],
+    ["neutra", "atrasada", "etiqueta--neutra"],
+  ];
+
+  it.each(casos)(
+    "variante '%s' mostra o texto '%s' com a classe '%s'",
+    (variante, texto, classe) => {
+      const { getByText } = render(
+        <EtiquetaEstado variante={variante}>{texto}</EtiquetaEstado>,
+      );
+
+      const etiqueta = getByText(texto);
+      expect(etiqueta).toHaveClass("etiqueta", classe);
+      expect(etiqueta).toHaveAttribute("data-variante", variante);
+    },
+  );
+
+  it("não tem violações de acessibilidade (vitest-axe)", async () => {
+    const { container } = render(
+      <EtiquetaEstado variante="ok">Aceita</EtiquetaEstado>,
+    );
 
     expect(await axe(container)).toHaveNoViolations();
   });
@@ -127,6 +242,28 @@ describe("EtiquetaFonte", () => {
 
     expect(getByText(rotulo)).toBeInTheDocument();
     expect(queryByText("rastreio")).not.toBeInTheDocument();
+  });
+
+  it.each(casos)("rotuloFonte('%s') devolve '%s'", (fonte, rotulo) => {
+    expect(rotuloFonte(fonte)).toBe(rotulo);
+  });
+
+  it("variante 'selo' acrescenta as classes de selo e da fonte", () => {
+    const { getByText } = render(
+      <EtiquetaFonte fonte="rastreio" variante="selo" />,
+    );
+
+    expect(getByText("Transportadora")).toHaveClass(
+      "etiqueta-fonte",
+      "etiqueta-fonte--selo",
+      "etiqueta-fonte--rastreio",
+    );
+  });
+
+  it("sem variante, mantém só a classe neutra", () => {
+    const { getByText } = render(<EtiquetaFonte fonte="vendas" />);
+
+    expect(getByText("Vendas").className).toBe("etiqueta-fonte");
   });
 
   it("não tem violações de acessibilidade (vitest-axe)", async () => {
@@ -255,6 +392,43 @@ describe("Paginacao", () => {
     expect(forma.getByRole("button", { name: "10" })).toBeInTheDocument();
     expect(forma.getByRole("button", { name: "11" })).toBeInTheDocument();
     expect(forma.queryByRole("button", { name: "5" })).not.toBeInTheDocument();
+  });
+
+  it("na página 1 mostra 1, 2, 3 e a última (como o mockup)", () => {
+    const { container } = render(
+      <Paginacao pagina={1} totalPaginas={40} aoMudarPagina={vi.fn()} />,
+    );
+
+    const forma = formaCompleta(container);
+    for (const numero of ["1", "2", "3", "40"]) {
+      expect(forma.getByRole("button", { name: numero })).toBeInTheDocument();
+    }
+    expect(forma.queryByRole("button", { name: "4" })).not.toBeInTheDocument();
+    expect(container.querySelector(".paginacao__reticencias")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
+  });
+
+  it("prop resumo aparece dentro da nav; sem a prop, nada é renderizado", () => {
+    const { getByRole, rerender, container } = render(
+      <Paginacao
+        pagina={1}
+        totalPaginas={178}
+        aoMudarPagina={vi.fn()}
+        resumo="1–50 de 8.856"
+      />,
+    );
+
+    const nav = getByRole("navigation", { name: "Paginação" });
+    expect(within(nav).getByText("1–50 de 8.856")).toHaveClass(
+      "paginacao__resumo",
+    );
+
+    rerender(
+      <Paginacao pagina={1} totalPaginas={178} aoMudarPagina={vi.fn()} />,
+    );
+    expect(container.querySelector(".paginacao__resumo")).toBeNull();
   });
 
   it("não tem violações de acessibilidade na primeira página (vitest-axe)", async () => {

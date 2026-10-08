@@ -1,89 +1,146 @@
-/* TP-0058 — estilos de CartoesResumo/FiltroTipo. Só tokens de tokens.css,
- * nenhuma cor/espaçamento declarado diretamente aqui. */
+/* TP-0058 / ajuste Modelo B (2026-10-08, mockup à risca) — estilos de
+ * CartoesResumo/FiltroTipo. A aparência dos cartões vem de `.kpis`/`.kpi`
+ * (estilos/painel.css); aqui ficam só as regras específicas da T1. */
 
-.cartoes-resumo {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--espaco-4);
+/* PC: os 4 cartões na mesma linha. */
+@media (min-width: 1024px) {
+  .cartoes-resumo {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
-.cartao-resumo {
-  flex: 1 1 200px;
-  background: var(--cor-superficie);
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio);
-  padding: var(--espaco-5);
+/* Celular: só "Em aberto" e "Pago a mais", estilo `.kpis--celular`, sem
+ * linha de base. */
+@media (max-width: 1023px) {
+  .cartoes-resumo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .cartoes-resumo .kpi--so-pc,
+  .cartoes-resumo .kpi__base {
+    display: none;
+  }
+
+  .cartoes-resumo .kpi {
+    border-radius: var(--raio-10);
+    padding: 10px 12px;
+    gap: 0;
+  }
+
+  .cartoes-resumo .kpi__rotulo {
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+
+  .cartoes-resumo .kpi__valor {
+    font-size: 18px;
+    font-weight: 800;
+  }
 }
 
-.cartao-resumo-titulo {
-  font-size: var(--texto-sm);
-  font-weight: 600;
-  color: var(--cor-texto-2);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.cartao-resumo-valor {
-  margin-top: var(--espaco-2);
-  font-family: var(--fonte-mono);
-  font-size: var(--texto-xl);
-  font-weight: 600;
-  color: var(--cor-texto);
-}
-
-.cartao-resumo-base {
-  margin-top: var(--espaco-1);
-  font-size: var(--texto-sm);
-  color: var(--cor-texto-2);
-}
-
+/* Filtro de tipo em chips. */
 .filtro-tipo {
   border: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--espaco-2);
+  min-width: 0;
 }
 
 .filtro-tipo legend {
-  font-size: var(--texto-sm);
-  font-weight: 600;
-  color: var(--cor-texto-2);
   padding: 0;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--cor-texto-2);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .filtro-tipo-opcoes {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--espaco-2);
+  gap: 8px;
 }
 
 .filtro-tipo-chip {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: var(--espaco-1);
-  padding: var(--espaco-1) var(--espaco-3);
-  border-radius: var(--raio-chip);
-  border: 1px solid var(--cor-borda-controle);
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid var(--cor-borda-chip);
+  border-radius: var(--raio-8);
   background: var(--cor-superficie);
   color: var(--cor-texto);
+  font-size: 14px;
   cursor: pointer;
-  white-space: nowrap;
 }
 
-.filtro-tipo-chip--selecionado {
-  background: var(--cor-destaque);
-  color: var(--cor-sobre-destaque);
-  border-color: var(--cor-destaque);
-}
-
-.filtro-tipo-chip-marca {
-  font-weight: 700;
+.filtro-tipo-chip input {
+  margin: 0;
+  accent-color: var(--cor-destaque);
 }
 
 .filtro-tipo-chip-contagem {
-  font-family: var(--fonte-mono);
+  font-family: var(--fonte-texto);
+  font-weight: 600;
+  color: var(--cor-texto-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.filtro-tipo-chip--selecionado {
+  border-color: var(--cor-destaque);
+  color: var(--cor-destaque);
+  background: var(--cor-selecionado-fundo);
+}
+
+.filtro-tipo-chip--selecionado .filtro-tipo-chip-contagem {
+  color: var(--cor-destaque);
+}
+
+/* Foco visível no chip (no celular o rádio fica oculto). */
+.filtro-tipo-chip:has(input:focus-visible) {
+  outline: 3px solid var(--cor-destaque);
+  outline-offset: 2px;
+}
+
+/* Celular: uma linha com rolagem horizontal, chips em pílula, rádio oculto.
+ * A margem negativa leva a rolagem até a borda da tela (o conteúdo tem
+ * 16px de padding lateral); o padding interno devolve o alinhamento. */
+@media (max-width: 1023px) {
+  .filtro-tipo legend {
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+
+  .filtro-tipo-opcoes {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 8px;
+    margin: 0 -16px;
+    padding: 0 16px 4px;
+  }
+
+  .filtro-tipo-chip {
+    position: relative;
+    flex-shrink: 0;
+    gap: 6px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: var(--raio-chip);
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .filtro-tipo-chip input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+
+  .filtro-tipo-chip--selecionado {
+    font-weight: 700;
+  }
 }

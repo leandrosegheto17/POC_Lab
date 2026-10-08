@@ -1,24 +1,36 @@
-/* TP-0072 — estilos do SeletorData. Só tokens de tokens.css, nenhuma
- * cor/espaçamento declarado diretamente aqui. Foco visível herdado do
- * `:focus-visible` global (TP-0051, base.css) — não redefinir aqui. */
+/* TP-0072 / ajuste Modelo B (2026-10-08, mockup à risca) — cartão "Ver
+ * estado em". Campo e botões vêm de painel.css (`.campo`, `.botao*`,
+ * `.rotulo-campo`), inclusive a altura de 44px e o raio 10 no celular.
+ * Foco visível herdado do `:focus-visible` global (base.css). */
 
 .seletor-data {
   display: flex;
-  align-items: center;
-  gap: var(--espaco-2);
-}
-
-.seletor-data__input {
-  border: 1px solid var(--cor-borda-controle);
-  border-radius: var(--raio);
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
   background: var(--cor-superficie);
-  color: var(--cor-texto);
-  padding: var(--espaco-1) var(--espaco-2);
-  font-family: var(--fonte-texto);
-  font-size: var(--texto-sm);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-12);
+  padding: 14px 16px;
 }
 
-.seletor-data button[aria-disabled="true"] {
-  color: var(--cor-desabilitado);
-  cursor: not-allowed;
+.seletor-data__campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.seletor-data__resultado {
+  flex: 1 1 260px;
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--cor-texto);
+}
+
+/* Sem frase: o parágrafo continua visível para a árvore de acessibilidade
+ * (região aria-live; `display:none` atrapalharia o anúncio da primeira
+ * frase), mas não força quebra de linha nem ocupa altura no cartão. */
+.seletor-data__resultado:empty {
+  flex-basis: 0;
+  margin: 0;
 }

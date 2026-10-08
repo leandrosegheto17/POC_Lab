@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useState, type ReactNode } from "react";
+import { Link, useLocation } from "react-router";
 import {
   EsquemaRespostaQualidade,
   type Achado,
@@ -13,22 +13,35 @@ import {
   EsquemaSugestaoIA,
   type SugestaoIA,
 } from "../dados/esquema-sugestao-ia.ts";
-import { BlocoAchado } from "../componentes/BlocoAchado.tsx";
+import {
+  BlocoAchado,
+  BlocoAchadoCelular,
+  idAchado,
+} from "../componentes/BlocoAchado.tsx";
 import { EstadoCarregando } from "../componentes/EstadoCarregando.tsx";
 import { EstadoErro } from "../componentes/EstadoErro.tsx";
+import { EtiquetaEstado } from "../componentes/EtiquetaEstado.tsx";
 import { TabelaDados } from "../componentes/TabelaDados.tsx";
-// Reaproveita os tokens visuais de etiqueta de EtiquetaTipo.tsx (TP-0054)
-// para a coluna "Conferida?" abaixo (ver EtiquetaConferida) — sem CSS novo.
-import "../componentes/Etiquetas.css";
+import { formatarNumero } from "../dados/formatacao.ts";
+import "./Qualidade.css";
 
-// TP-0064 — T4 Qualidade dos dados: GET /api/v1/qualidade, 7 `BlocoAchado`
-// numa ORDEM FIXA (definida pelo wireframe) mais a seção de sugestões da
-// IA. A API devolve os 7 achados em QUALQUER ordem (`EsquemaRespostaQualidade`
-// só garante `length(7)`, um por `tipo`) — por isso a ordem de exibição
-// abaixo NUNCA confia na posição do array recebido: cada entrada busca o
-// achado correspondente por `tipo` via `.find`.
+// TP-0064 — T4 Qualidade dos dados: GET /api/v1/qualidade, 7 achados numa
+// ORDEM FIXA (definida pelo wireframe) mais a seção de sugestões da IA. A
+// API devolve os 7 achados em QUALQUER ordem (`EsquemaRespostaQualidade` só
+// garante `length(7)`, um por `tipo`) — por isso a ordem de exibição abaixo
+// NUNCA confia na posição do array recebido: cada entrada busca o achado
+// correspondente por `tipo` via `.find`.
+//
+// Ajuste Modelo B (2026-10-08, mockup à risca): a página tem duas formas,
+// alternadas só por CSS (`Qualidade.css`, breakpoint 1024px):
+// - PC (`.qualidade__pc`): mini-cartões-âncora (`<nav>` "Tipos de achado",
+//   7 — o mockup tem 6, "Linhas rejeitadas" é requisito mantido) e um cartão
+//   por achado com tabela de exemplos;
+// - celular (`.qualidade__celular`): um `<details>` por achado, o primeiro
+//   aberto. A forma oculta sai com `display:none` (fora da árvore de
+//   acessibilidade), então não há leitura em dobro.
 const TIPOS_EM_ORDEM: ReadonlyArray<{ tipo: TipoAchado; titulo: string }> = [
-  { tipo: "formato_data", titulo: "Datas por formato" },
+  { tipo: "formato_data", titulo: "Datas em dois formatos" },
   { tipo: "pedido_sem_envio", titulo: "Pedidos sem envio" },
   { tipo: "valor_fora_do_padrao", titulo: "Valores fora do padrão" },
   { tipo: "linha_invalida", titulo: "Linhas rejeitadas" },
@@ -47,9 +60,9 @@ function construirUrlConsulta(tentativa: number): string {
   return `/api/v1/qualidade#${tentativa}`;
 }
 
-/** Mensagem fixa exibida quando a IA não foi utilizada OU foi utilizada mas não sobrou nenhuma sugestão válida. */
+/** Mensagem fixa exibida quando a IA não foi utilizada OU foi utilizada mas não sobrou nenhuma sugestão válida (dentro da caixa de regra, sem tabela). */
 const MENSAGEM_SEM_SUGESTOES_IA = (
-  <p>
+  <p className="caixa-formula">
     IA não utilizada nesta publicação: pagamentos ficaram &quot;sem
     sugestão&quot;.
   </p>
@@ -72,19 +85,24 @@ function filtrarSugestoesValidas(sugestoes: unknown[]): SugestaoIA[] {
 }
 
 /**
- * TP-0085 — "Conferida?" como etiqueta com texto. Reaproveita as classes de
- * `EtiquetaTipo` (TP-0054, `Etiquetas.css`) em vez de um componente novo:
- * "quitado" (verde, variante positiva) para `true`, "pendente" (neutro)
- * para `false` — nenhuma CSS nova foi criada para esta tarefa.
+ * TP-0085 (ajuste Modelo B, 2026-10-08) — "Conferida?" como etiqueta com
+ * texto: "Aceita" (ok, verde) quando a regra conferiu a sugestão,
+ * "Rejeitada" (ruim, vermelho) quando não conferiu.
  */
 function EtiquetaConferida({ conferida }: { conferida: boolean }) {
-  const variante = conferida ? "quitado" : "pendente";
-  const rotulo = conferida ? "Conferida" : "Não conferida";
-  return (
-    <span className={`etiqueta etiqueta--${variante}`} data-variante={variante}>
-      {rotulo}
-    </span>
+  return conferida ? (
+    <EtiquetaEstado variante="ok">Aceita</EtiquetaEstado>
+  ) : (
+    <EtiquetaEstado variante="ruim">Rejeitada</EtiquetaEstado>
   );
+}
+
+/** Tipo de achado apontado pelo fragmento da URL (`#achado-<tipo>`), se houver. */
+function tipoDoHash(hash: string): TipoAchado | null {
+  const encontrado = TIPOS_EM_ORDEM.find(
+    ({ tipo }) => `#${idAchado(tipo)}` === hash,
+  );
+  return encontrado ? encontrado.tipo : null;
 }
 
 export function Qualidade() {
@@ -102,12 +120,17 @@ export function Qualidade() {
   }
 
   return (
-    <>
-      <h1 ref={refTitulo} tabIndex={-1}>
-        Qualidade dos dados
-      </h1>
+    <div className="qualidade">
+      <div className="qualidade__topo">
+        <p className="rotulo-pagina">Problemas do dado, não do pedido</p>
+        <h1 ref={refTitulo} tabIndex={-1}>
+          Qualidade dos dados
+        </h1>
+        {/* Só no celular (o rótulo acima do h1 some < 1024px). */}
+        <p className="qualidade__subtitulo">Problemas do dado, não do pedido.</p>
+      </div>
 
-      <div aria-live="polite">
+      <div aria-live="polite" className="qualidade__corpo">
         {estadoConsulta.status === "carregando" ? (
           <EstadoCarregando
             mensagem="Carregando relatório…"
@@ -123,41 +146,81 @@ export function Qualidade() {
           <RelatorioQualidade dados={estadoConsulta.dados} />
         )}
       </div>
-    </>
+    </div>
   );
 }
 
 function RelatorioQualidade({ dados }: { dados: RespostaQualidade }) {
-  function achadoDoTipo(tipo: TipoAchado): Achado | undefined {
-    return dados.achados.find((item) => item.tipo === tipo);
-  }
+  const { hash } = useLocation();
+  // Mini-cartão selecionado: o último clicado; antes de qualquer clique, o
+  // do fragmento da URL; sem fragmento, o primeiro.
+  const [tipoClicado, setTipoClicado] = useState<TipoAchado | null>(null);
+  const tipoAtual = tipoClicado ?? tipoDoHash(hash) ?? TIPOS_EM_ORDEM[0]?.tipo;
+
+  // Defensivo: `EsquemaRespostaQualidade` garante 7 achados, um por tipo,
+  // mas se algum vier faltando ele simplesmente não é renderizado em vez de
+  // quebrar a tela inteira.
+  const achadosEmOrdem = TIPOS_EM_ORDEM.flatMap(({ tipo, titulo }) => {
+    const achado: Achado | undefined = dados.achados.find(
+      (item) => item.tipo === tipo,
+    );
+    return achado ? [{ tipo, titulo, achado }] : [];
+  });
+
+  // `null` = mostrar a mensagem fixa (IA não utilizada OU sem sugestão válida).
+  const sugestoes =
+    dados.ia.utilizada === false
+      ? null
+      : filtrarSugestoesValidas(dados.ia.sugestoes);
+  const temSugestoes = sugestoes !== null && sugestoes.length > 0;
 
   return (
     <>
-      {TIPOS_EM_ORDEM.map(({ tipo, titulo }) => {
-        const achado = achadoDoTipo(tipo);
-        // Defensivo: `EsquemaRespostaQualidade` garante 7 achados, um por
-        // tipo, mas se algum vier faltando a seção simplesmente não é
-        // renderizada em vez de quebrar a tela inteira.
-        return achado ? (
-          <BlocoAchado key={tipo} titulo={titulo} achado={achado} />
-        ) : null;
-      })}
-
-      <section>
-        <h2>Sugestões da IA</h2>
-        {dados.ia.utilizada === false ? (
-          MENSAGEM_SEM_SUGESTOES_IA
-        ) : (
-          (() => {
-            const sugestoesValidas = filtrarSugestoesValidas(
-              dados.ia.sugestoes,
+      <div className="qualidade__pc">
+        <nav aria-label="Tipos de achado" className="qualidade__tipos">
+          {achadosEmOrdem.map(({ tipo, titulo, achado }) => {
+            const atual = tipo === tipoAtual;
+            return (
+              <a
+                key={tipo}
+                href={`#${idAchado(tipo)}`}
+                className={
+                  atual
+                    ? "qualidade__tipo qualidade__tipo--atual"
+                    : "qualidade__tipo"
+                }
+                aria-current={atual ? "true" : undefined}
+                onClick={() => setTipoClicado(tipo)}
+              >
+                <span className="qualidade__tipo-nome">{titulo}</span>
+                <span className="qualidade__tipo-contagem">
+                  {formatarNumero(achado.contagem)}
+                </span>
+              </a>
             );
-            return sugestoesValidas.length === 0 ? (
-              MENSAGEM_SEM_SUGESTOES_IA
-            ) : (
+          })}
+        </nav>
+
+        {achadosEmOrdem.map(({ tipo, titulo, achado }) => (
+          <BlocoAchado key={tipo} titulo={titulo} achado={achado} />
+        ))}
+
+        <section className="cartao qualidade-ia">
+          <div className="qualidade-ia__topo">
+            <h2>Sugestões da IA</h2>
+            <span className="qualidade-ia__aparte">
+              À parte: não entram nos indicadores
+            </span>
+          </div>
+          {temSugestoes ? (
+            <>
+              <p className="caixa-formula">
+                A IA sugere o pedido de um pagamento com referência vaga. Uma
+                regra confere valor e data; se não bater, a sugestão é
+                rejeitada.
+              </p>
               <TabelaDados
-                caption="Sugestões da IA"
+                caption="Sugestões da IA para pagamentos sem identificação"
                 cabecalhos={[
                   "Pagamento",
                   "Texto da referência",
@@ -165,17 +228,17 @@ function RelatorioQualidade({ dados }: { dados: RespostaQualidade }) {
                   "Conferida?",
                   "Motivo da regra",
                 ]}
+                rotuloRegiao="Sugestões da IA"
+                legendaOculta
+                semMoldura
+                compacta
               >
-                {sugestoesValidas.map((sugestao) => (
+                {sugestoes.map((sugestao) => (
                   <tr key={sugestao.pagamento}>
-                    <td>{sugestao.pagamento}</td>
-                    <td>{sugestao.textoReferencia}</td>
+                    <td className="mono">{sugestao.pagamento}</td>
+                    <td>&quot;{sugestao.textoReferencia}&quot;</td>
                     <td>
-                      <Link
-                        to={`/pedido/${encodeURIComponent(sugestao.pedidoSugerido)}`}
-                      >
-                        {sugestao.pedidoSugerido}
-                      </Link>
+                      <LinkPedidoSugerido codigo={sugestao.pedidoSugerido} />
                     </td>
                     <td>
                       <EtiquetaConferida conferida={sugestao.conferida} />
@@ -184,10 +247,64 @@ function RelatorioQualidade({ dados }: { dados: RespostaQualidade }) {
                   </tr>
                 ))}
               </TabelaDados>
-            );
-          })()
-        )}
-      </section>
+            </>
+          ) : (
+            MENSAGEM_SEM_SUGESTOES_IA
+          )}
+        </section>
+      </div>
+
+      <div className="qualidade__celular">
+        {achadosEmOrdem.map(({ tipo, titulo, achado }, indice) => (
+          <BlocoAchadoCelular
+            key={tipo}
+            titulo={titulo}
+            achado={achado}
+            aberto={indice === 0}
+          />
+        ))}
+
+        <details className="achado-celular achado-celular--tracejado">
+          <summary className="achado-celular__resumo">
+            <h2>Sugestões da IA</h2>
+          </summary>
+          <div className="achado-celular__corpo">
+            {temSugestoes ? (
+              <>
+                <p className="caixa-formula">
+                  Não entram nos indicadores. Uma regra confere valor e data de
+                  cada sugestão.
+                </p>
+                <ul className="achado-celular__exemplos">
+                  {sugestoes.map((sugestao) => (
+                    <li
+                      key={sugestao.pagamento}
+                      className="achado-celular__exemplo"
+                    >
+                      <span>
+                        <span className="mono">{sugestao.pagamento}</span>
+                        {" → "}
+                        <LinkPedidoSugerido codigo={sugestao.pedidoSugerido} />
+                      </span>
+                      <EtiquetaConferida conferida={sugestao.conferida} />
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              MENSAGEM_SEM_SUGESTOES_IA
+            )}
+          </div>
+        </details>
+      </div>
     </>
+  );
+}
+
+function LinkPedidoSugerido({ codigo }: { codigo: string }): ReactNode {
+  return (
+    <Link to={`/pedido/${encodeURIComponent(codigo)}`} className="mono">
+      {codigo}
+    </Link>
   );
 }

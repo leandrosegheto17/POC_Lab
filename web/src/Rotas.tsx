@@ -21,6 +21,11 @@ import { NaoEncontrada } from "./paginas/NaoEncontrada.tsx";
 // <Casca> recebe os slots já preenchidos: slotResumo (FaixaResumo) e
 // slotBusca (CampoBusca) — único <CampoBusca> no DOM, reposicionado só por
 // CSS entre menu lateral e cabeçalho do celular.
+//
+// Ajuste Modelo B (2026-10-08) — a rota "*" (T5) fica num segundo layout,
+// <Casca variante="simples"/>, sem slotBusca e sem slotResumo (menu sem
+// busca, sem faixa e sem ícones, como no mockup); a própria página T5 traz
+// a busca dela (CampoBusca variante "pagina").
 export function Rotas() {
   return (
     <ProvedorResumo>
@@ -32,6 +37,8 @@ export function Rotas() {
           <Route path="/pedido/:codigo" element={<Pedido />} />
           <Route path="/indicadores" element={<Indicadores />} />
           <Route path="/qualidade" element={<Qualidade />} />
+        </Route>
+        <Route element={<Casca variante="simples" />}>
           <Route path="*" element={<NaoEncontrada />} />
         </Route>
       </Routes>

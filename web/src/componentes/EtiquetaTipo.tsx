@@ -12,35 +12,35 @@ type EtiquetaTipoProps = {
   tipo: TipoDivergencia;
 };
 
-// TP-0054 — mapeamento de cada `tipo` de divergência para uma das 6
-// variantes de etiqueta definidas em tokens.css (TP-0051). Cada tipo usa
-// uma variante distinta (nenhuma reaproveitada), preservando o significado
-// documentado de cada cor:
-//
-//   duplicado         -> "duplicado" (azul/roxo): pago mais de uma vez.
-//   parcial            -> "parcial" (âmbar forte): falta complementar.
-//   pago_nao_enviado   -> "pendente" (neutro): pagamento ok, aguardando
-//                         processamento/expedição — não é erro, é fila.
-//   enviado_nao_pago   -> "sem-pagamento" (âmbar leve): nenhum pagamento
-//                         encontrado para uma cobrança já enviada —
-//                         pendência a investigar no financeiro.
-//   entrega_atrasada   -> "erro" (vermelho): atraso logístico que precisa
-//                         de ação corretiva.
-//   sem_divergencia    -> "quitado" (verde): estado "bom", sem ação.
+// TP-0054 / ajuste Modelo B (2026-10-08, mockup à risca) — cada `tipo` de
+// divergência tem a sua própria paleta (texto/fundo/borda em tokens.css,
+// `--etq-<tipo>-*`); nenhuma paleta é reaproveitada entre tipos.
+// Rótulo de `duplicado` é "Pago duas vezes" (igual ao chip do filtro).
 const CONFIGURACAO: Record<
   TipoDivergencia,
   { variante: string; rotulo: string }
 > = {
-  duplicado: { variante: "duplicado", rotulo: "Pagamento duplicado" },
+  duplicado: { variante: "duplicado", rotulo: "Pago duas vezes" },
   parcial: { variante: "parcial", rotulo: "Pagamento parcial" },
-  pago_nao_enviado: { variante: "pendente", rotulo: "Pago e não enviado" },
+  pago_nao_enviado: {
+    variante: "pago-nao-enviado",
+    rotulo: "Pago e não enviado",
+  },
   enviado_nao_pago: {
-    variante: "sem-pagamento",
+    variante: "enviado-nao-pago",
     rotulo: "Enviado e não pago",
   },
-  entrega_atrasada: { variante: "erro", rotulo: "Entrega atrasada" },
-  sem_divergencia: { variante: "quitado", rotulo: "Sem divergência" },
+  entrega_atrasada: {
+    variante: "entrega-atrasada",
+    rotulo: "Entrega atrasada",
+  },
+  sem_divergencia: { variante: "sem-divergencia", rotulo: "Sem divergência" },
 };
+
+/** Rótulo em português de um tipo de divergência (sem a etiqueta). */
+export function rotuloTipo(tipo: TipoDivergencia): string {
+  return CONFIGURACAO[tipo].rotulo;
+}
 
 export function EtiquetaTipo({ tipo }: EtiquetaTipoProps) {
   const { variante, rotulo } = CONFIGURACAO[tipo];

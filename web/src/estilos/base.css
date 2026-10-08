@@ -42,6 +42,10 @@ a {
   text-decoration: underline;
 }
 
+a:hover {
+  color: var(--cor-link-hover);
+}
+
 :focus-visible {
   outline: 3px solid var(--cor-destaque);
   outline-offset: 2px;
@@ -51,19 +55,68 @@ a {
   font-variant-numeric: tabular-nums;
 }
 
-/* UX-SPEC §3 (complemento 2026-10-08) — mapeamento da escala para h1/h2,
- * que faltava e caía no padrão do navegador em vez da escala do design
- * system. */
+/* UX-SPEC §3 (mockup à risca, 2026-10-08) — títulos do Modelo B. */
 h1 {
   font-family: var(--fonte-texto);
-  font-weight: 700;
-  font-size: var(--texto-2xl);
+  font-weight: 800;
+  font-size: 30px;
+  letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
+/* Padrão de título de cartão. */
 h2 {
   font-family: var(--fonte-texto);
   font-weight: 700;
-  font-size: var(--texto-xl);
+  font-size: 18px;
   line-height: 1.3;
+}
+
+@media (max-width: 1023px) {
+  h1 {
+    font-size: 24px;
+  }
+
+  h2 {
+    font-size: 16px;
+  }
+}
+
+/* Texto só para leitor de tela (visualmente oculto, continua no DOM). */
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.mono {
+  font-family: var(--fonte-mono);
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--fonte-mono);
+}
+
+/* Alternância de texto PC/celular (ex. rótulos longos e curtos). A forma
+ * oculta sai com display:none, então também sai da árvore de acessibilidade. */
+.so-celular {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .so-pc {
+    display: none;
+  }
+
+  .so-celular {
+    display: inline;
+  }
 }

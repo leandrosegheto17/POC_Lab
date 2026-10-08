@@ -1,49 +1,107 @@
-/* TP-0054 — estilos da Paginacao. Alternância entre forma completa e
- * compacta é feita só por CSS (@media), nunca via JS/matchMedia. Só tokens
- * de tokens.css, nenhuma cor/espaçamento declarado diretamente aqui. */
+/* TP-0054 / ajuste Modelo B (2026-10-08, mockup à risca) — estilos da
+ * Paginacao. Alternância entre forma completa e compacta é feita só por
+ * CSS (@media), nunca via JS/matchMedia. */
 
 .paginacao {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
-.paginacao button[aria-disabled="true"] {
-  color: var(--cor-desabilitado);
-  cursor: not-allowed;
-}
-
-.paginacao-lista {
-  display: flex;
-  list-style: none;
-  gap: var(--espaco-1);
-  margin: 0;
-  padding: 0;
-}
-
-.paginacao-lista button[aria-current="page"] {
-  background: var(--cor-superficie);
-  border-color: var(--cor-destaque);
-  font-weight: 700;
+.paginacao__resumo {
+  font-size: 13px;
+  color: var(--cor-texto-2);
 }
 
 .paginacao-completa {
   display: flex;
   align-items: center;
-  gap: var(--espaco-2);
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.paginacao-lista {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  list-style: none;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+
+.paginacao__botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--cor-borda-chip);
+  border-radius: var(--raio-8);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.paginacao__botao[aria-current="page"] {
+  background: var(--cor-destaque);
+  border-color: var(--cor-destaque);
+  color: var(--cor-sobre-destaque);
+  font-weight: 700;
+}
+
+.paginacao__botao[aria-disabled="true"] {
+  color: var(--cor-desabilitado);
+  cursor: not-allowed;
+}
+
+/* A página atual com aria-disabled (carregando) mantém o texto escuro. */
+.paginacao__botao[aria-current="page"][aria-disabled="true"] {
+  color: var(--cor-sobre-destaque);
+}
+
+.paginacao__reticencias {
+  font-size: 13px;
+  color: var(--cor-texto-2);
 }
 
 .paginacao-compacta {
   display: none;
   align-items: center;
-  gap: var(--espaco-3);
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.paginacao__posicao {
+  font-size: 13px;
+  color: var(--cor-texto-2);
 }
 
 @media (max-width: 639px) {
+  .paginacao__resumo,
   .paginacao-completa {
     display: none;
   }
 
   .paginacao-compacta {
     display: flex;
+  }
+
+  .paginacao-compacta .paginacao__botao {
+    height: 44px;
+    padding: 0 14px;
+    border-radius: var(--raio-10);
+    background: transparent;
+  }
+
+  .paginacao-compacta .paginacao__botao--proxima {
+    background: var(--cor-superficie);
   }
 }

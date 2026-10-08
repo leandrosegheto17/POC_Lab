@@ -1,119 +1,191 @@
-/* TP-0061 — estilos de LinhaDoTempo. Só tokens de tokens.css/base.css,
- * nenhuma cor/espaçamento declarado diretamente aqui.
+/* TP-0061 / ajuste Modelo B (2026-10-08, mockup à risca) — LinhaDoTempo.
  *
- * Mobile-first, mesmo breakpoint de 1024px usado em casca.css/CampoBusca —
- * <1024px: cada <li> é um cartão empilhado; >=1024px: grade de 4 colunas
- * (Data | Vendas | Pagamentos | Transportadora), coluna do evento decidida
- * pelo atributo `data-fonte` do <li>, nunca pela posição/índice do array.
+ * Mobile-first, breakpoint único de 1024px:
+ *   < 1024px: um cartão por evento (selo da fonte + data), empilhados;
+ *   >= 1024px: grade "Data | Vendas | Pagamentos | Transportadora", uma
+ *   linha por data, dentro de um contêiner com rolagem horizontal.
  */
 
-.linha-do-tempo {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--espaco-3);
-}
+/* ---------- Celular (base) ---------- */
 
-/* Cabeçalho de colunas — só existe visualmente na grade (>=1024px). Em
- * <1024px fica oculto via CSS (permanece no DOM, aria-hidden="true"). */
-.linha-do-tempo-cabecalho {
+.linha-do-tempo__cabecalho,
+.linha-do-tempo__data,
+.evento__linha--pc {
   display: none;
 }
 
-/* <1024px: cartão. */
-.linha-do-tempo-item {
+.linha-do-tempo__datas,
+.linha-do-tempo__eventos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.linha-do-tempo__datas,
+.linha-do-tempo__linha,
+.linha-do-tempo__celula,
+.linha-do-tempo__eventos {
   display: flex;
   flex-direction: column;
-  gap: var(--espaco-2);
+  gap: 8px;
+}
+
+.linha-do-tempo__celula:empty {
+  display: none;
+}
+
+.evento {
+  position: relative; /* referência do texto `.visualmente-oculto` */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   background: var(--cor-superficie);
   border: 1px solid var(--cor-borda);
-  border-radius: var(--raio);
-  padding: var(--espaco-4);
+  border-radius: var(--raio-12);
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--cor-texto);
 }
 
-.linha-do-tempo-celula-data {
-  color: var(--cor-texto-2);
-  font-size: var(--texto-sm);
-}
-
-.linha-do-tempo-celula-evento {
+.evento__topo {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--espaco-2);
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.linha-do-tempo-tipo {
-  color: var(--cor-texto);
-  font-weight: 600;
+.evento__data {
+  font-size: 12px;
+  color: var(--cor-texto-2);
 }
 
-.linha-do-tempo-mono {
-  font-family: var(--fonte-mono);
-  color: var(--cor-texto);
+.evento__titulo {
+  font-weight: 700;
 }
 
-.linha-do-tempo-fora-de-ordem {
-  color: var(--etq-parcial-texto);
-  background: var(--etq-parcial-fundo);
-  border: 1px solid var(--etq-parcial-borda);
-  border-radius: var(--raio-chip);
-  padding: var(--espaco-1) var(--espaco-3);
-  font-size: var(--texto-sm);
+/* No celular a fonte já está no selo visível. */
+.evento__fonte-oculta {
+  display: none;
 }
 
-/* TP-0073 — atenuação visual de item "depois da data escolhida". Reaproveita
- * o mesmo token de desabilitado já usado em Paginacao.css/SeletorData.css
- * (`--cor-desabilitado`), nunca um token novo; o texto "depois da data
- * escolhida" (abaixo) é a parte que não depende só de cor (G-14). */
-.linha-do-tempo-item--atenuado .linha-do-tempo-tipo,
-.linha-do-tempo-item--atenuado .linha-do-tempo-codigo,
-.linha-do-tempo-item--atenuado .linha-do-tempo-valor,
-.linha-do-tempo-item--atenuado .linha-do-tempo-celula-data {
-  color: var(--cor-desabilitado);
+.evento__linha--celular,
+.evento__depois {
+  font-size: 13px;
+  color: var(--cor-texto-2);
 }
 
-.linha-do-tempo-depois-da-data {
-  color: var(--cor-desabilitado);
-  font-size: var(--texto-sm);
+.evento--ruim {
+  background: var(--cor-evento-ruim-fundo);
+  border-color: var(--cor-evento-ruim-borda);
 }
 
-/* >=1024px: grade Data | Vendas | Pagamentos | Transportadora. */
+/* Depois da data escolhida: atenuação + texto "depois da data escolhida". */
+.evento--depois {
+  opacity: 0.5;
+}
+
+/* ---------- PC ---------- */
+
 @media (min-width: 1024px) {
-  .linha-do-tempo-cabecalho {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    padding: 0 var(--espaco-4);
+  .linha-do-tempo {
+    background: var(--cor-superficie);
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-12);
+    overflow-x: auto;
   }
 
-  .linha-do-tempo-cabecalho-coluna {
+  .linha-do-tempo__grade {
+    min-width: 720px;
+  }
+
+  .linha-do-tempo__cabecalho,
+  .linha-do-tempo__linha {
+    display: grid;
+    grid-template-columns: 110px repeat(3, minmax(0, 1fr));
+    gap: 0;
+  }
+
+  .linha-do-tempo__datas {
+    display: block;
+  }
+
+  .linha-do-tempo__cabecalho-celula {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 14px;
+    font-size: 12px;
     color: var(--cor-texto-2);
-    font-size: var(--texto-sm);
-    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--cor-borda);
   }
 
-  .linha-do-tempo-item {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    align-items: center;
-    flex-direction: unset;
+  .linha-do-tempo__cabecalho-codigo {
+    font-family: var(--fonte-mono);
+    font-size: 13px;
+    color: var(--cor-texto);
+    text-transform: none;
+    letter-spacing: 0;
   }
 
-  .linha-do-tempo-celula-data {
-    grid-column: 1;
+  .linha-do-tempo__data {
+    display: block;
+    padding: 14px;
+    font-size: 13px;
+    color: var(--cor-texto-2);
+    font-variant-numeric: tabular-nums;
+    border-bottom: 1px solid var(--cor-divisoria);
   }
 
-  .linha-do-tempo-item[data-fonte="vendas"] .linha-do-tempo-celula-evento {
-    grid-column: 2;
+  .linha-do-tempo__celula,
+  .linha-do-tempo__celula:empty {
+    display: block;
+    padding: 8px 10px;
+    min-height: 56px;
+    border-left: 1px solid var(--cor-divisoria);
+    border-bottom: 1px solid var(--cor-divisoria);
   }
 
-  .linha-do-tempo-item[data-fonte="pagamentos"] .linha-do-tempo-celula-evento {
-    grid-column: 3;
+  .linha-do-tempo__eventos {
+    gap: 6px;
   }
 
-  .linha-do-tempo-item[data-fonte="rastreio"] .linha-do-tempo-celula-evento {
-    grid-column: 4;
+  .evento {
+    background: var(--cor-evento-fundo);
+    border-color: var(--cor-evento-borda);
+    border-radius: var(--raio-10);
+    padding: 10px 12px;
+    gap: 4px;
+    font-size: 13px;
+  }
+
+  .evento--ruim {
+    background: var(--cor-evento-ruim-fundo);
+    border-color: var(--cor-evento-ruim-borda);
+  }
+
+  .evento__topo,
+  .evento__linha--celular {
+    display: none;
+  }
+
+  .evento__titulo {
+    font-size: 14px;
+  }
+
+  .evento__linha--pc {
+    display: block;
+  }
+
+  .evento__depois {
+    font-size: 13px;
+    color: var(--cor-texto);
+  }
+
+  /* No PC a fonte é dada pela coluna: texto só para leitor de tela
+   * (`.visualmente-oculto` volta a valer). */
+  .evento__fonte-oculta {
+    display: block;
   }
 }

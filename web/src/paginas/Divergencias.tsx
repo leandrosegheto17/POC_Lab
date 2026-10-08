@@ -12,11 +12,55 @@ import { FiltroTipo, VALOR_TODOS } from "../componentes/FiltroTipo.tsx";
 import { TabelaDados } from "../componentes/TabelaDados.tsx";
 import { Paginacao } from "../componentes/Paginacao.tsx";
 import { EtiquetaTipo } from "../componentes/EtiquetaTipo.tsx";
+import { rotuloFonte } from "../componentes/EtiquetaFonte.tsx";
 import { EstadoCarregando } from "../componentes/EstadoCarregando.tsx";
 import { EstadoVazio } from "../componentes/EstadoVazio.tsx";
 import { EstadoErro } from "../componentes/EstadoErro.tsx";
+import { formatarData, formatarNumero } from "../dados/formatacao.ts";
+import type { EventoDivergencia } from "processamento/contrato/divergencias.js";
+import "./Divergencias.css";
 
 const TAMANHO_PAGINA = 50;
+
+// Ajuste Modelo B (2026-10-08) — nome em português do tipo de evento que a
+// API manda (`tipo` é texto livre no contrato v1). Tipo desconhecido aparece
+// como veio, sem quebrar a tela.
+const ROTULOS_EVENTO: Record<string, string> = {
+  venda: "Venda",
+  pagamento: "Pagamento",
+  coleta: "Coleta",
+  transporte: "Em trânsito",
+  entrega: "Entrega",
+};
+
+function rotuloEvento(tipo: string): string {
+  return ROTULOS_EVENTO[tipo] ?? tipo;
+}
+
+/**
+ * Eventos de uma divergência dentro de `<details>` (requisito mantido): o
+ * `<summary>` tem cara de link ("3 eventos ▸") e a lista aberta mostra data,
+ * sistema, tipo e código. Usado na tabela (PC) e no cartão (celular).
+ */
+function EventosDivergencia({ eventos }: { eventos: EventoDivergencia[] }) {
+  const quantidade = eventos.length;
+  const texto = quantidade === 1 ? "1 evento ▸" : `${quantidade} eventos ▸`;
+
+  return (
+    <details className="divergencias__eventos">
+      <summary>{texto}</summary>
+      <ul>
+        {eventos.map((evento, indice) => (
+          <li key={indice}>
+            {formatarData(evento.data)} · {rotuloFonte(evento.fonte)} ·{" "}
+            {rotuloEvento(evento.tipo)} ·{" "}
+            <span className="mono">{evento.codigo}</span>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
 
 // TP-0059 — T1 Divergências: consulta real a `/api/v1/divergencias`,
 // filtrada por `?tipo=` da URL, com tabela acessível e os 4 estados.
@@ -181,10 +225,12 @@ export function Divergencias() {
 
   const rotuloFiltroAtual = ROTULOS_FILTRO[tipoValido ?? VALOR_TODOS] ?? "Todos";
 
-  const titulo =
-    !vazioCorrigivel && ultimaResposta
-      ? `Divergências (${ultimaResposta.paginacao.total} pedidos)`
-      : "Divergências";
+  // Ajuste Modelo B (2026-10-08): o total fica dentro do h1, numa <span>
+  // própria — oculta visualmente no PC (só leitor de tela) e visível no
+  // celular como o número à direita do título (Divergencias.css). Conta
+  // divergências, não pedidos (1 pedido pode ter 2 divergências).
+  const totalDivergencias =
+    !vazioCorrigivel && ultimaResposta ? ultimaResposta.paginacao.total : null;
 
   // `<title>` reflete a página pedida na URL (não depende da resposta da
   // API ainda ter chegado) — só menciona "página N" quando N > 1.
@@ -213,15 +259,36 @@ export function Divergencias() {
     ultimaResposta.dados.length === 0 &&
     ultimaResposta.paginacao.total === 0;
 
-  const textoResumo = ultimaResposta
-    ? `${TAMANHO_PAGINA} de ${ultimaResposta.paginacao.total} divergências, página ${ultimaResposta.paginacao.pagina} de ${ultimaResposta.paginacao.totalPaginas}`
-    : null;
+  // Resumo da paginação ("1–50 de 8.856"): início/fim da página atual. Fica
+  // dentro da região `aria-live` (a `<nav>` da paginação está nela), então
+  // substitui o antigo `<p>` solto "50 de 8856 divergências…".
+  function textoResumoPaginacao(resposta: RespostaDivergencias): string {
+    const { pagina: paginaAtual, tamanho, total } = resposta.paginacao;
+    const inicio = (paginaAtual - 1) * tamanho + 1;
+    const fim = Math.min(paginaAtual * tamanho, total);
+    return `${formatarNumero(inicio)}–${formatarNumero(fim)} de ${formatarNumero(total)}`;
+  }
 
   return (
     <>
-      <h1 ref={refTitulo} tabIndex={-1}>
-        {titulo}
-      </h1>
+      <div className="divergencias__topo">
+        <p className="rotulo-pagina">Fila de conciliação</p>
+        <h1 ref={refTitulo} tabIndex={-1} className="divergencias__titulo">
+          Divergências
+          {totalDivergencias !== null ? (
+            <>
+              <span className="divergencias__total">
+                {` (${formatarNumero(totalDivergencias)} ${
+                  totalDivergencias === 1 ? "divergência" : "divergências"
+                })`}
+              </span>
+              <span className="divergencias__total-numero" aria-hidden="true">
+                {formatarNumero(totalDivergencias)}
+              </span>
+            </>
+          ) : null}
+        </h1>
+      </div>
 
       <CartoesResumo />
       <FiltroTipo valor={tipoNaUrl ?? VALOR_TODOS} aoMudar={aoMudarFiltro} />
@@ -253,47 +320,72 @@ export function Divergencias() {
             mensagem={`Nenhum pedido com divergência do tipo ${rotuloFiltroAtual}.`}
           />
         ) : ultimaResposta ? (
-          <>
-            <TabelaDados
-              caption={`Pedidos com divergência — filtro: ${rotuloFiltroAtual} — página ${ultimaResposta.paginacao.pagina} de ${ultimaResposta.paginacao.totalPaginas}`}
-              refCaption={refCaption}
-              cabecalhos={["Pedido", "Tipo", "Motivo", "Eventos"]}
-            >
+          <div className="divergencias__resultado">
+            {/* PC: tabela. Colunas Devido/Pago do mockup ficam de fora: a
+                API v1 não entrega esses valores (ADR-016). */}
+            <div className="divergencias__tabela">
+              <TabelaDados
+                caption={`Filtro: ${rotuloFiltroAtual} · página ${ultimaResposta.paginacao.pagina} de ${ultimaResposta.paginacao.totalPaginas}`}
+                refCaption={refCaption}
+                rotuloRegiao="Tabela de divergências"
+                cabecalhos={["Pedido", "Tipo", "Motivo", "Eventos"]}
+              >
+                {ultimaResposta.dados.map((linha) => (
+                  <tr key={`${linha.pedido}-${linha.tipo}`}>
+                    <td>
+                      <Link
+                        to={`/pedido/${encodeURIComponent(linha.pedido)}`}
+                        className="mono"
+                      >
+                        {linha.pedido}
+                      </Link>
+                    </td>
+                    <td>
+                      <EtiquetaTipo tipo={linha.tipo} />
+                    </td>
+                    <td>{linha.motivo}</td>
+                    <td>
+                      <EventosDivergencia eventos={linha.eventos} />
+                    </td>
+                  </tr>
+                ))}
+              </TabelaDados>
+            </div>
+
+            {/* Celular: lista de cartões no lugar da tabela. O cartão não é
+                um link inteiro — o link fica só no código do pedido (evita
+                interativo aninhado com o <details>). */}
+            <ul className="divergencias__lista" aria-label="Lista de divergências">
               {ultimaResposta.dados.map((linha) => (
-                <tr key={linha.pedido}>
-                  <td>
-                    <Link to={`/pedido/${encodeURIComponent(linha.pedido)}`}>
+                <li
+                  key={`${linha.pedido}-${linha.tipo}`}
+                  className="divergencias__cartao"
+                >
+                  <div className="divergencias__cartao-topo">
+                    <Link
+                      to={`/pedido/${encodeURIComponent(linha.pedido)}`}
+                      className="mono divergencias__cartao-pedido"
+                    >
                       {linha.pedido}
                     </Link>
-                  </td>
-                  <td>
                     <EtiquetaTipo tipo={linha.tipo} />
-                  </td>
-                  <td>{linha.motivo}</td>
-                  <td>
-                    <details>
-                      <summary>▸ ver {linha.eventos.length} eventos</summary>
-                      <ul>
-                        {linha.eventos.map((evento, indice) => (
-                          <li key={indice}>
-                            {evento.tipo} — {evento.data} — {evento.fonte} —{" "}
-                            {evento.codigo}
-                          </li>
-                        ))}
-                      </ul>
-                    </details>
-                  </td>
-                </tr>
+                  </div>
+                  <p className="divergencias__cartao-motivo">{linha.motivo}</p>
+                  <div className="divergencias__cartao-eventos">
+                    <EventosDivergencia eventos={linha.eventos} />
+                  </div>
+                </li>
               ))}
-            </TabelaDados>
+            </ul>
+
             <Paginacao
               pagina={ultimaResposta.paginacao.pagina}
               totalPaginas={ultimaResposta.paginacao.totalPaginas}
               carregando={estadoConsulta.status === "carregando"}
               aoMudarPagina={aoMudarPagina}
+              resumo={textoResumoPaginacao(ultimaResposta)}
             />
-            {textoResumo ? <p>{textoResumo}</p> : null}
-          </>
+          </div>
         ) : null}
       </div>
     </>

@@ -31,12 +31,60 @@ function renderSeletor(valor: string) {
 }
 
 describe("SeletorData — estrutura", () => {
-  it('<label> associado ao <input type="date"> via "Ver estado em uma data"', () => {
+  it('<label> associado ao <input type="date"> via "Ver estado em"', () => {
     const { getByLabelText } = renderSeletor("");
 
-    const campo = getByLabelText("Ver estado em uma data");
+    const campo = getByLabelText("Ver estado em");
     expect(campo).toHaveAttribute("type", "date");
     expect(campo).toHaveAttribute("id", "seletor-data-input");
+  });
+
+  it("usa as classes da Base: rótulo, campo, botão primário e secundário", () => {
+    const { getByLabelText, getByRole, getByText } = renderSeletor("");
+
+    expect(getByText("Ver estado em")).toHaveClass("rotulo-campo");
+    expect(getByLabelText("Ver estado em")).toHaveClass("campo");
+    expect(getByRole("button", { name: "Ver estado" })).toHaveClass(
+      "botao",
+      "botao--primario",
+    );
+    expect(getByRole("button", { name: "Limpar" })).toHaveClass(
+      "botao",
+      "botao--secundario",
+    );
+  });
+});
+
+describe("SeletorData — resultado no mesmo cartão", () => {
+  it("sem resultado, o parágrafo aria-live existe e está vazio", () => {
+    const { container } = renderSeletor("");
+
+    const paragrafo = container.querySelector(".seletor-data__resultado");
+    expect(paragrafo).not.toBeNull();
+    expect(paragrafo).toHaveAttribute("aria-live", "polite");
+    expect(paragrafo).toBeEmptyDOMElement();
+  });
+
+  it("com resultado, mostra a frase dentro do cartão", () => {
+    const { container } = render(
+      <SeletorData
+        valor="1996-07-10"
+        onMudar={vi.fn()}
+        onVerEstado={vi.fn()}
+        onLimpar={vi.fn()}
+        resultado={
+          <>
+            Em <span className="mono">1996-07-10</span>: vendido.
+          </>
+        }
+      />,
+    );
+
+    const paragrafo = container.querySelector(
+      ".seletor-data .seletor-data__resultado",
+    );
+    expect(paragrafo).toHaveTextContent("Em 1996-07-10: vendido.");
+    expect(paragrafo?.querySelector(".mono")).toHaveTextContent("1996-07-10");
   });
 });
 
@@ -44,7 +92,7 @@ describe("SeletorData — mudar valor", () => {
   it("fireEvent.change no input chama onMudar com o valor novo", () => {
     const { getByLabelText, onMudar } = renderSeletor("");
 
-    const campo = getByLabelText("Ver estado em uma data");
+    const campo = getByLabelText("Ver estado em");
     fireEvent.change(campo, { target: { value: "2026-10-08" } });
 
     expect(onMudar).toHaveBeenCalledTimes(1);

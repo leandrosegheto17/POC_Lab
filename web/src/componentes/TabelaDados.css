@@ -1,45 +1,78 @@
-/* TP-0054 — estilos da TabelaDados. Só tokens de tokens.css/base.css, nenhuma
- * cor/espaçamento declarado diretamente aqui. */
+/* TP-0054 / ajuste Modelo B (2026-10-08, mockup à risca) — estilos da
+ * TabelaDados. */
 
 .tabela-dados-regiao {
   overflow-x: auto;
+  background: var(--cor-superficie);
   border: 1px solid var(--cor-borda);
-  border-radius: var(--raio);
+  border-radius: var(--raio-12);
+}
+
+/* Tabela dentro de um `.cartao`: o cartão já dá fundo e borda. */
+.tabela-dados-regiao--sem-moldura {
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .tabela-dados {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--texto-sm);
+  font-size: 14px;
 }
 
 .tabela-dados caption {
+  caption-side: top;
   text-align: left;
-  padding: var(--espaco-3) var(--espaco-4);
+  padding: 14px;
+  font-size: 13px;
+  font-weight: 400;
   color: var(--cor-texto-2);
-  font-weight: 600;
-}
-
-.tabela-dados th,
-.tabela-dados td {
-  padding: var(--espaco-3) var(--espaco-4);
-  border-bottom: 1px solid var(--cor-divisoria);
-  text-align: left;
 }
 
 .tabela-dados th {
-  color: var(--cor-texto-2);
+  text-align: left;
+  padding: 12px 14px;
+  font-size: 12px;
   font-weight: 600;
+  color: var(--cor-texto-2);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--cor-borda);
+  white-space: nowrap;
+}
+
+.tabela-dados td {
+  text-align: left;
+  padding: 14px;
+  color: var(--cor-texto);
+  border-bottom: 1px solid var(--cor-divisoria);
+  vertical-align: top;
+}
+
+.tabela-dados th.num,
+.tabela-dados td.num {
+  text-align: right;
+}
+
+/* No cabeçalho, "num" só alinha: o texto do th continua na fonte normal. */
+.tabela-dados th.num {
+  font-family: inherit;
 }
 
 .tabela-dados tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* Utilitário para células que exibem código/identificadores — reutiliza a
- * fonte monoespaçada já definida em tokens.css. */
+.tabela-dados--compacta th {
+  padding: 10px 12px;
+}
+
+.tabela-dados--compacta td {
+  padding: 11px 12px;
+}
+
+/* Utilitário para células que exibem código/identificadores. */
 .tabela-dados .celula-codigo {
   font-family: var(--fonte-mono);
 }

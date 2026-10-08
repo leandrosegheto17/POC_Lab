@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render } from "@testing-library/react";
+import { fireEvent, render, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { axe } from "vitest-axe";
 import { Rotas } from "../src/Rotas.tsx";
@@ -130,6 +130,54 @@ describe("Casca/Rotas — aria-current no item ativo", () => {
   });
 });
 
+describe("Casca/Rotas — ajuste Modelo B (2026-10-08)", () => {
+  it('em "/pedido/X", Divergências tem a classe de ativo mas não aria-current', () => {
+    const { getByRole } = renderEm("/pedido/ABC");
+
+    // Dentro da nav: a página T2 tem o próprio link "← Divergências".
+    const nav = getByRole("navigation", { name: "Navegação principal" });
+    const link = within(nav).getByRole("link", { name: /^divergências$/i });
+    expect(link).toHaveClass("navegacao-principal__item--ativo");
+    expect(link).not.toHaveAttribute("aria-current");
+  });
+
+  it("rótulos da navegação: 'Qualidade dos dados'/'Qualidade' e 'Como foi feito' sem seta", () => {
+    const { container, getByRole } = renderEm("/");
+
+    const nav = container.querySelector(".navegacao-principal");
+    expect(nav?.querySelector(".so-pc")?.textContent).toBe(
+      "Qualidade dos dados",
+    );
+    expect(nav?.querySelector(".so-celular")?.textContent).toBe(
+      "Qualidade",
+    );
+    const externo = getByRole("link", {
+      name: "Como foi feito (abre o repositório)",
+    });
+    expect(externo.textContent).toBe("Como foi feito");
+  });
+
+  it("casca completa: navegação com 4 ícones decorativos", () => {
+    const { container } = renderEm("/");
+
+    const icones = container.querySelectorAll(".navegacao-principal svg");
+    expect(icones).toHaveLength(4);
+    icones.forEach((icone) =>
+      expect(icone).toHaveAttribute("aria-hidden", "true"),
+    );
+  });
+
+  it("rota inexistente usa a casca simples: sem faixa, sem busca na barra e sem ícones", () => {
+    const { container } = renderEm("/rota-inexistente");
+
+    expect(container.querySelector(".casca--simples")).not.toBeNull();
+    const barra = container.querySelector(".casca__barra");
+    expect(barra?.querySelector(".faixa-resumo")).toBeNull();
+    expect(barra?.querySelector(".campo-busca")).toBeNull();
+    expect(container.querySelectorAll(".navegacao-principal svg")).toHaveLength(0);
+  });
+});
+
 describe('Link "Pular para o conteúdo"', () => {
   it('existe e aponta para "#conteudo-principal" em qualquer rota', () => {
     const { getByRole } = renderEm("/");
@@ -140,11 +188,52 @@ describe('Link "Pular para o conteúdo"', () => {
 });
 
 describe("T5 — Página não encontrada", () => {
-  it('tem link "Voltar para Divergências" apontando para "/"', () => {
-    const { getByRole } = renderEm("/rota-inexistente");
+  it('tem link "Ir para Divergências →" apontando para "/" (seta decorativa)', () => {
+    const { getByRole, queryByRole } = renderEm("/rota-inexistente");
 
-    const link = getByRole("link", { name: /voltar para divergências/i });
+    const link = getByRole("link", { name: "Ir para Divergências" });
     expect(link).toHaveAttribute("href", "/");
+    expect(link.textContent).toBe("Ir para Divergências →");
+    expect(
+      queryByRole("link", { name: /voltar para divergências/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("mostra o código 404 e o texto com o exemplo de código, sem a antiga 'Dica'", () => {
+    const { getByText, queryByText } = renderEm("/rota-inexistente");
+
+    expect(getByText("404")).toHaveClass("mono");
+    expect(getByText("PED-000123")).toHaveClass("mono");
+    expect(queryByText(/dica:/i)).not.toBeInTheDocument();
+  });
+
+  it("tem busca própria (variante 'pagina', id 'busca-pedido-404') e é a única busca da página", () => {
+    const { container, getAllByRole, getByRole } = renderEm("/rota-inexistente");
+
+    expect(getAllByRole("search")).toHaveLength(1);
+    const busca = getByRole("search");
+    expect(busca).toHaveClass("campo-busca--pagina");
+    expect(container.querySelector(".casca__conteudo")).toContainElement(busca);
+
+    const campo = getByRole("searchbox", { name: "Buscar pedido" });
+    expect(campo).toHaveAttribute("id", "busca-pedido-404");
+    expect(
+      within(busca).getByRole("button", { name: "Buscar" }).textContent,
+    ).toBe("Buscar");
+  });
+
+  it("a busca da T5 navega para /pedido/{código}", () => {
+    const { getByRole, queryByRole } = renderEm("/rota-inexistente");
+
+    fireEvent.change(getByRole("searchbox", { name: "Buscar pedido" }), {
+      target: { value: "PED-000123" },
+    });
+    fireEvent.click(getByRole("button", { name: "Buscar" }));
+
+    // Saiu da T5: a rota agora é /pedido/PED-000123 (tela T2).
+    expect(
+      queryByRole("heading", { name: "Página não encontrada" }),
+    ).not.toBeInTheDocument();
   });
 
   it("não faz nenhuma chamada de rede ao montar (fetch mockado nunca é chamado)", () => {

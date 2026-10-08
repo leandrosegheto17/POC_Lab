@@ -168,10 +168,45 @@ function renderizar() {
   );
 }
 
+/**
+ * Ajuste Modelo B (2026-10-08): a página renderiza a forma PC e a forma do
+ * celular e alterna só por CSS (jsdom não aplica o CSS, então as duas estão
+ * no DOM). Os testes consultam cada forma pelo seu contêiner.
+ */
+function formaPc(): HTMLElement {
+  const elemento = document.querySelector(".qualidade__pc");
+  if (!(elemento instanceof HTMLElement)) {
+    throw new Error("forma PC (.qualidade__pc) não encontrada");
+  }
+  return elemento;
+}
+
+function formaCelular(): HTMLElement {
+  const elemento = document.querySelector(".qualidade__celular");
+  if (!(elemento instanceof HTMLElement)) {
+    throw new Error("forma do celular (.qualidade__celular) não encontrada");
+  }
+  return elemento;
+}
+
+/** Seção (cartão) da forma PC cujo h2 tem o nome dado. */
+function secaoPc(nome: string): HTMLElement {
+  return within(formaPc())
+    .getByRole("heading", { level: 2, name: nome })
+    .closest("section") as HTMLElement;
+}
+
+/** `<details>` da forma do celular cujo h2 (dentro do summary) tem o nome dado. */
+function detalhesCelular(nome: string): HTMLDetailsElement {
+  return within(formaCelular())
+    .getByRole("heading", { level: 2, name: nome })
+    .closest("details") as HTMLDetailsElement;
+}
+
 // Ordem fixa esperada de exibição (wireframe) — DIFERENTE da ordem do mock
 // acima, que segue a ordem dos literais de `TipoAchado`.
 const TITULOS_EM_ORDEM = [
-  "Datas por formato",
+  "Datas em dois formatos",
   "Pedidos sem envio",
   "Valores fora do padrão",
   "Linhas rejeitadas",
@@ -193,19 +228,26 @@ describe("Qualidade — sucesso", () => {
     renderizar();
 
     await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { level: 1, name: "Qualidade dos dados" }),
-      ).toBeInTheDocument();
+      expect(formaPc()).toBeInTheDocument();
     });
 
-    const titulosHeadings = screen
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Qualidade dos dados" }),
+    ).toBeInTheDocument();
+
+    const titulosPc = within(formaPc())
       .getAllByRole("heading", { level: 2 })
       .map((heading) => heading.textContent);
+    expect(titulosPc).toEqual([...TITULOS_EM_ORDEM, "Sugestões da IA"]);
 
-    expect(titulosHeadings).toEqual([...TITULOS_EM_ORDEM, "Sugestões da IA"]);
+    // Celular: a mesma ordem, cada título num <h2> dentro do <summary>.
+    const titulosCelular = within(formaCelular())
+      .getAllByRole("heading", { level: 2 })
+      .map((heading) => heading.textContent);
+    expect(titulosCelular).toEqual([...TITULOS_EM_ORDEM, "Sugestões da IA"]);
   });
 
-  it("cada exemplo mostra a EtiquetaFonte certa e link para /pedido/{pedido} quando houver", async () => {
+  it("topo: rótulo da página (PC) e subtítulo (celular)", async () => {
     instalarFetchMock(async () =>
       respostaFake({ ok: true, json: async () => respostaQualidadeValida() }),
     );
@@ -213,32 +255,169 @@ describe("Qualidade — sucesso", () => {
     renderizar();
 
     await waitFor(() => {
-      expect(screen.getByText("PED-010")).toBeInTheDocument();
+      expect(formaPc()).toBeInTheDocument();
     });
 
-    // "Datas por formato" — exemplo tem `pedido`, logo é um link.
-    const linkData = screen.getByRole("link", { name: "PED-010" });
-    expect(linkData).toHaveAttribute("href", "/pedido/PED-010");
+    expect(screen.getByText("Problemas do dado, não do pedido")).toHaveClass(
+      "rotulo-pagina",
+    );
+    expect(screen.getByText("Problemas do dado, não do pedido.")).toHaveClass(
+      "qualidade__subtitulo",
+    );
+  });
 
-    const secaoDatas = screen
-      .getByRole("heading", { level: 2, name: "Datas por formato" })
-      .closest("section") as HTMLElement;
-    expect(within(secaoDatas).getByText("Vendas")).toBeInTheDocument();
+  it("PC: 7 mini-cartões-âncora em 'Tipos de achado', com contagem e o primeiro selecionado", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({ ok: true, json: async () => respostaQualidadeValida() }),
+    );
+
+    renderizar();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("navigation", { name: "Tipos de achado" }),
+      ).toBeInTheDocument();
+    });
+
+    const nav = screen.getByRole("navigation", { name: "Tipos de achado" });
+    const links = within(nav).getAllByRole("link");
+    expect(links).toHaveLength(7);
+    expect(links[0]).toHaveAttribute("href", "#achado-formato_data");
+    expect(links[0]).toHaveTextContent("Datas em dois formatos3");
+    expect(links[3]).toHaveAttribute("href", "#achado-linha_invalida");
+    expect(links[3]).toHaveTextContent("Linhas rejeitadas5");
+
+    // Sem fragmento na URL, o primeiro é o atual.
+    expect(links[0]).toHaveAttribute("aria-current", "true");
+    expect(links[0]).toHaveClass("qualidade__tipo--atual");
+    links.slice(1).forEach((link) =>
+      expect(link).not.toHaveAttribute("aria-current"),
+    );
+
+    // Cada âncora aponta para o cartão do achado.
+    expect(
+      document.getElementById("achado-formato_data"),
+    ).toContainElement(
+      within(formaPc()).getByRole("heading", {
+        level: 2,
+        name: "Datas em dois formatos",
+      }),
+    );
+
+    // Clicar noutro mini-cartão move a seleção.
+    fireEvent.click(links[2]);
+    expect(links[2]).toHaveAttribute("aria-current", "true");
+    expect(links[0]).not.toHaveAttribute("aria-current");
+  });
+
+  it("PC: o fragmento da URL define o mini-cartão selecionado", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({ ok: true, json: async () => respostaQualidadeValida() }),
+    );
+
+    render(
+      <MemoryRouter initialEntries={["/qualidade#achado-fora_de_ordem"]}>
+        <Qualidade />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("navigation", { name: "Tipos de achado" }),
+      ).toBeInTheDocument();
+    });
+
+    const atuais = within(
+      screen.getByRole("navigation", { name: "Tipos de achado" }),
+    )
+      .getAllByRole("link")
+      .filter((link) => link.getAttribute("aria-current") === "true");
+    expect(atuais).toHaveLength(1);
+    expect(atuais[0]).toHaveAttribute("href", "#achado-fora_de_ordem");
+  });
+
+  it("PC: contagem com milhar ao lado do título e regra na caixa de fórmula", async () => {
+    const resposta = respostaQualidadeValida() as {
+      achados: Array<{ tipo: string; contagem: number }>;
+    };
+    resposta.achados.find((a) => a.tipo === "formato_data")!.contagem = 15452;
+    instalarFetchMock(async () =>
+      respostaFake({ ok: true, json: async () => resposta }),
+    );
+
+    renderizar();
+
+    await waitFor(() => {
+      expect(formaPc()).toBeInTheDocument();
+    });
+
+    const secao = secaoPc("Datas em dois formatos");
+    expect(secao).toHaveClass("cartao");
+    expect(secao).toHaveAttribute("id", "achado-formato_data");
+    expect(within(secao).getByText("15.452")).toHaveClass("mono");
+    expect(
+      within(secao).getByText(
+        "Regra: Datas devem estar no formato ISO 8601 (AAAA-MM-DD).",
+      ),
+    ).toHaveClass("caixa-formula");
+  });
+
+  it("PC: exemplos com Fonte em texto, Referência em mono (link quando há pedido, '#' em vendas numéricas) e Detalhe", async () => {
+    const resposta = respostaQualidadeValida() as {
+      achados: Array<{ tipo: string; exemplos: unknown[] }>;
+    };
+    resposta.achados.find((a) => a.tipo === "linha_invalida")!.exemplos = [
+      exemplo({
+        fonte: "vendas",
+        referencia: "11078",
+        detalhe: "Campo 'valor' ausente",
+      }),
+    ];
+    instalarFetchMock(async () =>
+      respostaFake({ ok: true, json: async () => resposta }),
+    );
+
+    renderizar();
+
+    await waitFor(() => {
+      expect(formaPc()).toBeInTheDocument();
+    });
+
+    // "Datas em dois formatos" — exemplo tem `pedido`, logo é um link mono.
+    const secaoDatas = secaoPc("Datas em dois formatos");
+    const linkData = within(secaoDatas).getByRole("link", { name: "PED-010" });
+    expect(linkData).toHaveAttribute("href", "/pedido/PED-010");
+    expect(linkData).toHaveClass("mono");
+    // Fonte em texto simples (sem pílula).
+    const celulaFonte = within(secaoDatas).getByText("Vendas");
+    expect(celulaFonte.tagName).toBe("TD");
+    expect(
+      within(secaoDatas).getByText("Data '10/01/2026' fora do formato"),
+    ).toBeInTheDocument();
+    // Colunas: Fonte | Referência | Detalhe.
+    expect(
+      within(secaoDatas)
+        .getAllByRole("columnheader")
+        .map((th) => th.textContent),
+    ).toEqual(["Fonte", "Referência", "Detalhe"]);
 
     // "Pagamentos sem identificação" — exemplo SEM `pedido`, referência é
     // texto simples, não link.
-    const secaoSemIdentificacao = screen
-      .getByRole("heading", {
-        level: 2,
-        name: "Pagamentos sem identificação",
-      })
-      .closest("section") as HTMLElement;
-    expect(
-      within(secaoSemIdentificacao).getByText("PAG-100"),
-    ).toBeInTheDocument();
+    const secaoSemIdentificacao = secaoPc("Pagamentos sem identificação");
+    expect(within(secaoSemIdentificacao).getByText("PAG-100")).toHaveClass(
+      "mono",
+    );
     expect(
       within(secaoSemIdentificacao).queryByRole("link", { name: "PAG-100" }),
     ).not.toBeInTheDocument();
+    expect(
+      within(secaoSemIdentificacao).getByText("Pagamentos"),
+    ).toBeInTheDocument();
+
+    // Vendas com referência numérica ganha o prefixo "#".
+    expect(
+      within(secaoPc("Linhas rejeitadas")).getByText("#11078"),
+    ).toBeInTheDocument();
   });
 
   it("achado com contagem 0 mostra a regra e 'Nenhum caso encontrado.', sem tabela", async () => {
@@ -249,14 +428,10 @@ describe("Qualidade — sucesso", () => {
     renderizar();
 
     await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { level: 2, name: "Registros repetidos" }),
-      ).toBeInTheDocument();
+      expect(formaPc()).toBeInTheDocument();
     });
 
-    const secao = screen
-      .getByRole("heading", { level: 2, name: "Registros repetidos" })
-      .closest("section") as HTMLElement;
+    const secao = secaoPc("Registros repetidos");
 
     expect(
       within(secao).getByText(
@@ -265,9 +440,53 @@ describe("Qualidade — sucesso", () => {
     ).toBeInTheDocument();
     expect(within(secao).getByText("Nenhum caso encontrado.")).toBeInTheDocument();
     expect(within(secao).queryByRole("table")).not.toBeInTheDocument();
+
+    const detalhes = detalhesCelular("Registros repetidos");
+    expect(within(detalhes).getByText("Nenhum caso encontrado.")).toBeInTheDocument();
+    expect(within(detalhes).queryByRole("list")).not.toBeInTheDocument();
   });
 
-  it("ia.utilizada === false mostra a mensagem fixa de IA não utilizada", async () => {
+  it("celular: um <details> por achado (o primeiro aberto), h2 no summary, contagem, regra e exemplos em linhas", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({ ok: true, json: async () => respostaQualidadeValida() }),
+    );
+
+    renderizar();
+
+    await waitFor(() => {
+      expect(formaCelular()).toBeInTheDocument();
+    });
+
+    const todos = formaCelular().querySelectorAll("details");
+    // 7 achados + Sugestões da IA.
+    expect(todos).toHaveLength(8);
+    expect(todos[0].open).toBe(true);
+    Array.from(todos)
+      .slice(1)
+      .forEach((detalhes) => expect(detalhes.open).toBe(false));
+
+    const datas = detalhesCelular("Datas em dois formatos");
+    const resumo = datas.querySelector("summary") as HTMLElement;
+    expect(resumo.querySelector("h2")?.textContent).toBe(
+      "Datas em dois formatos",
+    );
+    expect(resumo).toHaveTextContent("3");
+    expect(
+      within(datas).getByText(
+        "Regra: Datas devem estar no formato ISO 8601 (AAAA-MM-DD).",
+      ),
+    ).toHaveClass("caixa-formula");
+    const link = within(datas).getByText("PED-010");
+    expect(link.tagName).toBe("A");
+    expect(link).toHaveAttribute("href", "/pedido/PED-010");
+    expect(
+      within(datas).getByText("Data '10/01/2026' fora do formato"),
+    ).toHaveClass("achado-celular__detalhe");
+    // Sem tabela no celular.
+    expect(datas.querySelector("table")).toBeNull();
+  });
+
+  it("ia.utilizada === false mostra a mensagem fixa de IA não utilizada (PC e celular, na caixa de regra)", async () => {
     instalarFetchMock(async () =>
       respostaFake({
         ok: true,
@@ -278,12 +497,36 @@ describe("Qualidade — sucesso", () => {
     renderizar();
 
     await waitFor(() => {
-      expect(
-        screen.getByText(
-          'IA não utilizada nesta publicação: pagamentos ficaram "sem sugestão".',
-        ),
-      ).toBeInTheDocument();
+      expect(formaPc()).toBeInTheDocument();
     });
+
+    const mensagem =
+      'IA não utilizada nesta publicação: pagamentos ficaram "sem sugestão".';
+    expect(within(secaoPc("Sugestões da IA")).getByText(mensagem)).toHaveClass(
+      "caixa-formula",
+    );
+    expect(
+      within(detalhesCelular("Sugestões da IA")).getByText(mensagem),
+    ).toHaveClass("caixa-formula");
+  });
+
+  it("Sugestões da IA (PC): cartão tracejado, aviso 'À parte' e sem selo 'opcional'", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({ ok: true, json: async () => respostaQualidadeValida() }),
+    );
+
+    renderizar();
+
+    await waitFor(() => {
+      expect(formaPc()).toBeInTheDocument();
+    });
+
+    const secaoIa = secaoPc("Sugestões da IA");
+    expect(secaoIa).toHaveClass("cartao", "qualidade-ia");
+    expect(
+      within(secaoIa).getByText("À parte: não entram nos indicadores"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/opcional/i)).not.toBeInTheDocument();
   });
 });
 
@@ -404,19 +647,23 @@ describe("Qualidade — Sugestões da IA (TP-0085)", () => {
     renderizar();
 
     await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { level: 2, name: "Sugestões da IA" }),
-      ).toBeInTheDocument();
+      expect(formaPc()).toBeInTheDocument();
     });
 
-    const secaoIa = screen
-      .getByRole("heading", { level: 2, name: "Sugestões da IA" })
-      .closest("section") as HTMLElement;
+    const secaoIa = secaoPc("Sugestões da IA");
 
     // "PAG-100" também aparece no exemplo da seção "Pagamentos sem
     // identificação" da mesma fixture — escopar a esta seção evita
     // ambiguidade (`within`, não `screen`).
-    expect(within(secaoIa).getByText("PAG-100")).toBeInTheDocument();
+    expect(within(secaoIa).getByText("PAG-100")).toHaveClass("mono");
+    expect(
+      within(secaoIa).getByRole("region", { name: "Sugestões da IA" }),
+    ).toBeInTheDocument();
+    expect(
+      within(secaoIa).getByText(
+        "A IA sugere o pedido de um pagamento com referência vaga. Uma regra confere valor e data; se não bater, a sugestão é rejeitada.",
+      ),
+    ).toHaveClass("caixa-formula");
 
     expect(
       within(secaoIa).getByRole("columnheader", { name: "Pagamento" }),
@@ -436,7 +683,8 @@ describe("Qualidade — Sugestões da IA (TP-0085)", () => {
       within(secaoIa).getByRole("columnheader", { name: "Motivo da regra" }),
     ).toBeInTheDocument();
 
-    expect(within(secaoIa).getByText("ref pedido 100")).toBeInTheDocument();
+    // Texto da referência entre aspas.
+    expect(within(secaoIa).getByText('"ref pedido 100"')).toBeInTheDocument();
     expect(
       within(secaoIa).getByText(
         "Valor e data batem com o saldo em aberto.",
@@ -452,8 +700,35 @@ describe("Qualidade — Sugestões da IA (TP-0085)", () => {
     });
     expect(linkPedido200).toHaveAttribute("href", "/pedido/PED-200");
 
-    expect(within(secaoIa).getByText("Conferida")).toBeInTheDocument();
-    expect(within(secaoIa).getByText("Não conferida")).toBeInTheDocument();
+    // "Conferida?" como EtiquetaEstado: Aceita (ok) / Rejeitada (ruim).
+    const aceita = within(secaoIa).getByText("Aceita");
+    expect(aceita).toHaveClass("etiqueta", "etiqueta--ok");
+    const rejeitada = within(secaoIa).getByText("Rejeitada");
+    expect(rejeitada).toHaveClass("etiqueta", "etiqueta--ruim");
+
+    // Celular: linhas "pagamento → pedido" + etiqueta, sem tabela.
+    const detalhesIa = detalhesCelular("Sugestões da IA");
+    expect(detalhesIa).toHaveClass("achado-celular--tracejado");
+    expect(detalhesIa.querySelector("table")).toBeNull();
+    expect(
+      within(detalhesIa).getByText(
+        "Não entram nos indicadores. Uma regra confere valor e data de cada sugestão.",
+      ),
+    ).toHaveClass("caixa-formula");
+    // `querySelectorAll` (não `getAllByRole`): o <details> começa fechado.
+    const linhas = Array.from(
+      detalhesIa.querySelectorAll<HTMLElement>("li"),
+    );
+    expect(linhas).toHaveLength(2);
+    expect(linhas[0]).toHaveTextContent("PAG-100 → PED-100");
+    expect(within(linhas[0]).getByText("PED-100")).toHaveAttribute(
+      "href",
+      "/pedido/PED-100",
+    );
+    expect(within(linhas[0]).getByText("Aceita")).toHaveClass("etiqueta--ok");
+    expect(within(linhas[1]).getByText("Rejeitada")).toHaveClass(
+      "etiqueta--ruim",
+    );
   });
 
   it("ia.utilizada === true com sugestoes: [] mostra a mensagem de 'sem sugestões'", async () => {
@@ -467,16 +742,15 @@ describe("Qualidade — Sugestões da IA (TP-0085)", () => {
     renderizar();
 
     await waitFor(() => {
-      expect(
-        screen.getByText(
-          'IA não utilizada nesta publicação: pagamentos ficaram "sem sugestão".',
-        ),
-      ).toBeInTheDocument();
+      expect(formaPc()).toBeInTheDocument();
     });
 
-    const secaoIa = screen
-      .getByRole("heading", { level: 2, name: "Sugestões da IA" })
-      .closest("section") as HTMLElement;
+    const secaoIa = secaoPc("Sugestões da IA");
+    expect(
+      within(secaoIa).getByText(
+        'IA não utilizada nesta publicação: pagamentos ficaram "sem sugestão".',
+      ),
+    ).toBeInTheDocument();
     expect(within(secaoIa).queryByRole("table")).not.toBeInTheDocument();
   });
 
@@ -491,12 +765,14 @@ describe("Qualidade — Sugestões da IA (TP-0085)", () => {
     renderizar();
 
     await waitFor(() => {
-      expect(
-        screen.getByText(
-          'IA não utilizada nesta publicação: pagamentos ficaram "sem sugestão".',
-        ),
-      ).toBeInTheDocument();
+      expect(formaPc()).toBeInTheDocument();
     });
+
+    expect(
+      screen.getAllByText(
+        'IA não utilizada nesta publicação: pagamentos ficaram "sem sugestão".',
+      ),
+    ).toHaveLength(2);
   });
 
   it("item malformado (sem 'motivo') é descartado; o item válido continua aparecendo", async () => {
@@ -526,8 +802,16 @@ describe("Qualidade — Sugestões da IA (TP-0085)", () => {
     renderizar();
 
     await waitFor(() => {
-      expect(screen.getByText("PAG-300")).toBeInTheDocument();
+      expect(formaPc()).toBeInTheDocument();
     });
+
+    // Válido aparece nas duas formas (tabela no PC, linha no celular).
+    expect(
+      within(secaoPc("Sugestões da IA")).getByText("PAG-300"),
+    ).toBeInTheDocument();
+    expect(
+      within(detalhesCelular("Sugestões da IA")).getByText("PAG-300"),
+    ).toBeInTheDocument();
 
     expect(screen.queryByText("PAG-900")).not.toBeInTheDocument();
     expect(screen.queryByText("ref malformada")).not.toBeInTheDocument();
@@ -568,9 +852,7 @@ describe("Qualidade — acessibilidade (vitest-axe)", () => {
     const { container } = renderizar();
 
     await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { level: 2, name: "Registros repetidos" }),
-      ).toBeInTheDocument();
+      expect(formaPc()).toBeInTheDocument();
     });
 
     expect(await axe(container)).toHaveNoViolations();
@@ -603,9 +885,7 @@ describe("Qualidade — acessibilidade (vitest-axe)", () => {
     const { container } = renderizar();
 
     await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { level: 2, name: "Sugestões da IA" }),
-      ).toBeInTheDocument();
+      expect(formaPc()).toBeInTheDocument();
     });
 
     expect(await axe(container)).toHaveNoViolations();

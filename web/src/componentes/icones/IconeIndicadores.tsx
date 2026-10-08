@@ -1,19 +1,19 @@
-// TP-0055 — ícone decorativo do item de navegação "Indicadores" (gráfico de
-// barras simples). `aria-hidden="true"`: o texto do item já comunica o
-// destino — mesmo padrão de IconeSpinner/IconeVazio/IconeErro (TP-0053).
+// Ajuste Modelo B (2026-10-08) — ícone do item "Indicadores" (barras),
+// traço do mockup;
+// tamanho por CSS (.icone-nav: 18px no PC, 20px no celular). `aria-hidden`:
+// o texto do item já comunica o destino.
 export function IconeIndicadores() {
   return (
     <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
+      className="icone-nav"
+      viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth="2"
+      strokeLinecap="round"
       aria-hidden="true"
     >
-      <path d="M3 17V10M9 17V5M15 17V12.5" strokeLinecap="round" />
-      <path d="M2.5 17h15" strokeLinecap="round" />
+      <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
     </svg>
   );
 }

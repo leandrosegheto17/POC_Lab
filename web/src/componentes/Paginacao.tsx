@@ -5,6 +5,8 @@ type PaginacaoProps = {
   totalPaginas: number;
   aoMudarPagina: (pagina: number) => void;
   carregando?: boolean;
+  /** Ajuste Modelo B (2026-10-08): texto à esquerda no PC, ex. "1–50 de 8.856". */
+  resumo?: string;
 };
 
 type ItemPagina = number | "reticencias";
@@ -14,6 +16,8 @@ type ItemPagina = number | "reticencias";
 // primeira e a última página, mais a página atual e suas vizinhas
 // imediatas (atual-1, atual, atual+1), inserindo "…" nos saltos — evita uma
 // lista longa demais sem esconder o início/fim nem a posição atual.
+// Ajuste Modelo B (2026-10-08): na página 1 mostra também a 3 ("1 2 3 … 40",
+// como o mockup).
 function gerarItensDePagina(
   pagina: number,
   totalPaginas: number,
@@ -28,6 +32,7 @@ function gerarItensDePagina(
     pagina - 1,
     pagina,
     pagina + 1,
+    ...(pagina === 1 ? [3] : []),
   ]);
 
   const paginasValidas = [...paginasNucleo]
@@ -36,15 +41,13 @@ function gerarItensDePagina(
 
   const itens: ItemPagina[] = [];
 
-  for (let indice = 0; indice < paginasValidas.length; indice += 1) {
-    const atual = paginasValidas[indice];
-    const anterior = paginasValidas[indice - 1];
-
-    if (indice > 0 && atual - anterior > 1) {
+  let anterior: number | undefined;
+  for (const atual of paginasValidas) {
+    if (anterior !== undefined && atual - anterior > 1) {
       itens.push("reticencias");
     }
-
     itens.push(atual);
+    anterior = atual;
   }
 
   return itens;
@@ -64,6 +67,7 @@ export function Paginacao({
   totalPaginas,
   aoMudarPagina,
   carregando = false,
+  resumo,
 }: PaginacaoProps) {
   const paginaAnteriorDesabilitada = pagina === 1 || carregando;
   const proximaPaginaDesabilitada = pagina === totalPaginas || carregando;
@@ -95,9 +99,11 @@ export function Paginacao({
 
   return (
     <nav aria-label="Paginação" className="paginacao">
+      {resumo ? <span className="paginacao__resumo">{resumo}</span> : null}
       <div className="paginacao-completa">
         <button
           type="button"
+          className="paginacao__botao"
           aria-disabled={paginaAnteriorDesabilitada || undefined}
           onClick={irParaPaginaAnterior}
         >
@@ -106,13 +112,18 @@ export function Paginacao({
         <ul className="paginacao-lista">
           {itens.map((item, indice) =>
             item === "reticencias" ? (
-              <li key={`reticencias-${indice}`} aria-hidden="true">
+              <li
+                key={`reticencias-${indice}`}
+                className="paginacao__reticencias"
+                aria-hidden="true"
+              >
                 …
               </li>
             ) : (
               <li key={item}>
                 <button
                   type="button"
+                  className="paginacao__botao"
                   aria-current={item === pagina ? "page" : undefined}
                   aria-disabled={carregando || undefined}
                   onClick={() => irParaPagina(item)}
@@ -125,6 +136,7 @@ export function Paginacao({
         </ul>
         <button
           type="button"
+          className="paginacao__botao"
           aria-disabled={proximaPaginaDesabilitada || undefined}
           onClick={irParaProximaPagina}
         >
@@ -134,16 +146,18 @@ export function Paginacao({
       <div className="paginacao-compacta">
         <button
           type="button"
+          className="paginacao__botao"
           aria-disabled={paginaAnteriorDesabilitada || undefined}
           onClick={irParaPaginaAnterior}
         >
           Anterior
         </button>
-        <span>
+        <span className="paginacao__posicao">
           Página {pagina} de {totalPaginas}
         </span>
         <button
           type="button"
+          className="paginacao__botao paginacao__botao--proxima"
           aria-disabled={proximaPaginaDesabilitada || undefined}
           onClick={irParaProximaPagina}
         >

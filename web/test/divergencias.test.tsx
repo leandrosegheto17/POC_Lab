@@ -4,7 +4,13 @@
 // refaz a mesma chamada (ver comentário de `construirUrlConsulta` em
 // `Divergencias.tsx`).
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { axe } from "vitest-axe";
 import { ProvedorResumo } from "../src/dados/contexto-resumo.tsx";
@@ -167,35 +173,63 @@ describe("Divergencias — sucesso", () => {
 
     renderizar();
 
+    // Ajuste Modelo B (2026-10-08): total dentro do h1, contando
+    // divergências (singular/plural) — no PC fica só para leitor de tela.
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Divergências (1 pedidos)" }),
+        screen.getByRole("heading", { name: "Divergências (1 divergência)" }),
       ).toBeInTheDocument();
     });
-
-    expect(screen.getByRole("link", { name: "PED-001" })).toHaveAttribute(
-      "href",
-      "/pedido/PED-001",
+    expect(screen.getByText("Fila de conciliação")).toHaveClass(
+      "rotulo-pagina",
     );
-    expect(screen.getByText("Pagamento duplicado")).toBeInTheDocument();
+
+    // Tabela (PC) e lista de cartões (celular) ficam no DOM, alternadas só
+    // por CSS — cada link aparece duas vezes, ambos para a T2.
+    const links = screen.getAllByRole("link", { name: "PED-001" });
+    expect(links).toHaveLength(2);
+    for (const link of links) {
+      expect(link).toHaveAttribute("href", "/pedido/PED-001");
+      expect(link).toHaveClass("mono");
+    }
+    // Ajuste Modelo B (2026-10-08): rótulo da etiqueta "Pago duas vezes".
     expect(
-      screen.getByText("Pagamento recebido em duplicidade"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("▸ ver 2 eventos")).toBeInTheDocument();
+      screen.getAllByText("Pago duas vezes", { selector: ".etiqueta" }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Pagamento recebido em duplicidade"),
+    ).toHaveLength(2);
+    expect(screen.getAllByText("2 eventos ▸")).toHaveLength(2);
 
-    const caption = screen.getByText(
-      "Pedidos com divergência — filtro: Todos — página 1 de 1",
-    );
+    const caption = screen.getByText("Filtro: Todos · página 1 de 1");
     expect(caption.tagName).toBe("CAPTION");
+
+    // Colunas sem Devido/Pago (fora deste ciclo, ADR-016).
+    const tabela = screen.getByRole("table");
+    const cabecalhos = within(tabela)
+      .getAllByRole("columnheader")
+      .map((th) => th.textContent);
+    expect(cabecalhos).toEqual(["Pedido", "Tipo", "Motivo", "Eventos"]);
+    expect(
+      screen.getByRole("region", { name: "Tabela de divergências" }),
+    ).toBeInTheDocument();
+
+    // Lista do celular: um cartão por divergência.
+    const lista = screen.getByRole("list", { name: "Lista de divergências" });
+    expect(within(lista).getAllByRole("listitem")[0]).toHaveClass(
+      "divergencias__cartao",
+    );
   });
 
-  it("expande os eventos dentro do <details>", async () => {
+  it("total no h1 com milhar e resumo da paginação 'início–fim de total'", async () => {
     instalarFetchMock(async () =>
       respostaFake({
         ok: true,
         json: async () =>
           respostaDivergenciasValida({
-            dados: [divergenciaValida("PED-002", "parcial")],
+            dados: [divergenciaValida("PED-001", "duplicado")],
+            total: 8856,
+            totalPaginas: 178,
           }),
       }),
     );
@@ -203,14 +237,106 @@ describe("Divergencias — sucesso", () => {
     renderizar();
 
     await waitFor(() => {
-      expect(screen.getByText("▸ ver 2 eventos")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", {
+          name: "Divergências (8.856 divergências)",
+        }),
+      ).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("▸ ver 2 eventos"));
-
+    expect(screen.getByText("1–50 de 8.856")).toBeInTheDocument();
     expect(
-      screen.getByText("pagamento — 2026-10-01 — pagamentos — evt-1"),
+      screen.getByText("Filtro: Todos · página 1 de 178"),
     ).toBeInTheDocument();
+  });
+
+  it("singular '1 evento ▸' quando há um só evento", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () =>
+          respostaDivergenciasValida({
+            dados: [
+              {
+                pedido: "PED-003",
+                tipo: "entrega_atrasada",
+                motivo: "6 dias depois da data limite",
+                eventos: [
+                  {
+                    tipo: "entrega",
+                    data: "2016-07-21T20:00:15.260Z",
+                    fonte: "rastreio",
+                    codigo: "RS-5521",
+                  },
+                ],
+              },
+            ],
+          }),
+      }),
+    );
+
+    renderizar();
+
+    await waitFor(() => {
+      expect(screen.getAllByText("1 evento ▸")).toHaveLength(2);
+    });
+  });
+
+  it("expande os eventos dentro do <details> com data, sistema e tipo em português", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () =>
+          respostaDivergenciasValida({
+            dados: [
+              {
+                pedido: "PED-002",
+                tipo: "parcial",
+                motivo: "Faltam R$ 663,40",
+                eventos: [
+                  {
+                    tipo: "pagamento",
+                    data: "2016-07-21T20:00:15.260Z",
+                    fonte: "pagamentos",
+                    codigo: "TX-88812",
+                  },
+                  {
+                    tipo: "transporte",
+                    data: "2016-07-22",
+                    fonte: "rastreio",
+                    codigo: "RS-5521",
+                  },
+                ],
+              },
+            ],
+          }),
+      }),
+    );
+
+    const { container } = renderizar();
+
+    await waitFor(() => {
+      expect(screen.getAllByText("2 eventos ▸")).toHaveLength(2);
+    });
+
+    fireEvent.click(screen.getAllByText("2 eventos ▸")[0]);
+
+    const tabela = screen.getByRole("table");
+    const detalhes = tabela.querySelector("details");
+    expect(detalhes).not.toBeNull();
+
+    const itens = Array.from(detalhes!.querySelectorAll("li")).map(
+      (li) => li.textContent,
+    );
+    expect(itens).toEqual([
+      "2016-07-21 · Pagamentos · Pagamento · TX-88812",
+      "2016-07-22 · Transportadora · Em trânsito · RS-5521",
+    ]);
+    expect(within(detalhes as HTMLElement).getByText("TX-88812")).toHaveClass(
+      "mono",
+    );
+    // O <p> solto antigo ("50 de N divergências…") não existe mais.
+    expect(container.textContent).not.toMatch(/divergências, página/);
   });
 });
 
@@ -270,7 +396,7 @@ describe("Divergencias — filtro via URL e troca de chip", () => {
       ).toBeChecked();
     });
 
-    fireEvent.click(screen.getByRole("radio", { name: "Todos" }));
+    fireEvent.click(screen.getByRole("radio", { name: /^Todos/ }));
 
     await waitFor(() => {
       const chamadas = chamadasDeDivergencias(mock);
@@ -400,7 +526,9 @@ describe("Divergencias — acessibilidade (vitest-axe)", () => {
     const { container } = renderizar();
 
     await waitFor(() => {
-      expect(screen.getByRole("link", { name: "PED-900" })).toBeInTheDocument();
+      expect(
+        screen.getAllByRole("link", { name: "PED-900" }).length,
+      ).toBeGreaterThan(0);
     });
 
     expect(await axe(container)).toHaveNoViolations();

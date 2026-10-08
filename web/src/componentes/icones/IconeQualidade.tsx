@@ -1,22 +1,20 @@
-// TP-0055 — ícone decorativo do item de navegação "Qualidade" (escudo com
-// marca de verificação). `aria-hidden="true"`: o texto do item já comunica
-// o destino — mesmo padrão de IconeSpinner/IconeVazio/IconeErro (TP-0053).
+// Ajuste Modelo B (2026-10-08) — ícone do item "Qualidade dos dados"
+// (caixa com marca de verificação), traço do mockup;
+// tamanho por CSS (.icone-nav: 18px no PC, 20px no celular). `aria-hidden`:
+// o texto do item já comunica o destino.
 export function IconeQualidade() {
   return (
     <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
+      className="icone-nav"
+      viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth="2"
+      strokeLinecap="round"
       aria-hidden="true"
     >
-      <path
-        d="M10 2.5 16.5 5v5.5c0 4-3 6.5-6.5 7-3.5-.5-6.5-3-6.5-7V5L10 2.5Z"
-        strokeLinejoin="round"
-      />
-      <path d="M7 10l2 2 4-4.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 11l3 3 8-8" />
+      <path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" />
     </svg>
   );
 }

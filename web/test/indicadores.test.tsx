@@ -3,7 +3,13 @@
 // "Tentar de novo" refaz a mesma chamada (mesmo truque de fragmento de
 // `Divergencias.tsx`, TP-0059).
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { axe } from "vitest-axe";
 import { Indicadores } from "../src/paginas/Indicadores.tsx";
@@ -31,8 +37,10 @@ function blocoEntregasNoPrazo(opcoes?: { linhas?: LinhaMock[] }): unknown {
     formula:
       "numero de entregas com momento_fato <= dataLimite / numero de pedidos com entrega conhecida, por transportadora e mes da entrega",
     linhas: opcoes?.linhas ?? [
+      linha("Transportadora A / 2026-08", 5, 10, 0.5),
       linha("Transportadora A / 2026-09", 8, 10, 0.8),
-      linha("Pedidos sem entrega", 3, 1, 3),
+      linha("Transportadora B / 2026-09", 3, 4, 0.75),
+      linha("Pedidos sem entrega", 37, 1, 37),
     ],
     aParte: true,
   };
@@ -72,9 +80,11 @@ function blocoTempoMedio(opcoes?: { linhas?: LinhaMock[] }): unknown {
     chave: "tempoMedioPedidoEnvioEntrega",
     titulo: "Tempo médio pedido→envio e envio→entrega",
     formula: "soma de dias entre as datas ÷ contagem de pedidos elegíveis, por etapa",
+    // Números no formato real: numerador = soma de dias (fracionária),
+    // denominador = pedidos elegíveis, resultado = média arredondada.
     linhas: opcoes?.linhas ?? [
-      linha("pedido→envio", 120, 40, 3),
-      linha("envio→entrega", 80, 40, 2),
+      linha("pedido→envio", 136511.4, 16261, 8.39),
+      linha("envio→entrega", 66605.2, 16245, 4.1),
     ],
     aParte: false,
   };
@@ -85,8 +95,10 @@ function blocoValorPagoVsDevido(opcoes?: { linhas?: LinhaMock[] }): unknown {
     chave: "valorPagoVsDevido",
     titulo: "Valor pago × valor devido",
     formula: "Σ pago ÷ Σ devido",
+    // `resultado` do Total vem arredondado (0.99); a tela deve calcular
+    // numerador ÷ denominador (21,0 mi ÷ 21,3 mi = 98,6%).
     linhas: opcoes?.linhas ?? [
-      linha("Total", 900, 1000, 0.9),
+      linha("Total", 21000000, 21300000, 0.99),
       linha("sem_pagamento", 0, 100, 0),
       linha("parcial", 200, 300, 0.6667),
       linha("quitado", 600, 600, 1),
@@ -145,45 +157,155 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("Indicadores — sucesso", () => {
-  it("desenha título, fórmula e tabela de cada bloco, com a linha 'à parte' separada", async () => {
+/** Seção (`<section aria-labelledby>`) de um bloco, pelo nome do h2. */
+async function secaoDoBloco(nome: string): Promise<HTMLElement> {
+  const titulo = await screen.findByRole("heading", { level: 2, name: nome });
+  const secao = titulo.closest("section");
+  if (!secao) {
+    throw new Error(`seção do bloco "${nome}" não encontrada`);
+  }
+  return secao;
+}
+
+/** Texto completo da caixa de fórmula de uma seção. */
+function textoFormula(secao: HTMLElement): string {
+  const caixa = secao.querySelector(".caixa-formula");
+  return (caixa?.textContent ?? "").replace(/\s+/g, " ").trim();
+}
+
+const TITULO_ENTREGAS = "Entregas no prazo por transportadora e mês";
+const FORMULA_ENTREGAS =
+  "numero de entregas com momento_fato <= dataLimite / numero de pedidos com entrega conhecida, por transportadora e mes da entrega";
+
+describe("Indicadores — topo (Modelo B)", () => {
+  it("mostra o rótulo da página e o h1", async () => {
     instalarFetchMock(async () =>
       respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
     );
 
     renderizar();
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", {
-          level: 2,
-          name: "Entregas no prazo por transportadora e mês",
-        }),
-      ).toBeInTheDocument();
-    });
-
     expect(
-      screen.getByRole("heading", { level: 2, name: "Divergências por tipo" }),
+      screen.getByText("Cada número com fórmula, numerador e denominador"),
     ).toBeInTheDocument();
-
     expect(
-      screen.getByText(
-        "numero de entregas com momento_fato <= dataLimite / numero de pedidos com entrega conhecida, por transportadora e mes da entrega",
-      ),
+      screen.getByRole("heading", { level: 1, name: "Indicadores" }),
     ).toBeInTheDocument();
+    await secaoDoBloco(TITULO_ENTREGAS);
+  });
+});
 
-    // Linha principal do bloco de entregas, na tabela de %.
-    expect(screen.getByText("Transportadora A / 2026-09")).toBeInTheDocument();
-    expect(screen.getByText("80,0%")).toBeInTheDocument();
+describe("Indicadores — Entregas no prazo", () => {
+  it("mostra o geral (soma dos numeradores ÷ soma dos denominadores) com numerador e denominador", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    );
 
-    // Linha "à parte" NÃO entra na tabela de %: vem como parágrafo próprio
-    // com o valor bruto, fora das colunas Numerador/Denominador/%.
-    expect(
-      screen.getByText("Pedidos sem entrega: 3"),
-    ).toBeInTheDocument();
+    renderizar();
+    const secao = await secaoDoBloco(TITULO_ENTREGAS);
+
+    // (5 + 8 + 3) ÷ (10 + 10 + 4) = 16 ÷ 24 = 66,7%. A linha "à parte"
+    // (Pedidos sem entrega) não entra na soma.
+    expect(within(secao).getByText("66,7%")).toBeInTheDocument();
+    expect(within(secao).getByText("geral · 16 de 24")).toBeInTheDocument();
   });
 
-  it("mostra o texto específico quando o resultado de uma linha de entregas é nulo", async () => {
+  it("fórmula da API na caixa, com o total de pedidos sem entrega (sem linha solta)", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    );
+
+    renderizar();
+    const secao = await secaoDoBloco(TITULO_ENTREGAS);
+
+    expect(textoFormula(secao)).toBe(
+      `Fórmula: ${FORMULA_ENTREGAS}. Pedidos sem entrega ficam fora do denominador: 37.`,
+    );
+    expect(screen.queryByText("Pedidos sem entrega: 37")).not.toBeInTheDocument();
+  });
+
+  it("tabela em colunas (Transportadora, Mês, No prazo, Entregas, %) do mês mais recente por padrão", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    );
+
+    renderizar();
+    const secao = await secaoDoBloco(TITULO_ENTREGAS);
+    const tabela = within(secao).getByRole("table", { name: TITULO_ENTREGAS });
+
+    const cabecalhos = within(tabela)
+      .getAllByRole("columnheader")
+      .map((th) => th.textContent);
+    expect(cabecalhos).toEqual([
+      "Transportadora",
+      "Mês",
+      "No prazo",
+      "Entregas",
+      "%",
+      "Proporção",
+    ]);
+
+    const linhas = within(tabela).getAllByRole("row").slice(1);
+    expect(linhas).toHaveLength(2);
+    expect(
+      within(linhas[0]).getAllByRole("cell").map((td) => td.textContent),
+    ).toEqual(["Transportadora A", "2026-09", "8", "10", "80,0%", ""]);
+    expect(
+      within(linhas[1]).getAllByRole("cell").map((td) => td.textContent),
+    ).toEqual(["Transportadora B", "2026-09", "3", "4", "75,0%", ""]);
+  });
+
+  it("filtro 'Mês' lista os meses em ordem crescente e filtra no navegador, sem nova chamada à API", async () => {
+    const mock = instalarFetchMock(async () =>
+      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    );
+
+    renderizar();
+    const secao = await secaoDoBloco(TITULO_ENTREGAS);
+    const chamadasAntes = mock.mock.calls.length;
+
+    const seletor = within(secao).getByLabelText("Mês") as HTMLSelectElement;
+    expect(seletor.value).toBe("2026-09");
+    expect(Array.from(seletor.options).map((opcao) => opcao.value)).toEqual([
+      "2026-08",
+      "2026-09",
+    ]);
+
+    fireEvent.change(seletor, { target: { value: "2026-08" } });
+
+    const tabela = within(secao).getByRole("table", { name: TITULO_ENTREGAS });
+    const linhas = within(tabela).getAllByRole("row").slice(1);
+    expect(linhas).toHaveLength(1);
+    expect(
+      within(linhas[0]).getAllByRole("cell").map((td) => td.textContent),
+    ).toEqual(["Transportadora A", "2026-08", "5", "10", "50,0%", ""]);
+
+    // Lista do celular acompanha o mesmo filtro.
+    const listaCelular = secao.querySelector(".indicador__linhas");
+    expect(listaCelular?.querySelectorAll("li")).toHaveLength(1);
+    expect(listaCelular?.textContent).toContain("5/10");
+
+    expect(mock.mock.calls.length).toBe(chamadasAntes);
+  });
+
+  it("lista do celular: uma linha por transportadora com fração e %", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    );
+
+    renderizar();
+    const secao = await secaoDoBloco(TITULO_ENTREGAS);
+    const itens = Array.from(
+      secao.querySelectorAll(".indicador__linhas li"),
+    ).map((li) => li.textContent?.replace(/\s+/g, " ").trim());
+
+    expect(itens).toEqual([
+      "Transportadora A 8/1080,0%",
+      "Transportadora B 3/475,0%",
+    ]);
+  });
+
+  it("linha com denominador 0 mostra o texto específico, sem NaN", async () => {
     instalarFetchMock(async () =>
       respostaFake({
         ok: true,
@@ -200,94 +322,117 @@ describe("Indicadores — sucesso", () => {
     );
 
     renderizar();
+    const secao = await secaoDoBloco(TITULO_ENTREGAS);
 
-    await waitFor(() => {
-      expect(
-        screen.getByText("sem entregas com data conhecida"),
-      ).toBeInTheDocument();
-    });
+    expect(
+      within(secao).getAllByText("sem entregas com data conhecida").length,
+    ).toBeGreaterThan(0);
+    expect(secao.textContent).not.toContain("NaN");
   });
 
-  it("cada linha de divergências por tipo é um link para /?tipo=<literal>", async () => {
-    instalarFetchMock(async () =>
-      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
-    );
-
-    renderizar();
-
-    await waitFor(() => {
-      expect(screen.getByRole("link", { name: "duplicado" })).toBeInTheDocument();
-    });
-
-    expect(screen.getByRole("link", { name: "duplicado" })).toHaveAttribute(
-      "href",
-      "/?tipo=duplicado",
-    );
-    expect(screen.getByRole("link", { name: "parcial" })).toHaveAttribute(
-      "href",
-      "/?tipo=parcial",
-    );
-    expect(
-      screen.getByRole("link", { name: "pago_nao_enviado" }),
-    ).toHaveAttribute("href", "/?tipo=pago_nao_enviado");
-    expect(
-      screen.getByRole("link", { name: "enviado_nao_pago" }),
-    ).toHaveAttribute("href", "/?tipo=enviado_nao_pago");
-    expect(
-      screen.getByRole("link", { name: "entrega_atrasada" }),
-    ).toHaveAttribute("href", "/?tipo=entrega_atrasada");
-
-    // Linha com resultado 0 (não nulo) mostra percentual, não o texto de
-    // "sem dados" — distinção entre "zero" e "nulo".
-    expect(screen.getByText("0,0%")).toBeInTheDocument();
-  });
-});
-
-describe("Indicadores — casos de borda", () => {
-  it("bloco sem aParte não renderiza parágrafo de valor à parte", async () => {
-    // Só o bloco de divergências (sem aParte) na resposta — isola o caso de
-    // um bloco onde NENHUMA linha representa um valor "à parte", sem o
-    // bloco de entregas (que tem aParte) interferir na asserção.
-    instalarFetchMock(async () =>
-      respostaFake({
-        ok: true,
-        json: async () => [blocoDivergenciasPorTipo()],
-      }),
-    );
-
-    renderizar();
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { level: 2, name: "Divergências por tipo" }),
-      ).toBeInTheDocument();
-    });
-
-    expect(screen.queryByText(/sem entrega/i)).not.toBeInTheDocument();
-  });
-
-  it("bloco com todas as linhas de resultado nulo mostra o texto genérico em cada uma", async () => {
+  it("sem nenhuma linha de entrega: sem filtro e com aviso", async () => {
     instalarFetchMock(async () =>
       respostaFake({
         ok: true,
         json: async () =>
           respostaIndicadoresValida({
-            divergencias: blocoDivergenciasPorTipo({
-              linhas: [
-                linha("duplicado", 0, 0, null),
-                linha("parcial", 0, 0, null),
-              ],
+            entregas: blocoEntregasNoPrazo({
+              linhas: [linha("Pedidos sem entrega", 4, 1, 4)],
             }),
           }),
       }),
     );
 
     renderizar();
+    const secao = await secaoDoBloco(TITULO_ENTREGAS);
 
-    await waitFor(() => {
-      const ocorrencias = screen.getAllByText("sem dados suficientes");
-      expect(ocorrencias).toHaveLength(2);
+    expect(
+      within(secao).getByText("Nenhuma entrega com data conhecida."),
+    ).toBeInTheDocument();
+    expect(within(secao).queryByLabelText("Mês")).not.toBeInTheDocument();
+  });
+});
+
+describe("Indicadores — Divergências por tipo", () => {
+  it("tabela Tipo | Divergências em ordem decrescente, com etiqueta-link para /?tipo=<literal>", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    );
+
+    renderizar();
+    const secao = await secaoDoBloco("Divergências por tipo");
+    const tabela = within(secao).getByRole("table", {
+      name: "Divergências por tipo",
     });
+
+    expect(
+      within(tabela)
+        .getAllByRole("columnheader")
+        .map((th) => th.textContent),
+    ).toEqual(["Tipo", "Divergências"]);
+
+    const linhas = within(tabela).getAllByRole("row").slice(1);
+    expect(
+      linhas.map((tr) =>
+        within(tr)
+          .getAllByRole("cell")
+          .map((td) => td.textContent),
+      ),
+    ).toEqual([
+      ["Entrega atrasada", "4"],
+      ["Enviado e não pago", "3"],
+      ["Pago duas vezes", "2"],
+      ["Pago e não enviado", "1"],
+      ["Pagamento parcial", "0"],
+    ]);
+
+    expect(
+      within(tabela).getByRole("link", { name: "Pago duas vezes" }),
+    ).toHaveAttribute("href", "/?tipo=duplicado");
+    expect(
+      within(tabela).getByRole("link", { name: "Pagamento parcial" }),
+    ).toHaveAttribute("href", "/?tipo=parcial");
+    expect(
+      within(tabela).getByRole("link", { name: "Pago e não enviado" }),
+    ).toHaveAttribute("href", "/?tipo=pago_nao_enviado");
+    expect(
+      within(tabela).getByRole("link", { name: "Enviado e não pago" }),
+    ).toHaveAttribute("href", "/?tipo=enviado_nao_pago");
+    expect(
+      within(tabela).getByRole("link", { name: "Entrega atrasada" }),
+    ).toHaveAttribute("href", "/?tipo=entrega_atrasada");
+  });
+
+  it("fórmula da API com o total de divergências", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    );
+
+    renderizar();
+    const secao = await secaoDoBloco("Divergências por tipo");
+
+    expect(textoFormula(secao)).toBe(
+      "Fórmula: numero de divergencias do tipo / total de divergencias (total: 10).",
+    );
+  });
+
+  it("lista do celular com os mesmos links e contagens", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({ ok: true, json: async () => respostaIndicadoresValida() }),
+    );
+
+    renderizar();
+    const secao = await secaoDoBloco("Divergências por tipo");
+    const itens = Array.from(
+      secao.querySelectorAll(".indicador__lista-tipos li"),
+    );
+
+    expect(itens).toHaveLength(5);
+    expect(itens[0].querySelector("a")).toHaveAttribute(
+      "href",
+      "/?tipo=entrega_atrasada",
+    );
+    expect(itens[0].textContent).toBe("Entrega atrasada4");
   });
 });
 
@@ -354,8 +499,8 @@ describe("Indicadores — carregando", () => {
   });
 });
 
-describe("Indicadores — complementares (TP-0071)", () => {
-  it("desenha as 4 seções (2 Must + 2 complementares) pelo mesmo componente Indicador, na ordem recebida da API", async () => {
+describe("Indicadores — os 4 blocos (Modelo B)", () => {
+  it("desenha as 4 seções na ordem da API, com os títulos do mockup e sem selos", async () => {
     instalarFetchMock(async () =>
       respostaFake({
         ok: true,
@@ -364,54 +509,66 @@ describe("Indicadores — complementares (TP-0071)", () => {
     );
 
     renderizar();
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", {
-          level: 2,
-          name: "Tempo médio pedido→envio e envio→entrega",
-        }),
-      ).toBeInTheDocument();
-    });
-
-    const titulos = [
-      "Entregas no prazo por transportadora e mês",
-      "Divergências por tipo",
-      "Tempo médio pedido→envio e envio→entrega",
-      "Valor pago × valor devido",
-    ];
+    await secaoDoBloco("Pago × devido");
 
     const cabecalhos = screen.getAllByRole("heading", { level: 2 });
-    expect(cabecalhos).toHaveLength(4);
-    expect(cabecalhos.map((cabecalho) => cabecalho.textContent)).toEqual(
-      titulos,
-    );
+    expect(cabecalhos.map((cabecalho) => cabecalho.textContent)).toEqual([
+      TITULO_ENTREGAS,
+      "Divergências por tipo",
+      "Tempo médio",
+      "Pago × devido",
+    ]);
 
-    // Fórmula e uma linha de cada bloco novo, confirmando que título/fórmula/
-    // linhas vêm do bloco correto (não de um bloco vizinho).
-    expect(
-      screen.getByText(
-        "soma de dias entre as datas ÷ contagem de pedidos elegíveis, por etapa",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByText("pedido→envio")).toBeInTheDocument();
-    expect(screen.getByText("envio→entrega")).toBeInTheDocument();
-
-    expect(screen.getByText("Σ pago ÷ Σ devido")).toBeInTheDocument();
-    expect(screen.getByText("Total")).toBeInTheDocument();
-    expect(screen.getByText("quitado")).toBeInTheDocument();
+    // Selos "DESEJÁVEL"/"OPCIONAL" não são usados (decisão de 2026-10-08).
+    expect(screen.queryByText(/desejável|opcional/i)).not.toBeInTheDocument();
   });
 
-  it("linha com resultado nulo (denominador 0) entre os blocos complementares mostra o texto genérico de 'sem dados', sem NaN/erro", async () => {
+  it("Tempo médio mostra dias (numerador ÷ denominador), não percentual", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () => respostaComplementaresValida(),
+      }),
+    );
+
+    renderizar();
+    const secao = await secaoDoBloco("Tempo médio");
+
+    // 136.511,4 ÷ 16.261 = 8,39… → "8,4 dias"; 66.605,2 ÷ 16.245 → "4,1 dias".
+    expect(within(secao).getByText("8,4 dias")).toBeInTheDocument();
+    expect(within(secao).getByText("4,1 dias")).toBeInTheDocument();
+    expect(within(secao).getByText("pedido → envio")).toBeInTheDocument();
+    expect(within(secao).getByText("envio → entrega")).toBeInTheDocument();
+    // Defeito antigo: a média saía como "839,0%".
+    expect(secao.textContent).not.toContain("%");
+  });
+
+  it("Tempo médio: fórmula da API com numerador e denominador de cada etapa", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () => respostaComplementaresValida(),
+      }),
+    );
+
+    renderizar();
+    const secao = await secaoDoBloco("Tempo médio");
+
+    expect(textoFormula(secao)).toBe(
+      "Fórmula: soma de dias entre as datas ÷ contagem de pedidos elegíveis, por etapa. Pedido → envio: 136.511 ÷ 16.261. Envio → entrega: 66.605 ÷ 16.245.",
+    );
+  });
+
+  it("Tempo médio com denominador 0 mostra '—', sem NaN", async () => {
     instalarFetchMock(async () =>
       respostaFake({
         ok: true,
         json: async () =>
           respostaComplementaresValida({
-            valorPagoVsDevido: blocoValorPagoVsDevido({
+            tempoMedio: blocoTempoMedio({
               linhas: [
-                linha("Total", 900, 1000, 0.9),
-                linha("excedente", 100, 0, null),
+                linha("pedido→envio", 0, 0, null),
+                linha("envio→entrega", 0, 0, null),
               ],
             }),
           }),
@@ -419,18 +576,96 @@ describe("Indicadores — complementares (TP-0071)", () => {
     );
 
     renderizar();
+    const secao = await secaoDoBloco("Tempo médio");
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { level: 2, name: "Valor pago × valor devido" }),
-      ).toBeInTheDocument();
+    expect(within(secao).getAllByText("—")).toHaveLength(2);
+    expect(secao.textContent).not.toContain("NaN");
+  });
+
+  it("Pago × devido: valores compacto e exato, e % calculado como numerador ÷ denominador", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () => respostaComplementaresValida(),
+      }),
+    );
+
+    renderizar();
+    const secao = await secaoDoBloco("Pago × devido");
+
+    const rotulosMedidas = Array.from(
+      secao.querySelectorAll(".indicador__rotulo"),
+    ).map((p) => p.textContent);
+    expect(rotulosMedidas).toEqual(["Devido", "Pago"]);
+    expect(within(secao).getByText("R$ 21,3 mi")).toBeInTheDocument();
+    expect(within(secao).getByText("R$ 21.300.000,00")).toBeInTheDocument();
+    expect(within(secao).getByText("R$ 21 mi")).toBeInTheDocument();
+    expect(within(secao).getByText("R$ 21.000.000,00")).toBeInTheDocument();
+
+    // 21.000.000 ÷ 21.300.000 = 98,6% (o `resultado` da API, 0.99, não é usado).
+    expect(textoFormula(secao)).toBe("Fórmula: Σ pago ÷ Σ devido = 98,6%.");
+    expect(secao.textContent).not.toContain("99,0%");
+  });
+
+  it("Pago × devido: quebra por situação com rótulos em português e '—' de dados quando devido é 0", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () => respostaComplementaresValida(),
+      }),
+    );
+
+    renderizar();
+    const secao = await secaoDoBloco("Pago × devido");
+    const tabela = within(secao).getByRole("table", {
+      name: "Pago × devido por situação",
     });
 
-    // "excedente" tem denominador 0 — mesmo texto alternativo default do
-    // componente `Indicador` (nenhuma tela passa `textoSemDados` específico
-    // para este bloco), sem criar lógica nova de formatação.
-    expect(screen.getByText("sem dados suficientes")).toBeInTheDocument();
-    expect(screen.queryByText("NaN%")).not.toBeInTheDocument();
+    expect(
+      within(tabela)
+        .getAllByRole("columnheader")
+        .map((th) => th.textContent),
+    ).toEqual(["Situação", "Pago", "Devido", "%"]);
+
+    const rotulos = within(tabela)
+      .getAllByRole("row")
+      .slice(1)
+      .map((tr) => within(tr).getAllByRole("cell")[0].textContent);
+    expect(rotulos).toEqual([
+      "Sem pagamento",
+      "Parcial",
+      "Quitado",
+      "Pago a mais",
+    ]);
+
+    // "excedente" tem devido 0 → texto de "sem dados", sem NaN.
+    expect(within(tabela).getByText("sem dados suficientes")).toBeInTheDocument();
+    expect(secao.textContent).not.toContain("NaN");
+  });
+
+  it("bloco de chave desconhecida cai no componente genérico (título, fórmula e linhas)", async () => {
+    instalarFetchMock(async () =>
+      respostaFake({
+        ok: true,
+        json: async () => [
+          ...(respostaIndicadoresValida() as unknown[]),
+          {
+            chave: "indicador_novo",
+            titulo: "Indicador novo",
+            formula: "a ÷ b",
+            linhas: [linha("Grupo X", 1, 4, 0.25)],
+            aParte: false,
+          },
+        ],
+      }),
+    );
+
+    renderizar();
+    const secao = await secaoDoBloco("Indicador novo");
+
+    expect(textoFormula(secao)).toBe("Fórmula: a ÷ b.");
+    expect(within(secao).getByText("Grupo X")).toBeInTheDocument();
+    expect(within(secao).getByText("25,0%")).toBeInTheDocument();
   });
 
   it("sucesso com as 4 seções não tem violação de acessibilidade (axe)", async () => {
@@ -442,12 +677,7 @@ describe("Indicadores — complementares (TP-0071)", () => {
     );
 
     const { container } = renderizar();
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { level: 2, name: "Valor pago × valor devido" }),
-      ).toBeInTheDocument();
-    });
+    await secaoDoBloco("Pago × devido");
 
     expect(await axe(container)).toHaveNoViolations();
   });

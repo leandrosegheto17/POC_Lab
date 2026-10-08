@@ -1,28 +1,20 @@
-// TP-0055 — ícone decorativo do item de navegação "Divergências": duas
-// setas em sentidos opostos, representando itens que não se conciliam.
-// `aria-hidden="true"` porque o texto do item já comunica o destino —
-// mesmo padrão de IconeSpinner/IconeVazio/IconeErro (TP-0053).
+// Ajuste Modelo B (2026-10-08) — ícone do item "Divergências" (triângulo
+// de alerta), traço do mockup;
+// tamanho por CSS (.icone-nav: 18px no PC, 20px no celular). `aria-hidden`:
+// o texto do item já comunica o destino.
 export function IconeDivergencias() {
   return (
     <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
+      className="icone-nav"
+      viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth="2"
+      strokeLinecap="round"
       aria-hidden="true"
     >
-      <path
-        d="M3 7h10.5M13.5 7 10.5 4M13.5 7 10.5 10"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M17 13H6.5M6.5 13 9.5 10M6.5 13 9.5 16"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M12 3 2 20h20L12 3z" />
+      <path d="M12 10v4M12 17h.01" />
     </svg>
   );
 }

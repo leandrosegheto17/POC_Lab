@@ -1,78 +1,101 @@
 // TP-0058 — Cartões de resumo: 4 indicadores agregados vindos de
 // `useResumo()` (mesmo contexto da TP-0056/FaixaResumo, sem chamada de rede
 // própria). Enquanto a consulta carrega ou falha, cada cartão mostra "—"
-// (em mono, mesma fonte do valor em sucesso) + "indisponível agora" — nunca
-// `role="alert"`/`aria-live`, nunca a mensagem técnica do erro, mesmo
-// padrão de silêncio de `FaixaResumo`.
+// + "indisponível agora" — nunca `role="alert"`/`aria-live`, nunca a
+// mensagem técnica do erro, mesmo padrão de silêncio de `FaixaResumo`.
 //
-// Decisão sobre `Cartao.resultado` (processamento/contrato/resumo.ts): o
-// campo já chega como fração 0–1 (numerador/denominador), não como
-// percentual pronto — confirmado pela forma do esquema (`resultado` é só
-// `numerador / denominador`, sem multiplicação por 100 em nenhum produtor
-// conhecido do contrato). Por isso os dois indicadores percentuais
-// multiplicam por 100 aqui antes de formatar. Quando `resultado` é `null`
-// (caso de `denominador: 0`, ver comentário do esquema), também tratamos
-// como "—"/"indisponível agora" para esse cartão específico, para nunca
-// renderizar "NaN%".
+// Percentuais são calculados de numerador/denominador do `Cartao`
+// (processamento/contrato/resumo.ts) por `formatarPercentual`; com
+// denominador 0 o cartão mostra "—"/"indisponível agora", nunca "NaN%".
+//
+// Ajuste Modelo B (2026-10-08, mockup à risca): cartões `.kpi` dentro de
+// `.kpis` (painel.css). Moeda em destaque compacta ("R$ 65,4 mi") com o
+// valor exato na linha de base. No celular só ficam "Em aberto" e "Pago a
+// mais", com rótulo curto e sem linha de base (CartoesResumo.css).
 import "./CartoesResumo.css";
 import { useResumo } from "../dados/contexto-resumo.tsx";
+import {
+  formatarMoeda,
+  formatarMoedaCompacta,
+  formatarNumero,
+  formatarPercentual,
+} from "../dados/formatacao.ts";
 import type { Cartao } from "processamento/contrato/resumo.js";
-
-const FORMATADOR_NUMERO = new Intl.NumberFormat("pt-BR");
-const FORMATADOR_MOEDA = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
-const FORMATADOR_PERCENTUAL = new Intl.NumberFormat("pt-BR", {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
-
-function formatarPercentual(resultado: number): string {
-  return `${FORMATADOR_PERCENTUAL.format(resultado * 100)}%`;
-}
 
 type LinhaCartao = {
   titulo: string;
+  /** Rótulo curto do celular; ausente = cartão só aparece no PC. */
+  tituloCurto?: string;
   /** `null` quando não há resumo disponível ou o indicador não pôde ser calculado. */
   valor: string | null;
   /** `null` no mesmo caso de `valor`; nunca renderizado sem `valor`. */
   base: string | null;
 };
 
-function CartaoResumo({ titulo, valor, base }: LinhaCartao) {
+function CartaoResumo({ titulo, tituloCurto, valor, base }: LinhaCartao) {
   return (
-    <div className="cartao-resumo">
-      <p className="cartao-resumo-titulo">{titulo}</p>
-      <p className="cartao-resumo-valor">{valor ?? "—"}</p>
-      <p className="cartao-resumo-base">{base ?? "indisponível agora"}</p>
+    <div className={tituloCurto ? "kpi" : "kpi kpi--so-pc"}>
+      <p className="kpi__rotulo">
+        {tituloCurto ? (
+          <>
+            <span className="so-pc">{titulo}</span>
+            <span className="so-celular">{tituloCurto}</span>
+          </>
+        ) : (
+          titulo
+        )}
+      </p>
+      <p className="kpi__valor">{valor ?? "—"}</p>
+      <p className="kpi__base">{base ?? "indisponível agora"}</p>
     </div>
   );
 }
 
-function linhaPercentualDePedidos(
-  titulo: string,
-  cartao: Cartao,
-  baseFraseFinal: string,
-): LinhaCartao {
-  if (cartao.resultado === null) {
+function linhaComDivergencia(cartao: Cartao): LinhaCartao {
+  const titulo = "Com divergência";
+  const percentual = formatarPercentual(cartao.numerador, cartao.denominador);
+
+  if (percentual === null) {
     return { titulo, valor: null, base: null };
   }
 
   return {
     titulo,
-    valor: formatarPercentual(cartao.resultado),
-    base: `${FORMATADOR_NUMERO.format(cartao.numerador)} de ${FORMATADOR_NUMERO.format(
-      cartao.denominador,
-    )} ${baseFraseFinal}`,
+    valor: formatarNumero(cartao.numerador),
+    base: `${percentual} dos pedidos`,
   };
 }
 
-function linhaMoeda(titulo: string, cartao: Cartao, baseFixa: string): LinhaCartao {
+function linhaMoeda(
+  titulo: string,
+  tituloCurto: string,
+  cartao: Cartao,
+  complemento: string,
+): LinhaCartao {
   return {
     titulo,
-    valor: FORMATADOR_MOEDA.format(cartao.numerador),
-    base: baseFixa,
+    tituloCurto,
+    valor: formatarMoedaCompacta(cartao.numerador),
+    base: `${formatarMoeda(cartao.numerador)} · ${complemento}`,
+  };
+}
+
+function linhaEntregas(cartao: Cartao): LinhaCartao {
+  const titulo = "Entregas no prazo";
+  const percentual = formatarPercentual(cartao.numerador, cartao.denominador);
+
+  if (percentual === null) {
+    return { titulo, valor: null, base: null };
+  }
+
+  // Numerador/denominador ficam visíveis (requisito mantido); "ver
+  // Indicadores" é só texto, não link.
+  return {
+    titulo,
+    valor: percentual,
+    base: `${formatarNumero(cartao.numerador)} de ${formatarNumero(
+      cartao.denominador,
+    )} · ver Indicadores`,
   };
 }
 
@@ -84,48 +107,32 @@ export function CartoesResumo() {
   const linhas: LinhaCartao[] = semResumo
     ? [
         { titulo: "Com divergência", valor: null, base: null },
-        { titulo: "Valor em aberto", valor: null, base: null },
-        { titulo: "Pago a mais", valor: null, base: null },
+        { titulo: "Valor em aberto", tituloCurto: "Em aberto", valor: null, base: null },
+        { titulo: "Pago a mais", tituloCurto: "Pago a mais", valor: null, base: null },
         { titulo: "Entregas no prazo", valor: null, base: null },
       ]
     : [
-        linhaPercentualDePedidos(
-          "Com divergência",
-          resumo.totais.pedidosComDivergencia,
-          "pedidos",
-        ),
+        linhaComDivergencia(resumo.totais.pedidosComDivergencia),
         linhaMoeda(
           "Valor em aberto",
+          "Em aberto",
           resumo.totais.valorEmAberto,
-          "Soma do que falta pagar em pedidos parciais ou não pagos.",
+          "parciais + não pagos",
         ),
         linhaMoeda(
           "Pago a mais",
+          "Pago a mais",
           resumo.totais.pagoAMais,
-          "Soma do excedente em pagamentos duplicados.",
+          "duplicidades",
         ),
-        linhaPercentualEntregas(resumo.totais.entregasNoPrazo),
+        linhaEntregas(resumo.totais.entregasNoPrazo),
       ];
 
   return (
-    <div className="cartoes-resumo">
+    <div className="kpis cartoes-resumo">
       {linhas.map((linha) => (
         <CartaoResumo key={linha.titulo} {...linha} />
       ))}
     </div>
   );
-}
-
-function linhaPercentualEntregas(cartao: Cartao): LinhaCartao {
-  if (cartao.resultado === null) {
-    return { titulo: "Entregas no prazo", valor: null, base: null };
-  }
-
-  return {
-    titulo: "Entregas no prazo",
-    valor: formatarPercentual(cartao.resultado),
-    base: `${FORMATADOR_NUMERO.format(cartao.numerador)} de ${FORMATADOR_NUMERO.format(
-      cartao.denominador,
-    )}`,
-  };
 }

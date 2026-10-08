@@ -9,6 +9,11 @@ type CascaProps = {
   // TP-0057 — o CampoBusca entra aqui, dentro de `.casca__barra`, entre a
   // logo e a navegação.
   slotBusca?: ReactNode;
+  // Ajuste Modelo B (2026-10-08) — "simples" é a casca da T5 (página não
+  // encontrada): sem busca, sem faixa e navegação sem ícones (quem decide
+  // não passar os slots é Rotas.tsx). No celular continua com a barra de
+  // abas.
+  variante?: "completa" | "simples";
 };
 
 // TP-0055 (reestruturado para bater com o mockup/Modelo B) — casca do app:
@@ -34,16 +39,20 @@ type CascaProps = {
 // teclado/leitor de tela: pular para o conteúdo -> busca -> navegação ->
 // main. Logo e faixa não são focáveis, então a posição deles no DOM não
 // afeta essa ordem.
-export function Casca({ slotResumo = null, slotBusca = null }: CascaProps) {
+export function Casca({
+  slotResumo = null,
+  slotBusca = null,
+  variante = "completa",
+}: CascaProps) {
   return (
-    <div className="casca">
+    <div className={`casca casca--${variante}`}>
       <a href="#conteudo-principal" className="pular-para-conteudo">
         Pular para o conteúdo
       </a>
       <aside className="casca__barra">
         <LogoMarca />
         {slotBusca}
-        <NavegacaoPrincipal />
+        <NavegacaoPrincipal comIcones={variante === "completa"} />
         {slotResumo}
       </aside>
       <main id="conteudo-principal" className="casca__conteudo">

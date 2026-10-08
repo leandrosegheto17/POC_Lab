@@ -1,0 +1,219 @@
+/* T4 — Qualidade dos dados (ajuste Modelo B, mockup à risca, 2026-10-08).
+ * A página renderiza duas formas e alterna por CSS (breakpoint 1024px):
+ * - PC: mini-cartões-âncora + um cartão por achado com tabela de exemplos;
+ * - celular: um <details> por achado (o primeiro aberto), exemplos em linhas.
+ * A forma oculta sai com display:none (fora da árvore de acessibilidade). */
+
+.qualidade,
+.qualidade__corpo,
+.qualidade__pc,
+.qualidade__celular {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.qualidade__celular {
+  display: none;
+}
+
+.qualidade__topo h1 {
+  margin: 0;
+}
+
+.qualidade__subtitulo {
+  display: none;
+}
+
+/* Mini-cartões (links-âncora para cada achado). */
+.qualidade__tipos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.qualidade__tipo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 14px 16px;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-12);
+  color: var(--cor-texto);
+  text-decoration: none;
+}
+
+.qualidade__tipo:hover {
+  color: var(--cor-texto);
+}
+
+.qualidade__tipo--atual {
+  border-color: var(--cor-destaque);
+  background: var(--cor-selecionado-fundo);
+}
+
+.qualidade__tipo-nome {
+  font-size: 13px;
+  color: var(--cor-texto-2);
+}
+
+.qualidade__tipo-contagem {
+  font-family: var(--fonte-texto);
+  font-size: 26px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Cartão de um achado (PC). */
+.bloco-achado__topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bloco-achado__topo h2 {
+  margin: 0;
+}
+
+.bloco-achado__contagem {
+  font-size: 14px;
+  color: var(--cor-texto-2);
+}
+
+.bloco-achado__contagem .mono {
+  color: var(--cor-texto);
+}
+
+.bloco-achado__vazio {
+  margin: 0;
+  font-size: 13px;
+  color: var(--cor-texto-2);
+}
+
+/* Sugestões da IA (PC). */
+.qualidade-ia {
+  border-style: dashed;
+}
+
+.qualidade-ia__topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.qualidade-ia__topo h2 {
+  margin: 0;
+}
+
+.qualidade-ia__aparte {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--cor-texto-2);
+}
+
+/* Achado no celular (<details>). */
+.achado-celular {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-12);
+}
+
+.achado-celular--tracejado {
+  border-style: dashed;
+}
+
+.achado-celular__resumo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  min-height: 48px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.achado-celular__resumo::-webkit-details-marker {
+  display: none;
+}
+
+.achado-celular__resumo h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.achado-celular__contagem {
+  font-family: var(--fonte-mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--cor-texto);
+}
+
+.achado-celular__corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 14px 14px;
+  font-size: 13px;
+}
+
+.achado-celular__vazio {
+  margin: 0;
+  color: var(--cor-texto-2);
+}
+
+.achado-celular__exemplos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.achado-celular__exemplo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--cor-divisoria);
+}
+
+.achado-celular__detalhe {
+  font-size: 12px;
+  color: var(--cor-texto-2);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1023px) {
+  .qualidade,
+  .qualidade__corpo,
+  .qualidade__celular {
+    gap: 10px;
+  }
+
+  .qualidade__pc {
+    display: none;
+  }
+
+  .qualidade__celular {
+    display: flex;
+  }
+
+  .qualidade__topo h1 {
+    margin: 0 0 2px;
+  }
+
+  .qualidade__subtitulo {
+    display: block;
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: var(--cor-texto-2);
+  }
+}

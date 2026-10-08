@@ -1,45 +1,65 @@
-/* TP-0054 — estilos de EtiquetaTipo/EtiquetaFonte. Só tokens de
- * tokens.css, nenhuma cor declarada diretamente aqui. */
+/* TP-0054 / ajuste Modelo B (2026-10-08, mockup à risca) — estilos de
+ * EtiquetaTipo, EtiquetaEstado e EtiquetaFonte. Só tokens de tokens.css. */
 
 .etiqueta {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--espaco-1) var(--espaco-3);
-  border-radius: var(--raio-chip);
-  font-size: var(--texto-sm);
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: var(--raio-6);
+  font-size: 12px;
   font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
   border: 1px solid transparent;
   white-space: nowrap;
 }
 
-.etiqueta--sem-pagamento {
-  color: var(--etq-sem-pagamento-texto);
-  background: var(--etq-sem-pagamento-fundo);
-  border-color: var(--etq-sem-pagamento-borda);
-}
-
-.etiqueta--parcial {
-  color: var(--etq-parcial-texto);
-  background: var(--etq-parcial-fundo);
-  border-color: var(--etq-parcial-borda);
-}
-
-.etiqueta--quitado {
-  color: var(--etq-quitado-texto);
-  background: var(--etq-quitado-fundo);
-  border-color: var(--etq-quitado-borda);
-}
-
-.etiqueta--duplicado {
+/* Uma paleta por tipo de divergência. */
+.etiqueta--duplicado,
+.etiqueta--ruim {
   color: var(--etq-duplicado-texto);
   background: var(--etq-duplicado-fundo);
   border-color: var(--etq-duplicado-borda);
 }
 
-.etiqueta--erro {
-  color: var(--etq-erro-texto);
-  background: var(--etq-erro-fundo);
-  border-color: var(--etq-erro-borda);
+.etiqueta--parcial,
+.etiqueta--alerta {
+  color: var(--etq-parcial-texto);
+  background: var(--etq-parcial-fundo);
+  border-color: var(--etq-parcial-borda);
+}
+
+.etiqueta--pago-nao-enviado {
+  color: var(--etq-pago-nao-enviado-texto);
+  background: var(--etq-pago-nao-enviado-fundo);
+  border-color: var(--etq-pago-nao-enviado-borda);
+}
+
+.etiqueta--enviado-nao-pago {
+  color: var(--etq-enviado-nao-pago-texto);
+  background: var(--etq-enviado-nao-pago-fundo);
+  border-color: var(--etq-enviado-nao-pago-borda);
+}
+
+.etiqueta--entrega-atrasada,
+.etiqueta--neutra {
+  color: var(--etq-entrega-atrasada-texto);
+  background: var(--etq-entrega-atrasada-fundo);
+  border-color: var(--etq-entrega-atrasada-borda);
+}
+
+.etiqueta--sem-divergencia,
+.etiqueta--ok {
+  color: var(--etq-sem-divergencia-texto);
+  background: var(--etq-sem-divergencia-fundo);
+  border-color: var(--etq-sem-divergencia-borda);
+}
+
+/* Classes antigas (TP-0054), ainda usadas por telas que não migraram para
+ * EtiquetaEstado; apontam para as paletas novas. */
+.etiqueta--quitado {
+  color: var(--etq-quitado-texto);
+  background: var(--etq-quitado-fundo);
+  border-color: var(--etq-quitado-borda);
 }
 
 .etiqueta--pendente {
@@ -48,14 +68,59 @@
   border-color: var(--etq-pendente-borda);
 }
 
+.etiqueta--erro {
+  color: var(--etq-erro-texto);
+  background: var(--etq-erro-fundo);
+  border-color: var(--etq-erro-borda);
+}
+
+.etiqueta--sem-pagamento {
+  color: var(--etq-sem-pagamento-texto);
+  background: var(--etq-sem-pagamento-fundo);
+  border-color: var(--etq-sem-pagamento-borda);
+}
+
+/* Etiqueta de fonte neutra (padrão). */
 .etiqueta-fonte {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--espaco-1) var(--espaco-3);
-  border-radius: var(--raio-chip);
-  font-size: var(--texto-sm);
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: var(--raio-6);
+  font-size: 12px;
   color: var(--cor-texto-2);
   background: transparent;
   border: 1px solid var(--cor-borda);
   white-space: nowrap;
+}
+
+/* Selo de fonte (celular, T2). */
+.etiqueta-fonte--selo {
+  padding: 2px 6px;
+  border: none;
+  border-radius: var(--raio-4);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.etiqueta-fonte--vendas {
+  color: var(--fonte-vendas-texto);
+  background: var(--fonte-vendas-fundo);
+}
+
+.etiqueta-fonte--pagamentos {
+  color: var(--fonte-pagamentos-texto);
+  background: var(--fonte-pagamentos-fundo);
+}
+
+.etiqueta-fonte--rastreio {
+  color: var(--fonte-rastreio-texto);
+  background: var(--fonte-rastreio-fundo);
+}
+
+@media (max-width: 1023px) {
+  .etiqueta {
+    padding: 2px 7px;
+    font-size: 11px;
+  }
 }

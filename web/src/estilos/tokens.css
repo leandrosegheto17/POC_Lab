@@ -1,15 +1,28 @@
 /* TP-0051 — Tokens do Modelo B e fontes auto-hospedadas.
  *
- * Fontes: Manrope (400/600/700) e JetBrains Mono (400/600), subconjunto
- * latino, arquivos woff2 locais em ./fontes/ (licença SIL OFL 1.1, ver
+ * Fontes: Manrope (400/500/600/700/800) e JetBrains Mono (400/500/600),
+ * subconjunto latino (arquivos do fontsource, mesma origem para todos os
+ * pesos), woff2 locais em ./fontes/ (licença SIL OFL 1.1, ver
  * OFL-Manrope.txt e OFL-JetBrainsMono.txt na mesma pasta). Nenhum CDN
- * externo é usado — tudo auto-hospedado.
+ * externo é usado — tudo auto-hospedado (CSP default-src 'self').
+ *
+ * Ajuste 2026-10-08 (mockup à risca, UX-SPEC §0/§3): pesos Manrope 500/800
+ * e JetBrains Mono 500, paleta de etiquetas por tipo, raios do mockup e
+ * cores de menu/seleção/evento.
  */
 
 @font-face {
   font-family: "Manrope";
   src: url("./fontes/manrope-400.woff2") format("woff2");
   font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Manrope";
+  src: url("./fontes/manrope-500.woff2") format("woff2");
+  font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
@@ -31,9 +44,25 @@
 }
 
 @font-face {
+  font-family: "Manrope";
+  src: url("./fontes/manrope-800.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "JetBrains Mono";
   src: url("./fontes/jetbrains-mono-400.woff2") format("woff2");
   font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("./fontes/jetbrains-mono-500.woff2") format("woff2");
+  font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
@@ -57,7 +86,12 @@
   --cor-lateral: #11161c;
   --cor-borda: #263040;
   --cor-divisoria: #1d2530;
-  --cor-borda-controle: #6b7a89;
+  /* Ajuste 2026-10-08 (mockup à risca): bordas de campo, data, select e
+   * botão secundário. ~1,9:1 sobre o fundo — abaixo de 3:1, desvio aceito
+   * pelo usuário em 2026-10-08 (mockup à risca). */
+  --cor-borda-controle: #39434f;
+  /* Chips e botões de paginação (~1,4:1, mesmo desvio aceito). */
+  --cor-borda-chip: #263040;
   --cor-texto: #e6edf3;
   --cor-texto-2: #a3b1bf;
   --cor-destaque: #2dd4bf;
@@ -70,46 +104,67 @@
    * de asserção de contraste do teste. */
   --cor-desabilitado: #6b7a89;
 
-  /* Etiquetas de estado de negócio (conciliação de pagamentos).
-   * Cada variante define texto/fundo/borda com contraste AA (>= 4,5:1
-   * entre --etq-*-texto e --etq-*-fundo).
-   *
-   * 1. sem_pagamento   — nenhum pagamento encontrado para a cobrança.
-   *    Neutro/alerta leve (âmbar), pois é uma pendência a investigar.
-   * 2. parcial          — pagamento parcial, falta complementar.
-   *    Âmbar mais forte: situação de atenção mas não erro.
-   * 3. quitado          — cobrança paga integralmente, sem divergência.
-   *    Verde: estado "bom", sem ação necessária.
-   * 4. duplicado        — pago mais de uma vez / valor excedente.
-   *    Azul/roxo: chama atenção mas não é necessariamente erro grave.
-   * 5. erro             — divergência de valor ou dado inconsistente.
-   *    Vermelho: precisa de correção.
-   * 6. pendente         — aguardando processamento/neutro, estado default.
-   *    Cinza-azulado neutro.
-   */
-  --etq-sem-pagamento-texto: #fde68a;
-  --etq-sem-pagamento-fundo: #2b2308;
-  --etq-sem-pagamento-borda: #a16207;
+  /* Ajuste 2026-10-08 (mockup à risca) — menu, seleção, eventos e textos. */
+  --cor-texto-menu: #c9d4de;
+  --cor-menu-ativo: #18232b;
+  --cor-selecionado-fundo: #0f2422;
+  --cor-evento-fundo: #1a222b;
+  --cor-evento-borda: #2c3846;
+  --cor-evento-ruim-fundo: #221417;
+  --cor-evento-ruim-borda: #5c2626;
+  --cor-valor-ruim: #ffa69b;
+  --cor-link-hover: #b3dcff;
+  --cor-erro-texto: #ffa69b;
 
-  --etq-parcial-texto: #fdba74;
-  --etq-parcial-fundo: #2b1a08;
-  --etq-parcial-borda: #c2410c;
+  /* Selos de fonte de dados (texto / fundo). */
+  --fonte-vendas-texto: #9ccaff;
+  --fonte-vendas-fundo: #12203a;
+  --fonte-pagamentos-texto: #cdb5ff;
+  --fonte-pagamentos-fundo: #1f1830;
+  --fonte-rastreio-texto: #7ff0e0;
+  --fonte-rastreio-fundo: #0f2422;
 
-  --etq-quitado-texto: #86efac;
-  --etq-quitado-fundo: #0f2417;
-  --etq-quitado-borda: #1f5133;
+  /* Etiquetas — uma paleta por tipo de divergência (mockup Modelo B,
+   * 2026-10-08). Texto/fundo com contraste AA (>= 4,5:1), conferido em
+   * test/contraste.test.ts. */
+  --etq-duplicado-texto: #ffa69b;
+  --etq-duplicado-fundo: #2a1414;
+  --etq-duplicado-borda: #5c2626;
 
-  --etq-duplicado-texto: #c4b5fd;
-  --etq-duplicado-fundo: #211a3d;
-  --etq-duplicado-borda: #5b21b6;
+  --etq-parcial-texto: #f7c46c;
+  --etq-parcial-fundo: #2a2010;
+  --etq-parcial-borda: #5a4318;
 
-  --etq-erro-texto: #fca5a5;
-  --etq-erro-fundo: #2b1113;
-  --etq-erro-borda: #991b1b;
+  --etq-pago-nao-enviado-texto: #cdb5ff;
+  --etq-pago-nao-enviado-fundo: #1f1830;
+  --etq-pago-nao-enviado-borda: #42336b;
 
-  --etq-pendente-texto: #cbd5e1;
-  --etq-pendente-fundo: #1b222c;
-  --etq-pendente-borda: #475569;
+  --etq-enviado-nao-pago-texto: #9ccaff;
+  --etq-enviado-nao-pago-fundo: #12203a;
+  --etq-enviado-nao-pago-borda: #26406e;
+
+  --etq-entrega-atrasada-texto: #d0d7de;
+  --etq-entrega-atrasada-fundo: #1d242d;
+  --etq-entrega-atrasada-borda: #39434f;
+
+  --etq-sem-divergencia-texto: #86efac;
+  --etq-sem-divergencia-fundo: #0f2417;
+  --etq-sem-divergencia-borda: #1f5133;
+
+  /* Nomes antigos (TP-0051), mantidos como apelidos da paleta nova para
+   * CSS de telas que ainda não migrou (Qualidade/LinhaDoTempo). */
+  --etq-quitado-texto: var(--etq-sem-divergencia-texto);
+  --etq-quitado-fundo: var(--etq-sem-divergencia-fundo);
+  --etq-quitado-borda: var(--etq-sem-divergencia-borda);
+  --etq-pendente-texto: var(--etq-entrega-atrasada-texto);
+  --etq-pendente-fundo: var(--etq-entrega-atrasada-fundo);
+  --etq-pendente-borda: var(--etq-entrega-atrasada-borda);
+  --etq-erro-texto: var(--etq-duplicado-texto);
+  --etq-erro-fundo: var(--etq-duplicado-fundo);
+  --etq-erro-borda: var(--etq-duplicado-borda);
+  --etq-sem-pagamento-texto: var(--etq-enviado-nao-pago-texto);
+  --etq-sem-pagamento-fundo: var(--etq-enviado-nao-pago-fundo);
+  --etq-sem-pagamento-borda: var(--etq-enviado-nao-pago-borda);
 
   /* Espaçamento */
   --espaco-1: 4px;
@@ -119,12 +174,17 @@
   --espaco-5: 24px;
   --espaco-6: 32px;
 
-  /* Raio */
+  /* Raio (mockup Modelo B) */
   --raio: 6px;
-  --raio-chip: 999px;
+  --raio-4: 4px;
+  --raio-6: 6px; /* etiquetas */
+  --raio-8: 8px; /* campos, botões, menu, chip PC, paginação, caixas de fórmula */
+  --raio-10: 10px; /* controles do celular, cartão de evento PC, cartões pequenos do celular */
+  --raio-12: 12px; /* cartões, contêiner de tabela, cartões de lista */
+  --raio-chip: 999px; /* só chip do celular */
 
   /* Largura */
-  --largura-menu-lateral: 15rem;
+  --largura-menu-lateral: 240px;
   --largura-conteudo: 72rem;
 
   /* Escala tipográfica */

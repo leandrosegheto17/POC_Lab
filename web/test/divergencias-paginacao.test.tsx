@@ -209,7 +209,7 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
 
     await waitFor(() => {
       const caption = screen.getByText(
-        "Pedidos com divergência — filtro: Todos — página 2 de 3",
+        "Filtro: Todos · página 2 de 3",
       );
       expect(caption.tagName).toBe("CAPTION");
     });
@@ -236,7 +236,7 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Pedidos com divergência — filtro: Todos — página 1 de 2"),
+        screen.getByText("Filtro: Todos · página 1 de 2"),
       ).toBeInTheDocument();
     });
 
@@ -251,13 +251,13 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Pedidos com divergência — filtro: Todos — página 2 de 2"),
+        screen.getByText("Filtro: Todos · página 2 de 2"),
       ).toBeInTheDocument();
     });
 
-    expect(
-      screen.getByText("50 de 100 divergências, página 2 de 2"),
-    ).toBeInTheDocument();
+    // Ajuste Modelo B (2026-10-08): resumo "início–fim de total" dentro da
+    // paginação (substitui o antigo <p> "50 de 100 divergências…").
+    expect(screen.getByText("51–100 de 100")).toBeInTheDocument();
   });
 
   it("trocar o filtro enquanto em ?pagina=3 reseta a página para 1 numa única navegação", async () => {
@@ -327,7 +327,7 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Pedidos com divergência — filtro: Todos — página 1 de 2"),
+        screen.getByText("Filtro: Todos · página 1 de 2"),
       ).toBeInTheDocument();
     });
 
@@ -356,7 +356,7 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Pedidos com divergência — filtro: Todos — página 2 de 2"),
+        screen.getByText("Filtro: Todos · página 2 de 2"),
       ).toBeInTheDocument();
     });
   });
@@ -409,7 +409,7 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Pedidos com divergência — filtro: Todos — página 1 de 3"),
+        screen.getByText("Filtro: Todos · página 1 de 3"),
       ).toBeInTheDocument();
     });
 
@@ -439,7 +439,7 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Pedidos com divergência — filtro: Todos — página 3 de 3"),
+        screen.getByText("Filtro: Todos · página 3 de 3"),
       ).toBeInTheDocument();
     });
 
@@ -459,7 +459,7 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
     // A resposta tardia da página 2 nunca deve sobrescrever a página 3.
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(
-      screen.getByText("Pedidos com divergência — filtro: Todos — página 3 de 3"),
+      screen.getByText("Filtro: Todos · página 3 de 3"),
     ).toBeInTheDocument();
   });
 
@@ -531,7 +531,8 @@ describe("Divergencias — paginação e acessibilidade (vitest-axe)", () => {
     const { container } = renderizar(["/?pagina=2"]);
 
     await waitFor(() => {
-      expect(screen.getByText("PED-200")).toBeInTheDocument();
+      // Tabela (PC) e lista (celular) ficam no DOM, alternadas por CSS.
+      expect(screen.getAllByText("PED-200").length).toBeGreaterThan(0);
     });
 
     expect(await axe(container)).toHaveNoViolations();
@@ -586,7 +587,7 @@ describe("Divergencias — paginação e acessibilidade (vitest-axe)", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Pedidos com divergência — filtro: Todos — página 1 de 2"),
+        screen.getByText("Filtro: Todos · página 1 de 2"),
       ).toBeInTheDocument();
     });
 
@@ -606,7 +607,7 @@ describe("Divergencias — paginação e acessibilidade (vitest-axe)", () => {
     liberarSegundaChamada?.();
     await waitFor(() => {
       expect(
-        screen.getByText("Pedidos com divergência — filtro: Todos — página 2 de 2"),
+        screen.getByText("Filtro: Todos · página 2 de 2"),
       ).toBeInTheDocument();
     });
   });
