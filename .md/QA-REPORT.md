@@ -107,3 +107,51 @@ APROVADA — 44/44 testes da tarefa + repositorio 12/12 verdes; 0 críticos, 0 n
 
 ## TP-0080 — QA — 2026-10-08
 APROVADA; 0 críticos, 1 não crítico (RTP-0009, tolerância 0,01 sensível a ponto flutuante); 8/8 testes de conferencia-sugestao passam.
+
+## TP-0008 — QA — 2026-10-08
+APROVADA; 0 críticos, 0 não críticos; valores.test.ts 10/10 e RN-01 conferida no código (arredondamento só no fim, sem frete).
+
+## TP-0014 — QA — 2026-10-08
+APROVADA — 5/5 testes passam, aceite RN-03 atendido, 0 achados críticos / 0 não críticos.
+
+## TP-0020 — QA — 2026-10-08
+APROVADA; 7/7 testes passam, aceite cumprido (vínculo, evento venda v1, Transportadora N estável, 3 tipos de achado), 0 achados.
+
+## TP-0025 — QA — 2026-10-08
+APROVADA, 0 críticos/0 não críticos; 32/32 testes do gerador passando, 8 casos de pagamento com gabarito, disjuntos e determinísticos.
+
+## TP-0031 — QA — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico (erro de tipo TS nos casos negativos do teste, linhas 321/333); 19/19 testes passam e esquemas conformes ao aceite; RTP-0016.
+
+## TP-0035 — QA — 2026-10-08
+APROVADA — 6/6 testes de publicacao/pedidos passam, aceite (resumo, vínculos normalizados, colisão com erro, determinismo, sem nomes da base) atendido; 0 críticos, 0 não críticos.
+
+## TP-0042 — QA — 2026-10-08
+APROVADA - 7/7 testes de erros/cabeçalhos passam; 404/405(Allow)/400/500 e cabeçalhos de segurança/cache sem CORS conforme o aceite; 0 críticos, 0 não críticos.
+
+## TP-0048 — QA — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico (falta teste de rota com `%` e `;` do aceite); 7/7 testes passando; RTP-0014.
+
+## TP-0053 — QA — 2026-10-08
+DEVOLVIDA — 1 crítico (foco não devolvido à região no "Tentar de novo", desativado no código e sem teste de `toHaveFocus`), 0 não críticos; 15/15 testes passam, axe limpo.
+
+## TP-0057 — QA — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico (falta teste axe de CampoBusca dentro da Casca; RTP-0018); 12/12 testes `busca` passando, aceite RF-05/I-07 atendido.
+
+## TP-0060 — QA — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico (foco no caption e anúncio "50 de N, página X de Y" desativados/alterados); 12/12 testes passando; RTP-0015.
+
+## TP-0063 — QA — 2026-10-08
+APROVADA — 25/25 testes ok, 0 críticos, 1 não crítico (link de divergência sem validação contra enumeração de tipos); RTP-0017.
+
+## TP-0067 — QA — 2026-10-08
+APROVADA, 0 críticos e 0 não críticos; README (API, erro, paginação, versão, desligar, alerta) e AVISO-DE-LICENCA conferem com o worker real e G-11/G-01; sem RTP.
+
+## TP-0070 — QA — 2026-10-08
+APROVADA — 0 críticos/0 não críticos; 2 blocos novos na lista do documento indicadores em ordem fixa, esquema v1 intacto, documentos/integracao (59 testes) e contrato TP-0049 (3) verdes.
+
+## TP-0076 — QA — 2026-10-08
+APROVADA; 0 críticos, 0 não críticos; 23/23 testes (v2 + v1) passam, v1 intocada (G-21), sem passthrough.
+
+## TP-0081 — QA — 2026-10-08
+APROVADA — 8/8 testes do `sugerir` verdes, aceite (L-03, cache SHA-256, teto, sem provedor, RN-11) atendido; 0 críticos, 0 não críticos.
