@@ -395,3 +395,6 @@ APROVADA; 0 críticos, 0 não críticos; detalhe só com código e linha (inclus
 
 ## RTP-0023 — QA — 2026-10-08
 APROVADA — CI na main (run 37836655505, 282b45f) com success em Lint, Typecheck e Test; commit confirmado na main; 0 críticos, 0 não críticos.
+
+## RTP-0046 — QA — 2026-10-08
+APROVADA — lint e 6/6 testes da regra passam; 0 críticos, 2 não críticos (timeout 3,9s/5s -> RTP-0049; G-04 do GUARDRAILS sem a string literal, decisão do usuário).
