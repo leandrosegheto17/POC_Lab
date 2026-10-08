@@ -50,8 +50,6 @@ Itens previstos no `PRD.md`, ainda não implementados nesta fase. Cada um fica
 para depois da entrega Must, seguindo a ordem de corte do projeto (ADR-001), e
 é removido desta lista quando for implementado:
 
-- **Contrato de API v2** — fica para depois da entrega Must, seguindo a ordem
-  de corte do projeto (ADR-001).
 - **Sugestões de IA para pagamentos sem identificação** — fica para depois da
   entrega Must, seguindo a ordem de corte do projeto (ADR-001).
 
@@ -84,6 +82,16 @@ curl "https://<seu-worker>.workers.dev/api/v1/divergencias?tipo=pagamento_duplic
 curl https://<seu-worker>.workers.dev/api/v1/pedidos/ABC123/linha-do-tempo
 curl https://<seu-worker>.workers.dev/api/v1/indicadores
 curl https://<seu-worker>.workers.dev/api/v1/qualidade
+```
+
+Também existe um contrato v2 da linha do tempo, publicado em paralelo à v1
+(nunca a substitui): mesma rota, só sob `/api/v2/...`, mostrando
+`versao_schema` em cada evento e `meio_pagamento` no evento de pagamento
+quando a transação foi registrada nessa versão — a v1 continua exatamente na
+mesma forma de sempre, mesmo para esse pagamento.
+
+```sh
+curl https://<seu-worker>.workers.dev/api/v2/pedidos/ABC123/linha-do-tempo
 ```
 
 ### Formato de erro
@@ -159,8 +167,11 @@ Exemplo de resposta de `GET /api/v1/divergencias?pagina=1&tamanho=2`:
 
 ### Versão
 
-A API é versionada no caminho (`/api/v1/...`). Um contrato v2 está planejado
-para uma fase futura (ainda não publicado).
+A API é versionada no caminho. A v1 (`/api/v1/...`) cobre todas as rotas da
+tabela acima; a v2 (`/api/v2/...`) já está publicada e disponível hoje, só
+para a linha do tempo do pedido (`GET /api/v2/pedidos/{codigo}/linha-do-tempo`,
+exemplo de uso acima) — as duas convivem lado a lado, sem data de desligamento
+da v1.
 
 ### Como desligar a API
 
