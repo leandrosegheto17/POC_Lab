@@ -138,7 +138,7 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
     for (const idPedido of idsPedido) {
       const eventos = buscarEventosDoPedido(db, idPedido);
       const divergencias = calcularDivergencias(eventos, dataCorte);
-      calculadoPorPedido.set(idPedido, new Set(divergencias.map((d) => d.tipo)));
+      calculadoPorPedido.set(idPedido, new Set<string>(divergencias.map((d) => d.tipo)));
     }
 
     // Gabarito filtrado aos 5 tipos de divergência (RN-03 a RN-06), com o
@@ -253,7 +253,7 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
         expect(idPedido).toBeDefined();
         const eventos = buscarEventosDoPedido(db, idPedido as string);
         const divergencias = calcularDivergencias(eventos, dataCorte);
-        const tiposCalculados = new Set(divergencias.map((d) => d.tipo));
+        const tiposCalculados = new Set<string>(divergencias.map((d) => d.tipo));
 
         for (const tipo of tiposEsperados) {
           expect(tiposCalculados.has(tipo)).toBe(true);

@@ -117,7 +117,7 @@ describe("montarSqlPublicacao", () => {
     const correspondencia = sql.match(/\('indicadores', '((?:[^']|'')*)'\)/);
     expect(correspondencia).not.toBeNull();
 
-    const conteudoEscapado = correspondencia![1];
+    const conteudoEscapado = correspondencia![1]!;
     // `escritor-sql.ts` escapa aspas simples dobrando-as (convenção SQL) —
     // desfaz antes de fazer `JSON.parse`.
     const conteudoJson = conteudoEscapado.replace(/''/g, "'");

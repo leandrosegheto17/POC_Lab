@@ -82,7 +82,7 @@ export function criarProvedorOpenAI(fetchFn: typeof fetch = fetch): ProvedorSuge
           return null;
         }
 
-        const textoResposta = validacao.data.choices[0].message.content.trim();
+        const textoResposta = validacao.data.choices[0]!.message.content.trim();
         if (!candidatos.includes(textoResposta)) {
           return null;
         }

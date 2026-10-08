@@ -112,7 +112,7 @@ describe("processarRastreio", () => {
       regra: "tipo_valido",
     });
     expect(resultado.eventos).toHaveLength(1);
-    expect(resultado.eventos[0].codigoEvento).toBe("evt-2");
+    expect(resultado.eventos[0]!.codigoEvento).toBe("evt-2");
     expect(resultado.vinculos).toHaveLength(1);
   });
 
@@ -132,7 +132,7 @@ describe("processarRastreio", () => {
       regra: "momento_fato_iso",
     });
     expect(resultado.eventos).toHaveLength(1);
-    expect(resultado.eventos[0].codigoEvento).toBe("evt-2");
+    expect(resultado.eventos[0]!.codigoEvento).toBe("evt-2");
   });
 
   it("gera achado linha_invalida quando falta campo obrigatório", () => {

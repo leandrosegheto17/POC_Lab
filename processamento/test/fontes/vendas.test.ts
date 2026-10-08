@@ -74,7 +74,7 @@ describe("processarVendas (TP-0020)", () => {
         referencia: "2",
       }),
     ]);
-    expect(resultado.achados[0].detalhe).toContain("formato longo");
+    expect(resultado.achados[0]!.detalhe).toContain("formato longo");
   });
 
   it("pedido sem data de envio gera achado pedido_sem_envio", () => {
@@ -89,7 +89,7 @@ describe("processarVendas (TP-0020)", () => {
         referencia: "3",
       }),
     ]);
-    expect(resultado.achados[0].detalhe).toContain("sem data de envio");
+    expect(resultado.achados[0]!.detalhe).toContain("sem data de envio");
   });
 
   it("item com preço <= 0 ou desconto fora de [0,1] gera achado valor_fora_do_padrao", () => {

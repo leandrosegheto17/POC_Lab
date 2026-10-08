@@ -59,7 +59,7 @@ export function casarReferencia(
   );
 
   if (candidatosConhecidos.length === 1) {
-    return { idPedido: candidatosConhecidos[0] };
+    return { idPedido: candidatosConhecidos[0]! };
   }
 
   return { semIdentificacao: true };

@@ -22,9 +22,9 @@ describe("totaisResumo (TP-0034)", () => {
 
     const totais = totaisResumo(pedidos, divergencias, BLOCO_ENTREGAS_VAZIO);
 
-    expect(totais.valorEmAberto.linhas[0].numerador).toBe(80);
-    expect(totais.valorEmAberto.linhas[0].denominador).toBe(1);
-    expect(totais.valorEmAberto.linhas[0].resultado).toBe(80);
+    expect(totais.valorEmAberto.linhas[0]!.numerador).toBe(80);
+    expect(totais.valorEmAberto.linhas[0]!.denominador).toBe(1);
+    expect(totais.valorEmAberto.linhas[0]!.resultado).toBe(80);
   });
 
   it("soma pagoAMais só dos pedidos com divergência duplicado (pago - devido = 15)", () => {
@@ -38,7 +38,7 @@ describe("totaisResumo (TP-0034)", () => {
 
     const totais = totaisResumo(pedidos, divergencias, BLOCO_ENTREGAS_VAZIO);
 
-    expect(totais.pagoAMais.linhas[0].numerador).toBe(15);
+    expect(totais.pagoAMais.linhas[0]!.numerador).toBe(15);
   });
 
   it("sem divergências: porTipo com todos os tipos em 0, valorEmAberto e pagoAMais em 0", () => {
@@ -52,8 +52,8 @@ describe("totaisResumo (TP-0034)", () => {
     for (const linha of totais.porTipo.linhas) {
       expect(linha.numerador).toBe(0);
     }
-    expect(totais.valorEmAberto.linhas[0].numerador).toBe(0);
-    expect(totais.pagoAMais.linhas[0].numerador).toBe(0);
+    expect(totais.valorEmAberto.linhas[0]!.numerador).toBe(0);
+    expect(totais.pagoAMais.linhas[0]!.numerador).toBe(0);
   });
 
   it("entregasNoPrazoTotal soma numeradores/denominadores das linhas do bloco recebido (3/4 e 1/1 -> 4/5 = 0.8)", () => {
@@ -69,7 +69,7 @@ describe("totaisResumo (TP-0034)", () => {
 
     const totais = totaisResumo([], [], blocoEntregas);
 
-    const linha = totais.entregasNoPrazoTotal.linhas[0];
+    const linha = totais.entregasNoPrazoTotal.linhas[0]!;
     expect(linha.numerador).toBe(4);
     expect(linha.denominador).toBe(5);
     expect(linha.resultado).toBe(0.8);
@@ -78,7 +78,7 @@ describe("totaisResumo (TP-0034)", () => {
   it("entregasNoPrazoTotal com denominador 0 produz resultado null", () => {
     const totais = totaisResumo([], [], BLOCO_ENTREGAS_VAZIO);
 
-    const linha = totais.entregasNoPrazoTotal.linhas[0];
+    const linha = totais.entregasNoPrazoTotal.linhas[0]!;
     expect(linha.numerador).toBe(0);
     expect(linha.denominador).toBe(0);
     expect(linha.resultado).toBeNull();
@@ -97,9 +97,9 @@ describe("totaisResumo (TP-0034)", () => {
 
     const totais = totaisResumo(pedidos, divergencias, BLOCO_ENTREGAS_VAZIO);
 
-    expect(totais.pedidos.linhas[0].numerador).toBe(3);
-    expect(totais.pedidosComDivergencia.linhas[0].numerador).toBe(1);
-    expect(totais.pedidosComDivergencia.linhas[0].denominador).toBe(3);
+    expect(totais.pedidos.linhas[0]!.numerador).toBe(3);
+    expect(totais.pedidosComDivergencia.linhas[0]!.numerador).toBe(1);
+    expect(totais.pedidosComDivergencia.linhas[0]!.denominador).toBe(3);
   });
 
   it("arredonda só no fim da soma: dois saldos de 0,005 somam 0,01 (não 0,00 + 0,00 arredondados antes)", () => {
@@ -112,7 +112,7 @@ describe("totaisResumo (TP-0034)", () => {
 
     // soma bruta = 0.005 + 0.005 = 0.01; se arredondasse item a item antes
     // (0.005 -> 0.00 ou 0.01 cada), o resultado poderia ser diferente de 0.01.
-    expect(totais.valorEmAberto.linhas[0].numerador).toBe(0.01);
+    expect(totais.valorEmAberto.linhas[0]!.numerador).toBe(0.01);
   });
 
   it("arredonda pagoAMais só no fim da soma, mesma lógica de ponto flutuante", () => {
@@ -127,6 +127,6 @@ describe("totaisResumo (TP-0034)", () => {
 
     const totais = totaisResumo(pedidos, divergencias, BLOCO_ENTREGAS_VAZIO);
 
-    expect(totais.pagoAMais.linhas[0].numerador).toBe(0.01);
+    expect(totais.pagoAMais.linhas[0]!.numerador).toBe(0.01);
   });
 });
