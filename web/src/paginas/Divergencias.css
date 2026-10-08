@@ -34,6 +34,25 @@
   gap: 22px;
 }
 
+/* Colunas com largura fixa: sem isso o navegador recalcula a largura de cada
+ * coluna pelo conteúdo e elas se mexem a cada troca de filtro ou de página. */
+.divergencias__tabela .tabela-dados {
+  table-layout: fixed;
+  min-width: 640px;
+}
+
+.divergencias__tabela .tabela-dados th:nth-child(1) {
+  width: 130px;
+}
+
+.divergencias__tabela .tabela-dados th:nth-child(2) {
+  width: 190px;
+}
+
+.divergencias__tabela .tabela-dados th:nth-child(4) {
+  width: 140px;
+}
+
 /* Eventos: <details> com <summary> com cara de link. */
 .divergencias__eventos summary {
   list-style: none;
