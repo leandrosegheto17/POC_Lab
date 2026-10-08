@@ -210,19 +210,16 @@ function montarExemplos(
  * sugestão", a sugestão é reconstituída e `conferirSugestao` é aplicada na
  * hora sobre o candidato indicado.
  *
- * Limitação conhecida (documentada, não resolvida nesta tarefa): a chave de
- * cache inclui o `modelo` usado na chamada (`ia/sugerir.ts`, `OpcoesSugerir`),
- * que não é persistido em `cache_ia`. Esta reconstrução só encontra entradas
- * calculadas com `MODELO_PADRAO_RECONSTITUICAO` (mesmo valor padrão de
- * `ia/sugerir.ts`, `MODELO_PADRAO`); uma execução de `sugerir` com
- * `opcoes.modelo` explícito e diferente do padrão gera uma entrada em
- * `cache_ia` que conta para `ia.utilizada = true` mas não aparece em
- * `ia.sugestoes` — a lista fica subrepresentada nesse cenário, sem lançar
- * erro. As funções de leitura/montagem de candidatos abaixo duplicam a lógica
+ * Limitação residual (RTP-0028 a reduziu): a chave de cache inclui o `modelo`
+ * (`ia/sugerir.ts`), que não é persistido em `cache_ia`. Esta reconstrução
+ * tenta os modelos de `MODELOS_RECONSTITUICAO` ("falso", padrão de
+ * `ia/sugerir.ts`, e "gpt-4o-mini", padrão do CLI); um modelo fora dessa lista
+ * gera entrada que conta para `ia.utilizada = true` mas não aparece em
+ * `ia.sugestoes`, sem lançar erro. As funções de leitura/montagem de candidatos abaixo duplicam a lógica
  * (não exportada) de `ia/sugerir.ts` — ver aquele módulo para a versão
  * "fonte da verdade" usada pelo caso de uso de sugestão em si.
  */
-const MODELO_PADRAO_RECONSTITUICAO = "falso";
+const MODELOS_RECONSTITUICAO: readonly string[] = ["falso", "gpt-4o-mini"];
 
 /** Mesma convenção de `ia/sugerir.ts`: `""` representa "sem sugestão" em `cache_ia.resposta`. */
 const RESPOSTA_CACHE_SEM_SUGESTAO = "";
@@ -381,11 +378,18 @@ function montarBlocoIa(db: DatabaseSync): RespostaQualidade["ia"] {
     }
 
     const candidatosOrdenados = candidatos.map((candidato) => candidato.idPedido);
-    const chave = createHash("sha256")
-      .update(pagamento.textoReferencia + JSON.stringify(candidatosOrdenados) + MODELO_PADRAO_RECONSTITUICAO)
-      .digest("hex");
-
-    const entradaCache = cachePorChave.get(chave);
+    // RTP-0028: o modelo não é persistido em `cache_ia`; tenta cada modelo
+    // conhecido (padrão de teste e padrão do CLI) e usa a primeira chave que existe.
+    let entradaCache: { chave: string; resposta: string; criadoEm: string } | undefined;
+    for (const modelo of MODELOS_RECONSTITUICAO) {
+      const chave = createHash("sha256")
+        .update(pagamento.textoReferencia + JSON.stringify(candidatosOrdenados) + modelo)
+        .digest("hex");
+      entradaCache = cachePorChave.get(chave);
+      if (entradaCache !== undefined) {
+        break;
+      }
+    }
     if (entradaCache === undefined || entradaCache.resposta === RESPOSTA_CACHE_SEM_SUGESTAO) {
       continue;
     }

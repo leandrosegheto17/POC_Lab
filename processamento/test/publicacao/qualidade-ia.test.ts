@@ -154,6 +154,34 @@ describe("montarDocumentoQualidade — bloco ia (TP-0084)", () => {
     expect(EsquemaRespostaQualidade.safeParse(documento).success).toBe(true);
   });
 
+  it("RTP-0028: sugestão gerada com modelo gpt-4o-mini aparece em ia.sugestoes com conferida/motivo corretos", async () => {
+    const repositorio = criarRepositorio(":memory:");
+    inserirPedidoComVenda(repositorio, "PED-D", 100, "2026-01-01T00:00:00.000Z");
+    inserirPagamentoSemIdentificacao(repositorio, "TRANS-043", 100, DATA_PAGAMENTO, "REF-MODELO");
+
+    const provedorFalso = criarProvedorFalso({ "REF-MODELO": "PED-D" });
+    await sugerir(repositorio, provedorFalso, { modelo: "gpt-4o-mini" });
+
+    const documento = montarDocumentoQualidade(repositorio.db);
+    const esperado = conferirSugestao(
+      { devido: 100, pago: 0, dataPedido: "2026-01-01T00:00:00.000Z" },
+      { valor: 100, dataPagamento: DATA_PAGAMENTO },
+    );
+
+    expect(documento.ia.utilizada).toBe(true);
+    expect(documento.ia.sugestoes).toHaveLength(1);
+    const sugestao = documento.ia.sugestoes[0] as {
+      pagamento: string;
+      pedidoSugerido: string;
+      conferida: boolean;
+      motivo: string;
+    };
+    expect(sugestao.pagamento).toBe("TRANS-043");
+    expect(sugestao.pedidoSugerido).toBe("PED-D");
+    expect(sugestao.conferida).toBe(esperado.conferida);
+    expect(sugestao.motivo).toBe(esperado.motivo);
+  });
+
   it("cache_ia com entrada 'sem sugestão' (resposta vazia): ia.utilizada true, mas sugestoes não inclui essa entrada", async () => {
     const repositorio = criarRepositorio(":memory:");
     inserirPedidoComVenda(repositorio, "PED-C", 100, "2026-01-01T00:00:00.000Z");
