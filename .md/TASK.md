@@ -1,0 +1,365 @@
+# POC_Lab — TASK
+
+> Status: rascunho, `/definir` Loop C rodada 1 depois da reabertura do Loop B (2026-10-07). Base: `SDD.md` e `adr/001` a `adr/016` (ADR-007, 011 e 012 substituídos por 013, 014 e 015), `UX-SPEC.md` (com o ajuste visual Modelo B), `PRD-TECNICO.md`, `PRD.md`, `CTO-REVIEW.md`. Refeito a partir do rascunho anterior (JSON estáticos): Lotes 1 a 5 aproveitados quase sem mudança; publicação, site e documentação refeitos para D1 + API de leitura.
+> **Ordem do `PRD.md` §5 (ADR-001):** Lotes 1 a 14 = todos os Must, prontos, testados e publicados; Lote 15 = indicadores complementares (S); Lote 16 = estado numa data (S); Lote 17 = contrato v2 (S); Lote 18 = IA (C). **Cortar = não executar os últimos lotes**, na ordem inversa; nenhuma tarefa Must depende de tarefa S/C.
+> **Regra de granularidade (decisão do usuário): no máximo 0,5 dia-pessoa (4 h) por tarefa**, contando código, regra, SQL e testes, sem estimativa apertada para caber; tarefa que passe de 4 h é dividida antes de entrar aqui. Valem também a não-mistura (no máximo um item entre tela, endpoint, regra de negócio e SQL por tarefa, salvo inseparabilidade documentada na §6) e o canário de ~300 mil tokens de contexto. Maior estimativa atual: 3 h.
+> IDs `TP-0000` sequenciais, sem sufixo. Estimativas em horas de esforço de uma pessoa (calibração, não cronômetro). Caminhos de arquivo sem prefixo são relativos a `processamento/src/` (testes: `processamento/test/`).
+
+## 1. Diretrizes de Implementação
+
+**Estrutura e fronteiras (SDD §2, ADR-005, ADR-008, ADR-013, ADR-014)**
+- pnpm workspace com 2 pacotes: `processamento/` e `web/`. Nada de pacote `shared`: o compartilhado é `processamento/src/dominio/` e `processamento/src/contrato/`. O Worker fica em `web/worker/`, o site em `web/src/`.
+- `dominio/` é puro: só funções e tipos, sem `node:*`, sem zod, sem I/O, sem `Date.now()`, sem `Math.random()`. Toda regra recebe os dados e devolve o resultado.
+- `contrato/` só importa `dominio` e `zod`. É a única fonte dos esquemas de parâmetro, resposta e erro da API; tipos saem de `z.infer`, nunca redeclarados.
+- `web/worker` e `web/src` importam do `processamento` só `dominio` e `contrato`; nunca `node:*` fora de `test/`; `web/src` não importa `web/worker`.
+- Os 3 adaptadores (`fontes/vendas.ts`, `fontes/pagamentos.ts`, `fontes/rastreio.ts`) são chamados explicitamente pelo caso de uso `importar`. Proibido criar interface/registro genérico de "fonte" (ADR-005).
+- Funções e tipos simples; classe só se houver estado a encapsular. Sem ORM nem *query builder*, sem injeção de dependência por framework. A única porta é `ProvedorSugestao` (IA, Lote 18).
+
+**Linguagem (RNF-03, I-11)**
+- Nomes do domínio, mensagens, documentação, nomes de testes e commits em português. Palavras-chave e APIs de bibliotecas ficam como são. Campos JSON da API em português, `camelCase` (`totalPaginas`), exceto os nomes fixos do RFC 9457 (`type`, `title`, `status`, `detail`).
+- `tsconfig` com `strict` e `erasableSyntaxOnly`: sem `enum`, sem *parameter properties*, sem `namespace`. Use uniões de literais.
+
+**Determinismo (RNF-05, ADR-002, ADR-009)**
+- Gerador, importação e publicação produzem os mesmos bytes para a mesma entrada e semente: ordenar toda coleção antes de escrever, `JSON.stringify` com chaves em ordem fixa, fim de linha `\n`, datas ISO-8601 UTC, sem `Date.now()` nos arquivos gerados (inclusive em `leitura.sql`; o identificador da publicação é um hash do conteúdo, não a hora).
+- PRNG: `mulberry32` próprio, semente padrão `20261007`. Nunca `Math.random()` fora de teste.
+- Identidade `PED-000001`… atribuída na ordem: vendas por código crescente, depois rastreio e pagamentos por linha do arquivo.
+
+**Contrato dos CSV gerados** (detalhe, §6 L-01) — UTF-8, vírgula, cabeçalho na 1ª linha, decimal com ponto, datas ISO-8601:
+- `pagamentos.csv`: `codigo_transacao,referencia,valor,data_pagamento` (+ `meio_pagamento` opcional, só no Lote 17). `codigo_transacao` = `TX-` + 6 dígitos; `referencia` normalmente `PV-` + código de vendas com zeros à esquerda e espaços variados; nos casos plantados, texto livre ou dois códigos.
+- `rastreio.csv`: `codigo_evento,codigo_rastreio,pedido_venda,tipo,momento_fato,transportadora`. `tipo` ∈ `coleta`, `transporte`, `entrega`; `codigo_rastreio` = `RS-` + 6 dígitos; a ordem das linhas é a ordem de chegada.
+- `gabarito.json`: lista ordenada de `{ pedido_venda, tipo }`, com `tipo` ∈ `duplicado`, `parcial`, `pago_nao_enviado`, `enviado_nao_pago`, `entrega_atrasada`, `fora_de_ordem`, `sem_identificacao`, `registro_repetido`, `linha_invalida`, `valor_fora_do_padrao`.
+
+**Domínio e regras**
+- Cada regra de divergência devolve `{ tipo, motivo, idsEventos }` ou nada. `motivo` em linguagem simples, com os valores.
+- Valores em `number`, arredondamento a 2 casas só no fim (RN-01); quitação com tolerância R$ 0,01 (RN-02).
+- Transportadora exibida e publicada como `Transportadora 1`, `2`, `3` (pelo código da base), nunca o nome original (RNF-04; §6 L-02).
+- "Envio" (RN-05) = evento `coleta`. "Data de corte" (RN-14) = maior `momento_fato` existente.
+- Todo indicador e todo cartão de resumo é um bloco com fórmula, numerador, denominador e resultado (RF-08, §6 L-07 e L-08).
+
+**Event store local (ADR-003, ADR-004)**
+- Acesso ao SQLite local só em `armazenamento/`. Inserção sempre `INSERT ... ON CONFLICT DO NOTHING`; "nova/já existente" sai do resultado da inserção. Nenhum `UPDATE`/`DELETE` em `pedido`, `vinculo_fonte`, `evento`. Mudança de schema só aditiva (`CREATE TABLE IF NOT EXISTS`).
+
+**Publicação no D1 (ADR-013, ADR-015)**
+- O D1 é projeção descartável: `publicacao/leitura-d1.sql` faz `DROP TABLE IF EXISTS` + `CREATE TABLE` das 5 tabelas de leitura; é o único lugar onde se recria tabela.
+- `leitura.sql` = DDL + `INSERT` multi-linha com no máximo 100 KB por instrução, sem `BEGIN`/`COMMIT`, valores escapados (aspas simples duplicadas, `NULL`), linhas em ordem determinística.
+- Ordem de publicação: D1 primeiro, Worker depois. Nenhuma publicação a partir do CI.
+
+**API (Worker, ADR-016)**
+- Hono; só rotas GET (HEAD sai do GET). Parâmetros validados por `@hono/zod-validator` com os esquemas de `contrato/` em modo estrito (parâmetro desconhecido = 400).
+- SQL só em constantes de `web/worker/consultas.ts`, executado por `env.DB.prepare(CONSTANTE).bind(...)`. Proibido montar SQL com texto da requisição (lint + teste com código malicioso).
+- Toda resposta 200 passa pelo esquema de resposta do contrato antes de sair (`.parse`, que também descarta campo desconhecido: é assim que a v1 nunca muda de forma). Erros só pelo auxiliar `problema(codigo, status)`: `application/problem+json`, `detail` genérico em português, nunca pilha, SQL ou mensagem do D1.
+- Cabeçalhos das respostas da API por um *middleware* único (SDD §7). Sem CORS.
+
+**Site (UX-SPEC)**
+- Lê só `/api/v1` pelo `clienteApi` (fetch + `AbortController` + 10 s + validação zod + tradução de erro, UX-SPEC §4). Nenhum `fetch` direto em tela.
+- Filtro e página da T1 na URL (`/?tipo=duplicado&pagina=2`).
+- Toda tela: 4 estados do UX-SPEC §4, `<title>` próprio, foco no `<h1>` ao trocar de rota, teste `vitest-axe` sem violação crítica ou séria. Texto vindo da API só por JSX.
+- Modelo B: CSS puro com os tokens do UX-SPEC §3 em `web/src/estilos/tokens.css`; fontes `woff2` auto-hospedadas em `web/src/estilos/fontes/`; ícones SVG próprios `aria-hidden`. Sem Tailwind, biblioteca de componentes, de ícones, de gráficos ou de dados.
+
+**Testes (RNF-08, M4)**
+- Vitest nos 2 pacotes. Domínio: unidade; armazenamento: SQLite em memória; integração: `processamento/test/integracao/` com a base real.
+- API: `app.request()` do Hono + D1 de teste sobre `node:sqlite` em memória carregado pelo mesmo escritor de `leitura.sql` (`web/test/apoio/d1-teste.ts`). Cada rota testa sucesso, 400, 404/405 quando couber, e formato da resposta pelo esquema.
+- Testes das validações do Loop 0 nomeados por elas: `validação: idempotência`, `validação: ordenação`, `validação: parcial e duplicado` (Must); `validação: auditoria em data`, `validação: contrato v1 e v2` (Should).
+- `pnpm test` roda antes `baixar-base` (idempotente, confere SHA-256); sem rede e sem base, falha com "rode pnpm baixar-base". Nenhum teste acessa rede além disso. IA só com provedor falso e `fetch` falso.
+
+**Comandos (M6: no máximo 3)**: `pnpm install` → `pnpm preparar` (gera, importa, escreve `leitura.sql` e carrega o D1 local) → `pnpm dev` (site + API com D1 local, sem conta). Publicação: `pnpm publicar` (autor, com `wrangler login`).
+
+**Comportamento (coding-guidelines)**: faça o mínimo que cumpre o critério de aceite; não generalize para casos que não existem; não adicione dependência fora do SDD §3; leia o critério de aceite antes e confira-o ao fim; em dúvida de regra, a fonte é o `PRD-TECNICO.md` §3, nunca o gabarito.
+
+## 2. Spikes Técnicos Identificados
+
+Nenhum spike formal: nenhuma tarefa tem incerteza alta o bastante para impedir estimativa. Os riscos técnicos baixos foram absorvidos como primeiro item do critério de aceite da tarefa que os toca, com plano B já decidido (ADR-014, SDD §6):
+
+| Incerteza | Onde é verificada | Plano B |
+|---|---|---|
+| `node:sqlite` e type stripping nativo do Node 24 no Windows e no CI | TP-0001 e TP-0005 | `better-sqlite3` e `tsx`, sem tocar o domínio |
+| URL estável da base de vendas e SHA-256 conhecido | TP-0004 | Download manual documentado no README |
+| `@cloudflare/vite-plugin` sobe site + Worker com D1 local, na mesma pasta de estado que `wrangler d1 execute --local` | TP-0041 (sobe) e TP-0044 (carga visível no `pnpm dev`) | `vite build --watch` + `wrangler dev` com a mesma configuração |
+| `wrangler d1 execute --file` aceita o `leitura.sql` gerado (tamanho de instrução, sem transação) | TP-0044 (carga local) e TP-0065 (remota) | Reduzir o teto por instrução no escritor (TP-0040) |
+
+Se uma verificação falhar, o Executor registra BK e aplica o plano B, sem reestimar o restante.
+
+## 3. Lista de Tarefas
+
+### Lote 1 — Fundação do repositório (Must)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0001 | Lote 1 | Monorepo pnpm, tsconfig base e pacote `processamento` vazio com Vitest | DevOps | RNF-02, RF-13 | `pnpm install`, `pnpm typecheck` e `pnpm test` verdes; `tsconfig` com `strict`, `erasableSyntaxOnly`, ESM; `engines.node` 24; `.gitignore` cobre `dados/`, `.env`, `.wrangler/`, `node_modules`; `.env.example` sem valores; teste abre `node:sqlite` em memória e roda `.ts` sem build | 1,5h | — | — | `package.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`, `processamento/package.json`, `.gitignore`, `.env.example` | `processamento/test/ambiente.test.ts` | Pendente |
+| TP-0002 | Lote 1 | ESLint 9 com fronteiras de módulo e proibições | DevOps | RF-13, RN-13, SDD §2 e §7 | `pnpm lint` verde; `strictTypeChecked`; `no-restricted-imports` impede: `dominio` importar módulo do projeto, `zod` ou `node:*`; `contrato` importar além de `dominio` e `zod`; `web/worker` e `web/src` importarem além de `dominio` e `contrato` ou `node:*` fora de `test/`; `web/src` importar `web/worker`; arquivo fora de `test/` citar `gabarito`; proíbe `dangerouslySetInnerHTML`; `no-restricted-syntax` proíbe *template literal* com expressão ou concatenação como argumento de `prepare(`; um arquivo de exemplo violando cada regra faz o lint falhar (verificado e removido) | 2h | TP-0001 | TP-0003, TP-0004 | `eslint.config.js` | `pnpm lint` | Pendente |
+| TP-0003 | Lote 1 | Pacote `web` vazio: Vite, React 19, React Router, Vitest jsdom, Testing Library, vitest-axe | Frontend | RF-11, UX-SPEC §5 | `pnpm --filter web build` e `test` verdes; `index.html` com `lang="pt-BR"`; página provisória passa no `vitest-axe` | 1,5h | TP-0001 | TP-0002, TP-0004 | `web/package.json`, `web/vite.config.ts`, `web/index.html`, `web/src/main.tsx` | `web/test/app.test.tsx` | Pendente |
+| TP-0004 | Lote 1 | CLI `baixar-base` com URL fixada em commit e SHA-256 | Backend | RNF-05, I-01 | Baixa o `.db` para `dados/origem/`; não baixa de novo se o arquivo existir com o hash certo; falha com mensagem clara se o hash divergir; script `pnpm baixar-base` | 1,5h | TP-0001 | TP-0002, TP-0003 | `cli/baixar-base.ts` | `test/cli/baixar-base.test.ts` (conferência de hash, sem rede) | Pendente |
+| TP-0005 | Lote 1 | CI no GitHub Actions | DevOps | RF-13, ADR-015 | Workflow em push e PR; `ubuntu-latest`, Node 24; ações fixadas por SHA; `permissions: contents: read`; `pnpm install --frozen-lockfile`; base em cache pela chave do SHA-256; `pnpm lint`, `pnpm typecheck`, `pnpm test` (inclui os testes da API, sem conta e sem rede); um passo falhando marca a execução como falha; nenhum segredo nem deploy | 1,5h | TP-0002, TP-0003, TP-0004 | — | `.github/workflows/ci.yml` | execução verde no GitHub | Pendente |
+
+### Lote 2 — Domínio: contrato de evento e regras básicas (Must)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0006 | Lote 2 | Contrato de evento v1 e tipos do modelo comum | Backend | RF-02, RF-09, ADR-006 | União discriminada por `tipo` + `versao_schema` (venda, pagamento, coleta, transporte, entrega, todos v1, campos do SDD §5); tipos `Fonte`, `VinculoFonte`, `AchadoQualidade`, `TipoDivergencia`, `Divergencia`; sem I/O | 1h | TP-0001 | — | `dominio/evento.ts`, `dominio/modelo.ts` | `test/dominio/evento.test.ts` | Pendente |
+| TP-0007 | Lote 2 | RN-07 ordenação canônica dos eventos | Backend | RN-07, RF-05 | Ordena por `momento_fato`; empate: venda < pagamento < coleta < transporte < entrega, depois `codigo_evento`; qualquer permutação da entrada dá a mesma saída | 1h | TP-0006 | TP-0008, TP-0009, TP-0010, TP-0011 | `dominio/ordenacao.ts` | `validação: ordenação` | Pendente |
+| TP-0008 | Lote 2 | RN-01 valor devido do pedido | Backend | RN-01 | Σ preço × quantidade × (1 − desconto), arredondado a 2 casas só no fim; frete não entra; casos com desconto e com dízima | 1h | TP-0006 | TP-0007, TP-0009, TP-0010, TP-0011 | `dominio/valores.ts` | `test/dominio/valores.test.ts` | Pendente |
+| TP-0009 | Lote 2 | RN-02 quitação e saldo do pedido | Backend | RN-02 | Dado devido e pagamentos vinculados, devolve pago, saldo e situação (`sem_pagamento`, `parcial`, `quitado`, `excedente`) com tolerância de R$ 0,01 | 1h | TP-0006 | TP-0007, TP-0008, TP-0010, TP-0011 | `dominio/quitacao.ts` | `test/dominio/quitacao.test.ts` | Pendente |
+| TP-0010 | Lote 2 | RN-09 normalização e casamento da referência de pagamento | Backend | RN-09, RF-03 | Remove prefixo, espaços e zeros à esquerda; vincula só se casar com exatamente 1 código conhecido; texto livre e referência com dois códigos dão "sem identificação" | 1,5h | TP-0006 | TP-0007, TP-0008, TP-0009, TP-0011 | `dominio/referencia.ts` | `test/dominio/referencia.test.ts` | Pendente |
+| TP-0011 | Lote 2 | RN-10 valores fora do padrão | Backend | RN-10 | Detecta preço ou quantidade ≤ 0, desconto fora de [0, 1], pagamento ≤ 0 e pagamento > 2× devido; cada achado traz a regra em texto | 1h | TP-0006 | TP-0007, TP-0008, TP-0009, TP-0010 | `dominio/valores-fora-do-padrao.ts` | `test/dominio/valores-fora-do-padrao.test.ts` | Pendente |
+
+### Lote 3 — Domínio: estado e divergências (Must)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0012 | Lote 3 | Estado derivado do pedido até uma data | Backend | RN-12, RF-06 | Função pura (eventos, data opcional) → estado (vendido, situação de pagamento, coletado, em transporte, entregue) e frase em texto ("vendido, pago, ainda não coletado"); ignora eventos posteriores à data; mesma saída com eventos fora de ordem; roda no navegador (sem `node:*`) | 2h | TP-0007, TP-0009 | TP-0013, TP-0014, TP-0015, TP-0017 | `dominio/estado.ts` | `validação: auditoria em data` | Pendente |
+| TP-0013 | Lote 3 | RN-08 eventos recebidos fora de ordem | Backend | RN-08, RF-04 | Por pedido e fonte, compara a ordem de chegada com a canônica; devolve achados `fora_de_ordem` (não divergência) e a marca por evento | 1,5h | TP-0007 | TP-0012, TP-0014, TP-0015, TP-0016, TP-0017 | `dominio/fora-de-ordem.ts` | `test/dominio/fora-de-ordem.test.ts` | Pendente |
+| TP-0014 | Lote 3 | RN-03 pagamento duplicado | Backend | RN-03 | ≥ 2 transações de códigos distintos com o valor integral e pago > devido → `duplicado` com motivo e eventos; mesmo código repetido não gera divergência | 1,5h | TP-0009 | TP-0012, TP-0013, TP-0015, TP-0016, TP-0017 | `dominio/divergencias/duplicado.ts` | `validação: parcial e duplicado` | Pendente |
+| TP-0015 | Lote 3 | RN-04 pagamento parcial | Backend | RN-04 | 0 < pago < devido → `parcial`; parcelas que quitam (RN-02) não geram nada | 1h | TP-0009 | TP-0012, TP-0013, TP-0014, TP-0016, TP-0017 | `dominio/divergencias/parcial.ts` | `validação: parcial e duplicado` | Pendente |
+| TP-0016 | Lote 3 | RN-05 pago e não enviado / enviado e não pago, com data de corte RN-14 | Backend | RN-05, RN-14 | Data de corte = maior momento de fato; quitado sem `coleta` até o corte → `pago_nao_enviado`; `coleta` sem nenhum pagamento vinculado → `enviado_nao_pago`; motivo e eventos | 1,5h | TP-0012 | TP-0013, TP-0014, TP-0015, TP-0017 | `dominio/divergencias/envio-pagamento.ts` | `test/dominio/divergencias/envio-pagamento.test.ts` | Pendente |
+| TP-0017 | Lote 3 | RN-06 entrega atrasada | Backend | RN-06 | Data de `entrega` > data limite → `entrega_atrasada`; pedido sem entrega não gera; motivo com as duas datas | 1h | TP-0006 | TP-0012, TP-0013, TP-0014, TP-0015, TP-0016 | `dominio/divergencias/atraso.ts` | `test/dominio/divergencias/atraso.test.ts` | Pendente |
+
+### Lote 4 — Ingestão: event store e adaptadores (Must)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0018 | Lote 4 | Schema do event store e repositório SQLite idempotente | Backend | RF-02, RF-03, ADR-004 | `schema.sql` com `pedido`, `vinculo_fonte`, `evento`, `achado_qualidade` e as chaves únicas do SDD §5; funções de gravação com `ON CONFLICT DO NOTHING` que devolvem nova/já existente; nenhum `UPDATE`/`DELETE` | 2h | TP-0006 | TP-0019, TP-0020, TP-0021, TP-0022 | `armazenamento/schema.sql`, `armazenamento/repositorio.ts` | `test/armazenamento/repositorio.test.ts` (memória) | Pendente |
+| TP-0019 | Lote 4 | Leitura somente leitura da base de vendas e normalização das datas | Backend | RF-01, RF-04 | Abre o `.db` só para leitura; devolve pedidos com itens, data do pedido em ISO classificada `curto`/`longo`, data de envio, data limite e código da transportadora; com a base real: 16.282 pedidos, 609.283 itens, 830 curto, 15.452 longo, 21 sem envio | 2h | TP-0004, TP-0006 | TP-0018, TP-0021, TP-0022 | `fontes/leitura-vendas.ts` | `test/integracao/leitura-vendas.test.ts` | Pendente |
+| TP-0020 | Lote 4 | Adaptador de vendas: vínculos, evento `venda` e achados | Backend | RF-02, RN-01, RN-10 | Para cada pedido: vínculo (`vendas`, código), evento `venda` v1 com valor devido, data limite e `Transportadora N`; achados de data por formato, pedido sem envio e item fora do padrão | 2h | TP-0008, TP-0011, TP-0019 | TP-0018, TP-0021, TP-0022 | `fontes/vendas.ts` | `test/fontes/vendas.test.ts` | Pendente |
+| TP-0021 | Lote 4 | Adaptador de `pagamentos.csv` | Backend | RF-02, RN-09, RN-10 | Lê com `csv-parse`; linha inválida vira achado `linha_invalida` sem parar; mesmo `codigo_transacao` repetido vira `registro_repetido`; referência resolvida por RN-09 (sem casamento = evento sem pedido + achado `sem_identificacao`); valor fora do padrão vira achado | 2,5h | TP-0010, TP-0011 | TP-0018, TP-0019, TP-0020, TP-0022 | `fontes/pagamentos.ts` | `test/fontes/pagamentos.test.ts` (CSV de exemplo) | Pendente |
+| TP-0022 | Lote 4 | Adaptador de `rastreio.csv` | Backend | RF-02 | Eventos `coleta`/`transporte`/`entrega` v1 com `ordem_chegada` = posição da linha; vínculo (`rastreio`, código de rastreio); linha inválida e registro repetido viram achado | 2h | TP-0006 | TP-0018, TP-0019, TP-0020, TP-0021 | `fontes/rastreio.ts` | `test/fontes/rastreio.test.ts` (CSV de exemplo) | Pendente |
+
+### Lote 5 — Gerador, importação e gabarito (Must)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0023 | Lote 5 | Gerador base: PRNG com semente, pedidos limpos, `pagamentos.csv` sem problemas e CLI `gerar` | Backend | RF-01, ADR-009 | `mulberry32` próprio; seleção determinística dos pedidos limpos elegíveis para plantio; para cada pedido, pagamento integral (parte em parcelas que quitam); escreve `pagamentos.csv` no formato da §1 e `gabarito.json` estruturado; `pnpm gerar --semente N`; duas execuções com a mesma semente dão arquivos idênticos byte a byte | 2,5h | TP-0019 | TP-0027 | `gerador/prng.ts`, `gerador/gerar.ts`, `gerador/pagamentos.ts`, `cli/gerar.ts` | `test/integracao/gerador.test.ts` | Pendente |
+| TP-0024 | Lote 5 | Gerador base: `rastreio.csv` sem problemas | Backend | RF-01, ADR-009 | Para cada pedido com data de envio: `coleta` na data de envio, `transporte` e `entrega` até a data limite (§6 L-05), linhas na ordem canônica; formatos da §1; integrado ao `pnpm gerar`; determinismo byte a byte mantido | 2h | TP-0023 | TP-0025, TP-0027 | `gerador/rastreio.ts`, `gerador/gerar.ts` | `test/integracao/gerador.test.ts` | Pendente |
+| TP-0025 | Lote 5 | Gerador: plantar casos de pagamento | Backend | RF-01, RN-03, RN-04, RN-05, RN-09, RN-10 | Só em pedidos limpos, com proporções em constantes nomeadas: duplicado, parcial, enviado e não pago (sem pagamento), referência em texto livre e com dois códigos, `codigo_transacao` repetido, linha inválida, pagamento fora do padrão; cada caso no gabarito; determinismo mantido | 2,5h | TP-0023 | TP-0024, TP-0026, TP-0027 | `gerador/plantar-pagamentos.ts` | `test/integracao/gerador.test.ts` | Pendente |
+| TP-0026 | Lote 5 | Gerador: plantar casos de rastreio | Backend | RF-01, RN-05, RN-06, RN-08 | Só em pedidos limpos: pago e não enviado (sem coleta), entrega atrasada, eventos fora de ordem (linhas trocadas), linha inválida, registro repetido; cada caso no gabarito; determinismo mantido | 2h | TP-0024 | TP-0025, TP-0027 | `gerador/plantar-rastreio.ts` | `test/integracao/gerador.test.ts` | Pendente |
+| TP-0027 | Lote 5 | Caso de uso `importar` com identidade própria e CLI | Backend | RF-02, RF-03, ADR-002, ADR-004 | Chama os 3 adaptadores explicitamente; atribui `PED-nnnnnn` na ordem da §1; código já vinculado associa ao pedido existente; grava numa transação; imprime por fonte lidas/novas/já existentes/rejeitadas; importar 2× dá as mesmas contagens e o mesmo estado | 3h | TP-0018, TP-0020, TP-0021, TP-0022 | TP-0023, TP-0024, TP-0025, TP-0026 | `importacao/importar.ts`, `cli/importar.ts` | `validação: idempotência` | Pendente |
+| TP-0028 | Lote 5 | Lista de divergências do pedido e teste de M1 contra o gabarito | Backend | RF-07, M1, RN-13 | Função que aplica as 4 regras de divergência a cada pedido e devolve a lista ordenada; teste de integração (gerar → importar → divergências) acha 100% dos casos plantados de RN-03 a RN-06 e nenhum falso positivo nos pedidos do gabarito; o gabarito só é lido no teste | 2,5h | TP-0014, TP-0015, TP-0016, TP-0017, TP-0025, TP-0026, TP-0027 | — | `dominio/divergencias/index.ts` | `test/integracao/gabarito.test.ts` | Pendente |
+
+### Lote 6 — Contrato de leitura: API e D1 (Must)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0029 | Lote 6 | Contrato base da API: erro RFC 9457, paginação, parâmetros e normalização do código | Backend | ADR-016, SDD §7, RF-05 | Esquemas zod: erro (`type`, `title`, `status`, `detail`, `codigo` ∈ `parametro_invalido`/`pedido_nao_encontrado`/`rota_nao_encontrada`/`metodo_nao_permitido`/`erro_interno`, `erros[]` no 400); consulta de divergências estrita (`tipo` enum, `pagina` inteiro 1–10.000 padrão 1, `tamanho` 1–100 padrão 50, desconhecido rejeitado); `codigo` até 40 caracteres de `[A-Za-z0-9 _-]`; `paginacao` (`pagina`, `tamanho`, `total`, `totalPaginas`); função `normalizarCodigo` (espaços e caixa) usada pela publicação e pelo Worker; sem `node:*`; `zod` adicionado ao `processamento` | 2h | TP-0006 | TP-0032 | `contrato/erro.ts`, `contrato/parametros.ts`, `contrato/paginacao.ts`, `contrato/codigo.ts` | `test/contrato/parametros.test.ts` | Pendente |
+| TP-0030 | Lote 6 | Esquemas de resposta v1: resumo, divergências e linha do tempo | Backend | ADR-016, RF-05, RF-07, RF-11, UX-SPEC §2 | `resumo` com data de corte, semente, versão do contrato, identificador da publicação e `totais` (pedidos, pedidos com divergência, contagem por tipo, valor em aberto, pago a mais, entregas no prazo — cada cartão com fórmula, numerador, denominador; §6 L-07); `divergencias` paginada (`dados[]` com pedido, tipo, motivo, eventos); linha do tempo v1 (pedido: identidade, código buscado, fontes e códigos, devido, pago, data limite, divergências; eventos na forma v1 **sem** `versao_schema` e com `chegouForaDeOrdem`); o esquema de evento v1 descarta campo desconhecido (teste com `meio_pagamento` extra) | 2h | TP-0029 | TP-0031, TP-0032 | `contrato/resumo.ts`, `contrato/divergencias.ts`, `contrato/linha-do-tempo-v1.ts` | `test/contrato/respostas-v1.test.ts` | Pendente |
+| TP-0031 | Lote 6 | Esquemas de resposta v1: indicadores e qualidade | Backend | ADR-016, RF-04, RF-08, RF-10 | `indicadores` = lista de blocos genéricos (`chave`, título, fórmula, linhas com rótulos, numerador, denominador e resultado nulo quando denominador 0, e `aParte` opcional) — indicador novo entra como item, sem mudar a forma (§6 L-08); `qualidade` = 7 tipos (contagem, regra, até 10 exemplos com fonte, referência, detalhe, pedido opcional) + `ia` (`utilizada`, `sugestoes[]` vazia na Must) | 1,5h | TP-0029 | TP-0030, TP-0032 | `contrato/indicadores.ts`, `contrato/qualidade.ts` | `test/contrato/respostas-v1.test.ts` | Pendente |
+| TP-0032 | Lote 6 | Schema SQL das visões de leitura do D1 | Backend | ADR-013, SDD §5 | `leitura-d1.sql` com `DROP TABLE IF EXISTS` + `CREATE TABLE` de `pedido_resumo`, `vinculo_codigo`, `linha_do_tempo`, `divergencia`, `documento`, com as PKs e o índice `(id_pedido, tipo)` do SDD §5; sem `BEGIN`/`COMMIT`; aplicado 2× seguidas em `node:sqlite` em memória sem erro; `EXPLAIN QUERY PLAN` das consultas por código, por pedido e por tipo usa índice | 1,5h | TP-0006 | TP-0029, TP-0030, TP-0031 | `publicacao/leitura-d1.sql` | `test/publicacao/leitura-d1.test.ts` | Pendente |
+
+### Lote 7 — Projeções de leitura (Must)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0033 | Lote 7 | Indicadores Must no domínio | Backend | RF-08 (M), RN-06 | Blocos "entregas no prazo por transportadora e mês" (fórmula, numerador, denominador; denominador 0 dá resultado nulo; pedidos sem entrega à parte) e "divergências por tipo"; puro, sem I/O | 2h | TP-0017, TP-0028 | TP-0035, TP-0036, TP-0037, TP-0038 | `dominio/indicadores.ts` | `test/dominio/indicadores.test.ts` | Pendente |
+| TP-0034 | Lote 7 | Totais do resumo no domínio (cartões da T1) | Backend | RF-07, RF-08, UX-SPEC §2 | Pedidos, pedidos com divergência, contagem por tipo, valor em aberto = Σ (devido − pago) dos pedidos `parcial` ou `enviado_nao_pago`, pago a mais = Σ (pago − devido) dos pedidos `duplicado`, entregas no prazo total (reaproveita o bloco do TP-0033); cada total com fórmula, numerador e denominador; arredondamento só no fim | 1,5h | TP-0033 | TP-0035, TP-0036, TP-0037, TP-0038 | `dominio/totais.ts` | `test/dominio/totais.test.ts` | Pendente |
+| TP-0035 | Lote 7 | Projeção de `pedido_resumo` e `vinculo_codigo` | Backend | RF-03, RF-05, M2 | Uma linha por pedido (devido, pago, data limite, situação, fontes → código em JSON de chaves ordenadas); uma linha por código normalizado (`normalizarCodigo`) de cada fonte e pela identidade `PED-`; colisão de código normalizado faz a publicação falhar com mensagem; nenhum nome da base além de `Transportadora N` | 2h | TP-0027, TP-0029, TP-0032 | TP-0033, TP-0034, TP-0036, TP-0037, TP-0038 | `publicacao/pedidos.ts` | `test/publicacao/pedidos.test.ts` | Pendente |
+| TP-0036 | Lote 7 | Projeção de `linha_do_tempo` | Backend | RF-05, RN-07, RN-08 | Uma linha por evento vinculado: `posicao` pela ordem canônica (TP-0007), `fora_de_ordem` pela RN-08 (TP-0013), `versao_schema` e `dados` (JSON de chaves ordenadas) como gravados; pagamentos sem identificação não entram; mesma saída para mesma entrada | 2h | TP-0013, TP-0027, TP-0032 | TP-0033, TP-0034, TP-0035, TP-0037, TP-0038 | `publicacao/linha-do-tempo.ts` | `test/publicacao/linha-do-tempo.test.ts` | Pendente |
+| TP-0037 | Lote 7 | Projeção de `divergencia` | Backend | RF-07 | Uma linha por (tipo, pedido) com motivo e eventos que sustentam (tipo, data, fonte, código) em JSON; ordem estável por pedido e tipo (§6 L-11) | 1h | TP-0028, TP-0032 | TP-0033, TP-0034, TP-0035, TP-0036, TP-0038 | `publicacao/divergencias.ts` | `test/publicacao/divergencias.test.ts` | Pendente |
+| TP-0038 | Lote 7 | Projeção do documento `qualidade` | Backend | RF-04, RN-08 | Os 7 tipos de achado com contagem, regra em texto e até 10 exemplos (pedido quando houver); fora de ordem pela RN-08; tipo sem caso aparece com 0; `ia.utilizada = false` e lista vazia; conteúdo passa no esquema do TP-0031; com a base real: 830/15.452 e 21 | 2h | TP-0013, TP-0027, TP-0031, TP-0032 | TP-0033, TP-0034, TP-0035, TP-0036, TP-0037 | `publicacao/qualidade.ts` | `test/integracao/qualidade.test.ts` | Pendente |
+| TP-0039 | Lote 7 | Projeção dos documentos `resumo` e `indicadores` | Backend | RF-08, RF-11 | `resumo` com data de corte, semente, versão do contrato, identificador da publicação (hash do conteúdo) e totais do TP-0034; `indicadores` com os blocos do TP-0033; ambos passam nos esquemas do contrato | 1h | TP-0030, TP-0031, TP-0032, TP-0033, TP-0034 | — | `publicacao/documentos.ts` | `test/publicacao/documentos.test.ts` | Pendente |
+
+### Lote 8 — Carga do D1 e base do Worker (Must)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0040 | Lote 8 | Escritor do arquivo `leitura.sql` | Backend | ADR-013, RNF-05 | Recebe linhas por tabela e escreve DDL do `leitura-d1.sql` + `INSERT` multi-linha com no máximo 100 KB por instrução; escapa aspas simples e grava `NULL`; sem `BEGIN`/`COMMIT`; mesma entrada dá os mesmos bytes; o arquivo carregado em `node:sqlite` devolve as mesmas linhas | 2h | TP-0032 | TP-0041 | `publicacao/escritor-sql.ts` | `test/publicacao/escritor-sql.test.ts` (teto de bytes, aspas, ida e volta) | Pendente |
+| TP-0041 | Lote 8 | Esqueleto do Worker e `pnpm dev` com site + API | DevOps | ADR-014, SDD §2 | `web/worker/index.ts` com app Hono; `web/wrangler.jsonc` com `main`, `assets` (`not_found_handling: "single-page-application"`, `run_worker_first: ["/api/*"]`), `d1_databases` com binding `DB` (`poc-lab`), `compatibility_date` fixa, sem segredos; `@cloudflare/vite-plugin` no `vite.config`; `pnpm dev` sobe site e API num processo; dependências `hono`, `zod`, `@hono/zod-validator`, `wrangler`, `@cloudflare/workers-types` | 2,5h | TP-0003 | TP-0040 | `web/worker/index.ts`, `web/wrangler.jsonc`, `web/vite.config.ts`, `web/package.json` | `web/test/worker/esqueleto.test.ts` (`app.request`) | Pendente |
+| TP-0042 | Lote 8 | Erros centrais e cabeçalhos da API | Backend | ADR-016, SDD §7 | Auxiliar `problema(codigo, status)` com `application/problem+json`; rota desconhecida sob `/api/` → 404 `rota_nao_encontrada`; método diferente de GET/HEAD → 405 `metodo_nao_permitido` com `Allow: GET, HEAD`; falha do validador → 400 `parametro_invalido` com `erros`; exceção → 500 `erro_interno` sem detalhe; *middleware* põe `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` em toda resposta e `Cache-Control: public, max-age=60` nas 200; sem cabeçalho CORS | 2h | TP-0029, TP-0041 | TP-0043, TP-0044 | `web/worker/erros.ts`, `web/worker/cabecalhos.ts`, `web/worker/index.ts` | `web/test/worker/erros.test.ts` | Pendente |
+| TP-0043 | Lote 8 | D1 de teste sobre `node:sqlite` | Backend | ADR-014, RNF-08 | Adaptador com o subconjunto usado da interface do D1 (`prepare`, `bind`, `first`, `all`, `run`) sobre `node:sqlite` em memória; carregado com o SQL do escritor (TP-0040) a partir de linhas de exemplo; função de fixture reutilizável pelas rotas; só em `web/test/` | 1,5h | TP-0040, TP-0041 | TP-0042, TP-0044 | `web/test/apoio/d1-teste.ts`, `web/test/apoio/dados-exemplo.ts` | `web/test/apoio/d1-teste.test.ts` | Pendente |
+| TP-0044 | Lote 8 | CLI `publicar-dados`: escreve `leitura.sql` e carrega o D1 local | Backend | RF-11, ADR-013, ADR-015 | Monta as projeções do Lote 7, escreve `dados/publicacao/leitura.sql` e roda `wrangler d1 execute poc-lab --local --file` no pacote `web` (sem conta); falha com mensagem se a carga falhar; depois da carga, `pnpm dev` enxerga os dados (mesma pasta `.wrangler/state`) | 2h | TP-0035, TP-0036, TP-0037, TP-0038, TP-0039, TP-0040, TP-0041 | TP-0042, TP-0043 | `publicacao/publicar.ts`, `cli/publicar-dados.ts` | `test/integracao/publicacao.test.ts` (sem a etapa `wrangler`) | Pendente |
+| TP-0045 | Lote 8 | `pnpm preparar` de ponta a ponta | Backend | RNF-05, RNF-07, M6 | Encadeia baixar-base → gerar → importar → publicar-dados; termina em ≤ 5 min numa máquina comum (tempo impresso); duas execuções produzem o mesmo `leitura.sql` byte a byte; imprime o resumo final | 1,5h | TP-0004, TP-0024, TP-0025, TP-0026, TP-0027, TP-0044 | — | `cli/preparar.ts`, `package.json` | `test/integracao/preparar.test.ts` | Pendente |
+
+### Lote 9 — API de leitura: rotas v1 (Must)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0046 | Lote 9 | Endpoint `GET /api/v1/resumo` | Backend | RF-11, ADR-016 | Lê o documento `resumo` por chave; resposta passa no esquema; documento ausente → 500 `erro_interno`; HEAD funciona | 1h | TP-0030, TP-0042, TP-0043 | TP-0047, TP-0048, TP-0049, TP-0050 | `web/worker/rotas/resumo.ts`, `web/worker/consultas.ts` | `web/test/worker/resumo.test.ts` | Pendente |
+| TP-0047 | Lote 9 | Endpoint `GET /api/v1/divergencias` | Backend | RF-07, ADR-016 | `tipo?`, `pagina?`, `tamanho?` validados; `COUNT` + `LIMIT/OFFSET` com `bind`, ordem estável (§6 L-11); `paginacao` com total e `totalPaginas`; página além da última → 200 com `dados` vazio e total real; `tipo` inválido ou parâmetro desconhecido → 400 com `erros` | 2,5h | TP-0030, TP-0042, TP-0043 | TP-0046, TP-0048, TP-0049, TP-0050 | `web/worker/rotas/divergencias.ts`, `web/worker/consultas.ts` | `web/test/worker/divergencias.test.ts` | Pendente |
+| TP-0048 | Lote 9 | Endpoint `GET /api/v1/pedidos/{codigo}/linha-do-tempo` | Backend | RF-05, M2, ADR-016 | Normaliza o código (`normalizarCodigo`), resolve por `vinculo_codigo`, lê `pedido_resumo` e `linha_do_tempo` por índice (≤ 2 consultas); eventos em ordem canônica na forma v1 (passam pelo esquema v1, sem `versao_schema` nem campo posterior); devolve o código buscado; inexistente → 404 `pedido_nao_encontrado`; fora do padrão (> 40 caracteres, `'`, `%`, `;`) → 400; teste com `' OR 1=1 --` não devolve outro pedido | 3h | TP-0030, TP-0042, TP-0043 | TP-0046, TP-0047, TP-0049, TP-0050 | `web/worker/rotas/linha-do-tempo.ts`, `web/worker/consultas.ts` | `web/test/worker/linha-do-tempo.test.ts` | Pendente |
+| TP-0049 | Lote 9 | Endpoint `GET /api/v1/indicadores` | Backend | RF-08, ADR-016 | Lê o documento `indicadores`; resposta passa no esquema; ausente → 500 | 1h | TP-0031, TP-0042, TP-0043 | TP-0046, TP-0047, TP-0048, TP-0050 | `web/worker/rotas/indicadores.ts`, `web/worker/consultas.ts` | `web/test/worker/indicadores.test.ts` | Pendente |
+| TP-0050 | Lote 9 | Endpoint `GET /api/v1/qualidade` | Backend | RF-04, ADR-016 | Lê o documento `qualidade`; resposta passa no esquema; ausente → 500 | 1h | TP-0031, TP-0042, TP-0043 | TP-0046, TP-0047, TP-0048, TP-0049 | `web/worker/rotas/qualidade.ts`, `web/worker/consultas.ts` | `web/test/worker/qualidade.test.ts` | Pendente |
+
+### Lote 10 — Site: fundação visual e dados (Must)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0051 | Lote 10 | Tokens do Modelo B e fontes auto-hospedadas | Frontend | UX-SPEC §3, §5 | `tokens.css` com todas as cores, etiquetas, espaçamento e escala do UX-SPEC §3; `@font-face` das 2 famílias em `woff2` (subconjunto latino) com `font-display: swap` e reserva do sistema; licença OFL junto dos arquivos; CSS base (fundo, texto, links sublinhados, foco 3 px com afastamento); teste calcula o contraste WCAG de cada par usado e falha abaixo de 4,5:1 (texto) ou 3:1 (controle e foco) | 2h | TP-0003 | TP-0052, TP-0053 | `web/src/estilos/tokens.css`, `web/src/estilos/base.css`, `web/src/estilos/fontes/` | `web/test/contraste.test.ts` | Pendente |
+| TP-0052 | Lote 10 | `clienteApi` e gancho `useConsulta` | Frontend | RF-11, UX-SPEC §4 | `fetch` com `AbortController` e tempo limite de 10 s; valida a resposta com o esquema do contrato; traduz para estado conforme a tabela do UX-SPEC §4 (200 válido, formato inesperado, 400, 404, 5xx, rede, tempo esgotado, cancelada = silenciosa); só a chamada mais recente vale; nunca expõe `detail`/status ao usuário | 2,5h | TP-0003, TP-0029 | TP-0051, TP-0053, TP-0054 | `web/src/dados/cliente-api.ts`, `web/src/dados/use-consulta.ts` | `web/test/cliente-api.test.ts` (`fetch` falso) | Pendente |
+| TP-0053 | Lote 10 | Componentes de estado | Frontend | UX-SPEC §4, §5 | `EstadoCarregando` (`aria-busy`, região `aria-live="polite"`), `EstadoVazio`, `EstadoErro` (`role="alert"` quando interrompe a tela; "Tentar de novo" repete a chamada, devolve o foco à região e reanuncia "Carregando…"); axe sem violação | 1,5h | TP-0003 | TP-0051, TP-0052, TP-0054 | `web/src/componentes/Estado*.tsx` | `web/test/estados.test.tsx` | Pendente |
+| TP-0054 | Lote 10 | Componentes `TabelaDados`, `EtiquetaTipo`, `EtiquetaFonte` e `Paginacao` | Frontend | UX-SPEC §3, §5 | Tabela com `<caption>`, `<th scope>` e contêiner rolável rotulado (`tabIndex=0`, `role="region"`); etiqueta com texto + fundo + borda nas 6 variantes; etiqueta de fonte com os rótulos da §3; paginação com `aria-label="Paginação"`, `aria-current`, `aria-disabled` focável e forma curta < 640 px; axe sem violação | 2,5h | TP-0051 | TP-0052, TP-0053 | `web/src/componentes/` | `web/test/componentes.test.tsx` | Pendente |
+
+### Lote 11 — Site: casca e navegação (Must)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0055 | Lote 11 | Casca do app: menu lateral / barra de abas, rotas e página não encontrada (T5) | Frontend | RF-11, UX-SPEC §1, §2, §5, §6 | Um único `<nav>` com ícones SVG próprios e texto; ≥ 1024 px menu lateral fixo à esquerda; < 1024 px cabeçalho + barra de abas inferior fixa (não fixa com altura < 480 px; `scroll-padding-bottom`); "Pular para o conteúdo"; rotas T1–T5; `<title>` por rota; foco no `<h1>` ao trocar de rota; item ativo com `aria-current`; T5 com links; reflow a 320 px; axe sem violação | 3h | TP-0051 | — | `web/src/App.tsx`, `web/src/componentes/Casca.tsx`, `web/src/componentes/NavegacaoPrincipal.tsx`, `web/src/componentes/icones/`, `web/src/paginas/NaoEncontrada.tsx` | `web/test/casca.test.tsx` | Pendente |
+| TP-0056 | Lote 11 | Faixa de resumo e contexto do resumo | Frontend | RF-11, UX-SPEC §2, §4 | Consulta `/api/v1/resumo` uma vez por carga do app e compartilha por contexto; faixa "Dados sintéticos · corte AAAA-MM-DD · N pedidos"; enquanto carrega ou se falhar, só "Dados sintéticos", sem anúncio nem erro | 1,5h | TP-0030, TP-0052, TP-0055 | TP-0057 | `web/src/dados/contexto-resumo.tsx`, `web/src/componentes/FaixaResumo.tsx` | `web/test/faixa-resumo.test.tsx` | Pendente |
+| TP-0057 | Lote 11 | Busca de pedido | Frontend | RF-05, I-07, UX-SPEC §1, §5 | `<form role="search">` com `<label>` visível; remove espaços nas pontas e navega para `/pedido/:codigo`; vazio não navega e mostra "Informe um código" ligado por `aria-describedby`; aparece no menu lateral e no cabeçalho do celular (mesmo componente) | 1h | TP-0055 | TP-0056 | `web/src/componentes/CampoBusca.tsx` | `web/test/busca.test.tsx` | Pendente |
+
+### Lote 12 — Site: tela Divergências (Must)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0058 | Lote 12 | Componentes `CartoesResumo` e `FiltroTipo` em chips | Frontend | RF-07, UX-SPEC §2, §3 | 4 cartões com valor (mono) e base em texto; sem resumo: "—" e "indisponível agora"; chips = rádio nativo em `<fieldset>`/`<legend>` com rótulo + contagem do resumo (sem resumo: sem número); selecionado com preenchimento e ✓; quebra de linha; axe sem violação | 2h | TP-0054, TP-0056 | — | `web/src/componentes/CartoesResumo.tsx`, `web/src/componentes/FiltroTipo.tsx` | `web/test/cartoes-filtro.test.tsx` | Pendente |
+| TP-0059 | Lote 12 | Tela T1 Divergências: consulta, filtro e tabela | Frontend | RF-07, UX-SPEC T1, §4 | Lê `?tipo=` e chama `/api/v1/divergencias`; tabela com pedido (link T2), etiqueta, motivo e `<details>` com eventos; total no `<h1>`; `<caption>` com filtro e página; trocar filtro atualiza a URL; 4 estados; 400 → "O filtro do endereço não é válido. [Ver todas as divergências]"; axe sem violação | 3h | TP-0052, TP-0053, TP-0055, TP-0058 | — | `web/src/paginas/Divergencias.tsx` | `web/test/divergencias.test.tsx` | Pendente |
+| TP-0060 | Lote 12 | Tela T1: paginação na URL | Frontend | RF-07, UX-SPEC T1, §4, §5 | `?pagina=` na URL; trocar filtro volta à página 1; foco vai ao `<caption>` ao trocar de página; botões com `aria-disabled` durante a carga; chamada anterior cancelada; página além da última → "Esta página não existe. [Ir para a página 1]"; `<title>` com a página; anúncio "50 de N divergências, página X de Y"; axe sem violação | 2h | TP-0059 | — | `web/src/paginas/Divergencias.tsx` | `web/test/divergencias-paginacao.test.tsx` | Pendente |
+
+### Lote 13 — Site: Linha do tempo, Indicadores e Qualidade (Must)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0061 | Lote 13 | Componente `LinhaDoTempo` (grade no PC, cartões no celular) | Frontend | RF-05, UX-SPEC §3, §6 | Uma `<ol>` em ordem recebida; ≥ 1024 px grade Data \| Vendas \| Pagamentos \| Transportadora com títulos `aria-hidden` e fonte em texto em cada item; < 1024 px cartões com `EtiquetaFonte`; data, código e valor em mono; "chegou fora de ordem" em texto; axe sem violação | 2,5h | TP-0054 | TP-0063, TP-0064 | `web/src/componentes/LinhaDoTempo.tsx` | `web/test/componente-linha-do-tempo.test.tsx` | Pendente |
+| TP-0062 | Lote 13 | Tela T2 Linha do tempo do pedido (sem estado em data) | Frontend | RF-05, M2, UX-SPEC T2, §4 | Chama `/api/v1/pedidos/{codigo}/linha-do-tempo`; `<h1>` com a identidade e "Encontrado pelo código X" quando buscado por código de fonte; "Aparece em N de 3 fontes" com códigos; devido, pago, data limite; etiquetas de divergência ou "Sem divergência"; 404/400 → "Pedido não encontrado" + formatos aceitos, anunciado; 4 estados; axe sem violação | 2,5h | TP-0030, TP-0052, TP-0053, TP-0055, TP-0061 | TP-0063, TP-0064 | `web/src/paginas/LinhaDoTempo.tsx` | `web/test/linha-do-tempo.test.tsx` | Pendente |
+| TP-0063 | Lote 13 | Tela T3 Indicadores (Must) | Frontend | RF-08 (M), UX-SPEC T3, §4 | Componente `Indicador` que desenha qualquer bloco do contrato (título, fórmula, numerador, denominador, resultado); "sem entregas com data conhecida" quando o resultado é nulo; pedidos sem entrega à parte; divergências por tipo com link para `/?tipo=…`; 4 estados; axe sem violação | 2,5h | TP-0031, TP-0052, TP-0053, TP-0054, TP-0055 | TP-0061, TP-0062, TP-0064 | `web/src/paginas/Indicadores.tsx`, `web/src/componentes/Indicador.tsx` | `web/test/indicadores.test.tsx` | Pendente |
+| TP-0064 | Lote 13 | Tela T4 Qualidade dos dados | Frontend | RF-04, UX-SPEC T4, §4 | `BlocoAchado` por tipo (contagem, regra, até 10 exemplos com link para T2); contagem 0: "Nenhum caso encontrado."; seção IA com "IA não utilizada nesta publicação…" quando `ia.utilizada` é falso; 4 estados; axe sem violação | 2,5h | TP-0031, TP-0052, TP-0053, TP-0054, TP-0055 | TP-0061, TP-0062, TP-0063 | `web/src/paginas/Qualidade.tsx`, `web/src/componentes/BlocoAchado.tsx` | `web/test/qualidade.test.tsx` | Pendente |
+
+### Lote 14 — Publicação e documentação (Must)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0065 | Lote 14 | `pnpm publicar`: D1 remoto + Worker, e conferência do link | DevOps | RF-11, RNF-01, ADR-015, SDD §7 | `pnpm publicar` = `preparar` → `vite build` → `wrangler d1 execute poc-lab --remote --file dados/publicacao/leitura.sql` → `wrangler deploy` (D1 antes do Worker); `database_id` no `wrangler.jsonc`; `_headers` dos assets com CSP `default-src 'self'; frame-ancestors 'none'`, `nosniff`, `no-referrer`; ações do autor listadas (`wrangler login`, `wrangler d1 create` uma vez, alerta de uso no painel); após o deploy: `curl` nas 5 rotas v1 + 404 + 405 com os cabeçalhos esperados, T1–T4 abrem no link, link no README | 2h | TP-0045, TP-0046, TP-0047, TP-0048, TP-0049, TP-0050, TP-0057, TP-0060, TP-0062, TP-0063, TP-0064 | TP-0066, TP-0067 | `web/wrangler.jsonc`, `web/public/_headers`, `package.json` | conferência manual registrada (ação do autor) | Pendente |
+| TP-0066 | Lote 14 | README: o que é, como rodar, mapa de decisões e fora de propósito | Docs | RF-12, M3, M6 | Em português: o que é a POC; rodar em 3 comandos (`pnpm install`, `pnpm preparar`, `pnpm dev`, sem conta e sem chave); mapa das decisões com link para cada ADR 001–016 (≤ 2 cliques), marcando os substituídos; fora de propósito com motivo, incluindo os itens S/C ainda não entregues (RF-12 item 11); origem dos dados | 2h | TP-0045 | TP-0065, TP-0067 | `README.md` | revisão de links | Pendente |
+| TP-0067 | Lote 14 | README da API e avisos de licença | Docs | RF-12, ADR-016, I-01, SDD §7 | Seção da API: rotas, exemplos `curl`, formato de erro, paginação, versão no caminho (v2 pendente até o Lote 17); como desligar a API e alerta de uso (custo, SDD §6); `AVISO-DE-LICENCA.md` com a licença MIT e a atribuição da base (único lugar com o nome da base) e a licença OFL das fontes | 1,5h | TP-0046, TP-0047, TP-0048, TP-0049, TP-0050, TP-0051 | TP-0065, TP-0066 | `README.md`, `AVISO-DE-LICENCA.md` | revisão de links | Pendente |
+
+### Lote 15 — Indicadores complementares (Should)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0068 | Lote 15 | Domínio: tempo médio pedido→envio e envio→entrega | Backend | RF-08 (S) | Bloco com fórmula, soma (numerador), contagem (denominador) e média; pedidos sem envio/entrega fora do denominador | 2h | TP-0033 | TP-0069 | `dominio/indicadores.ts` | `test/dominio/indicadores.test.ts` | Pendente |
+| TP-0069 | Lote 15 | Domínio: valor pago × valor devido, total e por situação | Backend | RF-08 (S), RN-02, RN-11 | Bloco total e por situação de quitação, com fórmula, numerador e denominador; sugestões da IA nunca entram | 2h | TP-0033 | TP-0068 | `dominio/indicadores.ts` | `test/dominio/indicadores.test.ts` | Pendente |
+| TP-0070 | Lote 15 | Projeção: os 2 blocos novos no documento `indicadores` | Backend | RF-08 (S), ADR-016 | Blocos entram como itens novos da lista; o esquema v1 não muda e o teste de contrato do TP-0049 continua verde | 1h | TP-0039, TP-0068, TP-0069 | — | `publicacao/documentos.ts` | `test/publicacao/documentos.test.ts` | Pendente |
+| TP-0071 | Lote 15 | T3: seções dos indicadores complementares | Frontend | RF-08 (S), UX-SPEC T3 | As 2 seções aparecem pelo mesmo `Indicador`; axe sem violação; README tira o item de "fora de propósito" | 1,5h | TP-0063, TP-0070 | — | `web/src/paginas/Indicadores.tsx`, `README.md` | `web/test/indicadores.test.tsx` | Pendente |
+
+### Lote 16 — Estado numa data (Should)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0072 | Lote 16 | Componente `SeletorData` | Frontend | RF-06, UX-SPEC §3, §5 | `<input type="date">` com `<label>`, botões Ver estado e Limpar; contorno com `--cor-borda-controle`; axe sem violação | 1h | TP-0051 | — | `web/src/componentes/SeletorData.tsx` | `web/test/seletor-data.test.tsx` | Pendente |
+| TP-0073 | Lote 16 | T2: estado do pedido em uma data | Frontend | RF-06, UX-SPEC T2 | Usa a função pura do TP-0012 no navegador, sem nova chamada à API; frase do estado; eventos posteriores atenuados e com o texto "depois da data escolhida"; data anterior à venda: "Nenhum evento até esta data."; axe; README atualizado | 2,5h | TP-0012, TP-0062, TP-0072 | — | `web/src/paginas/LinhaDoTempo.tsx`, `web/src/componentes/LinhaDoTempo.tsx`, `README.md` | `web/test/estado-em-data.test.tsx` | Pendente |
+
+### Lote 17 — Contrato de evento v2 (Should)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0074 | Lote 17 | Domínio: `pagamento` v2 com `meio_pagamento` | Backend | RF-09, ADR-006 | União passa a aceitar `pagamento` v2 (aditivo); o consumidor de saldo/quitação v1 não muda e dá o mesmo resultado sobre uma mistura de v1 e v2 | 1,5h | TP-0009 | — | `dominio/evento.ts` | `test/dominio/evento.test.ts` | Pendente |
+| TP-0075 | Lote 17 | Gerador e adaptador de pagamentos com `meio_pagamento` opcional | Backend | RF-09, RF-01 | Gerador preenche a coluna em parte das linhas (determinístico); adaptador grava v2 quando há valor e v1 quando não; importação mista funciona; idempotência e teste de M1 continuam verdes | 2h | TP-0021, TP-0025, TP-0074 | TP-0076 | `gerador/plantar-pagamentos.ts`, `fontes/pagamentos.ts` | `test/fontes/pagamentos.test.ts` | Pendente |
+| TP-0076 | Lote 17 | Contrato: esquema da linha do tempo v2 | Backend | RF-09, ADR-016 | Eventos com `versao_schema` e os campos da versão gravada (`meio_pagamento` em `pagamento` v2); esquema v1 intocado | 1h | TP-0030, TP-0074 | TP-0075 | `contrato/linha-do-tempo-v2.ts` | `test/contrato/respostas-v2.test.ts` | Pendente |
+| TP-0077 | Lote 17 | Endpoint `GET /api/v2/pedidos/{codigo}/linha-do-tempo` | Backend | RF-09, ADR-016 | Mesma resolução e erros da v1 (reusa as consultas); resposta passa no esquema v2; só esta rota existe sob `/api/v2` (outras → 404) | 2h | TP-0048, TP-0076 | — | `web/worker/rotas/linha-do-tempo-v2.ts` | `web/test/worker/linha-do-tempo-v2.test.ts` | Pendente |
+| TP-0078 | Lote 17 | Teste `validação: contrato v1 e v2` e demonstração no README | Backend | RF-09, ADR-016, M4 | Para o mesmo pedido, a resposta da v1 é idêntica com os pagamentos gravados como v1 ou como v2 e passa no esquema v1; a v2 traz `meio_pagamento`; o site não muda (testes do `web` verdes sem alteração); README mostra os 2 `curl` e tira o item de "fora de propósito" | 1,5h | TP-0075, TP-0077 | — | `web/test/worker/contrato-v1-v2.test.ts`, `README.md` | `validação: contrato v1 e v2` | Pendente |
+
+### Lote 18 — Sugestão por IA (Could)
+
+| ID | Lote | Tarefa | Chapéu | Req | Critério de aceite | Est | Depende de | Paralelizável com | Arquivos | Testes | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| TP-0079 | Lote 18 | Tabela `cache_ia` no event store | Backend | RF-10 | `CREATE TABLE IF NOT EXISTS cache_ia` (chave SHA-256, resposta, criado_em), aditiva; reimportação continua idempotente | 0,5h | TP-0018 | TP-0080 | `armazenamento/schema.sql` | `test/armazenamento/repositorio.test.ts` | Pendente |
+| TP-0080 | Lote 18 | RN-11 conferência da sugestão | Backend | RN-11 | Conferida só se o valor for compatível com o saldo em aberto, a data do pagamento ≥ data do pedido e o pedido não estiver quitado; devolve o motivo em texto | 1,5h | TP-0009 | TP-0079 | `dominio/conferencia-sugestao.ts` | `test/dominio/conferencia-sugestao.test.ts` | Pendente |
+| TP-0081 | Lote 18 | Porta `ProvedorSugestao`, provedor falso e caso de uso `sugerir` | Backend | RF-10, ADR-010 | Monta candidatos (§6 L-03); cache por SHA-256 de texto + candidatos ordenados + modelo; respeita `IA_TETO_CHAMADAS` (padrão 20); sem chave ou teto atingido = "sem sugestão" e segue; testes só com provedor falso | 2,5h | TP-0027, TP-0079, TP-0080 | — | `ia/porta.ts`, `ia/provedor-falso.ts`, `ia/sugerir.ts` | `test/ia/sugerir.test.ts` | Pendente |
+| TP-0082 | Lote 18 | Provedor de IA via `fetch` | Backend | RF-10, SDD §7 | Chave só de `OPENAI_API_KEY`, modelo de `OPENAI_MODELO`; texto da referência enviado como dado; resposta validada por esquema e aceita só identidade da lista de candidatos; erro de rede vira "sem sugestão"; teste com `fetch` falso | 2h | TP-0081 | TP-0083, TP-0084 | `ia/provedor-openai.ts` | `test/ia/provedor-openai.test.ts` | Pendente |
+| TP-0083 | Lote 18 | CLI `sugerir` no `preparar` | Backend | RF-10 | `pnpm sugerir`; `preparar` chama `sugerir` só se houver chave, entre importar e publicar-dados; sem chave, o `leitura.sql` sai igual ao de antes (byte a byte) | 1h | TP-0045, TP-0081 | TP-0082, TP-0084 | `cli/sugerir.ts`, `cli/preparar.ts` | `test/integracao/preparar.test.ts` | Pendente |
+| TP-0084 | Lote 18 | Projeção: sugestões no documento `qualidade` | Backend | RF-10, RN-11 | Sugestões (conferidas e rejeitadas, com motivo) em `ia.sugestoes` e `ia.utilizada = true`; nunca no documento `indicadores`; esquema v1 não muda | 1,5h | TP-0038, TP-0081 | TP-0082, TP-0083 | `publicacao/qualidade.ts` | `test/publicacao/qualidade-ia.test.ts` | Pendente |
+| TP-0085 | Lote 18 | T4: seção "Sugestões da IA" | Frontend | RF-10, UX-SPEC T4 | Tabela pagamento, texto da referência, pedido sugerido, conferida? (etiqueta com texto), motivo da regra; mensagem própria quando não há sugestões; axe; README registra a IA como entregue | 1,5h | TP-0064, TP-0084 | — | `web/src/paginas/Qualidade.tsx`, `README.md` | `web/test/qualidade.test.tsx` | Pendente |
+
+## 4. Dependências e Ordem de Execução
+
+Ordem dos lotes: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → 14 → (publicar) → 15 → 16 → 17 → 18. Ao fim de cada lote S/C, o autor roda `pnpm publicar`. Cortar = parar antes do próximo lote; o README já lista os itens não entregues (TP-0066), e cada lote S/C tira o seu item ao terminar.
+
+Adiantamentos permitidos (dependem só do que já estiver pronto, sem quebrar a ordem Must → S → C):
+- Lote 6 (contrato) depende só de TP-0006: pode rodar junto dos Lotes 3 a 5.
+- TP-0040 e TP-0041 (Lote 8) dependem só de TP-0032 e TP-0003: podem rodar junto do Lote 7.
+- Lotes 10 a 13 (site) dependem do contrato (Lote 6) e do `web` (TP-0003), não do D1: podem rodar em paralelo aos Lotes 7 a 9, com respostas de exemplo validadas pelo esquema nos testes.
+
+| Lote | Rodada 1 (em paralelo) | Rodada 2 | Rodada 3 | Rodada 4 |
+|---|---|---|---|---|
+| 1 | TP-0001 | TP-0002, TP-0003, TP-0004 | TP-0005 | — |
+| 2 | TP-0006 | TP-0007, TP-0008, TP-0009, TP-0010, TP-0011 | — | — |
+| 3 | TP-0012, TP-0013, TP-0014, TP-0015, TP-0017 | TP-0016 (depende de TP-0012) | — | — |
+| 4 | TP-0018, TP-0019, TP-0021, TP-0022 | TP-0020 (depende de TP-0019) | — | — |
+| 5 | TP-0023, TP-0027 | TP-0024, TP-0025 | TP-0026 | TP-0028 |
+| 6 | TP-0029, TP-0032 | TP-0030, TP-0031 | — | — |
+| 7 | TP-0033, TP-0035, TP-0036, TP-0037, TP-0038 | TP-0034 (depende de TP-0033) | TP-0039 | — |
+| 8 | TP-0040, TP-0041 | TP-0042, TP-0043, TP-0044 | TP-0045 | — |
+| 9 | TP-0046, TP-0047, TP-0048, TP-0049, TP-0050 | — | — | — |
+| 10 | TP-0051, TP-0052, TP-0053 | TP-0054 (depende de TP-0051) | — | — |
+| 11 | TP-0055 | TP-0056, TP-0057 | — | — |
+| 12 | TP-0058 | TP-0059 | TP-0060 | — |
+| 13 | TP-0061, TP-0063, TP-0064 | TP-0062 (depende de TP-0061) | — | — |
+| 14 | TP-0065, TP-0066, TP-0067 | — | — | — |
+| 15 | TP-0068, TP-0069 | TP-0070 | TP-0071 | — |
+| 16 | TP-0072 | TP-0073 | — | — |
+| 17 | TP-0074 | TP-0075, TP-0076 | TP-0077 | TP-0078 |
+| 18 | TP-0079, TP-0080 | TP-0081 | TP-0082, TP-0083, TP-0084 | TP-0085 |
+
+**Caminho crítico dos Must** (≈ 24 h de esforço): TP-0001 → TP-0004 → TP-0019 → TP-0023 → TP-0024 → TP-0026 → TP-0028 → TP-0033 → TP-0034 → TP-0039 → TP-0044 → TP-0045 → TP-0065. (O ramo do site, TP-0001 → TP-0003 → TP-0051 → TP-0055 → TP-0056 → TP-0058 → TP-0059 → TP-0060, soma ≈ 16,5 h e corre em paralelo; o da API, TP-0041 → TP-0042 → TP-0048, ≈ 7,5 h.)
+
+Dependências entre lotes que o Executor precisa respeitar: TP-0019 precisa de TP-0004; TP-0028 precisa das 4 regras do Lote 3; Lote 7 precisa de TP-0028 e do Lote 6; TP-0044 precisa de todo o Lote 7; rotas do Lote 9 precisam dos esquemas do Lote 6 e de TP-0042/TP-0043; TP-0065 precisa de TP-0045, do Lote 9 e das telas; TP-0073 precisa de TP-0012 e TP-0062; TP-0077 precisa de TP-0048. Nenhuma tarefa Must depende de tarefa S/C.
+
+## 5. Riscos de Prazo Sinalizados
+
+| Risco | Severidade | Tratamento |
+|---|---|---|
+| Esforço total estimado: Must ≈ 123 h (85 tarefas no total: 67 Must, 11 Should, 7 Could), Should ≈ 18 h, Could ≈ 10,5 h. Em horas de uma pessoa, não cabe em 1 dia; o plano depende de várias instâncias do Executor em paralelo e de revisão rápida por lote. A API e o Modelo B somaram ≈ 42,5 h aos Must em relação ao rascunho anterior (≈ 80,5 h) | Alta | Publicar ao fim do Lote 14 antes de qualquer S/C; cortar pela ordem inversa dos lotes. O usuário pode pedir o parecer `capacity-and-timeline-validation` |
+| Caminho crítico dos Must (≈ 24 h) é sequencial no gerador, na importação e nas projeções | Alta | Adiantar Lote 6, TP-0040/TP-0041 e o site (Lotes 10–13) em paralelo, como na §4 |
+| `@cloudflare/vite-plugin` e `wrangler d1 execute --local` em pastas de estado diferentes | Baixa | Verificado em TP-0041/TP-0044; plano B na §2 |
+| Teste de M1 (TP-0028) achar falso positivo por colisão de caso plantado com divergência natural | Média | Plantio só em pedidos limpos (TP-0023); se falhar, corrigir o gerador, nunca a regra (RN-13) |
+| Publicação depende de ação do autor (`wrangler login`, `wrangler d1 create`, `pnpm publicar`) | Média | Pedir ao autor ao iniciar o Lote 14; o `database_id` entra no `wrangler.jsonc` em TP-0065 |
+| Download da base falhar no CI | Média | Cache por SHA-256 no CI (TP-0005); download manual no README |
+
+## 6. Lacunas Sinalizadas
+
+Nenhuma lacuna estrutural: nada exige novo ADR nem muda o SDD. O UX-SPEC recebeu o ajuste visual Modelo B (§3, §6) pedido pelo usuário. As decisões abaixo são de detalhe de implementação, tomadas aqui e registradas.
+
+| ID | Lacuna (detalhe) | Decisão | Tarefas afetadas |
+|---|---|---|---|
+| L-01 | O SDD não fixa as colunas dos CSV gerados | Contrato na §1; permite construir gerador e adaptadores em paralelo | TP-0021, TP-0022, TP-0023, TP-0024, TP-0025, TP-0026 |
+| L-02 | A base traz nomes de transportadoras, e RNF-04 proíbe nome de empresa | Publicar como `Transportadora 1/2/3` pelo código da base; nenhum nome da base (cliente, transportadora, produto) vai para o D1 | TP-0020, TP-0033, TP-0035, TP-0036 |
+| L-03 | Quais pedidos vão como candidatos à IA | Pedidos não quitados, com data do pedido ≤ data do pagamento e saldo em aberto ≥ valor pago − R$ 0,01, até 20, ordenados pela diferença de saldo | TP-0081 |
+| L-04 | Como plantar "referência ambígua" | Texto livre sem código e texto com dois códigos de vendas; ambos dão "sem identificação" por RN-09 | TP-0010, TP-0025 |
+| L-05 | A base não tem data de entrega nem eventos de transporte | O gerador cria `transporte` e `entrega` a partir da data de envio, dentro da data limite nos pedidos limpos | TP-0024, TP-0026 |
+| L-06 | Testes de integração precisam da base | `pnpm test` chama `baixar-base` antes (idempotente); no CI, a base vem do cache | TP-0001, TP-0005, TP-0019 |
+| L-07 | O SDD diz que o `resumo` traz "Totais", sem listar quais; o Modelo B pede cartões e contagem nos chips | `totais` = pedidos, pedidos com divergência, contagem por tipo, valor em aberto (Σ devido − pago dos `parcial` e `enviado_nao_pago`), pago a mais (Σ pago − devido dos `duplicado`) e entregas no prazo total, cada um com fórmula, numerador e denominador. Nenhuma rota nova | TP-0030, TP-0034, TP-0039, TP-0056, TP-0058 |
+| L-08 | Indicadores Should e sugestões da IA chegam depois da v1 publicada, e a v1 não pode mudar de forma (ADR-016) | Desde a Must, `indicadores` é uma lista de blocos genéricos e `qualidade` já tem `ia { utilizada, sugestoes[] }`. Os lotes S/C só acrescentam itens, nunca campos | TP-0031, TP-0063, TP-0070, TP-0084 |
+| L-09 | Fontes do Modelo B: CDN externo ou auto-hospedadas | Auto-hospedadas em `woff2` no repositório (CSP inalterado, sem dependência npm nova, funciona sem rede); licença OFL no aviso | TP-0051, TP-0067 |
+| L-10 | Qual subconjunto do D1 o adaptador de teste implementa | `prepare`, `bind`, `first`, `all`, `run` — só o que as rotas usam | TP-0043 |
+| L-11 | Ordem das divergências na API | Com `tipo`: por `id_pedido`; "Todos": por `id_pedido`, depois `tipo` (usa o índice `(id_pedido, tipo)`) | TP-0037, TP-0047 |
+| L-12 | Ícones da navegação sem biblioteca | SVG próprios em linha, `aria-hidden`, sempre com texto | TP-0055 |
+
+**Inseparabilidades documentadas** (exceções à regra de não misturar):
+- TP-0016 junta RN-05 e RN-14: a data de corte só existe para RN-05 e é uma linha.
+- TP-0027 junta importação (RF-02) e identidade própria (RF-03): não há como gravar um pedido sem atribuir a identidade, e o vínculo único é a própria idempotência (ADR-004).
+- TP-0055 junta a casca e a T5: a T5 é só texto e 2 links, sem dados; é a rota padrão do roteador criado na mesma tarefa.
+- TP-0025 e TP-0026 agrupam o plantio de vários tipos de problema por fonte (um arquivo cada): manipulação de dados sem regra de negócio própria; dividir por tipo geraria conflito de edição.
+- TP-0075 junta gerador e adaptador para a mesma coluna nova do CSV: escrita e leitura precisam mudar juntas para a importação não quebrar.
+- TP-0018 junta o `schema.sql` e o repositório: o repositório só existe para essas tabelas; é um único item de SQL.
+
+**Justificativa dos lotes com 7 tarefas:** Lote 7 (projeções) tem 7 tarefas de 1–2 h no mesmo módulo `publicacao/`, quase todas em paralelo; separá-lo só criaria uma fronteira artificial. Lote 18 (IA) tem 7 porque é uma única unidade de corte do PRD §5: dividi-lo deixaria um lote que sozinho não entrega nada visível.
+
+**Autocheck de granularidade (antes → depois)**, contra o rascunho anterior (JSON estáticos) e a regra de 4 h:
+- "Contrato de publicação" (TP-0028 antigo, tipos de JSON + *shards*) → TP-0029 (contrato base) + TP-0030 + TP-0031 (esquemas de resposta): com zod, erro RFC 9457 e paginação passava de 4 h.
+- "Projeções de pedidos e índice" (TP-0030 antigo) → TP-0035 (`pedido_resumo` + `vinculo_codigo`) + TP-0036 (`linha_do_tempo`).
+- "Indicadores Must + JSON" (TP-0031 antigo) → TP-0033 (regra) + TP-0039 (documento): a regra passou a ser usada também pelos totais do resumo, então deixou de ser inseparável da projeção.
+- "CLI publicar-dados + resumo + preparar" (TP-0033 antigo) → TP-0034 (totais, regra) + TP-0039 (documentos) + TP-0040 (escritor SQL) + TP-0044 (carga no D1 local) + TP-0045 (`preparar`): o SQL, a carga e a regra nova não cabiam juntos e misturavam regra com SQL.
+- "Publicação em static assets" (TP-0042 antigo) → TP-0041 (esqueleto do Worker) + TP-0042 (erros e cabeçalhos) + TP-0065 (publicar): o Worker é código novo, não só configuração.
+- Rotas da API: uma tarefa por endpoint (TP-0046 a TP-0050), pela regra de não-mistura; a linha do tempo (3 h, com testes de entrada maliciosa) ficou inteira.
+- "Camada de dados + estados" (TP-0034 antigo) → TP-0052 (`clienteApi`) + TP-0053 (estados): tempo limite, cancelamento e tradução de erro da API passavam de 4 h juntos.
+- "Casca com tokens, cabeçalho e rotas" (TP-0035 antigo) → TP-0051 (tokens e fontes do Modelo B) + TP-0055 (casca com menu lateral/abas) + TP-0056 (faixa e contexto do resumo): as 2 disposições do Modelo B levaram a casca a ≈ 6 h.
+- "Busca resolvendo índice" (TP-0037 antigo) ficou menor (TP-0057, 1 h): a API resolve o código.
+- "Tela T1" (TP-0038 antigo, 3 h) → TP-0058 (cartões e chips) + TP-0059 (consulta, filtro, tabela) + TP-0060 (paginação na URL): cartões, chips e paginação no servidor levariam a ≈ 7 h.
+- "Tela T2" (TP-0039 antigo, 3 h) → TP-0061 (componente em grade/cartões) + TP-0062 (página).
+- "README" (TP-0043 antigo) → TP-0066 (base) + TP-0067 (API e licenças).
+- "Estado em data" (TP-0047 antigo) → TP-0072 (`SeletorData`) + TP-0073 (integração na T2).
+- "Contrato v2" (2 tarefas antes) → TP-0074 a TP-0078: entram o esquema v2, a rota v2 e o teste de validação na API.
+- "CLI sugerir + publicação" (TP-0054 antigo) → TP-0083 (CLI) + TP-0084 (projeção).
+- "Gerador base" (TP-0023a/TP-0023b) renumerado para TP-0023/TP-0024, sem sufixo, como pedido.
+- Reconferidas e mantidas: as de 3 h (TP-0027, TP-0048, TP-0055, TP-0059) ficam abaixo de 4 h com folga real; a de maior contexto (TP-0027, 3 adaptadores + repositório) fica muito abaixo de ~300 mil tokens.
+
+**Critérios de Pronto do TASK.md (autocheck)**
+- [x] IDs no formato `TP-0000`, sequenciais e sem sufixo (TP-0001 a TP-0085), inclusive nas dependências; nenhum `T-nnn`
+- [x] Toda tarefa tem critério de aceite testável, lote nomeado e cabe num ciclo de implementação
+- [x] Paralelismo e dependências explícitos na §3 (coluna) e na §4 (rodadas)
+- [x] Nenhum lote acima de 5-6 tarefas sem justificativa (Lotes 7 e 18 com 7, justificados acima)
+- [x] Toda tarefa não-spike tem estimativa; nenhum spike formal (§2)
+- [x] **Toda tarefa com no máximo 0,5 dia-pessoa (4 h)**, contando código, SQL e testes, sem estimativa apertada; maior estimativa: 3 h
+- [x] Nenhuma tarefa mistura mais de uma tela/endpoint/regra/SQL, salvo as inseparabilidades acima
+- [x] Nenhuma tarefa prevista acima de ~300 mil tokens de contexto
+- [x] Divisões do autocheck documentadas (antes → depois)
+- [x] Diretrizes de implementação traduzidas em regra prática (§1)
+- [x] Nenhuma lacuna estrutural em aberto; as de detalhe estão na tabela acima
+- [x] Ordem do PRD §5: Must (Lotes 1–14) → indicadores complementares (15) → estado numa data (16) → contrato v2 (17) → IA (18)
+- [x] Rascunho do `GUARDRAILS.md` refeito junto
