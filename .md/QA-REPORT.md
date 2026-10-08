@@ -242,3 +242,6 @@ APROVADA — 4/4 testes de TP-0045 passam (pipeline 71–75s, leitura.sql idênt
 
 ## TP-0084 — QA — 2026-10-08
 APROVADA; 0 críticos, 1 não crítico (média: chave de cache usa modelo "falso" fixo, sugestões reais da CLI com gpt-4o-mini não aparecem em ia.sugestoes); 24 testes verdes (qualidade-ia, qualidade, documentos); RTP-0028.
+
+## TP-0085 — QA — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico (README sem menção explícita à IA entregue; RTP-0033); qualidade.test.tsx 21/21 verde, axe ok.

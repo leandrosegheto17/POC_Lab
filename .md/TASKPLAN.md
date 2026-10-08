@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-08 12:53
+Atualizado: 2026-10-08 12:54
 
-Resumo: Não executada 30 · Em execução 3 · Executada (aguarda teste) 2 · Testada (aguarda segurança) 80 · total 115
+Resumo: Não executada 32 · Em execução 3 · Testada (aguarda segurança) 82 · total 117
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -51,7 +51,7 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 36 | TP-0036 | executor | ✔ | Projeção de linha_do_tempo | Lote 7 | TP-0013, TP-0027, TP-0032 | Testada (aguarda segurança) |
 | 37 | TP-0037 | executor | ✔ | Projeção de divergencia | Lote 7 | TP-0028, TP-0032 | Testada (aguarda segurança) |
 | 38 | TP-0038 | executor | ✔ | Projeção do documento qualidade | Lote 7 | TP-0013, TP-0027, TP-0031, TP-0032 | Testada (aguarda segurança) |
-| 39 | TP-0039 | executor | ✔ | Projeção dos documentos resumo e indicadores | Lote 7 | TP-0030, TP-0031, TP-0032, TP-0033, TP-0034 | Executada (aguarda teste) |
+| 39 | TP-0039 | executor | ✔ | Projeção dos documentos resumo e indicadores | Lote 7 | TP-0030, TP-0031, TP-0032, TP-0033, TP-0034 | Testada (aguarda segurança) |
 | 40 | TP-0040 | executor | ✔ | Escritor do arquivo leitura.sql | Lote 8 | TP-0032 | Testada (aguarda segurança) |
 | 41 | TP-0041 | executor | ✔ | Esqueleto do Worker e pnpm dev com site + API | Lote 8 | TP-0003 | Testada (aguarda segurança) |
 | 42 | TP-0042 | executor | ✔ | Erros centrais e cabeçalhos da API | Lote 8 | TP-0029, TP-0041 | Testada (aguarda segurança) |
@@ -97,7 +97,7 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 82 | TP-0082 | executor | ✔ | Provedor de IA via fetch | Lote 18 | TP-0081 | Testada (aguarda segurança) |
 | 83 | TP-0083 | executor | ✔ | CLI sugerir no preparar | Lote 18 | TP-0045, TP-0081 | Testada (aguarda segurança) |
 | 84 | TP-0084 | executor | ✔ | Projeção: sugestões no documento qualidade | Lote 18 | TP-0038, TP-0081 | Testada (aguarda segurança) |
-| 85 | TP-0085 | executor | ✔ | T4: seção "Sugestões da IA" | Lote 18 | TP-0064, TP-0084 | Executada (aguarda teste) |
+| 85 | TP-0085 | executor | ✔ | T4: seção "Sugestões da IA" | Lote 18 | TP-0064, TP-0084 | Testada (aguarda segurança) |
 | 86 | RTP-0001 | executor | ✔ | Corrigir erros de typecheck em processamento/test/dominio/evento.test.ts após pagamento v2 | Refatoração Lote-17 | TP-0074 | Não executada |
 | 87 | RTP-0002 | executor | ✔ | Deixar pnpm typecheck verde no pacote processamento (tsconfig base e testes) | Refatoração Lote-1 | TP-0001 | Não executada |
 | 88 | RTP-0011 | executor | ✔ | Cobrir dangerouslySetInnerHTML em componentes JSX customizados no ESLint | Refatoração Lote-1 | TP-0002 | Não executada |
@@ -121,10 +121,12 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 106 | RTP-0021 | executor | ✔ | Timeout na chamada do provedor de IA | Refatoração Lote-18 | TP-0082 | Não executada |
 | 107 | RTP-0027 | executor | ✔ | Passo 4 do preparar: mensagem desatualizada e ordem não testada | Refatoração Lote-18 | TP-0083 | Não executada |
 | 108 | RTP-0028 | executor | ✔ | qualidade: sugestões de IA reais aparecem em ia.sugestoes (modelo na chave de cache) | Refatoração Lote-18 | TP-0084 | Não executada |
-| 109 | RTP-0010 | executor | ✔ | Ajustar web/tsconfig.json para o typecheck do Worker (tipos Cloudflare e extensão .ts) | Refatoração Lote-8 | TP-0041 | Não executada |
-| 110 | RTP-0012 | executor | ✔ | clienteApi: 5xx sem corpo RFC 9457 deve mostrar a mensagem de indisponível | Refatoração Lote-10 | TP-0052 | Não executada |
-| 111 | RTP-0013 | executor | ✔ | T2: incluir eventos do próprio dia escolhido no estado em uma data | Refatoração Lote-16 | TP-0073 | Não executada |
-| 112 | RTP-0015 | executor | ✔ | T1 paginação: foco no caption e anúncio 'página X de Y' | Refatoração Lote-12 | TP-0060 | Não executada |
-| 113 | RTP-0016 | executor | ✔ | Tipar os casos negativos de qualidade em respostas-v1.test.ts | Refatoração Lote-6 | TP-0031 | Não executada |
-| 114 | RTP-0024 | executor | ✔ | Teste de ordenação secundária por tipo em divergencias | Refatoração Lote-7 | TP-0037 | Não executada |
-| 115 | RTP-0031 | executor | ✔ | Teste de qualidade: tipos com contagem 0 e os 830 pedidos de formato curto | Refatoração Lote-7 | TP-0038 | Não executada |
+| 109 | RTP-0033 | executor | ✔ | README: registrar a IA (Sugestões da IA, ADR-010) como entregue | Refatoração Lote-18 | TP-0085 | Não executada |
+| 110 | RTP-0010 | executor | ✔ | Ajustar web/tsconfig.json para o typecheck do Worker (tipos Cloudflare e extensão .ts) | Refatoração Lote-8 | TP-0041 | Não executada |
+| 111 | RTP-0012 | executor | ✔ | clienteApi: 5xx sem corpo RFC 9457 deve mostrar a mensagem de indisponível | Refatoração Lote-10 | TP-0052 | Não executada |
+| 112 | RTP-0013 | executor | ✔ | T2: incluir eventos do próprio dia escolhido no estado em uma data | Refatoração Lote-16 | TP-0073 | Não executada |
+| 113 | RTP-0015 | executor | ✔ | T1 paginação: foco no caption e anúncio 'página X de Y' | Refatoração Lote-12 | TP-0060 | Não executada |
+| 114 | RTP-0016 | executor | ✔ | Tipar os casos negativos de qualidade em respostas-v1.test.ts | Refatoração Lote-6 | TP-0031 | Não executada |
+| 115 | RTP-0024 | executor | ✔ | Teste de ordenação secundária por tipo em divergencias | Refatoração Lote-7 | TP-0037 | Não executada |
+| 116 | RTP-0031 | executor | ✔ | Teste de qualidade: tipos com contagem 0 e os 830 pedidos de formato curto | Refatoração Lote-7 | TP-0038 | Não executada |
+| 117 | RTP-0032 | executor | ✔ | Testar dataCorte = maior momento_fato na publicação | Refatoração Lote-7 | TP-0039 | Não executada |
