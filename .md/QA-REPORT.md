@@ -245,3 +245,117 @@ APROVADA; 0 críticos, 1 não crítico (média: chave de cache usa modelo "falso
 
 ## TP-0085 — QA — 2026-10-08
 APROVADA; 0 críticos, 1 não crítico (README sem menção explícita à IA entregue; RTP-0033); qualidade.test.tsx 21/21 verde, axe ok.
+
+## RTP-0001 — QA — 2026-10-08
+APROVADA; 0 críticos/0 não críticos; tsc sem erros em evento.test.ts e vitest 7/7.
+
+## RTP-0002 — QA — 2026-10-08
+APROVADA — escopo da RTP-0002 atendido (0 erros nos arquivos dela, noEmit seguro); typecheck global falha por TS2353 on_skip da RTP-0020 (1 não crítico, fora desta tarefa).
+
+## RTP-0003 — QA — 2026-10-08
+APROVADA; 0 achados; URL igual ao origin, rel/target/aria-label intactos, casca 31/31 passando.
+
+## RTP-0004 — QA — 2026-10-08
+APROVADA, 0 achados; resumo.test.ts afirma Cache-Control public, max-age=60 no 200; 13/13 passando.
+
+## RTP-0005 — QA — 2026-10-08
+APROVADA; 0 críticos, 0 não críticos; 17/17 testes passando, texto "chegou fora de ordem" e valor mono na linha PC conferidos no diff e nos testes.
+
+## RTP-0006 — QA — 2026-10-08
+APROVADA; 0 achados; describe "validação: ordenação" presente (linha 61) e 7/7 testes passando.
+
+## RTP-0007 — QA — 2026-10-08
+APROVADA; 0 achados; 7/7 testes passando com a base real, asserções 830/15.452/0 e escrita em conexão somente leitura falhando.
+
+## RTP-0008 — QA — 2026-10-08
+RTP-0008 APROVADA; 32 testes do gerador passando, typecheck só com erro de RTP-0020; 0 críticos, 1 não crítico (rastreio.csv versionado não regerado).
+
+## RTP-0009 — QA — 2026-10-08
+APROVADA; 0 achados; 9/9 testes passando, bordas 0,01/0,011/0,02 e 0,30 vs 0,31 corretas.
+
+## RTP-0010 — QA — 2026-10-08
+APROVADA; aceite cumprido (zero erros de D1Database/TS5097/cloudflare()), esqueleto 1/1 e vite build verde; 0 críticos, 0 não críticos; 111 erros alheios de typecheck fora do escopo.
+
+## RTP-0012 — QA — 2026-10-08
+RTP-0012 APROVADA; 14/14 testes passam, 5xx sem RFC 9457 vira mensagem de indisponível, 4xx fora do esquema segue formato inesperado, sem vazamento; troca do teste de 502 legítima; 0 achados.
+
+## RTP-0013 — QA — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico (teste LinhaDoTempo:323 usa ISO completo na prop AAAA-MM-DD; RTP-0043); 41 testes passando, caso do mesmo dia coberto.
+
+## RTP-0014 — QA — 2026-10-08
+APROVADA; 0 críticos, 0 não críticos; linha-do-tempo 33/33 passando, 3 casos novos devolvem 400 parametro_invalido com 0 consultas ao D1.
+
+## RTP-0015 — QA — 2026-10-08
+RTP-0015 APROVADA; foco no caption e anúncio "N de T divergências, página X de Y" atendidos (27/27 testes); 0 críticos, 1 não crítico (focoPendente não limpa em erro/troca de filtro).
+
+## RTP-0016 — QA — 2026-10-08
+APROVADA; 0 críticos e 0 não críticos; 19/19 testes passando, sem erro de tsc em respostas-v1.test.ts e casos negativos ainda rejeitados.
+
+## RTP-0017 — QA — 2026-10-08
+APROVADA; 0 achados; 29 testes passando, link só para os 5 tipos conhecidos e texto puro para rótulo desconhecido (tabela e celular).
+
+## RTP-0018 — QA — 2026-10-08
+APROVADA; 0 críticos/0 não críticos; busca.test.tsx 14/14 passando, Casca+CampoBusca sem violações axe e role=search único.
+
+## RTP-0019 — QA — 2026-10-08
+APROVADA com ressalva - aceite RTP-0019 ok, 140 testes de domínio passando; 0 críticos, 1 não crítico (saldo 0,011 passa a quitado por arredondamento a centavo; RTP-0040).
+
+## RTP-0020 — QA — 2026-10-08
+DEVOLVIDA - teste funcional 11/11 e aceite ok, mas 1 crítico (TS2353 on_skip em pagamentos.ts(85) quebra typecheck, regressão da RTP-0002), 0 não críticos.
+
+## RTP-0021 — QA — 2026-10-08
+RTP-0021 APROVADA — timeout do provedor de IA devolve null no limite (11/11 testes, fetch falso), 0 achados; typecheck só com erro da RTP-0020.
+
+## RTP-0022 — QA — 2026-10-08
+APROVADA; 0 criticos/0 nao criticos; 3 testes de indicadores passando contra a app real (Cache-Control e HEAD 200 sem corpo).
+
+## RTP-0024 — QA — 2026-10-08
+APROVADA; 0 críticos, 0 não críticos; 5 testes passando, par parcial+entrega_atrasada justificado por RN-03/RN-05 e exercita a ordenação por tipo.
+
+## RTP-0025 — QA — 2026-10-08
+APROVADA, 0 críticos/0 não críticos; 3 testes de worker/qualidade passam com app real (GET Cache-Control e HEAD sem corpo cobertos).
+
+## RTP-0026 — QA — 2026-10-08
+APROVADA — teste da tarefa 10/10, aceite RF-03 atendido; typecheck com 1 erro pré-existente em pagamentos.ts (RTP-0020), fora do escopo; 0 achados.
+
+## RTP-0027 — QA — 2026-10-08
+APROVADA — mensagem sem chave corrigida e ordem importar->sugerir->publicar-dados asserida; 10/10 testes passando, 0 achados críticos, 0 não críticos.
+
+## RTP-0028 — QA — 2026-10-08
+APROVADA, 0 críticos e 1 não crítico (modelo customizado fora da lista não aparece em ia.sugestoes, RTP-0041); 13 testes passando, caso gpt-4o-mini confere conferida/motivo.
+
+## RTP-0030 — QA — 2026-10-08
+APROVADA - gabarito (3/3) e qualidade (8/8) com exit 0 e sem Unhandled Error; asserções originais mantidas; 0 achados.
+
+## RTP-0031 — QA — 2026-10-08
+APROVADA — 8/8 testes (exit 0, sem Unhandled Error); 7 tipos com contagem 0 e exemplos [] em banco vazio; 830 curtos sem achado e formato_data = 15.452; 0 achados.
+
+## RTP-0032 — QA — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico (comentário JSDoc deslocado no teste); 7/7 em publicacao.test.ts, dataCorte = maior momento_fato (2026-01-02T10:00:00Z) = MAX do banco.
+
+## RTP-0033 — QA — 2026-10-08
+APROVADA, 0 críticos e 0 não críticos; grep -n -i sugest README.md acha a linha 55 e o texto está em português simples, sem nomes de empresas (G-11).
+
+## RTP-0034 — QA — 2026-10-08
+APROVADA, 0 achados; 3 variantes ignoradas e .env.example rastreado.
+
+## RTP-0035 — QA — 2026-10-08
+APROVADA; 0 críticos/0 não críticos; persist-credentials: false presente no Checkout (ci.yml:15), sem step que precise de credencial git.
+
+## RTP-0036 — QA — 2026-10-08
+RTP-0036 APROVADA; 34 testes passando (valores-fora-do-padrao + pagamentos); 0 achados; troca MAX_VALUE/2 da RTP-0020 não mascara regressão.
+
+## RTP-0037 — QA — 2026-10-08
+APROVADA; 0 críticos/0 não críticos; escritor-sql + integração de publicação 21/21 verdes, nenhum chamador passa Date/bigint.
+
+## RTP-0038 — QA — 2026-10-08
+RTP-0038 APROVADA; 0 achados; vitest publicacao.test.ts 7/7 com executor falso, sem shell:true, caminho com espaço e & intacto, bin do wrangler existe e a ausência falha com erro claro.
+
+## TP-0002 — QA — 2026-10-08
+APROVADA rodada 2 — achados 1 e 2 corrigidos (0 parsing errors, web/src->worker relativo barrado), 0 críticos, 1 não crítico novo (backlog de lint de outros lotes: 647 erros) + RTP-0011 existente.
+
+## TP-0053 — QA — 2026-10-08
+APROVADA rodada 2 — foco devolvido à região (própria ou `regiaoFoco`) com 2 testes `toHaveFocus`, 17/17 passando, axe limpo; reanúncio de "Carregando…" fica com as telas T1–T4; 0 críticos, 0 não críticos.
+
+## TP-0066 — QA — 2026-10-08
+APROVADA (rodada 2) — 0 críticos, 0 não críticos; `pnpm dev` na raiz sobe o site (GET / = 200, processo encerrado) e os 3 comandos do README batem com os scripts reais.
