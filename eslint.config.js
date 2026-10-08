@@ -69,7 +69,16 @@ export default tseslint.config(
       "**/build/**",
       "**/coverage/**",
       "**/.vite/**",
-      "**/*.config.js",
+      "**/*.config.{js,mjs,cjs,ts,mts,cts}",
+      "**/.wrangler/**",
+      "**/.next/**",
+      "**/.turbo/**",
+      "**/out/**",
+      ".claude/**",
+      ".md/**",
+      ".git/**",
+      "processamento/dados/**",
+      "**/*.d.ts",
     ],
   },
 
@@ -200,8 +209,10 @@ export default tseslint.config(
               // imports reais como `processamento/contrato/erro.js` — a
               // entrada bare "processamento" foi removida por isso.
               group: [
-                "**/processamento/**",
+                "**/processamento/src/*",
+                "!**/processamento/src/dominio",
                 "!**/processamento/src/dominio/**",
+                "!**/processamento/src/contrato",
                 "!**/processamento/src/contrato/**",
                 "processamento/*",
                 "!processamento/dominio",
@@ -245,8 +256,10 @@ export default tseslint.config(
               // `processamento/dominio/**` (quirk de ancestral ignorado do
               // pacote `ignore`/semântica .gitignore).
               group: [
-                "**/processamento/**",
+                "**/processamento/src/*",
+                "!**/processamento/src/dominio",
                 "!**/processamento/src/dominio/**",
+                "!**/processamento/src/contrato",
                 "!**/processamento/src/contrato/**",
                 "processamento/*",
                 "!processamento/dominio",
@@ -258,7 +271,15 @@ export default tseslint.config(
                 "web/src só importa dominio e contrato do processamento (G-03).",
             },
             {
-              group: ["**/web/worker/**", "web/worker", "web/worker/*"],
+              // Imports relativos reais (`../worker/x.js`, `../../worker/x.js`)
+              // não contêm "web/worker" no texto; por isso o padrão `**/worker`.
+              group: [
+                "**/web/worker/**",
+                "web/worker",
+                "web/worker/*",
+                "**/worker",
+                "**/worker/**",
+              ],
               message: "web/src não importa web/worker (G-03).",
             },
             {
