@@ -141,6 +141,43 @@ describe("montarDivergencias", () => {
     expect(linhas.map((linha) => linha.id_pedido)).toEqual(["PED-000003", "PED-000009"]);
   });
 
+  it("pedido com 2 tipos de divergência gera linhas em ordem alfabética de tipo dentro do mesmo id_pedido", () => {
+    const repositorio = criarRepositorio(":memory:");
+    repositorio.inserirPedido("PED-000005");
+    // Duplicado + pago_nao_enviado não coexistem (duplicado implica excedente,
+    // não quitado). Par viável cuja ordem alfabética difere da ordem de
+    // detecção (parcial antes de entrega_atrasada): parcial + entrega_atrasada.
+    const venda = eventoVenda("VEN-005", "PED-000005", 200);
+    venda.dados = JSON.stringify({
+      ...JSON.parse(venda.dados),
+      data_limite: "2024-01-05T00:00:00Z",
+    });
+    repositorio.inserirEvento(venda);
+    repositorio.inserirEvento(
+      eventoPagamento("PAG-005A", "PED-000005", 100, "2024-01-02T10:00:00Z"),
+    );
+    repositorio.inserirEvento({
+      fonte: "rastreio",
+      codigoEvento: "ENT-005",
+      idPedido: "PED-000005",
+      tipo: "entrega",
+      momentoFato: "2024-01-10T10:00:00Z",
+      ordemChegada: 4,
+      versaoSchema: 1,
+      dados: JSON.stringify({
+        tipo: "entrega",
+        versao_schema: 1,
+        transportadora: "Transportadora X",
+        codigo_rastreio: "ENT-005",
+      }),
+    });
+
+    const linhas = montarDivergencias(repositorio.db, DATA_CORTE);
+
+    expect(linhas.map((linha) => linha.tipo)).toEqual(["entrega_atrasada", "parcial"]);
+    expect(linhas.every((linha) => linha.id_pedido === "PED-000005")).toBe(true);
+  });
+
   it("é determinístico: mesma entrada 2x produz a mesma ordem e os mesmos bytes do JSON", () => {
     const repositorio = criarRepositorio(":memory:");
     repositorio.inserirPedido("PED-000001");
