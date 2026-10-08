@@ -185,3 +185,22 @@
     scroll-padding-bottom: 0;
   }
 }
+
+/* TP-0057 — campo de busca de pedido: montado uma única vez dentro do
+ * slot `slotBusca` de Casca.tsx (header). Layout em linha (rótulo visível
+ * + input + botão) com quebra para a mensagem de erro; mobile-first já
+ * cabe bem no cabeçalho estreito do celular por flex-wrap, sem precisar de
+ * uma segunda instância para o menu lateral (>=1024px). */
+.campo-busca {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-2);
+}
+
+.campo-busca__erro {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--cor-erro, #b00020);
+  font-size: var(--texto-sm);
+}
