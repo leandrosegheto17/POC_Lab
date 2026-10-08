@@ -150,11 +150,47 @@ describe("consultarApi", () => {
     });
   });
 
-  it("corpo de erro HTTP que não parseia como EsquemaErro → formato inesperado", async () => {
+  it("502 com corpo fora do esquema → mensagem de indisponível", async () => {
     global.fetch = vi.fn(async () =>
       respostaFake({
         ok: false,
         status: 502,
+        json: async () => ({ mensagem: "algo quebrou" }),
+      }),
+    );
+
+    const resultado = await consultarApi("/api/x", EsquemaTeste);
+
+    expect(resultado).toEqual({
+      tipo: "erro",
+      mensagem: MENSAGEM_INDISPONIVEL,
+    });
+  });
+
+  it("503 com corpo HTML (não-JSON) → mensagem de indisponível", async () => {
+    global.fetch = vi.fn(async () =>
+      respostaFake({
+        ok: false,
+        status: 503,
+        json: async () => {
+          throw new SyntaxError("Unexpected token <");
+        },
+      }),
+    );
+
+    const resultado = await consultarApi("/api/x", EsquemaTeste);
+
+    expect(resultado).toEqual({
+      tipo: "erro",
+      mensagem: MENSAGEM_INDISPONIVEL,
+    });
+  });
+
+  it("4xx com corpo fora do esquema → formato inesperado", async () => {
+    global.fetch = vi.fn(async () =>
+      respostaFake({
+        ok: false,
+        status: 400,
         json: async () => ({ mensagem: "algo quebrou" }),
       }),
     );

@@ -92,12 +92,25 @@ export async function consultarApi<T>(
     try {
       corpoErro = await resposta.json();
     } catch {
-      return { tipo: "erro", mensagem: MENSAGEM_FORMATO_INESPERADO };
+      // Corpo não-JSON (ex.: HTML de proxy): 5xx decide pelo status HTTP.
+      return {
+        tipo: "erro",
+        mensagem:
+          resposta.status >= 500
+            ? MENSAGEM_INDISPONIVEL
+            : MENSAGEM_FORMATO_INESPERADO,
+      };
     }
 
     const resultadoErro = EsquemaErro.safeParse(corpoErro);
     if (!resultadoErro.success) {
-      return { tipo: "erro", mensagem: MENSAGEM_FORMATO_INESPERADO };
+      return {
+        tipo: "erro",
+        mensagem:
+          resposta.status >= 500
+            ? MENSAGEM_INDISPONIVEL
+            : MENSAGEM_FORMATO_INESPERADO,
+      };
     }
 
     const { codigo, status } = resultadoErro.data;
