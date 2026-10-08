@@ -361,6 +361,42 @@ describe("Divergencias — paginação via URL (?pagina=)", () => {
     });
   });
 
+  it("ao trocar de página o foco vai ao caption e a região aria-live anuncia 'página X de Y' (RTP-0015)", async () => {
+    instalarFetchMock(async (url) => {
+      const pagina = paginaDaUrl(url);
+      return respostaFake({
+        ok: true,
+        json: async () =>
+          respostaDivergenciasValida({
+            dados: [divergenciaValida(`PED-${pagina}`, "duplicado")],
+            pagina,
+            total: 100,
+            totalPaginas: 2,
+          }),
+      });
+    });
+
+    const { container } = renderizar();
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Filtro: Todos · página 1 de 2"),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(
+      formaCompleta(container).getByRole("button", { name: "Próxima" }),
+    );
+
+    await waitFor(() => {
+      const caption = screen.getByText("Filtro: Todos · página 2 de 2");
+      expect(document.activeElement).toBe(caption);
+    });
+
+    const regiaoViva = container.querySelector("[aria-live='polite']");
+    expect(regiaoViva).toHaveTextContent("1 de 100 divergências, página 2 de 2");
+  });
+
   it("troca rápida de página (2 navegações antes da 1ª resposta): só a resposta mais recente é aplicada", async () => {
     // Dispara as duas navegações via botões ocultos com `useNavigate()` do
     // router clássico (em vez de clicar duas vezes no botão "Próxima" de

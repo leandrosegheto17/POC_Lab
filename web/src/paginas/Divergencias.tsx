@@ -137,6 +137,7 @@ const PADRAO_PAGINA_VALIDA = /^[1-9]\d*$/;
 export function Divergencias() {
   const refTitulo = useFocoNoTitulo<HTMLHeadingElement>();
   const refCaption = useRef<HTMLTableCaptionElement>(null);
+  const focoPendente = useRef(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [tentativa, setTentativa] = useState(0);
@@ -192,8 +193,15 @@ export function Divergencias() {
     }
   }, [estadoConsulta]);
 
-  // Foco no `<caption>` ao trocar de PÁGINA (TP-0055) desativado — POC não
-  // precisa de suporte a leitor de tela.
+  // Foco no `<caption>` ao trocar de PÁGINA (RTP-0015, UX-SPEC T1): só depois
+  // que o usuário pede outra página (`focoPendente`) e a nova resposta já
+  // está na tela — nunca no carregamento inicial nem na troca de filtro.
+  useEffect(() => {
+    if (focoPendente.current && ultimaResposta !== null) {
+      focoPendente.current = false;
+      refCaption.current?.focus();
+    }
+  }, [ultimaResposta]);
 
   function aoMudarFiltro(tipo: string) {
     const novosParametros = new URLSearchParams(searchParams);
@@ -210,6 +218,7 @@ export function Divergencias() {
   }
 
   function aoMudarPagina(novaPagina: number) {
+    focoPendente.current = true;
     const novosParametros = new URLSearchParams(searchParams);
     if (novaPagina <= 1) {
       novosParametros.delete("pagina");
@@ -321,6 +330,12 @@ export function Divergencias() {
           />
         ) : ultimaResposta ? (
           <div className="divergencias__resultado">
+            {/* Anúncio da região aria-live ao trocar de página (RTP-0015). */}
+            <p className="visualmente-oculto">
+              {`${formatarNumero(ultimaResposta.dados.length)} de ${formatarNumero(
+                ultimaResposta.paginacao.total,
+              )} divergências, página ${ultimaResposta.paginacao.pagina} de ${ultimaResposta.paginacao.totalPaginas}`}
+            </p>
             {/* PC: tabela. Colunas Devido/Pago do mockup ficam de fora: a
                 API v1 não entrega esses valores (ADR-016). */}
             <div className="divergencias__tabela">

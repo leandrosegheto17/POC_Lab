@@ -335,8 +335,11 @@ describe("Divergencias — sucesso", () => {
     expect(within(detalhes as HTMLElement).getByText("TX-88812")).toHaveClass(
       "mono",
     );
-    // O <p> solto antigo ("50 de N divergências…") não existe mais.
-    expect(container.textContent).not.toMatch(/divergências, página/);
+    // RTP-0015: o anúncio "N de T divergências, página X de Y" volta, só para
+    // leitor de tela (`visualmente-oculto`) dentro da região aria-live.
+    expect(
+      container.querySelector("p.visualmente-oculto"),
+    ).toHaveTextContent(/divergências, página 1 de 1/);
   });
 });
 
