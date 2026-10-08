@@ -51,7 +51,9 @@ Cada linha é um ADR, em `.md/adr/`. Os substituídos estão marcados.
 
 ## Fora de propósito (por agora)
 
-Nenhum item pendente — todos os lotes planejados foram entregues.
+Nenhum item pendente — todos os lotes planejados foram entregues, incluindo as
+sugestões da IA (opcionais, ADR-010) para os casos de conciliação sem resolução
+automática.
 
 ## Origem dos dados
 
