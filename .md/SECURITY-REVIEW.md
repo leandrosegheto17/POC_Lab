@@ -233,3 +233,9 @@ OK; 0 críticos, 1 não crítico (sem timeout no fetch, RTP-0021); chave só de 
 
 ## TP-0083 — DevSecOps — 2026-10-08
 APROVADA em segurança; 0 críticos, 1 não crítico (mensagem desatualizada/ordem sem teste, coberto por RTP-0027); evidência: chave só em process.env, nunca logada/gravada, sem chave nada é escrito, sem uso em web/CI.
+
+## TP-0084 — DevSecOps — 2026-10-08
+APROVADA; 0 críticos, 0 não críticos novos (G-09/G-21/RN-11 confirmados, SQL parametrizado, sem segredo/dependência/dado pessoal; limitação do modelo na chave de cache coberta por RTP-0028).
+
+## TP-0085 — DevSecOps — 2026-10-08
+APROVADA em segurança; 0 críticos, 0 não críticos novos (README coberto por RTP-0033); XSS ok (só JSX + zod safeParse, sem dangerouslySetInnerHTML, link com encodeURIComponent), sem chamada à IA pelo site.
