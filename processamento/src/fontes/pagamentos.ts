@@ -10,7 +10,7 @@
  * `csv-parse` é usado só aqui (`fontes/`), nunca em `dominio/`: o domínio
  * permanece puro e sem dependência de parsing de arquivo.
  */
-import { parse } from "csv-parse/sync";
+import { parse, type Options } from "csv-parse/sync";
 import type { Evento } from "../dominio/evento.js";
 import { casarReferencia } from "../dominio/referencia.js";
 import { verificarPagamento } from "../dominio/valores-fora-do-padrao.js";
@@ -75,7 +75,8 @@ export function processarPagamentos(
   // Numeração real no arquivo (inclui registros descartados por erro de
   // sintaxe): a linha 1 é o cabeçalho.
   let sequencia = 1;
-  const linhas = parse(conteudoCsv, {
+  // `on_skip` existe em runtime no csv-parse, mas falta nos tipos de `Options`.
+  const opcoes: Options & { on_skip?: (erro: unknown) => void } = {
     columns: true,
     skip_empty_lines: true,
     trim: true,
@@ -103,7 +104,8 @@ export function processarPagamentos(
     // — ela é tratada abaixo como achado `linha_invalida`, preservando RF-02
     // (continuar processando as demais linhas).
     relax_column_count: true,
-  }) as LinhaPagamentoCsv[];
+  };
+  const linhas = parse(conteudoCsv, opcoes) as LinhaPagamentoCsv[];
 
   linhas.forEach((linha) => {
     const numeroLinha = Number(linha.__linha);
