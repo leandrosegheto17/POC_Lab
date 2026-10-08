@@ -11,7 +11,6 @@
 // diretamente aqui, via `db.prepare(...).bind(...).run()` (mesma API usada
 // por `buscarDocumento`), sem editar a fixture compartilhada
 // `dados-exemplo.ts` (usada por outras rotas em paralelo).
-import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -19,7 +18,7 @@ import {
   type RespostaQualidade,
 } from "processamento/contrato/qualidade.js";
 
-import { handlerQualidade } from "../../worker/rotas/qualidade.ts";
+import appReal from "../../worker/index.ts";
 import { criarD1Teste } from "../apoio/fixture.ts";
 
 /** Formato mínimo do corpo RFC 9457 usado nas asserções de erro abaixo. */
@@ -66,11 +65,9 @@ function criarD1TesteComQualidade() {
   return db;
 }
 
-/** Monta a app de teste local, só com a rota deste handler registrada. */
+/** RTP-0025 — usa a app real de `worker/index.ts`. */
 function montarApp() {
-  const app = new Hono();
-  app.get("/api/v1/qualidade", handlerQualidade);
-  return app;
+  return appReal;
 }
 
 describe("GET /api/v1/qualidade", () => {
@@ -81,6 +78,7 @@ describe("GET /api/v1/qualidade", () => {
     const resposta = await app.request("/api/v1/qualidade", {}, { DB: db });
 
     expect(resposta.status).toBe(200);
+    expect(resposta.headers.get("Cache-Control")).toBe("public, max-age=60");
 
     const corpo = await resposta.json();
     const validacao = EsquemaRespostaQualidade.safeParse(corpo);
@@ -116,6 +114,7 @@ describe("GET /api/v1/qualidade", () => {
       { DB: db },
     );
 
-    expect(resposta.status).not.toBe(405);
+    expect(resposta.status).toBe(200);
+    expect(await resposta.text()).toBe("");
   });
 });
