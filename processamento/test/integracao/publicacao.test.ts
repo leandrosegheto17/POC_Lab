@@ -8,11 +8,14 @@
  * propagação de erro é testada, com `executarWrangler` substituído por uma
  * função fake injetada.
  */
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { criarRepositorio, type Repositorio } from "../../src/armazenamento/repositorio.ts";
 import { montarSqlPublicacao } from "../../src/publicacao/publicar.ts";
 import {
+  executarWrangler,
   publicarDados,
   type ResultadoExecucaoWrangler,
 } from "../../src/cli/publicar-dados.ts";
@@ -133,6 +136,26 @@ describe("montarSqlPublicacao", () => {
 });
 
 describe("publicarDados / executarWrangler", () => {
+  it("executarWrangler não usa shell e entrega o caminho com espaço e & intacto", () => {
+    const chamadas: Array<{ comando: string; args: readonly string[]; opcoes: Record<string, unknown> }> = [];
+    const executorFalso = ((comando: string, args: readonly string[], opcoes: Record<string, unknown>) => {
+      chamadas.push({ comando, args, opcoes });
+      return "ok";
+    }) as unknown as Parameters<typeof executarWrangler>[2];
+
+    const caminho = "pasta com espaco & outra/leitura.sql";
+    const resultado = executarWrangler(caminho, "web", executorFalso);
+
+    expect(resultado.codigo).toBe(0);
+    expect(chamadas).toHaveLength(1);
+    const chamada = chamadas[0]!;
+    expect(chamada.opcoes.shell).toBeUndefined();
+    expect(chamada.comando).toBe(process.execPath);
+    expect(chamada.args[chamada.args.length - 1]).toBe(path.resolve(caminho));
+    expect(chamada.args).toContain("--local");
+    expect(chamada.args).not.toContain("--remote");
+  });
+
   it("propaga uma mensagem de erro clara (com stdout/stderr) quando o wrangler sai com código != 0", () => {
     const resultadoFalho: ResultadoExecucaoWrangler = {
       codigo: 1,

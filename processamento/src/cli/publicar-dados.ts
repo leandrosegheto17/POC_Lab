@@ -56,12 +56,16 @@ export type ResultadoExecucaoWrangler = {
 export function executarWrangler(
   caminhoArquivo: string,
   cwdWeb: string,
+  executar: typeof execFileSync = execFileSync,
 ): ResultadoExecucaoWrangler {
   try {
-    const stdout = execFileSync(
-      "pnpm",
-      ["exec", "wrangler", "d1", "execute", "poc-lab", "--local", "--file", path.resolve(caminhoArquivo)],
-      { cwd: cwdWeb, encoding: "utf8", shell: true },
+    // Sem shell: o bin do wrangler (instalado em `web`) roda via o próprio
+    // Node, então caminho com espaço ou `&` chega intacto como argumento.
+    const binWrangler = path.resolve(cwdWeb, "node_modules", "wrangler", "bin", "wrangler.js");
+    const stdout = executar(
+      process.execPath,
+      [binWrangler, "d1", "execute", "poc-lab", "--local", "--file", path.resolve(caminhoArquivo)],
+      { cwd: cwdWeb, encoding: "utf8" },
     );
     return { codigo: 0, stdout, stderr: "" };
   } catch (erro) {
