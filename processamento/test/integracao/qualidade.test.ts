@@ -19,7 +19,7 @@
  */
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { lerBaseDeVendas } from "../../src/fontes/leitura-vendas.ts";
 import { gerarConteudo } from "../../src/cli/gerar.ts";
@@ -33,9 +33,18 @@ const CAMINHO_BASE = path.join("dados", "origem", "northwind.db");
 const baseDisponivel = existsSync(CAMINHO_BASE);
 
 describe.skipIf(!baseDisponivel)("montarDocumentoQualidade (pipeline completo, base real)", () => {
-  function montarDocumento() {
+  // RTP-0030: o pipeline pesado roda UMA vez (beforeAll), cedendo o event loop
+  // entre as etapas, para o worker do vitest não perder o RPC `onTaskUpdate`
+  // ("Unhandled Error: Timeout calling onTaskUpdate", exit 1).
+  let documentoCompartilhado: ReturnType<typeof montarDocumentoQualidade>;
+
+  const ceder = (): Promise<void> => new Promise((resolver) => setImmediate(resolver));
+
+  beforeAll(async () => {
     const pedidosVendas = lerBaseDeVendas(CAMINHO_BASE);
+    await ceder();
     const { pagamentosCsv, rastreioCsv } = gerarConteudo(pedidosVendas, SEMENTE_PADRAO);
+    await ceder();
     const codigosConhecidos = construirCodigosConhecidos(
       pedidosVendas.map((pedido) => pedido.idPedido),
     );
@@ -47,8 +56,13 @@ describe.skipIf(!baseDisponivel)("montarDocumentoQualidade (pipeline completo, b
       rastreioCsv,
       codigosConhecidos,
     });
+    await ceder();
 
-    return montarDocumentoQualidade(repositorio.db);
+    documentoCompartilhado = montarDocumentoQualidade(repositorio.db);
+  }, 600_000);
+
+  function montarDocumento() {
+    return documentoCompartilhado;
   }
 
   it(

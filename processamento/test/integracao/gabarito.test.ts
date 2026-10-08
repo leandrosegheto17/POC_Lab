@@ -14,7 +14,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { lerBaseDeVendas } from "../../src/fontes/leitura-vendas.ts";
 import { gerarConteudo } from "../../src/cli/gerar.ts";
@@ -27,6 +27,11 @@ import { SEMENTE_PADRAO } from "../../src/gerador/prng.ts";
 
 const CAMINHO_BASE = path.join("dados", "origem", "northwind.db");
 const baseDisponivel = existsSync(CAMINHO_BASE);
+
+/** Cede o event loop para o worker do vitest responder ao RPC do runner. */
+function ceder(): Promise<void> {
+  return new Promise((resolver) => setImmediate(resolver));
+}
 
 /** Os 5 tipos de `TipoDivergencia` do domínio — o gabarito também contém
  * tipos de achado de qualidade (ex. `sem_identificacao`, `linha_invalida`,
@@ -94,28 +99,42 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
   // divergências) sobre a base real inteira (~16 mil pedidos) é pesado —
   // mesmo padrão já usado em `test/integracao/qualidade.test.ts`
   // (verificação de 2026-10-08).
-  it("acha 100% dos casos plantados de RN-03 a RN-06 e nenhum falso positivo", { timeout: 300_000 }, () => {
-    const pedidosVendas = lerBaseDeVendas(CAMINHO_BASE);
+  // RTP-0030: o pipeline pesado (gerar → importar → divergências) roda UMA
+  // vez, aqui, cedendo o event loop entre as etapas e a cada lote de pedidos.
+  // Sem isso, o trabalho síncrono longo bloqueava o worker do vitest, que
+  // perdia o RPC `onTaskUpdate` ("Unhandled Error: Timeout calling
+  // onTaskUpdate") e saía com código 1 mesmo com os testes passando.
+  let pedidosVendas: ReturnType<typeof lerBaseDeVendas>;
+  let gabaritoCompleto: Array<{ pedido_venda: string; tipo: string }>;
+  let repositorio: ReturnType<typeof criarRepositorio>;
+  let dataCorte: string | null;
+  let calculadoPorPedido: Map<string, Set<string>>;
+
+  beforeAll(async () => {
+    pedidosVendas = lerBaseDeVendas(CAMINHO_BASE);
+    await ceder();
     const { pagamentosCsv, rastreioCsv, gabaritoJson } = gerarConteudo(
       pedidosVendas,
       SEMENTE_PADRAO,
     );
-    const gabaritoCompleto = JSON.parse(gabaritoJson) as Array<{
+    gabaritoCompleto = JSON.parse(gabaritoJson) as Array<{
       pedido_venda: string;
       tipo: string;
     }>;
+    await ceder();
 
     const codigosConhecidos = construirCodigosConhecidos(
       pedidosVendas.map((pedido) => pedido.idPedido),
     );
 
-    const repositorio = criarRepositorio(":memory:");
+    repositorio = criarRepositorio(":memory:");
     importar(repositorio, {
       vendas: pedidosVendas,
       pagamentosCsv,
       rastreioCsv,
       codigosConhecidos,
     });
+    await ceder();
 
     const db = repositorio.db;
 
@@ -124,8 +143,10 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
     const linhaMaximo = db.prepare(`SELECT MAX(momento_fato) AS maximo FROM evento`).get() as {
       maximo: string | null;
     };
-    expect(linhaMaximo.maximo).not.toBeNull();
-    const dataCorte = linhaMaximo.maximo as string;
+    dataCorte = linhaMaximo.maximo;
+    if (dataCorte === null) {
+      return;
+    }
 
     const idsPedido = (
       db
@@ -134,12 +155,26 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
     ).map((linha) => linha.id_pedido);
 
     // (idPedido interno, tipo) calculado, para todos os pedidos importados.
-    const calculadoPorPedido = new Map<string, Set<string>>();
+    calculadoPorPedido = new Map<string, Set<string>>();
+    let contador = 0;
     for (const idPedido of idsPedido) {
       const eventos = buscarEventosDoPedido(db, idPedido);
       const divergencias = calcularDivergencias(eventos, dataCorte);
       calculadoPorPedido.set(idPedido, new Set<string>(divergencias.map((d) => d.tipo)));
+      contador += 1;
+      if (contador % 500 === 0) {
+        await ceder();
+      }
     }
+  }, 600_000);
+
+  it("o pipeline compartilhado importou eventos e calculou divergências por pedido (RTP-0030)", () => {
+    expect(dataCorte).not.toBeNull();
+    expect(calculadoPorPedido.size).toBeGreaterThan(0);
+  });
+
+  it("acha 100% dos casos plantados de RN-03 a RN-06 e nenhum falso positivo", { timeout: 300_000 }, () => {
+    const db = repositorio.db;
 
     // Gabarito filtrado aos 5 tipos de divergência (RN-03 a RN-06), com o
     // `pedido_venda` (código bruto) resolvido para o `id_pedido` interno.
@@ -201,16 +236,6 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
     "pedido com caso plantado de pagamento E de rastreio simultaneamente tem ambos os tipos na lista calculada",
     { timeout: 300_000 },
     () => {
-      const pedidosVendas = lerBaseDeVendas(CAMINHO_BASE);
-      const { pagamentosCsv, rastreioCsv, gabaritoJson } = gerarConteudo(
-        pedidosVendas,
-        SEMENTE_PADRAO,
-      );
-      const gabaritoCompleto = JSON.parse(gabaritoJson) as Array<{
-        pedido_venda: string;
-        tipo: string;
-      }>;
-
       const porPedidoVenda = new Map<string, Set<string>>();
       for (const entrada of gabaritoCompleto) {
         if (!TIPOS_DIVERGENCIA.has(entrada.tipo)) {
@@ -231,28 +256,13 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
         return;
       }
 
-      const codigosConhecidos = construirCodigosConhecidos(
-        pedidosVendas.map((pedido) => pedido.idPedido),
-      );
-      const repositorio = criarRepositorio(":memory:");
-      importar(repositorio, {
-        vendas: pedidosVendas,
-        pagamentosCsv,
-        rastreioCsv,
-        codigosConhecidos,
-      });
       const db = repositorio.db;
-
-      const linhaMaximo = db.prepare(`SELECT MAX(momento_fato) AS maximo FROM evento`).get() as {
-        maximo: string;
-      };
-      const dataCorte = linhaMaximo.maximo;
 
       for (const [codigoVenda, tiposEsperados] of comDoisTipos) {
         const idPedido = resolverIdPedido(db, codigoVenda);
         expect(idPedido).toBeDefined();
         const eventos = buscarEventosDoPedido(db, idPedido as string);
-        const divergencias = calcularDivergencias(eventos, dataCorte);
+        const divergencias = calcularDivergencias(eventos, dataCorte as string);
         const tiposCalculados = new Set<string>(divergencias.map((d) => d.tipo));
 
         for (const tipo of tiposEsperados) {
