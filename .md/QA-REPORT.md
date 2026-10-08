@@ -398,3 +398,6 @@ APROVADA — CI na main (run 37836655505, 282b45f) com success em Lint, Typechec
 
 ## RTP-0046 — QA — 2026-10-08
 APROVADA — lint e 6/6 testes da regra passam; 0 críticos, 2 não críticos (timeout 3,9s/5s -> RTP-0049; G-04 do GUARDRAILS sem a string literal, decisão do usuário).
+
+## RTP-0049 — QA — 2026-10-08
+APROVADA — timeout explícito 60000 ms válido no vitest 3.2.7, 6/6 testes e lint passam; 0 achados.

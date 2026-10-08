@@ -377,3 +377,6 @@ APROVADA — ci.yml inalterado pela tarefa, permissões mínimas (contents: read
 
 ## RTP-0046 — DevSecOps — 2026-10-08
 APROVADA — exceção GERACAO restrita ao nome novo, nome antigo e leitura fora de test/ seguem barrados, sem dependência nem segredo novos; 0 críticos, 0 novos não críticos.
+
+## RTP-0049 — DevSecOps — 2026-10-08
+APROVADA — só timeout 60000 ms no teste de lint; sem dependência, segredo nem afrouxamento da regra; 0 achados.
