@@ -1,0 +1,169 @@
+import type { DatabaseSync } from "node:sqlite";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { montarPedidosEVinculos } from "./pedidos.js";
+import { montarLinhaDoTempo } from "./linha-do-tempo.js";
+import { montarDivergencias, type LinhaDivergenciaProjecao } from "./divergencias.js";
+import { montarDocumentoQualidade } from "./qualidade.js";
+import { montarDocumentoResumo, montarDocumentoIndicadores } from "./documentos.js";
+import { escreverSqlPublicacao, type LinhaTabela, type TabelasParaPublicacao } from "./escritor-sql.js";
+import { totaisResumo, type DivergenciaComPedido, type PedidoParaTotais } from "../dominio/totais.js";
+import { indicadorEntregasNoPrazo, type PedidoParaIndicadorEntrega } from "../dominio/indicadores.js";
+
+/**
+ * TP-0044 — Monta o SQL completo de publicação (DDL + dados) a partir do
+ * event store já populado em `db`, encadeando as projeções do Lote 7
+ * (`pedidos.ts`, `linha-do-tempo.ts`, `divergencias.ts`, `qualidade.ts`) e os
+ * documentos finais (`documentos.ts`, `dominio/totais.ts`,
+ * `dominio/indicadores.ts`).
+ *
+ * Função pura em relação a I/O de disco: lê o DDL verbatim de
+ * `leitura-d1.sql` (caminho relativo a este módulo, mesmo padrão de
+ * `armazenamento/repositorio.ts` para `schema.sql`) e devolve a string SQL
+ * final — nunca escreve em disco nem roda `wrangler` (isso é
+ * responsabilidade do CLI, `cli/publicar-dados.ts`).
+ */
+
+const DIRETORIO_ATUAL = dirname(fileURLToPath(import.meta.url));
+const CAMINHO_DDL = join(DIRETORIO_ATUAL, "leitura-d1.sql");
+
+type LinhaEventoCorte = { momento: string | null };
+
+/** Calcula `dataCorte` (RN-14): o maior `momento_fato` entre todos os eventos do event store. */
+function calcularDataCorte(db: DatabaseSync): string {
+  const linha = db
+    .prepare(`SELECT MAX(momento_fato) AS momento FROM evento`)
+    .get() as LinhaEventoCorte;
+  return linha.momento ?? "";
+}
+
+/** Informações extraídas da linha do tempo de um pedido, necessárias para o indicador de entregas no prazo. */
+type InfoEntregaPedido = {
+  transportadora?: string;
+  dataLimite?: string;
+  momentoEntrega?: string;
+};
+
+type DadosVendaPayload = { transportadora?: string; data_limite?: string };
+
+/**
+ * A partir da projeção `linha_do_tempo` (já montada), extrai por pedido a
+ * `transportadora`/`dataLimite` (do evento `venda`) e o `momento_fato` do
+ * evento `entrega` (quando existir) — sem reconsultar o banco, já que essas
+ * informações já estão disponíveis em `dados` (JSON do payload do evento,
+ * gravado verbatim pela importação).
+ */
+function extrairInfoEntregaPorPedido(
+  linhaDoTempo: { id_pedido: string; tipo: string; momento_fato: string; dados: string }[],
+): Map<string, InfoEntregaPedido> {
+  const porPedido = new Map<string, InfoEntregaPedido>();
+
+  for (const linha of linhaDoTempo) {
+    const info = porPedido.get(linha.id_pedido) ?? {};
+
+    if (linha.tipo === "venda") {
+      const payload = JSON.parse(linha.dados) as DadosVendaPayload;
+      info.transportadora = payload.transportadora;
+      info.dataLimite = payload.data_limite;
+    } else if (linha.tipo === "entrega") {
+      info.momentoEntrega = linha.momento_fato;
+    }
+
+    porPedido.set(linha.id_pedido, info);
+  }
+
+  return porPedido;
+}
+
+/** Monta a lista de `PedidoParaIndicadorEntrega` (`dominio/indicadores.ts`), um item por pedido de `pedidoResumo`. */
+function montarPedidosParaIndicadorEntrega(
+  pedidoResumo: { id_pedido: string; data_limite: string | null }[],
+  infoPorPedido: Map<string, InfoEntregaPedido>,
+): PedidoParaIndicadorEntrega[] {
+  return pedidoResumo.map((pedido) => {
+    const info = infoPorPedido.get(pedido.id_pedido);
+    return {
+      transportadora: info?.transportadora ?? "",
+      dataLimite: info?.dataLimite ?? pedido.data_limite ?? "",
+      eventoEntrega:
+        info?.momentoEntrega !== undefined ? { momento_fato: info.momentoEntrega } : undefined,
+    };
+  });
+}
+
+/** Converte `LinhaDivergenciaProjecao[]` (`publicacao/divergencias.ts`) para `DivergenciaComPedido[]` (`dominio/totais.ts`). */
+function montarDivergenciasComPedido(
+  divergenciasProjecao: LinhaDivergenciaProjecao[],
+): DivergenciaComPedido[] {
+  return divergenciasProjecao.map((divergencia) => {
+    const eventos = JSON.parse(divergencia.eventos) as Array<{ codigo: string }>;
+    return {
+      tipo: divergencia.tipo,
+      motivo: divergencia.motivo,
+      idsEventos: eventos.map((evento) => evento.codigo),
+      idPedido: divergencia.id_pedido,
+    };
+  });
+}
+
+/**
+ * Monta o SQL completo de publicação (DDL + `INSERT`s) a partir do event
+ * store aberto em `db`. Determinístico: a mesma entrada (mesmo `db`, mesma
+ * `semente`) produz sempre a mesma string.
+ */
+export function montarSqlPublicacao(db: DatabaseSync, args: { semente: number }): string {
+  const { semente } = args;
+
+  const { pedidoResumo, vinculoCodigo } = montarPedidosEVinculos(db);
+  const dataCorte = calcularDataCorte(db);
+  const linhaDoTempo = montarLinhaDoTempo(db);
+  const divergenciasProjecao = montarDivergencias(db, dataCorte);
+  const qualidade = montarDocumentoQualidade(db);
+
+  const pedidosParaTotais: PedidoParaTotais[] = pedidoResumo.map((pedido) => ({
+    idPedido: pedido.id_pedido,
+    devido: pedido.valor_devido ?? 0,
+    pago: pedido.valor_pago,
+    situacao: pedido.situacao_pagamento,
+  }));
+
+  const divergenciasComPedido = montarDivergenciasComPedido(divergenciasProjecao);
+
+  const infoEntregaPorPedido = extrairInfoEntregaPorPedido(linhaDoTempo);
+  const pedidosParaIndicadorEntrega = montarPedidosParaIndicadorEntrega(
+    pedidoResumo,
+    infoEntregaPorPedido,
+  );
+  const blocoEntregasNoPrazo = indicadorEntregasNoPrazo(pedidosParaIndicadorEntrega);
+
+  const totais = totaisResumo(pedidosParaTotais, divergenciasComPedido, blocoEntregasNoPrazo);
+
+  const resumo = montarDocumentoResumo({
+    dataCorte,
+    semente,
+    totais,
+    conteudoParaHash: { totais, blocoEntregasNoPrazo, qualidade },
+  });
+
+  const indicadores = montarDocumentoIndicadores([blocoEntregasNoPrazo, totais.porTipo]);
+
+  const documento: LinhaTabela[] = [
+    { chave: "resumo", conteudo: JSON.stringify(resumo) },
+    { chave: "indicadores", conteudo: JSON.stringify(indicadores) },
+    { chave: "qualidade", conteudo: JSON.stringify(qualidade) },
+  ];
+
+  const ddl = readFileSync(CAMINHO_DDL, "utf8");
+
+  const tabelas: TabelasParaPublicacao = {
+    pedido_resumo: pedidoResumo,
+    vinculo_codigo: vinculoCodigo,
+    linha_do_tempo: linhaDoTempo,
+    divergencia: divergenciasProjecao,
+    documento,
+  };
+
+  return escreverSqlPublicacao(ddl, tabelas);
+}

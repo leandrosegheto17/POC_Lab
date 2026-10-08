@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "poc-lab",
+  "main": "worker/index.ts",
+  // TP-0041 — data real na criação deste arquivo; mantida fixa (não usar "latest").
+  "compatibility_date": "2026-10-08",
+  "assets": {
+    "directory": "./dist/client",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "poc-lab",
+      // "database_id" é um placeholder para desenvolvimento local. O ID real do
+      // banco D1 remoto é preenchido manualmente na etapa de publicação (fora de
+      // escopo da TP-0041) — nenhum segredo/ID real fica neste arquivo.
+      "database_id": "local-dev-placeholder"
+    }
+  ]
+}

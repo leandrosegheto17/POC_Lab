@@ -7,6 +7,14 @@
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "types": ["vite/client"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "test/**/*.ts", "test/**/*.tsx", "vite.config.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "worker/**/*.ts",
+    "test/**/*.ts",
+    "test/**/*.tsx",
+    "vite.config.ts",
+    "wrangler.jsonc"
+  ],
   "exclude": ["node_modules", "dist"]
 }

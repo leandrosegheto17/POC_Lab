@@ -3,10 +3,17 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./dominio/*.js": "./src/dominio/*.ts",
+    "./contrato/*.js": "./src/contrato/*.ts",
+    "./publicacao/*.js": "./src/publicacao/*.ts",
+    "./publicacao/*.sql": "./src/publicacao/*.sql"
+  },
   "scripts": {
     "baixar-base": "node src/cli/baixar-base.ts",
     "gerar": "node src/cli/gerar.ts",
     "importar": "node src/cli/importar.ts",
+    "publicar-dados": "node src/cli/publicar-dados.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
