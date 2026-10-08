@@ -58,7 +58,7 @@ function evento(parcial: {
   }
 }
 
-describe("ordenarEventos (RN-07)", () => {
+describe("validação: ordenação", () => {
   it("ordena por momentoFato quando a entrada está fora de ordem cronológica", () => {
     const venda = evento({
       tipo: "venda",
