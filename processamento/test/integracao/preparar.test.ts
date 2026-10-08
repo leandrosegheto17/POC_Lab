@@ -139,11 +139,18 @@ describe("decidirSugerir (TP-0045, passo 4 isolado)", () => {
     expect(() => decidirSugerir({} as NodeJS.ProcessEnv)).not.toThrow();
   });
 
-  it("também pula o passo (sem lançar erro) quando OPENAI_API_KEY está definida, pois a CLI `sugerir` ainda não existe", () => {
+  it("sem chave, a mensagem não cita 'ainda não existe' (RTP-0027)", () => {
+    const decisao = decidirSugerir({} as NodeJS.ProcessEnv);
+
+    expect(decisao.mensagem).not.toMatch(/ainda não existe/i);
+    expect(decisao.mensagem).toMatch(/OPENAI_API_KEY/);
+  });
+
+  it("com OPENAI_API_KEY definida, pula sem lançar erro e sem citar 'ainda não existe'", () => {
     const decisao = decidirSugerir({ OPENAI_API_KEY: "chave-fake" } as NodeJS.ProcessEnv);
 
     expect(decisao.pular).toBe(true);
-    expect(decisao.mensagem).toMatch(/ainda não existe/i);
+    expect(decisao.mensagem).not.toMatch(/ainda não existe/i);
   });
 });
 
@@ -266,6 +273,40 @@ describe("executarPreparar + passo 4 (TP-0083, pipeline completo, base real)", (
     // Pipeline completo contra a base real (download/import): bem acima do
     // timeout padrão de 5s do vitest, mesma necessidade dos 2 testes
     // "pipeline completo, base real" de TP-0045 acima.
+    300_000,
+  );
+
+  it.skipIf(!baseDisponivel)(
+    "ordem dos passos: importar -> sugerir -> publicar-dados (RTP-0027)",
+    async () => {
+      const { opcoes } = montarOpcoesIsoladas();
+      const eventos: string[] = [];
+      const logSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+        const texto = String(args[0]);
+        if (texto.startsWith("[3/5]")) eventos.push("importar");
+        else if (texto.startsWith("[4/5]")) eventos.push("sugerir");
+        else if (texto.startsWith("[5/5]")) eventos.push("log-publicar");
+      });
+      const executarWranglerSpy = vi.fn(() => {
+        eventos.push("publicar-dados");
+        return { codigo: 0, stdout: "ok", stderr: "" };
+      });
+
+      try {
+        await executarPreparar({
+          ...opcoes,
+          dependenciasPublicar: { executarWrangler: executarWranglerSpy },
+        });
+      } finally {
+        logSpy.mockRestore();
+      }
+
+      expect(executarWranglerSpy).toHaveBeenCalled();
+      expect(eventos.indexOf("importar")).toBeGreaterThanOrEqual(0);
+      expect(eventos.indexOf("importar")).toBeLessThan(eventos.indexOf("sugerir"));
+      expect(eventos.indexOf("sugerir")).toBeLessThan(eventos.indexOf("publicar-dados"));
+      expect(eventos.indexOf("publicar-dados")).toBeLessThan(eventos.indexOf("log-publicar"));
+    },
     300_000,
   );
 

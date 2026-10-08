@@ -131,15 +131,13 @@ export function decidirSugerir(ambiente: NodeJS.ProcessEnv = process.env): Decis
     return {
       pular: true,
       mensagem:
-        "Passo de sugestão pulado: sem sugestão (OPENAI_API_KEY não definida; " +
-        "a CLI `sugerir` ainda não existe neste ponto do projeto).",
+        "Passo de sugestão pulado: sem sugestão (OPENAI_API_KEY não definida).",
     };
   }
   return {
     pular: true,
     mensagem:
-      "Passo de sugestão pulado: sem sugestão (OPENAI_API_KEY definida, mas a CLI " +
-      "`sugerir` ainda não existe neste ponto do projeto — nada a chamar).",
+      "Passo de sugestão pulado: sem sugestão (decisão isolada, sem chamar o provedor de IA).",
   };
 }
 
