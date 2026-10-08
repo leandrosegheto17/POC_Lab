@@ -292,4 +292,29 @@ describe("GET /api/v1/pedidos/{codigo}/linha-do-tempo", () => {
     const corpo = (await resposta.json()) as CorpoErroTeste;
     expect(corpo.codigo).toBe("parametro_invalido");
   });
+
+  it.each(["PED-000001%", "PED-000001;", "PED;000001"])(
+    "devolve 400 parametro_invalido para %s, sem consultar o D1",
+    async (codigoInvalido) => {
+      const app = criarAppDeTeste();
+      let consultas = 0;
+      const DB = {
+        prepare: () => {
+          consultas += 1;
+          throw new Error("D1 não deveria ser consultado");
+        },
+      } as unknown as D1Database;
+
+      const resposta = await app.request(
+        `/api/v1/pedidos/${encodeURIComponent(codigoInvalido)}/linha-do-tempo`,
+        undefined,
+        { DB },
+      );
+
+      expect(resposta.status).toBe(400);
+      const corpo = (await resposta.json()) as CorpoErroTeste;
+      expect(corpo.codigo).toBe("parametro_invalido");
+      expect(consultas).toBe(0);
+    },
+  );
 });
