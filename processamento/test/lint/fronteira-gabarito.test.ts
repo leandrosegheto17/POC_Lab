@@ -30,7 +30,8 @@ const IMPORTA_NOME_NOVO = 'import { x } from "../gerador/problemas-plantados.js"
 const CITA_NOME_NOVO = 'export const nome = "problemas-plantados.json";\n';
 const IMPORTA_NOME_ANTIGO = 'import { x } from "../gerador/gabarito.js";\nexport const y = x;\n';
 
-describe("lint — fronteira do gabarito (problemas-plantados)", () => {
+// Timeout explícito: o 1º lintText inicia o projectService do typescript-eslint (lento).
+describe("lint — fronteira do gabarito (problemas-plantados)", { timeout: 60000 }, () => {
   it("barra o import do nome novo fora de test/ (fontes)", async () => {
     const regras = await regrasVioladas("processamento/src/fontes/vendas.ts", IMPORTA_NOME_NOVO);
     expect(regras).toContain("no-restricted-imports");
