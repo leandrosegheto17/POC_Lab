@@ -112,6 +112,23 @@ describe("montarSqlPublicacao", () => {
    * cobre eventuais aspas simples escapadas (dobradas) dentro do conteúdo,
    * mesma convenção de `escaparValor`.
    */
+  it("o documento 'resumo' publicado tem dataCorte igual ao maior momento_fato da fixture (RN-14)", () => {
+    const repositorio = montarRepositorioComFixture();
+
+    const sql = montarSqlPublicacao(repositorio.db, { semente: 20261007 });
+
+    const correspondencia = sql.match(/\('resumo', '((?:[^']|'')*)'\)/);
+    expect(correspondencia).not.toBeNull();
+    const resumo = JSON.parse(correspondencia![1]!.replace(/''/g, "'")) as { dataCorte: string };
+
+    // Na fixture, o maior momento_fato é o do pagamento (2026-01-02), posterior ao da venda.
+    expect(resumo.dataCorte).toBe("2026-01-02T10:00:00Z");
+    const maximo = repositorio.db.prepare("SELECT MAX(momento_fato) AS m FROM evento").get() as {
+      m: string;
+    };
+    expect(resumo.dataCorte).toBe(maximo.m);
+  });
+
   it("o documento 'indicadores' no SQL final contém as 4 chaves de bloco, na ordem fixa", () => {
     const repositorio = montarRepositorioComFixture();
 
