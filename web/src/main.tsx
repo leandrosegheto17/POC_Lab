@@ -1,3 +1,6 @@
+import "./estilos/tokens.css";
+import "./estilos/base.css";
+import "./estilos/casca.css";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";
 

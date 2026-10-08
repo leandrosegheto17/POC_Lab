@@ -1,0 +1,43 @@
+/* TP-0054 — estilos da TabelaDados. Só tokens de tokens.css/base.css, nenhuma
+ * cor/espaçamento declarado diretamente aqui. */
+
+.tabela-dados-regiao {
+  overflow-x: auto;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+}
+
+.tabela-dados {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--texto-sm);
+}
+
+.tabela-dados caption {
+  text-align: left;
+  padding: var(--espaco-3) var(--espaco-4);
+  color: var(--cor-texto-2);
+  font-weight: 600;
+}
+
+.tabela-dados th,
+.tabela-dados td {
+  padding: var(--espaco-2) var(--espaco-4);
+  border-bottom: 1px solid var(--cor-divisoria);
+  text-align: left;
+}
+
+.tabela-dados th {
+  color: var(--cor-texto-2);
+  font-weight: 600;
+}
+
+.tabela-dados tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Utilitário para células que exibem código/identificadores — reutiliza a
+ * fonte monoespaçada já definida em tokens.css. */
+.tabela-dados .celula-codigo {
+  font-family: var(--fonte-mono);
+}

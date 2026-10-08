@@ -1,0 +1,137 @@
+/* TP-0051 — Tokens do Modelo B e fontes auto-hospedadas.
+ *
+ * Fontes: Manrope (400/600/700) e JetBrains Mono (400/600), subconjunto
+ * latino, arquivos woff2 locais em ./fontes/ (licença SIL OFL 1.1, ver
+ * OFL-Manrope.txt e OFL-JetBrainsMono.txt na mesma pasta). Nenhum CDN
+ * externo é usado — tudo auto-hospedado.
+ */
+
+@font-face {
+  font-family: "Manrope";
+  src: url("./fontes/manrope-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Manrope";
+  src: url("./fontes/manrope-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Manrope";
+  src: url("./fontes/manrope-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("./fontes/jetbrains-mono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("./fontes/jetbrains-mono-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Fontes — reserva do sistema caso o woff2 ainda não tenha carregado. */
+  --fonte-texto: "Manrope", system-ui, sans-serif;
+  --fonte-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Cores base */
+  --cor-fundo: #0e1217;
+  --cor-superficie: #151b22;
+  --cor-lateral: #11161c;
+  --cor-borda: #263040;
+  --cor-divisoria: #1d2530;
+  --cor-borda-controle: #6b7a89;
+  --cor-texto: #e6edf3;
+  --cor-texto-2: #a3b1bf;
+  --cor-destaque: #2dd4bf;
+  --cor-sobre-destaque: #062420;
+  --cor-link: #7cc4ff;
+  /* Exceção documentada: --cor-desabilitado é intencionalmente abaixo de
+   * 4,5:1 contra --cor-fundo/--cor-superficie — estado desabilitado não
+   * precisa do contraste mínimo de texto normal (WCAG não exige contraste
+   * para componentes/texto desabilitado). Não incluir este token no loop
+   * de asserção de contraste do teste. */
+  --cor-desabilitado: #6b7a89;
+
+  /* Etiquetas de estado de negócio (conciliação de pagamentos).
+   * Cada variante define texto/fundo/borda com contraste AA (>= 4,5:1
+   * entre --etq-*-texto e --etq-*-fundo).
+   *
+   * 1. sem_pagamento   — nenhum pagamento encontrado para a cobrança.
+   *    Neutro/alerta leve (âmbar), pois é uma pendência a investigar.
+   * 2. parcial          — pagamento parcial, falta complementar.
+   *    Âmbar mais forte: situação de atenção mas não erro.
+   * 3. quitado          — cobrança paga integralmente, sem divergência.
+   *    Verde: estado "bom", sem ação necessária.
+   * 4. duplicado        — pago mais de uma vez / valor excedente.
+   *    Azul/roxo: chama atenção mas não é necessariamente erro grave.
+   * 5. erro             — divergência de valor ou dado inconsistente.
+   *    Vermelho: precisa de correção.
+   * 6. pendente         — aguardando processamento/neutro, estado default.
+   *    Cinza-azulado neutro.
+   */
+  --etq-sem-pagamento-texto: #fde68a;
+  --etq-sem-pagamento-fundo: #2b2308;
+  --etq-sem-pagamento-borda: #a16207;
+
+  --etq-parcial-texto: #fdba74;
+  --etq-parcial-fundo: #2b1a08;
+  --etq-parcial-borda: #c2410c;
+
+  --etq-quitado-texto: #86efac;
+  --etq-quitado-fundo: #0f2417;
+  --etq-quitado-borda: #1f5133;
+
+  --etq-duplicado-texto: #c4b5fd;
+  --etq-duplicado-fundo: #211a3d;
+  --etq-duplicado-borda: #5b21b6;
+
+  --etq-erro-texto: #fca5a5;
+  --etq-erro-fundo: #2b1113;
+  --etq-erro-borda: #991b1b;
+
+  --etq-pendente-texto: #cbd5e1;
+  --etq-pendente-fundo: #1b222c;
+  --etq-pendente-borda: #475569;
+
+  /* Espaçamento */
+  --espaco-1: 4px;
+  --espaco-2: 8px;
+  --espaco-3: 12px;
+  --espaco-4: 16px;
+  --espaco-5: 24px;
+  --espaco-6: 32px;
+
+  /* Raio */
+  --raio: 6px;
+  --raio-chip: 999px;
+
+  /* Largura */
+  --largura-menu-lateral: 15rem;
+  --largura-conteudo: 72rem;
+
+  /* Escala tipográfica */
+  --texto-sm: 0.875rem;
+  --texto-base: 1rem;
+  --texto-lg: 1.25rem;
+  --texto-xl: 1.5rem;
+  --texto-2xl: 2rem;
+  --altura-linha: 1.5;
+}

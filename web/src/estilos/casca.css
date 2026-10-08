@@ -1,0 +1,187 @@
+/* TP-0055 — layout da casca do app (link "pular para o conteúdo",
+ * cabeçalho e navegação principal) e seu comportamento responsivo.
+ * Mobile-first, breakpoints em 1024px (menu lateral vs. barra de abas) e
+ * altura 480px (barra de abas deixa de ser fixa em telas muito baixas).
+ *
+ * Importante: a troca entre menu lateral (>=1024px) e barra de abas
+ * inferior (<1024px) é o MESMO elemento <nav> (NavegacaoPrincipal) só
+ * reposicionado via @media — nunca há JS decidindo isso.
+ */
+
+.casca {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.casca__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-3);
+  padding: var(--espaco-3) var(--espaco-4);
+  border-bottom: 1px solid var(--cor-divisoria);
+}
+
+.casca__corpo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.casca__conteudo {
+  flex: 1;
+  padding: var(--espaco-4);
+  /* Espaço reservado para a barra de abas inferior fixa (56px) não cobrir
+   * conteúdo — resetado a var(--espaco-4) sempre que a barra deixa de ser
+   * fixa (>=1024px ou altura <= 480px, ver media queries abaixo). */
+  padding-bottom: calc(56px + var(--espaco-4));
+  max-width: var(--largura-conteudo);
+  margin: 0 auto;
+  width: 100%;
+  scroll-padding-bottom: 56px;
+}
+
+/* Link "Pular para o conteúdo": fora da tela até receber foco. */
+.pular-para-conteudo {
+  position: absolute;
+  left: -999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.pular-para-conteudo:focus {
+  position: fixed;
+  left: var(--espaco-3);
+  top: var(--espaco-3);
+  width: auto;
+  height: auto;
+  overflow: visible;
+  padding: var(--espaco-2) var(--espaco-4);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  z-index: 200;
+}
+
+/* Navegação principal — mobile-first: barra de abas fixa no rodapé. */
+.navegacao-principal {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 56px;
+  background: var(--cor-superficie);
+  border-top: 1px solid var(--cor-divisoria);
+  z-index: 50;
+}
+
+.navegacao-principal__lista {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.navegacao-principal__lista li {
+  display: flex;
+  flex: 1;
+}
+
+.navegacao-principal__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-1);
+  flex: 1;
+  padding: var(--espaco-1);
+  color: var(--cor-texto-2);
+  text-decoration: none;
+  font-size: var(--texto-sm);
+  border-top: 3px solid transparent;
+}
+
+.navegacao-principal__item--ativo {
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  font-weight: 600;
+  border-top: 3px solid var(--cor-destaque);
+}
+
+/* >=1024px: o mesmo <nav> passa a ser o menu lateral fixo à esquerda. */
+@media (min-width: 1024px) {
+  .casca__corpo {
+    flex-direction: row;
+  }
+
+  .navegacao-principal {
+    position: sticky;
+    top: 0;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    height: 100vh;
+    width: var(--largura-menu-lateral);
+    flex-shrink: 0;
+    background: var(--cor-lateral);
+    border-top: none;
+    border-right: 1px solid var(--cor-divisoria);
+  }
+
+  .navegacao-principal__lista {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .navegacao-principal__lista li {
+    flex: none;
+  }
+
+  .navegacao-principal__item {
+    flex-direction: row;
+    justify-content: flex-start;
+    border-top: none;
+    border-left: 3px solid transparent;
+    padding: var(--espaco-3) var(--espaco-4);
+  }
+
+  .navegacao-principal__item--ativo {
+    border-top: none;
+    border-left: 3px solid var(--cor-destaque);
+  }
+
+  .casca__conteudo {
+    padding-bottom: var(--espaco-4);
+    scroll-padding-bottom: 0;
+  }
+}
+
+/* Telas muito baixas (altura <= 480px, ex. celular em paisagem): a barra
+ * de abas fixa comeria espaço vertical demais. Ela deixa de ser `fixed` e
+ * passa a fazer parte do fluxo normal do documento. Mantemos a ordem no
+ * DOM (nav antes de main, ver Casca.tsx) para não alterar a ordem de tab
+ * do teclado — só a posição VISUAL muda, via `order` do flex, para o nav
+ * aparecer depois do conteúdo principal. */
+@media (max-height: 480px) and (max-width: 1023px) {
+  .navegacao-principal {
+    position: static;
+    height: auto;
+    order: 2;
+  }
+
+  .navegacao-principal__lista {
+    flex-wrap: wrap;
+  }
+
+  .casca__conteudo {
+    order: 1;
+    padding-bottom: var(--espaco-4);
+    scroll-padding-bottom: 0;
+  }
+}

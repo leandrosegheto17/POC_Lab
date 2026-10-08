@@ -1,0 +1,49 @@
+/* TP-0054 — estilos da Paginacao. Alternância entre forma completa e
+ * compacta é feita só por CSS (@media), nunca via JS/matchMedia. Só tokens
+ * de tokens.css, nenhuma cor/espaçamento declarado diretamente aqui. */
+
+.paginacao {
+  display: flex;
+  align-items: center;
+}
+
+.paginacao button[aria-disabled="true"] {
+  color: var(--cor-desabilitado);
+  cursor: not-allowed;
+}
+
+.paginacao-lista {
+  display: flex;
+  list-style: none;
+  gap: var(--espaco-1);
+  margin: 0;
+  padding: 0;
+}
+
+.paginacao-lista button[aria-current="page"] {
+  background: var(--cor-superficie);
+  border-color: var(--cor-destaque);
+  font-weight: 700;
+}
+
+.paginacao-completa {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-2);
+}
+
+.paginacao-compacta {
+  display: none;
+  align-items: center;
+  gap: var(--espaco-3);
+}
+
+@media (max-width: 639px) {
+  .paginacao-completa {
+    display: none;
+  }
+
+  .paginacao-compacta {
+    display: flex;
+  }
+}

@@ -1,0 +1,61 @@
+/* TP-0054 — estilos de EtiquetaTipo/EtiquetaFonte. Só tokens de
+ * tokens.css, nenhuma cor declarada diretamente aqui. */
+
+.etiqueta {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--espaco-1) var(--espaco-3);
+  border-radius: var(--raio-chip);
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.etiqueta--sem-pagamento {
+  color: var(--etq-sem-pagamento-texto);
+  background: var(--etq-sem-pagamento-fundo);
+  border-color: var(--etq-sem-pagamento-borda);
+}
+
+.etiqueta--parcial {
+  color: var(--etq-parcial-texto);
+  background: var(--etq-parcial-fundo);
+  border-color: var(--etq-parcial-borda);
+}
+
+.etiqueta--quitado {
+  color: var(--etq-quitado-texto);
+  background: var(--etq-quitado-fundo);
+  border-color: var(--etq-quitado-borda);
+}
+
+.etiqueta--duplicado {
+  color: var(--etq-duplicado-texto);
+  background: var(--etq-duplicado-fundo);
+  border-color: var(--etq-duplicado-borda);
+}
+
+.etiqueta--erro {
+  color: var(--etq-erro-texto);
+  background: var(--etq-erro-fundo);
+  border-color: var(--etq-erro-borda);
+}
+
+.etiqueta--pendente {
+  color: var(--etq-pendente-texto);
+  background: var(--etq-pendente-fundo);
+  border-color: var(--etq-pendente-borda);
+}
+
+.etiqueta-fonte {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--espaco-1) var(--espaco-3);
+  border-radius: var(--raio-chip);
+  font-size: var(--texto-sm);
+  color: var(--cor-texto-2);
+  background: transparent;
+  border: 1px solid var(--cor-borda);
+  white-space: nowrap;
+}
