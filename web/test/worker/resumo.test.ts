@@ -6,6 +6,7 @@ import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 
 import { EsquemaResumo } from "processamento/contrato/resumo.js";
+import { cabecalhos } from "../../worker/cabecalhos.ts";
 import { handlerResumo } from "../../worker/rotas/resumo.ts";
 import { criarD1Teste } from "../apoio/fixture.ts";
 
@@ -48,6 +49,7 @@ const RESUMO_VALIDO = {
 /** Monta a app de teste local, só com a rota deste handler registrada. */
 function montarAppDeTeste() {
   const app = new Hono();
+  app.use("*", cabecalhos);
   app.get("/api/v1/resumo", handlerResumo);
   return app;
 }
@@ -63,6 +65,7 @@ describe("GET /api/v1/resumo", () => {
     const resposta = await app.request("/api/v1/resumo", {}, { DB: db });
 
     expect(resposta.status).toBe(200);
+    expect(resposta.headers.get("Cache-Control")).toBe("public, max-age=60");
     const corpo = await resposta.json();
     expect(EsquemaResumo.safeParse(corpo).success).toBe(true);
   });
