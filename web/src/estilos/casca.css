@@ -290,6 +290,33 @@
 .campo-busca__input {
   flex: 1;
   min-width: 0;
+  padding: var(--espaco-2) var(--espaco-3);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-borda-controle);
+  border-radius: var(--raio);
+  font-size: var(--texto-base);
+  font-family: var(--fonte-texto);
+}
+
+.campo-busca__input::placeholder {
+  color: var(--cor-texto-2);
+}
+
+.campo-busca__botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-1);
+  padding: var(--espaco-2) var(--espaco-3);
+  background: var(--cor-destaque);
+  color: var(--cor-sobre-destaque);
+  border: none;
+  border-radius: var(--raio);
+  font-size: var(--texto-base);
+  font-family: var(--fonte-texto);
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .campo-busca__erro {

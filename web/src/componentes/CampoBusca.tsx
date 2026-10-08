@@ -46,11 +46,24 @@ export function CampoBusca() {
         id={ID_CAMPO}
         type="text"
         className="campo-busca__input"
+        placeholder="PED-, 10248, TX-…"
         value={valor}
         onChange={(event) => setValor(event.target.value)}
         aria-describedby={erroVisivel ? ID_ERRO : undefined}
       />
       <button type="submit" className="campo-busca__botao">
+        <svg
+          viewBox="0 0 20 20"
+          width="20"
+          height="20"
+          aria-hidden="true"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
+          <circle cx="9" cy="9" r="6" />
+          <line x1="13.5" y1="13.5" x2="17" y2="17" strokeLinecap="round" />
+        </svg>
         Buscar
       </button>
       {erroVisivel ? (
