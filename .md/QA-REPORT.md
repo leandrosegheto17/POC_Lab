@@ -359,3 +359,30 @@ APROVADA rodada 2 — foco devolvido à região (própria ou `regiaoFoco`) com 2
 
 ## TP-0066 — QA — 2026-10-08
 APROVADA (rodada 2) — 0 críticos, 0 não críticos; `pnpm dev` na raiz sobe o site (GET / = 200, processo encerrado) e os 3 comandos do README batem com os scripts reais.
+
+## RTP-0011 — QA — 2026-10-08
+APROVADA; 0 criticos/0 acionaveis; Foo e div com dangerouslySetInnerHTML falham, div sem prop passa, fronteiras G-02/G-03 intactas, pnpm run lint verde.
+
+## RTP-0020 — QA — 2026-10-08
+APROVADA (rodada 2) - typecheck 0 erros, teste 11/11, aceite ok, sem any, lint exit 0; 0 críticos, 0 não críticos.
+
+## RTP-0039 — QA — 2026-10-08
+APROVADA — lint exit 0 sem regra enfraquecida, testes (processamento e web) e typecheck dos dois pacotes passando; 0 críticos e 1 não crítico (docs normativos e regra de lint ainda no nome "gabarito"; renomeação parcialmente cosmética, src não lê o arquivo).
+
+## RTP-0040 — QA — 2026-10-08
+RTP-0040 APROVADA; 141 testes do domínio e typecheck OK; 0,011 não é mais absorvido; 0 achados.
+
+## RTP-0041 — QA — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico (falta teste do ALTER TABLE em banco legado, RTP-0047); 27 testes passando, tsc 0 erros, aceite do modelo customizado coberto, cache_ia aditiva.
+
+## RTP-0042 — QA — 2026-10-08
+APROVADA; typecheck 0 erros, 363 testes e lint ok, nenhuma asserção enfraquecida, runtime do worker preservado; 0 críticos, 1 não crítico (espaçamento em web/worker/erros.ts).
+
+## RTP-0043 — QA — 2026-10-08
+APROVADA; 0 críticos, 0 não críticos; 34 testes passando e typecheck sem erros, só teste alterado com data AAAA-MM-DD e caso do próprio dia.
+
+## RTP-0044 — QA — 2026-10-08
+RTP-0044 APROVADA; 0 críticos, 1 não crítico (falta teste de erro seguido de retry); 34 testes e typecheck OK, RTP-0015 sem regressão.
+
+## RTP-0045 — QA — 2026-10-08
+APROVADA; 0 críticos, 1 não crítico (comentário fora de escopo no commit, sem impacto); .dev.vars.* ignorado, .env.example rastreado, nenhum legítimo ignorado.
