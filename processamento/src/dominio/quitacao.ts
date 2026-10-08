@@ -14,7 +14,7 @@ export type SituacaoPagamento =
  * Tolerância monetária (em reais) usada para considerar um pedido quitado
  * mesmo com diferença residual de centavos (ex.: arredondamento de parcelas).
  */
-const TOLERANCIA_QUITACAO = 0.01;
+const TOLERANCIA_QUITACAO_CENTAVOS = 1;
 
 /**
  * Calcula a quitação/saldo de um pedido (RN-02):
@@ -37,13 +37,16 @@ export function calcularQuitacao(
 ): { pago: number; saldo: number; situacao: SituacaoPagamento } {
   const pagoBruto = pagamentos.reduce((acumulado, valor) => acumulado + valor, 0);
   const saldoBruto = valorDevido - pagoBruto;
+  // Comparação em centavos inteiros: evita que ruído de ponto flutuante
+  // (ex.: 100 − 99.99 = 0.01000000000000512) quebre a tolerância.
+  const saldoCentavos = Math.round(saldoBruto * 100);
 
   let situacao: SituacaoPagamento;
   if (pagoBruto === 0) {
     situacao = 'sem_pagamento';
-  } else if (Math.abs(saldoBruto) <= TOLERANCIA_QUITACAO) {
+  } else if (Math.abs(saldoCentavos) <= TOLERANCIA_QUITACAO_CENTAVOS) {
     situacao = 'quitado';
-  } else if (saldoBruto > TOLERANCIA_QUITACAO) {
+  } else if (saldoCentavos > TOLERANCIA_QUITACAO_CENTAVOS) {
     situacao = 'parcial';
   } else {
     situacao = 'excedente';
