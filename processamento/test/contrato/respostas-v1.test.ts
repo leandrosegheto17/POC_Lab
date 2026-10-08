@@ -317,8 +317,8 @@ describe("indicadores/qualidade", () => {
     });
 
     it("tipo fora do enum falha", () => {
-      const achados = achadosValidos();
-      achados[0] = { ...achados[0]!, tipo: "tipo_inexistente" as never };
+      const achados: unknown[] = achadosValidos();
+      achados[0] = { ...achadosValidos()[0]!, tipo: "tipo_inexistente" };
 
       expect(() =>
         EsquemaRespostaQualidade.parse({
@@ -329,9 +329,9 @@ describe("indicadores/qualidade", () => {
     });
 
     it("'exemplos' com 11 itens falha ('.max(10)')", () => {
-      const achados = achadosValidos();
+      const achados: unknown[] = achadosValidos();
       achados[0] = {
-        ...achados[0]!,
+        ...achadosValidos()[0]!,
         exemplos: Array.from({ length: 11 }, () => exemploValido),
       };
 
