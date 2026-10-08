@@ -31,9 +31,8 @@ function classeItem({ isActive }: { isActive: boolean }) {
   return montarClasse(isActive);
 }
 
-// URL placeholder — preencher com o link real do repositório quando
-// publicado.
-const URL_REPOSITORIO = "https://github.com/exemplo/poc-lab";
+// URL do repositório real (origin).
+const URL_REPOSITORIO = "https://github.com/leandrosegheto17/POC_Lab";
 
 type NavegacaoPrincipalProps = {
   /** `false` na casca simples (T5): navegação sem ícones. */
