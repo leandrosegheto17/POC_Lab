@@ -179,6 +179,21 @@ describe("cache_ia", () => {
     });
   });
 
+  it("RTP-0041: gravarCache persiste o modelo na coluna modelo (NULL quando omitido)", () => {
+    const repositorio = criarRepositorio(":memory:");
+
+    repositorio.gravarCache("h1", "r", "2026-01-01T10:00:00Z", "meu-modelo");
+    repositorio.gravarCache("h2", "r", "2026-01-01T10:00:00Z");
+
+    const linhas = repositorio.db
+      .prepare(`SELECT chave, modelo FROM cache_ia ORDER BY chave`)
+      .all() as { chave: string; modelo: string | null }[];
+    expect(linhas.map((l) => ({ ...l }))).toEqual([
+      { chave: "h1", modelo: "meu-modelo" },
+      { chave: "h2", modelo: null },
+    ]);
+  });
+
   it("gravar a mesma chave 2x com resposta diferente ignora a 2ª gravação (ON CONFLICT DO NOTHING)", () => {
     const repositorio = criarRepositorio(":memory:");
 

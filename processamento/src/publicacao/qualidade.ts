@@ -210,12 +210,10 @@ function montarExemplos(
  * sugestão", a sugestão é reconstituída e `conferirSugestao` é aplicada na
  * hora sobre o candidato indicado.
  *
- * Limitação residual (RTP-0028 a reduziu): a chave de cache inclui o `modelo`
- * (`ia/sugerir.ts`), que não é persistido em `cache_ia`. Esta reconstrução
- * tenta os modelos de `MODELOS_RECONSTITUICAO` ("falso", padrão de
- * `ia/sugerir.ts`, e "gpt-4o-mini", padrão do CLI); um modelo fora dessa lista
- * gera entrada que conta para `ia.utilizada = true` mas não aparece em
- * `ia.sugestoes`, sem lançar erro. As funções de leitura/montagem de candidatos abaixo duplicam a lógica
+ * A chave de cache inclui o `modelo` (`ia/sugerir.ts`); desde RTP-0041 ele é
+ * persistido em `cache_ia.modelo`, e esta reconstrução tenta os modelos
+ * gravados. Entradas antigas (modelo NULL) só são reconstituídas se usaram os
+ * modelos de `MODELOS_RECONSTITUICAO` ("falso" e "gpt-4o-mini"). As funções de leitura/montagem de candidatos abaixo duplicam a lógica
  * (não exportada) de `ia/sugerir.ts` — ver aquele módulo para a versão
  * "fonte da verdade" usada pelo caso de uso de sugestão em si.
  */
@@ -230,7 +228,12 @@ const TOLERANCIA_VALOR_IA = 0.01;
 /** Número máximo de candidatos por pagamento (mesma convenção de `ia/sugerir.ts`). */
 const MAXIMO_CANDIDATOS_IA = 20;
 
-type LinhaCacheIaDb = { chave: string; resposta: string; criado_em: string };
+type LinhaCacheIaDb = {
+  chave: string;
+  resposta: string;
+  criado_em: string;
+  modelo: string | null;
+};
 
 type AchadoSemIdentificacaoDb = { referencia: string };
 
@@ -264,14 +267,17 @@ type SugestaoQualidade = {
 };
 
 /** Lê todas as entradas de `cache_ia` (chave/resposta/criadoEm), sem nenhuma relação ainda com pagamento/pedido. */
-function lerCacheIa(db: DatabaseSync): { chave: string; resposta: string; criadoEm: string }[] {
+function lerCacheIa(
+  db: DatabaseSync,
+): { chave: string; resposta: string; criadoEm: string; modelo: string | null }[] {
   const linhas = db
-    .prepare(`SELECT chave, resposta, criado_em FROM cache_ia`)
+    .prepare(`SELECT chave, resposta, criado_em, modelo FROM cache_ia`)
     .all() as unknown as LinhaCacheIaDb[];
   return linhas.map((linha) => ({
     chave: linha.chave,
     resposta: linha.resposta,
     criadoEm: linha.criado_em,
+    modelo: linha.modelo,
   }));
 }
 
@@ -366,6 +372,13 @@ function montarBlocoIa(db: DatabaseSync): RespostaQualidade["ia"] {
   }
 
   const cachePorChave = new Map(cache.map((entrada) => [entrada.chave, entrada]));
+  // RTP-0041: modelos persistidos em `cache_ia` + os conhecidos (entradas antigas, sem modelo).
+  const modelosConhecidos = new Set<string>(MODELOS_RECONSTITUICAO);
+  for (const entrada of cache) {
+    if (entrada.modelo !== null) {
+      modelosConhecidos.add(entrada.modelo);
+    }
+  }
   const pagamentos = lerPagamentosSemIdentificacaoIa(db);
   const { pedidoResumo } = montarPedidosEVinculos(db);
 
@@ -378,10 +391,10 @@ function montarBlocoIa(db: DatabaseSync): RespostaQualidade["ia"] {
     }
 
     const candidatosOrdenados = candidatos.map((candidato) => candidato.idPedido);
-    // RTP-0028: o modelo não é persistido em `cache_ia`; tenta cada modelo
-    // conhecido (padrão de teste e padrão do CLI) e usa a primeira chave que existe.
+    // RTP-0028/RTP-0041: tenta cada modelo conhecido (persistido em `cache_ia`
+    // ou padrão para entradas antigas) e usa a primeira chave que existe.
     let entradaCache: { chave: string; resposta: string; criadoEm: string } | undefined;
-    for (const modelo of MODELOS_RECONSTITUICAO) {
+    for (const modelo of modelosConhecidos) {
       const chave = createHash("sha256")
         .update(pagamento.textoReferencia + JSON.stringify(candidatosOrdenados) + modelo)
         .digest("hex");

@@ -56,7 +56,7 @@ export type Repositorio = {
   /** TP-0079 — Lê a cache de IA pela chave (hash SHA-256); `undefined` se não houver. */
   obterCache: (chave: string) => { resposta: string; criadoEm: string } | undefined;
   /** TP-0079 — Grava a cache de IA; se a chave já existir, a gravação é ignorada (ON CONFLICT DO NOTHING). */
-  gravarCache: (chave: string, resposta: string, criadoEm: string) => void;
+  gravarCache: (chave: string, resposta: string, criadoEm: string, modelo?: string) => void;
 };
 
 /**
@@ -76,6 +76,14 @@ export function criarRepositorio(caminhoArquivo: string): Repositorio {
   const db = new DatabaseSync(caminhoArquivo);
   const sqlSchema = readFileSync(CAMINHO_SCHEMA, "utf8");
   db.exec(sqlSchema);
+  // RTP-0041: bancos criados antes da coluna `modelo` em `cache_ia` (TP-0079)
+  // recebem a coluna aditiva (nullable); nenhum dado é alterado.
+  const colunasCache = db.prepare(`PRAGMA table_info(cache_ia)`).all() as unknown as {
+    name: string;
+  }[];
+  if (!colunasCache.some((coluna) => coluna.name === "modelo")) {
+    db.exec(`ALTER TABLE cache_ia ADD COLUMN modelo TEXT`);
+  }
 
   function inserirPedido(idPedido: string): ResultadoInsercao {
     const resultado = db
@@ -134,10 +142,15 @@ export function criarRepositorio(caminhoArquivo: string): Repositorio {
     return { resposta: linha.resposta, criadoEm: linha.criado_em };
   }
 
-  function gravarCache(chave: string, resposta: string, criadoEm: string): void {
+  function gravarCache(
+    chave: string,
+    resposta: string,
+    criadoEm: string,
+    modelo?: string,
+  ): void {
     db.prepare(
-      `INSERT INTO cache_ia (chave, resposta, criado_em) VALUES (?, ?, ?) ON CONFLICT(chave) DO NOTHING`,
-    ).run(chave, resposta, criadoEm);
+      `INSERT INTO cache_ia (chave, resposta, criado_em, modelo) VALUES (?, ?, ?, ?) ON CONFLICT(chave) DO NOTHING`,
+    ).run(chave, resposta, criadoEm, modelo ?? null);
   }
 
   return {

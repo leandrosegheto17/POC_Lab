@@ -45,5 +45,7 @@ CREATE TABLE IF NOT EXISTS achado_qualidade (
 CREATE TABLE IF NOT EXISTS cache_ia (
   chave TEXT PRIMARY KEY,
   resposta TEXT NOT NULL,
-  criado_em TEXT NOT NULL
+  criado_em TEXT NOT NULL,
+  -- RTP-0041 — modelo usado na chave (NULL em entradas antigas; ver criarRepositorio).
+  modelo TEXT
 );

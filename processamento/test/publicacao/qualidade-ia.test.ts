@@ -182,6 +182,26 @@ describe("montarDocumentoQualidade — bloco ia (TP-0084)", () => {
     expect(sugestao.motivo).toBe(esperado.motivo);
   });
 
+  it("RTP-0041: sugestão gerada com modelo customizado (fora da lista) aparece em ia.sugestoes", async () => {
+    const repositorio = criarRepositorio(":memory:");
+    inserirPedidoComVenda(repositorio, "PED-E", 100, "2026-01-01T00:00:00.000Z");
+    inserirPagamentoSemIdentificacao(repositorio, "TRANS-044", 100, DATA_PAGAMENTO, "REF-CUSTOM");
+
+    const provedorFalso = criarProvedorFalso({ "REF-CUSTOM": "PED-E" });
+    await sugerir(repositorio, provedorFalso, { modelo: "modelo-customizado-x" });
+
+    const documento = montarDocumentoQualidade(repositorio.db);
+
+    expect(documento.ia.utilizada).toBe(true);
+    expect(documento.ia.sugestoes).toHaveLength(1);
+    expect(documento.ia.sugestoes[0]).toMatchObject({
+      pagamento: "TRANS-044",
+      pedidoSugerido: "PED-E",
+      conferida: true,
+    });
+    expect(EsquemaRespostaQualidade.safeParse(documento).success).toBe(true);
+  });
+
   it("cache_ia com entrada 'sem sugestão' (resposta vazia): ia.utilizada true, mas sugestoes não inclui essa entrada", async () => {
     const repositorio = criarRepositorio(":memory:");
     inserirPedidoComVenda(repositorio, "PED-C", 100, "2026-01-01T00:00:00.000Z");

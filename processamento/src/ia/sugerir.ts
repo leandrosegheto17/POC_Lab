@@ -334,7 +334,7 @@ export async function sugerir(
       const resposta = await provedor.sugerir(pagamento.textoReferencia, candidatosOrdenados, modelo);
       chamadasEfetivas += 1;
       respostaBruta = resposta ?? RESPOSTA_CACHE_SEM_SUGESTAO;
-      repositorio.gravarCache(chave, respostaBruta, dataCorte);
+      repositorio.gravarCache(chave, respostaBruta, dataCorte, modelo);
     }
 
     if (respostaBruta === RESPOSTA_CACHE_SEM_SUGESTAO) {
