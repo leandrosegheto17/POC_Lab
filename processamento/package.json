@@ -1,0 +1,22 @@
+{
+  "name": "processamento",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "baixar-base": "node src/cli/baixar-base.ts",
+    "gerar": "node src/cli/gerar.ts",
+    "importar": "node src/cli/importar.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "csv-parse": "^5.6.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

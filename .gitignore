@@ -1,0 +1,4 @@
+dados/
+.env
+.wrangler/
+node_modules/

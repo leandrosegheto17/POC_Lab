@@ -1,0 +1,255 @@
+/**
+ * TP-0028 — Teste de integração ponta a ponta: gerar (semente padrão) →
+ * importar → `calcularDivergencias` por pedido → comparar com o gabarito.
+ *
+ * ÚNICO arquivo do projeto autorizado a ler/usar o `gabarito.json` (aqui, o
+ * `gabarito` devolvido em memória por `gerarConteudo`, sem nenhuma leitura de
+ * disco) fora de teste.
+ *
+ * Depende da base real `dados/origem/northwind.db` (TP-0004, `pnpm
+ * baixar-base`). Se o arquivo ainda não existir neste ambiente, os testes
+ * abaixo são pulados em vez de falhar — mesmo padrão de
+ * `test/integracao/leitura-vendas.test.ts`.
+ */
+import type { DatabaseSync } from "node:sqlite";
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+
+import { lerBaseDeVendas } from "../../src/fontes/leitura-vendas.ts";
+import { gerarConteudo } from "../../src/cli/gerar.ts";
+import { construirCodigosConhecidos } from "../../src/cli/importar.ts";
+import { criarRepositorio } from "../../src/armazenamento/repositorio.ts";
+import { importar } from "../../src/importacao/importar.ts";
+import { calcularDivergencias } from "../../src/dominio/divergencias/index.ts";
+import type { Evento } from "../../src/dominio/evento.ts";
+import { SEMENTE_PADRAO } from "../../src/gerador/prng.ts";
+
+const CAMINHO_BASE = path.join("dados", "origem", "northwind.db");
+const baseDisponivel = existsSync(CAMINHO_BASE);
+
+/** Os 5 tipos de `TipoDivergencia` do domínio — o gabarito também contém
+ * tipos de achado de qualidade (ex. `sem_identificacao`, `linha_invalida`,
+ * `registro_repetido`, `fora_de_ordem`), que não são escopo desta tarefa e
+ * são filtrados fora. */
+const TIPOS_DIVERGENCIA = new Set([
+  "duplicado",
+  "parcial",
+  "pago_nao_enviado",
+  "enviado_nao_pago",
+  "entrega_atrasada",
+]);
+
+type LinhaEvento = {
+  fonte: "vendas" | "pagamentos" | "rastreio";
+  codigo_evento: string;
+  id_pedido: string | null;
+  tipo: string;
+  momento_fato: string;
+  ordem_chegada: number | null;
+  versao_schema: number;
+  dados: string;
+};
+
+/**
+ * Reconstrói um `Evento` de domínio a partir de uma linha da tabela
+ * `evento`: o envelope comum (`fonte`, `codigoEvento`, `momentoFato`,
+ * `ordemChegada`) vem das colunas próprias; o restante (`tipo`,
+ * `versao_schema` e os campos específicos do payload) vem do JSON gravado em
+ * `dados` por `serializarDados` (`importacao/importar.ts`), que já exclui o
+ * envelope do que serializa — ou seja, `dados` cobre exatamente o
+ * complemento do que falta para reconstruir o `Evento` original.
+ */
+function linhaParaEvento(linha: LinhaEvento): Evento {
+  const payload = JSON.parse(linha.dados) as Record<string, unknown>;
+  const envelope: Record<string, unknown> = {
+    fonte: linha.fonte,
+    codigoEvento: linha.codigo_evento,
+    momentoFato: linha.momento_fato,
+  };
+  if (linha.ordem_chegada !== null) {
+    envelope.ordemChegada = linha.ordem_chegada;
+  }
+  return { ...envelope, ...payload } as Evento;
+}
+
+/** Busca todos os eventos vinculados a um `id_pedido`, reconstruídos como `Evento[]`. */
+function buscarEventosDoPedido(db: DatabaseSync, idPedido: string): Evento[] {
+  const linhas = db
+    .prepare(`SELECT * FROM evento WHERE id_pedido = ?`)
+    .all(idPedido) as unknown as LinhaEvento[];
+  return linhas.map(linhaParaEvento);
+}
+
+/** Resolve o `id_pedido` interno (`PED-nnnnnn`) a partir do código bruto de vendas (`pedido_venda` do gabarito). */
+function resolverIdPedido(db: DatabaseSync, codigoVenda: string): string | undefined {
+  const linha = db
+    .prepare(`SELECT id_pedido FROM vinculo_fonte WHERE fonte = 'vendas' AND codigo_externo = ?`)
+    .get(codigoVenda) as { id_pedido: string } | undefined;
+  return linha?.id_pedido;
+}
+
+describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → divergências) contra o gabarito", () => {
+  it("acha 100% dos casos plantados de RN-03 a RN-06 e nenhum falso positivo", () => {
+    const pedidosVendas = lerBaseDeVendas(CAMINHO_BASE);
+    const { pagamentosCsv, rastreioCsv, gabaritoJson } = gerarConteudo(
+      pedidosVendas,
+      SEMENTE_PADRAO,
+    );
+    const gabaritoCompleto = JSON.parse(gabaritoJson) as Array<{
+      pedido_venda: string;
+      tipo: string;
+    }>;
+
+    const codigosConhecidos = construirCodigosConhecidos(
+      pedidosVendas.map((pedido) => pedido.idPedido),
+    );
+
+    const repositorio = criarRepositorio(":memory:");
+    importar(repositorio, {
+      vendas: pedidosVendas,
+      pagamentosCsv,
+      rastreioCsv,
+      codigosConhecidos,
+    });
+
+    const db = repositorio.db;
+
+    // RN-14: dataCorte = maior momento_fato de TODOS os eventos de TODOS os
+    // pedidos importados nesta chamada.
+    const linhaMaximo = db.prepare(`SELECT MAX(momento_fato) AS maximo FROM evento`).get() as {
+      maximo: string | null;
+    };
+    expect(linhaMaximo.maximo).not.toBeNull();
+    const dataCorte = linhaMaximo.maximo as string;
+
+    const idsPedido = (
+      db
+        .prepare(`SELECT DISTINCT id_pedido FROM evento WHERE id_pedido IS NOT NULL`)
+        .all() as unknown as Array<{ id_pedido: string }>
+    ).map((linha) => linha.id_pedido);
+
+    // (idPedido interno, tipo) calculado, para todos os pedidos importados.
+    const calculadoPorPedido = new Map<string, Set<string>>();
+    for (const idPedido of idsPedido) {
+      const eventos = buscarEventosDoPedido(db, idPedido);
+      const divergencias = calcularDivergencias(eventos, dataCorte);
+      calculadoPorPedido.set(idPedido, new Set(divergencias.map((d) => d.tipo)));
+    }
+
+    // Gabarito filtrado aos 5 tipos de divergência (RN-03 a RN-06), com o
+    // `pedido_venda` (código bruto) resolvido para o `id_pedido` interno.
+    const esperadoPorPedido = new Map<string, Set<string>>();
+    const entradasNaoResolviveis: Array<{ pedido_venda: string; tipo: string }> = [];
+    for (const entrada of gabaritoCompleto) {
+      if (!TIPOS_DIVERGENCIA.has(entrada.tipo)) {
+        continue;
+      }
+      const idPedido = resolverIdPedido(db, entrada.pedido_venda);
+      if (idPedido === undefined) {
+        entradasNaoResolviveis.push(entrada);
+        continue;
+      }
+      const conjunto = esperadoPorPedido.get(idPedido) ?? new Set<string>();
+      conjunto.add(entrada.tipo);
+      esperadoPorPedido.set(idPedido, conjunto);
+    }
+
+    // Todo item do gabarito (dos 5 tipos) deve ter resolvido para um
+    // id_pedido existente no event store.
+    expect(entradasNaoResolviveis).toEqual([]);
+
+    // Cobertura: todo (pedido, tipo) esperado está no calculado.
+    const faltantes: Array<{ idPedido: string; tipo: string }> = [];
+    for (const [idPedido, tipos] of esperadoPorPedido) {
+      const calculado = calculadoPorPedido.get(idPedido) ?? new Set<string>();
+      for (const tipo of tipos) {
+        if (!calculado.has(tipo)) {
+          faltantes.push({ idPedido, tipo });
+        }
+      }
+    }
+
+    // Precisão: nenhum (pedido, tipo) calculado fora do gabarito.
+    const falsosPositivos: Array<{ idPedido: string; tipo: string }> = [];
+    for (const [idPedido, tipos] of calculadoPorPedido) {
+      const esperado = esperadoPorPedido.get(idPedido) ?? new Set<string>();
+      for (const tipo of tipos) {
+        if (!esperado.has(tipo)) {
+          falsosPositivos.push({ idPedido, tipo });
+        }
+      }
+    }
+
+    if (faltantes.length > 0) {
+      console.warn("Divergências do gabarito NÃO encontradas (falso negativo):", faltantes);
+    }
+    if (falsosPositivos.length > 0) {
+      console.warn("Divergências calculadas fora do gabarito (falso positivo):", falsosPositivos);
+    }
+
+    expect(faltantes).toEqual([]);
+    expect(falsosPositivos).toEqual([]);
+  });
+
+  it("pedido com caso plantado de pagamento E de rastreio simultaneamente tem ambos os tipos na lista calculada", () => {
+    const pedidosVendas = lerBaseDeVendas(CAMINHO_BASE);
+    const { pagamentosCsv, rastreioCsv, gabaritoJson } = gerarConteudo(
+      pedidosVendas,
+      SEMENTE_PADRAO,
+    );
+    const gabaritoCompleto = JSON.parse(gabaritoJson) as Array<{
+      pedido_venda: string;
+      tipo: string;
+    }>;
+
+    const porPedidoVenda = new Map<string, Set<string>>();
+    for (const entrada of gabaritoCompleto) {
+      if (!TIPOS_DIVERGENCIA.has(entrada.tipo)) {
+        continue;
+      }
+      const conjunto = porPedidoVenda.get(entrada.pedido_venda) ?? new Set<string>();
+      conjunto.add(entrada.tipo);
+      porPedidoVenda.set(entrada.pedido_venda, conjunto);
+    }
+
+    const comDoisTipos = [...porPedidoVenda.entries()].filter(([, tipos]) => tipos.size >= 2);
+
+    if (comDoisTipos.length === 0) {
+      // Pools de pagamento e rastreio são sorteados de forma independente
+      // (ver `plantar-rastreio.ts`): nesta semente pode não haver colisão.
+      // Sem caso de borda para exercitar, o teste não falha — apenas não
+      // cobre esta combinação específica nesta rodada.
+      return;
+    }
+
+    const codigosConhecidos = construirCodigosConhecidos(
+      pedidosVendas.map((pedido) => pedido.idPedido),
+    );
+    const repositorio = criarRepositorio(":memory:");
+    importar(repositorio, {
+      vendas: pedidosVendas,
+      pagamentosCsv,
+      rastreioCsv,
+      codigosConhecidos,
+    });
+    const db = repositorio.db;
+
+    const linhaMaximo = db.prepare(`SELECT MAX(momento_fato) AS maximo FROM evento`).get() as {
+      maximo: string;
+    };
+    const dataCorte = linhaMaximo.maximo;
+
+    for (const [codigoVenda, tiposEsperados] of comDoisTipos) {
+      const idPedido = resolverIdPedido(db, codigoVenda);
+      expect(idPedido).toBeDefined();
+      const eventos = buscarEventosDoPedido(db, idPedido as string);
+      const divergencias = calcularDivergencias(eventos, dataCorte);
+      const tiposCalculados = new Set(divergencias.map((d) => d.tipo));
+
+      for (const tipo of tiposEsperados) {
+        expect(tiposCalculados.has(tipo)).toBe(true);
+      }
+    }
+  });
+});

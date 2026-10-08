@@ -1,0 +1,5 @@
+packages:
+  - "processamento"
+  - "web"
+allowBuilds:
+  esbuild: true
