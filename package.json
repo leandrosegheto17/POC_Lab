@@ -6,6 +6,7 @@
   },
   "packageManager": "pnpm@11.23.0",
   "scripts": {
+    "dev": "pnpm --filter web run dev",
     "baixar-base": "pnpm --filter processamento run baixar-base",
     "preparar": "pnpm --filter processamento run preparar",
     "typecheck": "pnpm -r run typecheck",
