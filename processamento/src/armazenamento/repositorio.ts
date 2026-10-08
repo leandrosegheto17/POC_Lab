@@ -53,6 +53,10 @@ export type Repositorio = {
   ) => ResultadoInsercao;
   inserirEvento: (evento: EventoParaInserir) => ResultadoInsercao;
   inserirAchadoQualidade: (achado: AchadoQualidade) => ResultadoInsercao;
+  /** TP-0079 — Lê a cache de IA pela chave (hash SHA-256); `undefined` se não houver. */
+  obterCache: (chave: string) => { resposta: string; criadoEm: string } | undefined;
+  /** TP-0079 — Grava a cache de IA; se a chave já existir, a gravação é ignorada (ON CONFLICT DO NOTHING). */
+  gravarCache: (chave: string, resposta: string, criadoEm: string) => void;
 };
 
 /**
@@ -120,11 +124,29 @@ export function criarRepositorio(caminhoArquivo: string): Repositorio {
     return { nova: foiLinhaNova(resultado.changes) };
   }
 
+  function obterCache(chave: string): { resposta: string; criadoEm: string } | undefined {
+    const linha = db
+      .prepare(`SELECT resposta, criado_em FROM cache_ia WHERE chave = ?`)
+      .get(chave) as { resposta: string; criado_em: string } | undefined;
+    if (linha === undefined) {
+      return undefined;
+    }
+    return { resposta: linha.resposta, criadoEm: linha.criado_em };
+  }
+
+  function gravarCache(chave: string, resposta: string, criadoEm: string): void {
+    db.prepare(
+      `INSERT INTO cache_ia (chave, resposta, criado_em) VALUES (?, ?, ?) ON CONFLICT(chave) DO NOTHING`,
+    ).run(chave, resposta, criadoEm);
+  }
+
   return {
     db,
     inserirPedido,
     inserirVinculoFonte,
     inserirEvento,
     inserirAchadoQualidade,
+    obterCache,
+    gravarCache,
   };
 }

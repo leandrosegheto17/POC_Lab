@@ -40,3 +40,10 @@ CREATE TABLE IF NOT EXISTS achado_qualidade (
   detalhe TEXT NOT NULL,
   UNIQUE (tipo, fonte, referencia)
 );
+
+-- TP-0079 — Cache de respostas de IA (chave = hash SHA-256 do prompt/entrada).
+CREATE TABLE IF NOT EXISTS cache_ia (
+  chave TEXT PRIMARY KEY,
+  resposta TEXT NOT NULL,
+  criado_em TEXT NOT NULL
+);

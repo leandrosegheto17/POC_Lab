@@ -160,3 +160,34 @@ describe("inserirAchadoQualidade", () => {
     expect(linha.total).toBe(1);
   });
 });
+
+describe("cache_ia", () => {
+  it("obterCache de chave inexistente devolve undefined", () => {
+    const repositorio = criarRepositorio(":memory:");
+
+    expect(repositorio.obterCache("chave-inexistente")).toBeUndefined();
+  });
+
+  it("gravarCache grava e obterCache da mesma chave devolve resposta e criadoEm certos", () => {
+    const repositorio = criarRepositorio(":memory:");
+
+    repositorio.gravarCache("hash-abc", "resposta-1", "2026-01-01T10:00:00Z");
+
+    expect(repositorio.obterCache("hash-abc")).toEqual({
+      resposta: "resposta-1",
+      criadoEm: "2026-01-01T10:00:00Z",
+    });
+  });
+
+  it("gravar a mesma chave 2x com resposta diferente ignora a 2ª gravação (ON CONFLICT DO NOTHING)", () => {
+    const repositorio = criarRepositorio(":memory:");
+
+    repositorio.gravarCache("hash-abc", "resposta-1", "2026-01-01T10:00:00Z");
+    repositorio.gravarCache("hash-abc", "resposta-2", "2026-01-02T10:00:00Z");
+
+    expect(repositorio.obterCache("hash-abc")).toEqual({
+      resposta: "resposta-1",
+      criadoEm: "2026-01-01T10:00:00Z",
+    });
+  });
+});
