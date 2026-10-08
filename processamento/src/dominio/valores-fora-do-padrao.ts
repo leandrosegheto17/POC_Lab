@@ -36,19 +36,31 @@ export function verificarItemPedido(
 ): AchadoValorForaDoPadrao | null {
   const violacoes: string[] = [];
 
-  if (item.precoUnitario <= 0) {
+  if (!Number.isFinite(item.precoUnitario)) {
+    violacoes.push(
+      `preço unitário deveria ser um número finito, mas é ${item.precoUnitario}`,
+    );
+  } else if (item.precoUnitario <= 0) {
     violacoes.push(
       `preço unitário deveria ser maior que zero, mas é ${item.precoUnitario}`,
     );
   }
 
-  if (item.quantidade <= 0) {
+  if (!Number.isFinite(item.quantidade)) {
+    violacoes.push(
+      `quantidade deveria ser um número finito, mas é ${item.quantidade}`,
+    );
+  } else if (item.quantidade <= 0) {
     violacoes.push(
       `quantidade deveria ser maior que zero, mas é ${item.quantidade}`,
     );
   }
 
-  if (item.desconto < 0 || item.desconto > 1) {
+  if (!Number.isFinite(item.desconto)) {
+    violacoes.push(
+      `desconto deveria ser um número finito, mas é ${item.desconto}`,
+    );
+  } else if (item.desconto < 0 || item.desconto > 1) {
     violacoes.push(
       `desconto deveria estar entre 0 e 1, mas é ${item.desconto}`,
     );
@@ -76,14 +88,27 @@ export function verificarPagamento(
 ): AchadoValorForaDoPadrao | null {
   const violacoes: string[] = [];
 
-  if (valorPagamento <= 0) {
+  const pagamentoFinito = Number.isFinite(valorPagamento);
+  const devidoFinito = Number.isFinite(valorDevido);
+
+  if (!pagamentoFinito) {
+    violacoes.push(
+      `valor de pagamento deveria ser um número finito, mas é ${valorPagamento}`,
+    );
+  } else if (valorPagamento <= 0) {
     violacoes.push(
       `valor de pagamento deveria ser maior que zero, mas é ${valorPagamento}`,
     );
   }
 
+  if (!devidoFinito) {
+    violacoes.push(
+      `valor devido deveria ser um número finito, mas é ${valorDevido}`,
+    );
+  }
+
   const limiteMaximo = 2 * valorDevido;
-  if (valorPagamento > limiteMaximo) {
+  if (pagamentoFinito && devidoFinito && valorPagamento > limiteMaximo) {
     violacoes.push(
       `valor de pagamento (${valorPagamento}) excede o dobro do valor devido (${valorDevido}, limite ${limiteMaximo})`,
     );

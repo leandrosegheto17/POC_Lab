@@ -102,6 +102,27 @@ describe("verificarItemPedido (RN-10)", () => {
     expect(verificarItemPedido(item)).toBeNull();
   });
 
+  it.each([
+    ["precoUnitario", "preço unitário"],
+    ["quantidade", "quantidade"],
+    ["desconto", "desconto"],
+  ] as const)("%s com NaN ou ±Infinity gera achado citando o valor", (campo, rotulo) => {
+    for (const valor of [Number.NaN, Infinity, -Infinity]) {
+      const item: ItemPedidoParaValidacao = {
+        precoUnitario: 10,
+        quantidade: 2,
+        desconto: 0.5,
+        [campo]: valor,
+      };
+
+      const resultado = verificarItemPedido(item);
+
+      expect(resultado).not.toBeNull();
+      expect(resultado?.detalhe).toContain(rotulo);
+      expect(resultado?.detalhe).toContain(String(valor));
+    }
+  });
+
   it("consolida múltiplas violações num único achado com todos os detalhes", () => {
     const item: ItemPedidoParaValidacao = {
       precoUnitario: -5,
@@ -150,6 +171,27 @@ describe("verificarPagamento (RN-10)", () => {
 
   it("pagamento exatamente 2× devido é válido (fronteira inclusiva)", () => {
     expect(verificarPagamento(200, 100)).toBeNull();
+  });
+
+  it.each([
+    ["NaN", Number.NaN],
+    ["Infinity", Number.POSITIVE_INFINITY],
+    ["-Infinity", Number.NEGATIVE_INFINITY],
+  ])("pagamento %s gera achado citando o valor", (texto, valor) => {
+    const resultado = verificarPagamento(valor, 100);
+
+    expect(resultado).not.toBeNull();
+    expect(resultado?.detalhe).toContain(texto);
+  });
+
+  it.each([
+    ["NaN", Number.NaN],
+    ["Infinity", Number.POSITIVE_INFINITY],
+  ])("valor devido %s gera achado citando o valor", (texto, valor) => {
+    const resultado = verificarPagamento(100, valor);
+
+    expect(resultado).not.toBeNull();
+    expect(resultado?.detalhe).toContain(texto);
   });
 
   it("consolida pagamento ≤ 0 e acima de 2× devido num único achado quando ambos ocorrem", () => {
