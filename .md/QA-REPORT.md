@@ -533,3 +533,6 @@ APROVADA; 0 críticos, 1 não crítico (RTP-0095, backtracking exponencial na re
 
 ## RTP-0094 — QA — 2026-10-09
 APROVADA; 0 críticos, 1 não crítico (RTP-0096: tag após `||` e BOM); 53 testes passando, regex linear.
+
+## RTP-0095 — QA — 2026-10-09
+APROVADA; 0 críticos, 1 não crítico (RTP-0097: aspa escapada + string com `;` deixou de ser acusada); regex sem backtracking exponencial (30 literais em ~0,2 ms), suíte 101/101.
