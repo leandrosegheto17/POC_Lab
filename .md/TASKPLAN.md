@@ -7,7 +7,7 @@ dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuá
 
 Atualizado: 2026-10-09 10:18
 
-Resumo: Não executada 2 · Em execução 1 · Em teste 1 · Testada (aguarda segurança) 2 · Aprovada 189 · total 195
+Resumo: Não executada 2 · Em execução 1 · Testada (aguarda segurança) 3 · Aprovada 189 · total 195
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -202,7 +202,7 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 187 | RTP-0100 | executor | ✔ | Teste de desempenho do G-05 sem limite fixo de 50 ms (instável sob carga) | Refatoração Revisão 2026-10-09 | — | Aprovada |
 | 188 | RTP-0101 | executor | ✔ | Migrar dominio e contrato para o novo pacote nucleo | Refatoração Revisão 2026-10-09 | RTP-0056, RTP-0057, RTP-0058, RTP-0062 | Em execução |
 | 189 | RTP-0102 | executor | ✔ | Teste: T2 só marca pagamento duplicado quando a API declarou a divergência duplicado | Refatoração Revisão 2026-10-09 | — | Testada (aguarda segurança) |
-| 190 | RTP-0103 | executor | ✔ | Publicar: guardar bookmark do Time Travel antes da carga do D1 e conferir version produ... | Refatoração Revisão 2026-10-09 | — | Em teste |
+| 190 | RTP-0103 | executor | ✔ | Publicar: guardar bookmark do Time Travel antes da carga do D1 e conferir version produ... | Refatoração Revisão 2026-10-09 | — | Testada (aguarda segurança) |
 | 191 | RTP-0104 | executor | ✔ | Tirar os helpers de teste do exports do nucleo (apoio/*) | Refatoração Revisão 2026-10-09 | RTP-0101 | Não executada |
 | 192 | RTP-0105 | executor | ✔ | Lint: tirar o ?. desnecessário no teste de duplicado só com divergência | Refatoração Revisão 2026-10-09 | RTP-0102 | Não executada |
 | 193 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Aprovada |

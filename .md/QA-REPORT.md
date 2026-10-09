@@ -548,3 +548,15 @@ APROVADA; 0 críticos, 0 não críticos; gabarito.test.ts 3/3 verdes, asserçõe
 
 ## RTP-0100 — QA — 2026-10-09
 APROVADA; 0 críticos e 0 não críticos; regex exponencial antiga estoura 1000 ms a partir de 22 literais (2,5 s; 17,9 s com 24), g05+g17 20/20 verdes e paralelo verde, lint e tsc ok.
+
+## RTP-0086 — QA — 2026-10-09
+APROVADA — comentário de importar.ts remete ao ADR-017 (idempotência: ADR-004), ADR-017 tem os quatro pontos, ADR-004 intacto; 0 críticos, 0 não críticos.
+
+## RTP-0101 — QA — 2026-10-09
+DEVOLVIDA — typecheck e todos os testes (nucleo 187, processamento 345, web 402, scripts 15) passam e o teste negativo das fronteiras funciona, mas 1 crítico (web/test e web/package.json ainda dependem de processamento, contra o aceite e o G-03) e 2 não críticos (RTP-0104 para exports apoio/*; lint vermelho vindo da RTP-0102).
+
+## RTP-0102 — QA — 2026-10-09
+APROVADA — 4 testes passam e cobrem o aceite (a) e (b); typecheck ok; `pnpm lint` falha com 2 erros `no-unnecessary-condition` só neste arquivo (0 críticos, 1 não crítico -> RTP-0105).
+
+## RTP-0103 — QA — 2026-10-09
+APROVADA — 15/15 testes e lint ok, aceite (bookmark antes da carga, version production, restore em falha) cumprido; 0 achados críticos, 0 não críticos; risco: formatos reais do wrangler por confirmar (código falha seguro).
