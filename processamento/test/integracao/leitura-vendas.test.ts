@@ -12,7 +12,7 @@ import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { lerBaseDeVendas } from "../../src/fontes/leitura-vendas.ts";
-import { obrigatorio } from "nucleo/apoio/obrigatorio.js";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 
 const CAMINHO_BASE = path.join("dados", "origem", "northwind.db");
 const baseDisponivel = existsSync(CAMINHO_BASE);

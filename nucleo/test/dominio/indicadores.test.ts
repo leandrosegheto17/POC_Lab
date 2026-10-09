@@ -9,7 +9,7 @@ import {
   type PedidoParaIndicadorValorPagoVsDevido,
 } from "../../src/dominio/indicadores.js";
 import type { TipoDivergencia } from "../../src/dominio/modelo.js";
-import { obrigatorio } from "../apoio/obrigatorio.js";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 
 describe("indicadorEntregasNoPrazo", () => {
   it("gera resultado 1 por grupo quando todas as entregas estão no prazo, para 2 transportadoras x 2 meses", () => {

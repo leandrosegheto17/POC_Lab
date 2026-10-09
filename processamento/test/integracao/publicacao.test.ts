@@ -18,7 +18,7 @@ import {
   publicarDados,
   type ResultadoExecucaoWrangler,
 } from "../../src/aplicacao/publicar-dados.ts";
-import { obrigatorio } from "nucleo/apoio/obrigatorio.js";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 import { montarRepositorioComFixture } from "../apoio/publicacao.js";
 
 describe("montarSqlPublicacao", () => {

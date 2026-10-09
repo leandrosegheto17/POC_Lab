@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { totaisResumo, type DivergenciaComPedido, type PedidoParaTotais } from "../../src/dominio/totais.js";
 import type { BlocoIndicador } from "../../src/dominio/indicadores.js";
-import { obrigatorio } from "../apoio/obrigatorio.js";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 
 const BLOCO_ENTREGAS_VAZIO: BlocoIndicador = {
   chave: "entregas_no_prazo",

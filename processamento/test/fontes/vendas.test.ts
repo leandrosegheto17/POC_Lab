@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { processarVendas } from "../../src/fontes/vendas.js";
 import type { PedidoVendas } from "../../src/fontes/leitura-vendas.js";
-import { obrigatorio } from "nucleo/apoio/obrigatorio.js";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 
 function pedidoBase(sobrescritas: Partial<PedidoVendas> = {}): PedidoVendas {
   return {

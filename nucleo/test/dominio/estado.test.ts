@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Evento } from "../../src/dominio/evento.js";
 import { derivarEstado } from "../../src/dominio/estado.js";
-import { obrigatorio } from "../apoio/obrigatorio.js";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 import { coleta, pagamento, venda } from "../apoio/eventos.js";
 
 function transporte(partial: { codigoEvento: string; momentoFato: string }): Evento {

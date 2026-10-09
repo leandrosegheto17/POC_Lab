@@ -4,7 +4,7 @@ import { EsquemaBlocoIndicador } from "../../src/contrato/indicadores.js";
 import { EsquemaEventoV1, EsquemaLinhaDoTempoV1 } from "../../src/contrato/linha-do-tempo-v1.js";
 import { EsquemaRespostaQualidade } from "../../src/contrato/qualidade.js";
 import { EsquemaResumo } from "../../src/contrato/resumo.js";
-import { obrigatorio } from "../apoio/obrigatorio.js";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 
 /**
  * Esquemas de resposta v1 (resumo, divergências e linha do tempo).

@@ -26,7 +26,7 @@ import { DIR_DESTINO_PADRAO, NOME_ARQUIVO_PADRAO } from "../../src/config/caminh
 import { decidirSugerir, executarSugerir } from "../../src/aplicacao/sugerir.ts";
 import { criarRepositorio } from "../../src/armazenamento/repositorio.ts";
 import { criarProvedorFalso } from "../../src/ia/provedor-falso.ts";
-import { obrigatorio } from "nucleo/apoio/obrigatorio.js";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 
 const CAMINHO_BASE_REAL = path.join(DIR_DESTINO_PADRAO, NOME_ARQUIVO_PADRAO);
 const baseDisponivel = existsSync(CAMINHO_BASE_REAL);

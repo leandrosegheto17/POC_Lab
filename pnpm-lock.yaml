@@ -24,12 +24,21 @@ importers:
         specifier: ^8.0.0
         version: 8.71.1(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@5.9.3)
 
+  apoio-teste:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   nucleo:
     dependencies:
       zod:
         specifier: ^4.0.0
         version: 4.6.5
     devDependencies:
+      apoio-teste:
+        specifier: workspace:*
+        version: link:../apoio-teste
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -52,6 +61,9 @@ importers:
       '@types/node':
         specifier: ^24.0.0
         version: 24.19.1
+      apoio-teste:
+        specifier: workspace:*
+        version: link:../apoio-teste
       tsx:
         specifier: ^4.0.0
         version: 4.23.15

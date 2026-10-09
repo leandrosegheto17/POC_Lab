@@ -560,3 +560,9 @@ APROVADA — 4 testes passam e cobrem o aceite (a) e (b); typecheck ok; `pnpm li
 
 ## RTP-0103 — QA — 2026-10-09
 APROVADA — 15/15 testes e lint ok, aceite (bookmark antes da carga, version production, restore em falha) cumprido; 0 achados críticos, 0 não críticos; risco: formatos reais do wrangler por confirmar (código falha seguro).
+
+## RTP-0101 — QA — 2026-10-09
+APROVADA (reteste) — crítico corrigido (web sem import nem dependência de processamento, G-03 imposto também em web/test); lint, typecheck, nucleo 187, web 402, processamento 345 e scripts 16 passam; mutação do DDL é acusada pelo teste de sincronia; 2 não críticos novos (RTP-0106 timeout do Vitest no processamento, RTP-0107 colunas da fixture) e RTP-0104 já existente.
+
+## RTP-0105 — QA — 2026-10-09
+APROVADA; 0 críticos e 0 não críticos; vitest do arquivo com 4/4 passando e `pnpm lint` na raiz sem erros, diff com só 2 linhas.

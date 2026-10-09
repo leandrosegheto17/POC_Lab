@@ -4,7 +4,7 @@ import { criarRepositorio } from "../../src/armazenamento/repositorio.js";
 import { criarProvedorFalso } from "../../src/ia/provedor-falso.js";
 import { conferirSugestao } from "nucleo/dominio/conferencia-sugestao.js";
 import type { ProvedorSugestao } from "../../src/ia/porta.js";
-import { obrigatorio } from "nucleo/apoio/obrigatorio.js";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 import { inserirPagamentoSemIdentificacao, inserirPedidoComVenda, sugerir } from "../apoio/ia.js";
 
 /** Provedor espião: nunca decide nada por conta própria, só registra as chamadas recebidas. */

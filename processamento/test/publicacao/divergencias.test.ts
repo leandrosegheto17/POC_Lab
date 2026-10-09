@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 
 import { criarRepositorio, type EventoParaInserir } from "../../src/armazenamento/repositorio.ts";
 import { montarDivergencias } from "../../src/publicacao/divergencias.ts";
-import { obrigatorio } from "nucleo/apoio/obrigatorio.js";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 
 const DATA_CORTE = "2024-06-01T00:00:00Z";
 

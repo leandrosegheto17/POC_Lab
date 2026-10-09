@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { processarRastreio } from "../../src/fontes/rastreio.js";
-import { obrigatorio } from "nucleo/apoio/obrigatorio.js";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 
 const cabecalho =
   "codigo_evento,codigo_rastreio,pedido_venda,tipo,momento_fato,transportadora";

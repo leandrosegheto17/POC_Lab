@@ -539,3 +539,9 @@ APROVADA — só teste com dados fictícios em memória; sem segredo, sem `dange
 
 ## RTP-0103 — DevSecOps — 2026-10-09
 APROVADA em segurança — sem segredo, só execFileSync com lista de argumentos, falha segura antes da carga destrutiva, bookmark fora do git, sem dependência nova, 15/15 testes; 0 críticos, 0 não críticos.
+
+## RTP-0101 — DevSecOps — 2026-10-09
+APROVADA — ci.yml sem mudança (ações por SHA, contents: read, sem segredo), lockfile frozen passa, nucleo sem node:*, G-02/G-03 no lint (também web/test), fixture SQL só com DDL; 0 críticos e 1 não crítico (RTP-0108: aviso moderate do csv-parse, anterior à tarefa).
+
+## RTP-0105 — DevSecOps — 2026-10-09
+APROVADA; 0 achados; diff de 2 linhas só em teste do web, sem dependência, segredo ou código de produção (revisão de leitura, nada executado).

@@ -19,7 +19,7 @@ import {
   EsquemaRespostaIndicadores,
   EsquemaBlocoIndicador,
 } from "nucleo/contrato/indicadores.js";
-import { obrigatorio } from "nucleo/apoio/obrigatorio.js";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 
 /**
  * Testes de `montarDocumentoResumo`/`montarDocumentoIndicadores`

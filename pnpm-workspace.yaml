@@ -1,4 +1,5 @@
 packages:
+  - "apoio-teste"
   - "nucleo"
   - "processamento"
   - "web"

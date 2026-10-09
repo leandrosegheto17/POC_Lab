@@ -5,8 +5,7 @@
   "type": "module",
   "exports": {
     "./dominio/*.js": "./src/dominio/*.ts",
-    "./contrato/*.js": "./src/contrato/*.ts",
-    "./apoio/*.js": "./test/apoio/*.ts"
+    "./contrato/*.js": "./src/contrato/*.ts"
   },
   "scripts": {
     "test": "vitest run",
@@ -16,6 +15,7 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
+    "apoio-teste": "workspace:*",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }
