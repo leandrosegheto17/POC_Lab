@@ -3,28 +3,35 @@
 Este documento descreve o fluxo de publicação do POC_Lab e as ações que só o
 autor pode fazer manualmente (nenhuma é automatizável por código/CI).
 
-## O que `pnpm publicar` faz
+## Qual comando usar
 
 Rodando na raiz do repositório:
 
-```
-pnpm publicar
-```
+| O que mudou | Comando |
+|---|---|
+| Só `web/` (telas, Worker, estilos) | `pnpm publicar:site` |
+| `processamento/src` (dados, regras, publicação) | `pnpm publicar:dados` ou `pnpm publicar` |
+| `processamento/src` e `web/` | `pnpm publicar` |
 
-executa, nesta ordem fixa:
+Os três chamam `scripts/publicar.mjs`, que roda passos nomeados e para no
+primeiro erro, citando o passo que falhou.
 
-1. `preparar` (pacote `processamento`, TP-0045) — regenera os dados de
-   demonstração e escreve `dados/publicacao/leitura.sql`.
-2. `vite build` (pacote `web`) — gera os assets estáticos em `web/dist/client`.
-3. `wrangler d1 execute poc-lab --remote --file ../processamento/dados/publicacao/leitura.sql`
-   (rodando no contexto do pacote `web`, onde vive `wrangler.jsonc`) — carrega
-   o SQL de leitura no banco D1 **remoto**.
-4. `wrangler deploy` (idem, contexto do pacote `web`) — publica o Worker +
-   assets estáticos no Cloudflare.
+- `pnpm publicar:site` — `vite build` e `wrangler deploy`. Não toca no D1.
+- `pnpm publicar:dados` — `preparar` (regenera os dados e escreve
+  `processamento/dados/publicacao/leitura.sql`), lê o `idPublicacao` do
+  `leitura.sql` local, consulta (só leitura) o `idPublicacao` do resumo no D1
+  remoto e:
+  - se for igual, **não** carrega e avisa "dados já publicados";
+  - se for diferente (ou o D1 remoto estiver vazio), roda
+    `wrangler d1 execute poc-lab --remote --file …/leitura.sql`.
+- `pnpm publicar` — `publicar:dados` e depois `publicar:site`.
 
 A ordem **D1 antes do Worker** é intencional (ADR-015): o código novo do
-Worker nunca deve ler as tabelas antigas do D1. Se um dos passos falhar, os
-seguintes não rodam (encadeamento com `&&`).
+Worker nunca deve ler as tabelas antigas do D1.
+
+Atenção: a carga do D1 regrava cerca de 175 mil linhas e reabre a janela de
+tabela vazia durante a troca. Por isso, correção só de tela não deve recarregar
+os dados: use `publicar:site`.
 
 Isto é um script **manual**, disparado pelo autor na própria máquina — nenhum
 passo de CI dispara `pnpm publicar` (G-16/ADR-015).

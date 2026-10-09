@@ -12,7 +12,10 @@
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
     "lint": "eslint .",
-    "publicar": "pnpm preparar && pnpm --filter web run build && pnpm --filter web exec wrangler d1 execute poc-lab --remote --file ../processamento/dados/publicacao/leitura.sql --config wrangler.jsonc && pnpm --filter web exec wrangler deploy --config wrangler.jsonc"
+    "test:scripts": "node --test scripts/*.test.mjs",
+    "publicar:dados": "node scripts/publicar.mjs dados",
+    "publicar:site": "node scripts/publicar.mjs site",
+    "publicar": "node scripts/publicar.mjs tudo"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

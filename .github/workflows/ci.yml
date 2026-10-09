@@ -26,7 +26,7 @@ jobs:
       - name: Cache da base de vendas
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: dados/origem
+          path: processamento/dados/origem
           key: base-vendas-2f4f5c68dfcd33ba27373eae48c7a4869800c68095ee0f9f0da494f83382a877
 
       - name: Instalar dependências
@@ -43,3 +43,6 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      - name: Test dos scripts da raiz
+        run: pnpm test:scripts

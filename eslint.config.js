@@ -248,6 +248,14 @@ export default tseslint.config(
     rules: bloqueioSintaxe(),
   },
 
+  // Scripts Node puro da raiz (fora de qualquer tsconfig): sem regras que
+  // exigem informação de tipos.
+  {
+    files: ["scripts/**/*.mjs"],
+    extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: { globals: { console: "readonly", process: "readonly" } },
+  },
+
   // G-12 — dangerouslySetInnerHTML proibido em qualquer elemento JSX.
   {
     files: ["**/*.{jsx,tsx}"],
