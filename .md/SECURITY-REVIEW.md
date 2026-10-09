@@ -380,3 +380,66 @@ APROVADA — exceção GERACAO restrita ao nome novo, nome antigo e leitura fora
 
 ## RTP-0049 — DevSecOps — 2026-10-08
 APROVADA — só timeout 60000 ms no teste de lint; sem dependência, segredo nem afrouxamento da regra; 0 achados.
+
+## RTP-0050 — DevSecOps — 2026-10-09
+OK - 0 achados; só SELECT/INSERT ON CONFLICT com `?`, sem UPDATE/DELETE (G-05), sem dependência nova; grep confirmou sem concatenação SQL.
+
+## RTP-0051 — DevSecOps — 2026-10-09
+OK - 0 achados; leitura do event store só por consultas preparadas constantes do repositório, escritor-sql intocado, sem dependência nova, gabarito fora de publicacao/.
+
+## RTP-0052 — DevSecOps — 2026-10-09
+OK; 0 críticos, 0 achados novos; sem SQL por concatenação, gravação em `emTransacao` com rollback testado, sem UPDATE/DELETE; importar.test 3/3.
+
+## RTP-0053 — DevSecOps — 2026-10-09
+OK — 0 achados; chave de cache sem credencial, provedor com timeout e sem log, RN-11 mantida, conexão do banco fora do tipo Repositorio e `abrirRepositorioParaTeste` sem importador em produção, sem dependência nova.
+
+## RTP-0054 — DevSecOps — 2026-10-09
+OK — 0 achados; config sem segredo/eco, só `--semente` numérica como entrada, SHA-256 e URL fixada mantidos, wrangler sem shell/--remote, eslint sem regra afrouxada.
+
+## RTP-0055 — DevSecOps — 2026-10-09
+OK; 0 achados de segurança; sem Math.random/Date.now, sem dado real, gabarito fora do código de importação/publicação (G-04), sem dependência nova.
+
+## RTP-0056 — DevSecOps — 2026-10-09
+OK em segurança; 0 achados; v2 derivada da v1 sem afrouxar validação, listas únicas, EsquemaSugestaoIA estrito, nenhum campo interno exposto; vitest contrato+domínio 187 verdes.
+
+## RTP-0057 — DevSecOps — 2026-10-09
+OK, 0 achados; código validado por zod antes do D1, SQL só em consultas.ts com bind, cabeçalhos e erros RFC 9457 inalterados nas rotas v1/v2; 42 testes do Worker passando.
+
+## RTP-0058 — DevSecOps — 2026-10-09
+OK; 0 achados; sem innerHTML/eval/node:*/segredo em web/src, rótulos da API seguem como texto escapado, sem dependência nova (greps executados).
+
+## RTP-0059 — DevSecOps — 2026-10-09
+OK — 0 achados; refatoração sem mudança de comportamento, sem innerHTML novo, link de tipo validado por enumeração e codificado, sem dependência nova.
+
+## RTP-0060 — DevSecOps — 2026-10-09
+OK; 0 achados; sem `as unknown as`/eval, texto por JSX, código do pedido com encodeURIComponent, resposta validada por zod, erros com mensagem fixa, sem retry automático, sem dependência nova.
+
+## RTP-0061 — DevSecOps — 2026-10-09
+OK; 0 achados de segurança; tipo/pagina validados antes da API, URLSearchParams, links relativos com encodeURIComponent, sem HTML injetado; 14 testes executados passando.
+
+## RTP-0062 — DevSecOps — 2026-10-09
+OK; 0 críticos, 1 baixo (RTP-0085, sem limite de tamanho nas strings da sugestão); IA só como texto JSX, link com encodeURIComponent em rota interna, esquema do contrato equivale ao removido.
+
+## RTP-0063 — DevSecOps — 2026-10-09
+OK; 0 achados; CSS sem @import/url externa, fontes locais, ícones SVG sem script/evento/innerHTML, IconeBase sem injeção de HTML, sem dependência nova.
+
+## RTP-0064 — DevSecOps — 2026-10-09
+OK; 0 achados de segurança; testes de 4xx, cabeçalhos e axe mantidos (15/20/56 antes e depois), sem segredo, sem rede real, sem vazamento de teste para o bundle.
+
+## RTP-0065 — DevSecOps — 2026-10-09
+APROVADA em segurança; 0 achados; sem segredo/rede nas fábricas, src não importa apoio, asserções G-04/G-09 preservadas (81 expects, 32 casos antes e depois).
+
+## RTP-0066 — DevSecOps — 2026-10-09
+APROVADA — só comentários/nomes de teste + prefixo das REGRA_* mudaram; nenhum comentário de segurança (G-04) apagado, nenhum segredo; 0 achados.
+
+## RTP-0067 — DevSecOps — 2026-10-09
+OK — diff só de comentários e 2 nomes de describe (código executável idêntico), nenhum comentário de segurança apagado, correções de comentários conferidas contra o código, sem segredo; 0 achados.
+
+## RTP-0068 — DevSecOps — 2026-10-09
+OK — 0 achados de segurança; print-config idêntico (antes/depois) em 4 arquivos sensíveis (publicacao, web/src, web/worker), proibições de gabarito, prepare, dangerouslySetInnerHTML e G-03 preservadas; `eslint/**` em ignores aceito.
+
+## RTP-0069 — DevSecOps — 2026-10-09
+APROVADA, 0 críticos e 0 não críticos; execFileSync sem shell com alvo validado, sem segredos, falha/vazio na consulta remota leva à carga (só SELECT), D1 antes do Worker, CI sem publicação/segredos e cache protegido pelo hash; só scripts mudaram no package.json (sem auditoria de dependências); 8 testes ok.
+
+## RTP-0070 — DevSecOps — 2026-10-09
+OK; 0 críticos/altos, lacunas médias/baixas já em RTP-0083 e RTP-0084; testes sem segredo, sem rede, sem enfraquecer o existente; texto do GUARDRAILS e leitura ampla do G-17 aguardam o usuário/Gestor.
