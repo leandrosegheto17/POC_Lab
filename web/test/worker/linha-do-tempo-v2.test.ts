@@ -9,7 +9,6 @@
 //
 // `node:fs`/`node:sqlite` só são lidos aqui porque este arquivo vive em
 // `web/test/` (mesma exceção documentada em `web/test/apoio/d1-teste.ts`).
-import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 
 import type { TabelasParaPublicacao } from "processamento/publicacao/escritor-sql.js";
@@ -17,6 +16,7 @@ import { EsquemaLinhaDoTempoV2 } from "processamento/contrato/linha-do-tempo-v2.
 
 import { criarD1TesteComTabelas } from "../apoio/fixture.ts";
 import type { CorpoLinhaDoTempoSolto } from "../apoio/corpo-teste.ts";
+import { criarAppDeRota, divergenciaParcial } from "../apoio/linha-do-tempo-worker.ts";
 import { obrigatorio } from "../apoio/obrigatorio.ts";
 import { rotaLinhaDoTempoV2 } from "../../worker/rotas/linha-do-tempo-v2.ts";
 import appReal from "../../worker/index.ts";
@@ -85,23 +85,12 @@ const TABELAS: TabelasParaPublicacao = {
       fora_de_ordem: 0,
     },
   ],
-  divergencia: [
-    {
-      tipo: "parcial",
-      id_pedido: ID_PEDIDO,
-      motivo: "Pagamento parcial identificado.",
-      eventos: "[]",
-    },
-  ],
+  divergencia: [divergenciaParcial(ID_PEDIDO)],
   documento: [],
 };
 
 /** Instância Hono local só para este teste, com a rota v2 registrada. */
-function criarAppDeTeste() {
-  const app = new Hono<{ Bindings: { DB: D1Database } }>();
-  app.route("/", rotaLinhaDoTempoV2);
-  return app;
-}
+const criarAppDeTeste = () => criarAppDeRota(rotaLinhaDoTempoV2);
 
 describe("GET /api/v2/pedidos/{codigo}/linha-do-tempo", () => {
   it("devolve 200 com a linha do tempo v2, incluindo versao_schema e meio_pagamento no evento de pagamento v2", async () => {

@@ -14,6 +14,7 @@ import {
   respostaComSugestoes,
   respostaQualidadeValida,
 } from "./apoio/qualidade-simulada.tsx";
+import { esperarMensagemIndisponivel, respostaApi500 } from "./apoio/estados-erro.ts";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -43,28 +44,18 @@ describe("Qualidade — erro 5xx/rede", () => {
 
   it("erro 5xx vindo da API também mostra 'Tentar de novo'", async () => {
     instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: false,
+      respostaApi500({
+        type: "about:blank",
+        title: "Erro interno",
         status: 500,
-        json: () => Promise.resolve({
-          type: "about:blank",
-          title: "Erro interno",
-          status: 500,
-          detail: "Falha ao gerar relatório.",
-          codigo: "erro_interno",
-        }),
-      })),
+        detail: "Falha ao gerar relatório.",
+        codigo: "erro_interno",
+      }),
     );
 
     renderizar();
 
-    await waitFor(() => {
-      expect(
-        screen.getByText(
-          "Não foi possível consultar os dados agora. Tente de novo em alguns segundos.",
-        ),
-      ).toBeInTheDocument();
-    });
+    await esperarMensagemIndisponivel();
 
     expect(
       screen.getByRole("button", { name: "Tentar de novo" }),

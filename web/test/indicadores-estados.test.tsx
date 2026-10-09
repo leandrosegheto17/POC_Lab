@@ -9,7 +9,7 @@ import {
   renderizar,
   respostaIndicadoresValida,
 } from "./apoio/indicadores-simulada.tsx";
-import { respostaFake } from "./apoio/api-simulada.tsx";
+import { esperarMensagemIndisponivel, respostaApi500 } from "./apoio/estados-erro.ts";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -38,28 +38,18 @@ describe("Indicadores — erro 5xx/rede/timeout", () => {
 
   it("5xx mostra a mensagem de indisponibilidade", async () => {
     instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: false,
+      respostaApi500({
+        type: "about:blank",
+        title: "Erro interno",
         status: 500,
-        json: () => Promise.resolve({
-          type: "about:blank",
-          title: "Erro interno",
-          status: 500,
-          detail: "falha",
-          codigo: "erro_interno",
-        }),
-      })),
+        detail: "falha",
+        codigo: "erro_interno",
+      }),
     );
 
     renderizar();
 
-    await waitFor(() => {
-      expect(
-        screen.getByText(
-          "Não foi possível consultar os dados agora. Tente de novo em alguns segundos.",
-        ),
-      ).toBeInTheDocument();
-    });
+    await esperarMensagemIndisponivel();
   });
 });
 

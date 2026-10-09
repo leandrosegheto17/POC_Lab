@@ -12,6 +12,7 @@ import {
   respostaErro,
   respostaLinhaDoTempoValida,
 } from "./apoio/pedido-simulado.tsx";
+import { esperarMensagemIndisponivel, respostaApi500 } from "./apoio/estados-erro.ts";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -94,23 +95,12 @@ describe("Pedido — erro 5xx/rede/timeout", () => {
 
   it("erro 5xx da API mostra EstadoErro com 'Tentar de novo'", async () => {
     instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: false,
-        status: 500,
-        json: () =>
-          Promise.resolve(respostaErro({ status: 500, codigo: "erro_interno" })),
-      })),
+      respostaApi500(respostaErro({ status: 500, codigo: "erro_interno" })),
     );
 
     renderizar();
 
-    await waitFor(() => {
-      expect(
-        screen.getByText(
-          "Não foi possível consultar os dados agora. Tente de novo em alguns segundos.",
-        ),
-      ).toBeInTheDocument();
-    });
+    await esperarMensagemIndisponivel();
 
     expect(
       screen.getByRole("button", { name: "Tentar de novo" }),
