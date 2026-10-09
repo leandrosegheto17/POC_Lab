@@ -509,3 +509,21 @@ APROVADA; 0 críticos, 1 não crítico (mensagem do g17 não orienta a lista do 
 
 ## RTP-0085 — QA — 2026-10-09
 APROVADA; 0 críticos, 1 não crítico (RTP-0090: `parse` em `montarBlocoIa` aborta a publicação se `textoReferencia` > 600); web 398 verdes, tsc e vitest afetados verdes; limites cobrem os maiores textos reais (motivo ≤ ~400).
+
+## RTP-0087 — QA — 2026-10-09
+APROVADA; 0 críticos, 0 não críticos; 30/30 execuções isoladas e suíte web 398/398 passando, asserção de foco intacta.
+
+## RTP-0088 — QA — 2026-10-09
+APROVADA; 0 achados; 398 testes passam, nº de casos e asserções inalterados, pares-alvo removidos.
+
+## RTP-0089 — QA — 2026-10-09
+APROVADA; 0 críticos, 0 não críticos; g17 passa (41 testes) e a mensagem cita o pacote e a lista PERMITIDAS_POR_PACOTE/COMUM.
+
+## RTP-0090 — QA — 2026-10-09
+APROVADA; 0 críticos, 0 não críticos; safeParse descarta só o item inválido de `ia`, teste novo + 72 testes de publicação/integração qualidade, tsc e eslint passando.
+
+## RTP-0091 — QA — 2026-10-09
+APROVADA; 0 críticos, 0 não críticos; 34 testes G-05 passando, repositório real limpo, ALTER/PRAGMA/`;` em string cobertos com casos negativos, sem falso-positivo e sem perda de rigor relevante.
+
+## RTP-0092 — QA — 2026-10-09
+APROVADA; 0 críticos, 0 não críticos; 41 testes G-17 passando, repositório real limpo, casos negativos para cada forma de especificador, overrides e pacote de workspace; tags tipo "latest" aceitas (fora do aceite, registrado).
