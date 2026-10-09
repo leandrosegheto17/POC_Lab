@@ -72,3 +72,8 @@ export function formatarPercentual(
 export function formatarDias(n: number): string {
   return `${UMA_CASA.format(n)} dias`;
 }
+
+/** Tira o ponto final, para a frase ganhar o seu próprio sem duplicar. */
+export function semPontoFinal(texto: string): string {
+  return texto.trim().replace(/\.$/, "");
+}

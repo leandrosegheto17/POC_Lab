@@ -6,13 +6,11 @@ import {
 import { useFocoNoTitulo } from "../nav/useFocoNoTitulo.ts";
 import { useTituloDocumento } from "../nav/useTituloDocumento.ts";
 import { useConsulta } from "../dados/use-consulta.ts";
-import {
-  BlocoDivergenciasPorTipo,
-  BlocoEntregasNoPrazo,
-  BlocoPagoVsDevido,
-  BlocoTempoMedio,
-  Indicador,
-} from "../componentes/Indicador.tsx";
+import { BlocoDivergenciasPorTipo } from "../componentes/indicador/BlocoDivergenciasPorTipo.tsx";
+import { BlocoEntregasNoPrazo } from "../componentes/indicador/BlocoEntregasNoPrazo.tsx";
+import { BlocoPagoVsDevido } from "../componentes/indicador/BlocoPagoVsDevido.tsx";
+import { BlocoTempoMedio } from "../componentes/indicador/BlocoTempoMedio.tsx";
+import { Indicador } from "../componentes/indicador/Indicador.tsx";
 import { EstadoCarregando } from "../componentes/EstadoCarregando.tsx";
 import { EstadoErro } from "../componentes/EstadoErro.tsx";
 import "./Indicadores.css";
