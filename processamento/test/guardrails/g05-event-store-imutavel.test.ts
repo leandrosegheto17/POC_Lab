@@ -14,7 +14,12 @@ const ESCRITA_PROIBIDA = [
   new RegExp(`\\bUPDATE\\s+(?:OR\\s+\\w+\\s+)?${TABELA}`, "i"),
   new RegExp(`\\bDELETE\\s+FROM\\s+${TABELA}`, "i"),
   new RegExp(`\\b(?:INSERT\\s+OR\\s+REPLACE|REPLACE)\\s+INTO\\s+${TABELA}`, "i"),
-  new RegExp(`\\bINSERT\\s+(?:OR\\s+\\w+\\s+)?INTO\\s+${TABELA}(?:'[^']*'|"[^"]*"|[^;])*?\\bDO\\s+UPDATE\\b`, "i"),
+  // Alternativas exclusivas (caractere solto não casa aspa) evitam backtracking exponencial;
+  // o ramo opcional final cobre aspa desbalanceada/escapada por barra até o fim da instrução.
+  new RegExp(
+    `\\bINSERT\\s+(?:OR\\s+\\w+\\s+)?INTO\\s+${TABELA}(?:[^;'"]|'[^']*'|"[^"]*")*?(?:['"][^;]*?)?\\bDO\\s+UPDATE\\b`,
+    "i",
+  ),
 ];
 // DDL de tabela só no DDL de leitura do D1 (recriado a cada publicação); no armazenamento local
 // só `CREATE TABLE IF NOT EXISTS`. ALTER TABLE (inclui RENAME) nas tabelas do event store e
@@ -169,6 +174,17 @@ describe("guardrail G-05 — event store imutável", () => {
     expect(violacoesG05(`INSERT INTO pedido (a) VALUES ('it\\'s') ON CONFLICT(a) DO UPDATE SET a = 2`)).not.toEqual([]);
     expect(violacoesG05(`INSERT INTO evento (a) VALUES ('x) ON CONFLICT(a) DO UPDATE SET a = 2`)).not.toEqual([]);
     expect(violacoesG05(`INSERT INTO evento (a) VALUES ("x) ON CONFLICT(a) DO UPDATE SET a = 2`)).not.toEqual([]);
+  });
+
+  it("avalia em milissegundos instrução com muitos literais e linha enorme", () => {
+    const muitos = `INSERT INTO evento ${"'a' ".repeat(30)};`;
+    const aspasSoltas = `INSERT INTO evento ${"' ".repeat(30)};`;
+    const enorme = `INSERT INTO evento (a) VALUES (${"x, ".repeat(100_000)}1);`;
+    for (const sql of [muitos, aspasSoltas, enorme]) {
+      const inicio = performance.now();
+      expect(violacoesG05(sql)).toEqual([]);
+      expect(performance.now() - inicio).toBeLessThan(50);
+    }
   });
 
   it("não atravessa instrução: DO UPDATE em outra tabela não acusa", () => {
