@@ -551,3 +551,9 @@ APROVADA em segurança, 0 críticos e 0 não críticos novos (RTP-0109 e RTP-011
 
 ## RTP-0107 — DevSecOps — 2026-10-09
 APROVADA; 0 críticos, 0 não críticos; diff só de teste com banco em memória, sem dependência nova nem segredo (grep 0), SAST/gitleaks não executados.
+
+## RTP-0109 — DevSecOps — 2026-10-09
+APROVADA, 0 críticos e 0 não críticos; pnpm lint passa e import de apoio-teste em src/worker é acusado (G-03) executado via eslint --stdin, só devDependency, sem RTP aberta.
+
+## RTP-0110 — DevSecOps — 2026-10-09
+APROVADA — lockfile só ganhou o link workspace apoio-teste (devDependency, sem pacote externo), nenhum código de produção importa o pacote de teste, sem exposição de dado sensível; 0 críticos, 0 não críticos.
