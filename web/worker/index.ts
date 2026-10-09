@@ -1,9 +1,6 @@
-// TP-0041 — Esqueleto do Worker (Hono). Nenhuma rota de negócio aqui: isso é
-// escopo de tarefa futura/paralela (TP-0042 em diante). Não importar nada de
-// `node:*` nem de `web/src/` — o Worker roda no runtime do Cloudflare Workers.
-//
-// TP-0042 — erros centrais (404/405/500) e cabeçalhos de segurança/cache.
-// Nenhuma rota de negócio real ainda (isso é Lote 9).
+// Worker (Hono): compõe as rotas da API, os erros centrais (404/405/500) e os
+// cabeçalhos de segurança/cache. Não importar nada de `node:*` nem de
+// `web/src/` — o Worker roda no runtime do Cloudflare Workers.
 import { Hono } from "hono";
 import { cabecalhos } from "./cabecalhos.js";
 import { problema } from "./erros.js";
@@ -21,7 +18,7 @@ const app = new Hono<{ Bindings: { DB: D1Database } }>();
 // erro do onError/notFound).
 app.use("*", cabecalhos);
 
-// Rotas de negócio (Lote 9) — registradas ANTES do catch-all de método não
+// Rotas de negócio — registradas ANTES do catch-all de método não
 // permitido abaixo, para que POST/PUT/etc. nessas rotas caiam no 405 e não
 // no 404 genérico (ordem de registro importa no Hono).
 app.get("/api/v1/resumo", handlerResumo);
@@ -29,15 +26,14 @@ app.get("/api/v1/indicadores", handlerIndicadores);
 app.get("/api/v1/qualidade", handlerQualidade);
 app.route("/", rotaDivergencias);
 app.route("/", rotaLinhaDoTempo);
-// TP-0077 — única rota existente sob /api/v2 (CRÍTICO: nenhum prefixo
-// genérico /api/v2/* é registrado; qualquer outro caminho sob /api/v2/ cai
-// no app.notFound abaixo, TP-0042).
+// Única rota sob /api/v2 (nenhum prefixo genérico /api/v2/* é registrado;
+// qualquer outro caminho sob /api/v2/ cai no app.notFound abaixo).
 app.route("/", rotaLinhaDoTempoV2);
 
 // Qualquer método diferente de GET/HEAD sob /api/* → 405 com `Allow`.
 // Hono deriva HEAD do GET automaticamente, por isso não aparece aqui.
 //
-// ATENÇÃO (Lote 9): rotas reais que usem POST/PUT/PATCH/DELETE devem ser
+// ATENÇÃO: rotas reais que usem POST/PUT/PATCH/DELETE devem ser
 // registradas ANTES deste catch-all (ordem de registro importa no Hono),
 // senão esta regra genérica intercepta a rota real antes dela ser
 // alcançada. Rotas GET reais não são afetadas, pois este catch-all não
