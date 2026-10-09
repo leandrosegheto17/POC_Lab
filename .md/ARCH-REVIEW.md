@@ -2,6 +2,20 @@
 
 Uma entrada por revisão (`/revisar`, skill `architecture-health-review`), a mais recente no topo.
 
+## Revisão 2026-10-09 (terceira) — sob demanda (projeto inteiro)
+
+Números do saude.py (comparado com a segunda revisão do dia): 0 arquivos acima do limite (igual) · 1 bloco duplicado no código (igual) · 0 IDs de tarefa no código (igual) · acesso a dados nas mesmas pastas esperadas · imports entre pacotes só `processamento`/`web` → `nucleo` (`contrato`, `dominio`); `apoio-teste` não aparece como dependência de código de produção · 9 `as unknown as`, todos na fronteira do `node:sqlite` · comentários de cópia: 38 (eram 35), a diferença é 1 comentário novo em `web/test/apoio/fixture.ts` e linhas de tokens CSS.
+
+Conferência das RTP-0104, 0107, 0109 e 0110: sem sobra visível no relatório (apoio-teste fora do código de produção; web sem cópia própria dos helpers). RTP-0106 (vitest do `processamento`) está em andamento em outra sessão e não é repetida. BK-0003, BK-0004, BK-0005 e BK-0006 já tratados. Sem mockup: item visual não se aplica. Projeto saudável: zero RTP é o resultado correto.
+
+Descartados (falso positivo):
+- §2 `eslint.config.js:91-100` × `121-130`: já descartado nas revisões anteriores do dia (regras G-02 e G-03 com mensagens e exceções próprias).
+- §4 `web/test/apoio/fixture.ts:5` (`leitura-d1.sql` é cópia do arquivo do `processamento`): cópia assumida, porque o web não importa `processamento`, e conferida por `scripts/sincronizar-ddl-web.mjs --check` dentro do `pnpm test:scripts`; não pode divergir em silêncio.
+- §4 demais: termo de domínio "duplicado" (RN-03), tokens CSS e escape de aspas.
+- §5, §6a, §7: sem mudança em relação às revisões anteriores do dia.
+
+Sem achado nos itens: todos os 18 itens do checklist.
+
 ## Revisão 2026-10-09 (segunda) — sob demanda (projeto inteiro)
 
 Números do saude.py (comparado com a primeira revisão do dia): 0 arquivos acima do limite (igual) · 1 bloco duplicado no código, 23 com testes (era 1 e 24) · 0 IDs de tarefa no código (era 2 em 1 arquivo) · acesso a dados nas mesmas pastas esperadas · imports `web` → `processamento` só em `contrato` e `dominio` (BK-0003 aberto) · 9 `as unknown as`, todos na fronteira do `node:sqlite`.
