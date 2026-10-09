@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-09 03:54
+Atualizado: 2026-10-09 04:21
 
-Resumo: Não executada 3 · Executada (aguarda teste) 15 · Aprovada 156 · total 174
+Resumo: Não executada 5 · Executada (aguarda teste) 8 · Em teste 1 · Testada (aguarda segurança) 6 · Aprovada 156 · total 176
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -169,13 +169,13 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 154 | RTP-0068 | executor | ✔ | eslint.config.js sem grupos de fronteira repetidos | Refatoração Revisão 2026-10-08 | — | Aprovada |
 | 155 | RTP-0069 | executor | ✔ | Cache do CI no caminho certo e publicação em scripts dedicados (site separado dos dados) | Refatoração Revisão 2026-10-08 | — | Aprovada |
 | 156 | RTP-0070 | executor | ✔ | Checagem automática para os guardrails G-05, G-17 e G-22 | Refatoração Revisão 2026-10-08 | — | Aprovada |
-| 157 | RTP-0071 | executor | ✔ | importar.ts dentro de 300 linhas | Refatoração Revisão 2026-10-08 | RTP-0052 | Executada (aguarda teste) |
-| 158 | RTP-0072 | executor | ✔ | Mensagem do passo sugerir impressa uma só vez | Refatoração Revisão 2026-10-08 | RTP-0054 | Executada (aguarda teste) |
-| 159 | RTP-0073 | executor | ✔ | plantar-rastreio reaproveita a partição de pagamentos | Refatoração Revisão 2026-10-08 | RTP-0055 | Executada (aguarda teste) |
-| 160 | RTP-0074 | executor | ✔ | Comentário de plantarCasosPagamento sem a linha quebrada | Refatoração Revisão 2026-10-08 | RTP-0055 | Executada (aguarda teste) |
-| 161 | RTP-0075 | executor | ✔ | Teste das listas do domínio cobre também o z.enum de TIPOS_ACHADO | Refatoração Revisão 2026-10-08 | RTP-0056 | Executada (aguarda teste) |
-| 162 | RTP-0076 | executor | ✔ | Teste de foco após erro de paginação sem falha intermitente | Refatoração Revisão 2026-10-08 | — | Executada (aguarda teste) |
-| 163 | RTP-0077 | executor | ✔ | Mover VALOR_TODOS para dados/rotulos e tirar a importacao nav para componentes | Refatoração Revisão 2026-10-08 | RTP-0061 | Executada (aguarda teste) |
+| 157 | RTP-0071 | executor | ✔ | importar.ts dentro de 300 linhas | Refatoração Revisão 2026-10-08 | RTP-0052 | Testada (aguarda segurança) |
+| 158 | RTP-0072 | executor | ✔ | Mensagem do passo sugerir impressa uma só vez | Refatoração Revisão 2026-10-08 | RTP-0054 | Testada (aguarda segurança) |
+| 159 | RTP-0073 | executor | ✔ | plantar-rastreio reaproveita a partição de pagamentos | Refatoração Revisão 2026-10-08 | RTP-0055 | Testada (aguarda segurança) |
+| 160 | RTP-0074 | executor | ✔ | Comentário de plantarCasosPagamento sem a linha quebrada | Refatoração Revisão 2026-10-08 | RTP-0055 | Testada (aguarda segurança) |
+| 161 | RTP-0075 | executor | ✔ | Teste das listas do domínio cobre também o z.enum de TIPOS_ACHADO | Refatoração Revisão 2026-10-08 | RTP-0056 | Testada (aguarda segurança) |
+| 162 | RTP-0076 | executor | ✔ | Teste de foco após erro de paginação sem falha intermitente | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 163 | RTP-0077 | executor | ✔ | Mover VALOR_TODOS para dados/rotulos e tirar a importacao nav para componentes | Refatoração Revisão 2026-10-08 | RTP-0061 | Em teste |
 | 164 | RTP-0078 | executor | ✔ | Corrigir espaco perdido em SITUACOES_PAGAMENTO em dados/rotulos.ts | Refatoração Revisão 2026-10-08 | — | Executada (aguarda teste) |
 | 165 | RTP-0079 | executor | ✔ | Atualizar comentário de test/casca.test.tsx que cita o casca.css removido | Refatoração Revisão 2026-10-08 | — | Executada (aguarda teste) |
 | 166 | RTP-0080 | executor | ✔ | Extrair para fábricas os trechos de teste ainda repetidos em web/test (linha-do-tempo W... | Refatoração Revisão 2026-10-08 | — | Executada (aguarda teste) |
@@ -184,6 +184,8 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 169 | RTP-0083 | executor | ✔ | Fechar brechas da checagem G-05: identificador entre aspas, REPLACE e ON CONFLICT DO UP... | Refatoração Revisão 2026-10-08 | — | Executada (aguarda teste) |
 | 170 | RTP-0084 | executor | ✔ | Apertar checagens G-17 e G-22: lista permitida por pacote, optional/peer deps e outros... | Refatoração Revisão 2026-10-08 | — | Executada (aguarda teste) |
 | 171 | RTP-0085 | executor | ✔ | Limitar tamanho dos textos de EsquemaSugestaoIA (contrato) e testar descarte de item gr... | Refatoração Revisão 2026-10-08 | — | Executada (aguarda teste) |
-| 172 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Não executada |
-| 173 | BK-0004 | coordenador | ✔ | Decidir onde roda a marcação de pagamentos duplicados (RN-03) da tela T2: hoje Pedido.tsx | — | — | Não executada |
-| 174 | BK-0005 | coordenador | ✔ | Decidir como o D1 é trocado em produção e escrever a subseção Troca de dados em produção d | — | — | Não executada |
+| 172 | RTP-0086 | executor | ✔ | Registrar no ADR-004 a regra de convergência de identidade de pedido | Refatoração Revisão 2026-10-08 | RTP-0071 | Não executada |
+| 173 | RTP-0087 | executor | ✔ | Investigar falha rara do teste de foco após erro de paginação (1 em 80 execuções) | Refatoração Revisão 2026-10-08 | RTP-0076 | Não executada |
+| 174 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Não executada |
+| 175 | BK-0004 | coordenador | ✔ | Decidir onde roda a marcação de pagamentos duplicados (RN-03) da tela T2: hoje Pedido.tsx | — | — | Não executada |
+| 176 | BK-0005 | coordenador | ✔ | Decidir como o D1 é trocado em produção e escrever a subseção Troca de dados em produção d | — | — | Não executada |
