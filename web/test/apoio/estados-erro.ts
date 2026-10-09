@@ -12,6 +12,15 @@ export function respostaApi500(corpo: unknown): Promise<Response> {
   }));
 }
 
+/** Espera a mensagem de falha de rede mostrada pelo `EstadoErro`. */
+export async function esperarSemConexao(): Promise<void> {
+  await waitFor(() => {
+    expect(
+      screen.getByText("Sem conexão com o servidor."),
+    ).toBeInTheDocument();
+  });
+}
+
 /** Espera a mensagem de indisponibilidade mostrada pelo `EstadoErro`. */
 export async function esperarMensagemIndisponivel(): Promise<void> {
   await waitFor(() => {

@@ -9,7 +9,7 @@ import {
   renderizar,
   respostaIndicadoresValida,
 } from "./apoio/indicadores-simulada.tsx";
-import { esperarMensagemIndisponivel, respostaApi500 } from "./apoio/estados-erro.ts";
+import { esperarMensagemIndisponivel, esperarSemConexao, respostaApi500 } from "./apoio/estados-erro.ts";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -21,11 +21,7 @@ describe("Indicadores — erro 5xx/rede/timeout", () => {
 
     renderizar();
 
-    await waitFor(() => {
-      expect(
-        screen.getByText("Sem conexão com o servidor."),
-      ).toBeInTheDocument();
-    });
+    await esperarSemConexao();
 
     const chamadasAntes = mock.mock.calls.length;
 
@@ -94,11 +90,7 @@ describe("Indicadores — acessibilidade (vitest-axe)", () => {
 
     const { container } = renderizar();
 
-    await waitFor(() => {
-      expect(
-        screen.getByText("Sem conexão com o servidor."),
-      ).toBeInTheDocument();
-    });
+    await esperarSemConexao();
 
     expect(await axe(container)).toHaveNoViolations();
   });

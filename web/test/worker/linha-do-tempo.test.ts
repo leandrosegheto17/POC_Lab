@@ -19,15 +19,13 @@ import { EsquemaLinhaDoTempoV1 } from "processamento/contrato/linha-do-tempo-v1.
 
 import { criarD1TesteComTabelas } from "../apoio/fixture.ts";
 import type { CorpoLinhaDoTempoSolto } from "../apoio/corpo-teste.ts";
-import { criarAppDeRota, divergenciaParcial } from "../apoio/linha-do-tempo-worker.ts";
+import {
+  criarAppDeRota,
+  divergenciaParcial,
+  pedirLinhaDoTempoComErro,
+} from "../apoio/linha-do-tempo-worker.ts";
 import { obrigatorio } from "../apoio/obrigatorio.ts";
 import { rotaLinhaDoTempo } from "../../worker/rotas/linha-do-tempo.ts";
-
-/** Formato mínimo do corpo RFC 9457 usado nas asserções de erro abaixo. */
-interface CorpoErroTeste {
-  codigo: string;
-  status: number;
-}
 
 const ID_PEDIDO = "PED-100001";
 
@@ -218,14 +216,9 @@ describe("GET /api/v1/pedidos/{codigo}/linha-do-tempo", () => {
     const app = criarAppDeTeste();
     const DB = criarD1TesteComTabelas(TABELAS) as unknown as D1Database;
 
-    const resposta = await app.request(
-      "/api/v1/pedidos/PED-999999/linha-do-tempo",
-      undefined,
-      { DB },
-    );
+    const { status, corpo } = await pedirLinhaDoTempoComErro(app, DB, "v1", "PED-999999");
 
-    expect(resposta.status).toBe(404);
-    const corpo = await resposta.json<CorpoErroTeste>();
+    expect(status).toBe(404);
     expect(corpo.codigo).toBe("pedido_nao_encontrado");
   });
 
@@ -234,14 +227,9 @@ describe("GET /api/v1/pedidos/{codigo}/linha-do-tempo", () => {
     const DB = criarD1TesteComTabelas(TABELAS) as unknown as D1Database;
 
     const codigoMuitoLongo = "A".repeat(41);
-    const resposta = await app.request(
-      `/api/v1/pedidos/${codigoMuitoLongo}/linha-do-tempo`,
-      undefined,
-      { DB },
-    );
+    const { status, corpo } = await pedirLinhaDoTempoComErro(app, DB, "v1", codigoMuitoLongo);
 
-    expect(resposta.status).toBe(400);
-    const corpo = await resposta.json<CorpoErroTeste>();
+    expect(status).toBe(400);
     expect(corpo.codigo).toBe("parametro_invalido");
   });
 
@@ -250,15 +238,10 @@ describe("GET /api/v1/pedidos/{codigo}/linha-do-tempo", () => {
     const DB = criarD1TesteComTabelas(TABELAS) as unknown as D1Database;
 
     const tentativaInjecao = "' OR 1=1 --";
-    const resposta = await app.request(
-      `/api/v1/pedidos/${encodeURIComponent(tentativaInjecao)}/linha-do-tempo`,
-      undefined,
-      { DB },
-    );
+    const { status, corpo } = await pedirLinhaDoTempoComErro(app, DB, "v1", tentativaInjecao);
 
-    expect(resposta.status).toBe(400);
-    expect(resposta.status).not.toBe(200);
-    const corpo = await resposta.json<CorpoErroTeste>();
+    expect(status).toBe(400);
+    expect(status).not.toBe(200);
     expect(corpo.codigo).toBe("parametro_invalido");
   });
 
@@ -274,14 +257,9 @@ describe("GET /api/v1/pedidos/{codigo}/linha-do-tempo", () => {
         },
       } as unknown as D1Database;
 
-      const resposta = await app.request(
-        `/api/v1/pedidos/${encodeURIComponent(codigoInvalido)}/linha-do-tempo`,
-        undefined,
-        { DB },
-      );
+      const { status, corpo } = await pedirLinhaDoTempoComErro(app, DB, "v1", codigoInvalido);
 
-      expect(resposta.status).toBe(400);
-      const corpo = await resposta.json<CorpoErroTeste>();
+      expect(status).toBe(400);
       expect(corpo.codigo).toBe("parametro_invalido");
       expect(consultas).toBe(0);
     },

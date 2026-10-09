@@ -14,7 +14,7 @@ import {
   respostaComSugestoes,
   respostaQualidadeValida,
 } from "./apoio/qualidade-simulada.tsx";
-import { esperarMensagemIndisponivel, respostaApi500 } from "./apoio/estados-erro.ts";
+import { esperarMensagemIndisponivel, esperarSemConexao, respostaApi500 } from "./apoio/estados-erro.ts";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -26,11 +26,7 @@ describe("Qualidade — erro 5xx/rede", () => {
 
     renderizar();
 
-    await waitFor(() => {
-      expect(
-        screen.getByText("Sem conexão com o servidor."),
-      ).toBeInTheDocument();
-    });
+    await esperarSemConexao();
 
     const chamadasAntes = chamadas(mock).length;
     expect(chamadasAntes).toBeGreaterThan(0);
@@ -91,11 +87,7 @@ describe("Qualidade — acessibilidade (vitest-axe)", () => {
 
     const { container } = renderizar();
 
-    await waitFor(() => {
-      expect(
-        screen.getByText("Sem conexão com o servidor."),
-      ).toBeInTheDocument();
-    });
+    await esperarSemConexao();
 
     expect(await axe(container)).toHaveNoViolations();
   });
