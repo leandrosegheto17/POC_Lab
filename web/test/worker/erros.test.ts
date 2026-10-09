@@ -1,4 +1,4 @@
-// TP-0042 — Erros centrais e cabeçalhos da API.
+// Erros centrais e cabeçalhos da API.
 import { obrigatorio } from "../apoio/obrigatorio.ts";
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";

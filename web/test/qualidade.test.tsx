@@ -1,220 +1,23 @@
-// TP-0064 — Tela T4 Qualidade dos dados: GET /api/v1/qualidade, 7
-// `BlocoAchado` em ORDEM FIXA (independente da ordem do array devolvido
-// pela API), seção de IA e os 4 estados.
+// Tela Qualidade dos dados: 7 `BlocoAchado` em ORDEM FIXA (independente da
+// ordem do array devolvido pela API), mini-cartões-âncora, exemplos e a forma
+// do celular. Seção de IA em `qualidade-ia.test.tsx`; estados de erro,
+// carregando e acessibilidade em `qualidade-estados.test.tsx`.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { axe } from "vitest-axe";
 import { Qualidade } from "../src/paginas/Qualidade.tsx";
 import { obrigatorio } from "./apoio/obrigatorio.ts";
-
-/** Exemplo concreto de achado, contra `EsquemaExemploAchado`. */
-function exemplo(opcoes: {
-  fonte: "vendas" | "pagamentos" | "rastreio";
-  referencia: string;
-  detalhe: string;
-  pedido?: string;
-}): unknown {
-  return opcoes;
-}
-
-/** Achado de qualidade, contra `EsquemaAchado`. */
-function achado(opcoes: {
-  tipo: string;
-  contagem: number;
-  regra: string;
-  exemplos?: unknown[];
-}): unknown {
-  return {
-    tipo: opcoes.tipo,
-    contagem: opcoes.contagem,
-    regra: opcoes.regra,
-    exemplos: opcoes.exemplos ?? [],
-  };
-}
-
-/**
- * Resposta válida com os 7 tipos em ordem EMBARALHADA (a mesma ordem dos
- * literais de `TipoAchado` em `processamento/src/dominio/modelo.ts`, que é
- * DIFERENTE da ordem fixa de exibição do wireframe) — prova de que a página
- * reordena por `tipo`, nunca confia na posição do array recebido.
- */
-function respostaQualidadeValida(opcoes?: {
-  iaUtilizada?: boolean;
-}): unknown {
-  return {
-    achados: [
-      achado({
-        tipo: "fora_de_ordem",
-        contagem: 1,
-        regra: "Eventos devem respeitar a ordem cronológica esperada.",
-        exemplos: [
-          exemplo({
-            fonte: "rastreio",
-            referencia: "EVT-900",
-            detalhe: "Entrega registrada antes da postagem",
-            pedido: "PED-900",
-          }),
-        ],
-      }),
-      achado({
-        tipo: "sem_identificacao",
-        contagem: 4,
-        regra: "Pagamentos devem conter identificação do pedido de origem.",
-        exemplos: [
-          exemplo({
-            fonte: "pagamentos",
-            referencia: "PAG-100",
-            detalhe: "Sem campo de referência ao pedido",
-          }),
-        ],
-      }),
-      achado({
-        tipo: "registro_repetido",
-        contagem: 0,
-        regra: "Registros não devem se repetir para o mesmo pedido e evento.",
-        exemplos: [],
-      }),
-      achado({
-        tipo: "linha_invalida",
-        contagem: 5,
-        regra: "Linhas devem conter todos os campos obrigatórios.",
-        exemplos: [
-          exemplo({
-            fonte: "vendas",
-            referencia: "LINHA-7",
-            detalhe: "Campo 'valor' ausente",
-          }),
-        ],
-      }),
-      achado({
-        tipo: "valor_fora_do_padrao",
-        contagem: 2,
-        regra: "Valores devem estar dentro da faixa esperada.",
-        exemplos: [
-          exemplo({
-            fonte: "vendas",
-            referencia: "PED-050",
-            detalhe: "Valor negativo",
-            pedido: "PED-050",
-          }),
-        ],
-      }),
-      achado({
-        tipo: "formato_data",
-        contagem: 3,
-        regra: "Datas devem estar no formato ISO 8601 (AAAA-MM-DD).",
-        exemplos: [
-          exemplo({
-            fonte: "vendas",
-            referencia: "PED-010",
-            detalhe: "Data '10/01/2026' fora do formato",
-            pedido: "PED-010",
-          }),
-        ],
-      }),
-      achado({
-        tipo: "pedido_sem_envio",
-        contagem: 1,
-        regra: "Pedidos pagos devem ter evento de envio correspondente.",
-        exemplos: [
-          exemplo({
-            fonte: "vendas",
-            referencia: "PED-020",
-            detalhe: "Pago há mais de 10 dias, sem envio",
-            pedido: "PED-020",
-          }),
-        ],
-      }),
-    ],
-    ia: { utilizada: opcoes?.iaUtilizada ?? false, sugestoes: [] },
-  };
-}
-
-function respostaFake(opcoes: {
-  ok: boolean;
-  status?: number;
-  json?: () => Promise<unknown>;
-}) {
-  return {
-    ok: opcoes.ok,
-    status: opcoes.status ?? (opcoes.ok ? 200 : 500),
-    json: opcoes.json ?? (() => Promise.resolve({})),
-  } as unknown as Response;
-}
-
-function instalarFetchMock(
-  aoChamarQualidade: (url: string) => Promise<Response> | Response,
-) {
-  const mock = vi.fn(async (entrada: string | URL) => {
-    const url = String(entrada);
-    if (url.startsWith("/api/v1/qualidade")) {
-      return aoChamarQualidade(url);
-    }
-    return Promise.reject(new Error(`fetch não mockado para ${url}`));
-  });
-  global.fetch = mock as unknown as typeof fetch;
-  return mock;
-}
-
-function chamadas(mock: { mock: { calls: unknown[][] } }): string[] {
-  return mock.mock.calls.map((chamada) => String(chamada[0]));
-}
-
-function renderizar() {
-  return render(
-    <MemoryRouter initialEntries={["/qualidade"]}>
-      <Qualidade />
-    </MemoryRouter>,
-  );
-}
-
-/**
- * Ajuste Modelo B (2026-10-08): a página renderiza a forma PC e a forma do
- * celular e alterna só por CSS (jsdom não aplica o CSS, então as duas estão
- * no DOM). Os testes consultam cada forma pelo seu contêiner.
- */
-function formaPc(): HTMLElement {
-  const elemento = document.querySelector(".qualidade__pc");
-  if (!(elemento instanceof HTMLElement)) {
-    throw new Error("forma PC (.qualidade__pc) não encontrada");
-  }
-  return elemento;
-}
-
-function formaCelular(): HTMLElement {
-  const elemento = document.querySelector(".qualidade__celular");
-  if (!(elemento instanceof HTMLElement)) {
-    throw new Error("forma do celular (.qualidade__celular) não encontrada");
-  }
-  return elemento;
-}
-
-/** Seção (cartão) da forma PC cujo h2 tem o nome dado. */
-function secaoPc(nome: string): HTMLElement {
-  return within(formaPc())
-    .getByRole("heading", { level: 2, name: nome })
-    .closest("section") as HTMLElement;
-}
-
-/** `<details>` da forma do celular cujo h2 (dentro do summary) tem o nome dado. */
-function detalhesCelular(nome: string): HTMLDetailsElement {
-  return within(formaCelular())
-    .getByRole("heading", { level: 2, name: nome })
-    .closest("details") as HTMLDetailsElement;
-}
-
-// Ordem fixa esperada de exibição (wireframe) — DIFERENTE da ordem do mock
-// acima, que segue a ordem dos literais de `TipoAchado`.
-const TITULOS_EM_ORDEM = [
-  "Datas em dois formatos",
-  "Pedidos sem envio",
-  "Valores fora do padrão",
-  "Linhas rejeitadas",
-  "Registros repetidos",
-  "Pagamentos sem identificação",
-  "Eventos fora de ordem",
-];
+import {
+  detalhesCelular,
+  exemplo,
+  formaCelular,
+  formaPc,
+  instalarQualidadeFixa,
+  respostaQualidadeValida,
+  renderizar,
+  secaoPc,
+  TITULOS_EM_ORDEM,
+} from "./apoio/qualidade-simulada.tsx";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -222,9 +25,7 @@ afterEach(() => {
 
 describe("Qualidade — sucesso", () => {
   it("mostra os 7 BlocoAchado na ORDEM FIXA, não na ordem do array recebido", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
-    );
+    instalarQualidadeFixa(respostaQualidadeValida());
 
     renderizar();
 
@@ -249,9 +50,7 @@ describe("Qualidade — sucesso", () => {
   });
 
   it("topo: rótulo da página (PC) e subtítulo (celular)", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
-    );
+    instalarQualidadeFixa(respostaQualidadeValida());
 
     renderizar();
 
@@ -268,9 +67,7 @@ describe("Qualidade — sucesso", () => {
   });
 
   it("PC: 7 mini-cartões-âncora em 'Tipos de achado', com contagem e o primeiro selecionado", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
-    );
+    instalarQualidadeFixa(respostaQualidadeValida());
 
     renderizar();
 
@@ -313,9 +110,7 @@ describe("Qualidade — sucesso", () => {
   });
 
   it("PC: o fragmento da URL define o mini-cartão selecionado", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
-    );
+    instalarQualidadeFixa(respostaQualidadeValida());
 
     render(
       <MemoryRouter initialEntries={["/qualidade#achado-fora_de_ordem"]}>
@@ -343,9 +138,7 @@ describe("Qualidade — sucesso", () => {
       achados: Array<{ tipo: string; contagem: number }>;
     };
     obrigatorio(resposta.achados.find((a) => a.tipo === "formato_data")).contagem = 15452;
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(resposta) })),
-    );
+    instalarQualidadeFixa(resposta);
 
     renderizar();
 
@@ -375,9 +168,7 @@ describe("Qualidade — sucesso", () => {
         detalhe: "Campo 'valor' ausente",
       }),
     ];
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(resposta) })),
-    );
+    instalarQualidadeFixa(resposta);
 
     renderizar();
 
@@ -423,9 +214,7 @@ describe("Qualidade — sucesso", () => {
   });
 
   it("achado com contagem 0 mostra a regra e 'Nenhum caso encontrado.', sem tabela", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
-    );
+    instalarQualidadeFixa(respostaQualidadeValida());
 
     renderizar();
 
@@ -449,9 +238,7 @@ describe("Qualidade — sucesso", () => {
   });
 
   it("celular: um <details> por achado (o primeiro aberto), h2 no summary, contagem, regra e exemplos em linhas", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
-    );
+    instalarQualidadeFixa(respostaQualidadeValida());
 
     renderizar();
 
@@ -486,406 +273,5 @@ describe("Qualidade — sucesso", () => {
     ).toHaveClass("achado-celular__detalhe");
     // Sem tabela no celular.
     expect(datas.querySelector("table")).toBeNull();
-  });
-
-  it("ia.utilizada === false mostra a mensagem fixa de IA não utilizada (PC e celular, na caixa de regra)", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: true,
-        json: () => Promise.resolve(respostaQualidadeValida({ iaUtilizada: false })),
-      })),
-    );
-
-    renderizar();
-
-    await waitFor(() => {
-      expect(formaPc()).toBeInTheDocument();
-    });
-
-    const mensagem =
-      'IA não utilizada nesta publicação: pagamentos ficaram "sem sugestão".';
-    expect(within(secaoPc("Sugestões da IA")).getByText(mensagem)).toHaveClass(
-      "caixa-formula",
-    );
-    expect(
-      within(detalhesCelular("Sugestões da IA")).getByText(mensagem),
-    ).toHaveClass("caixa-formula");
-  });
-
-  it("Sugestões da IA (PC): cartão tracejado, aviso 'À parte' e sem selo 'opcional'", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
-    );
-
-    renderizar();
-
-    await waitFor(() => {
-      expect(formaPc()).toBeInTheDocument();
-    });
-
-    const secaoIa = secaoPc("Sugestões da IA");
-    expect(secaoIa).toHaveClass("cartao", "qualidade-ia");
-    expect(
-      within(secaoIa).getByText("À parte: não entram nos indicadores"),
-    ).toBeInTheDocument();
-    expect(screen.queryByText(/opcional/i)).not.toBeInTheDocument();
-  });
-});
-
-describe("Qualidade — erro 5xx/rede", () => {
-  it("mostra mensagem de erro e 'Tentar de novo' refaz a chamada", async () => {
-    const mock = instalarFetchMock(() => Promise.reject(new TypeError("Failed to fetch")));
-
-    renderizar();
-
-    await waitFor(() => {
-      expect(
-        screen.getByText("Sem conexão com o servidor."),
-      ).toBeInTheDocument();
-    });
-
-    const chamadasAntes = chamadas(mock).length;
-    expect(chamadasAntes).toBeGreaterThan(0);
-
-    fireEvent.click(screen.getByRole("button", { name: "Tentar de novo" }));
-
-    await waitFor(() => {
-      expect(chamadas(mock).length).toBeGreaterThan(chamadasAntes);
-    });
-  });
-
-  it("erro 5xx vindo da API também mostra 'Tentar de novo'", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: false,
-        status: 500,
-        json: () => Promise.resolve({
-          type: "about:blank",
-          title: "Erro interno",
-          status: 500,
-          detail: "Falha ao gerar relatório.",
-          codigo: "erro_interno",
-        }),
-      })),
-    );
-
-    renderizar();
-
-    await waitFor(() => {
-      expect(
-        screen.getByText(
-          "Não foi possível consultar os dados agora. Tente de novo em alguns segundos.",
-        ),
-      ).toBeInTheDocument();
-    });
-
-    expect(
-      screen.getByRole("button", { name: "Tentar de novo" }),
-    ).toBeInTheDocument();
-  });
-});
-
-describe("Qualidade — carregando", () => {
-  it("mostra 'Carregando relatório…' com aria-busy='true'", () => {
-    instalarFetchMock(() => new Promise<Response>(() => {}));
-
-    const { container } = renderizar();
-
-    expect(screen.getByText("Carregando relatório…")).toBeInTheDocument();
-    expect(
-      container.querySelector("[aria-busy='true']"),
-    ).toBeInTheDocument();
-  });
-});
-
-// TP-0085 — "Sugestões da IA": tabela com as 5 colunas quando há sugestões
-// válidas, mensagem fixa quando não há (IA não utilizada OU sem itens
-// válidos) e descarte silencioso de item malformado.
-function sugestaoIa(opcoes: {
-  pagamento: string;
-  textoReferencia: string;
-  pedidoSugerido: string;
-  conferida: boolean;
-  motivo: string;
-}): unknown {
-  return opcoes;
-}
-
-function respostaComSugestoes(sugestoes: unknown[]): unknown {
-  const base = respostaQualidadeValida({ iaUtilizada: true }) as {
-    achados: unknown[];
-    ia: { utilizada: boolean; sugestoes: unknown[] };
-  };
-  return { ...base, ia: { utilizada: true, sugestoes } };
-}
-
-describe("Qualidade — Sugestões da IA (TP-0085)", () => {
-  it("ia.utilizada === true com 2 sugestões válidas mostra a tabela com as 5 colunas", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: true,
-        json: () =>
-          Promise.resolve(respostaComSugestoes([
-            sugestaoIa({
-              pagamento: "PAG-100",
-              textoReferencia: "ref pedido 100",
-              pedidoSugerido: "PED-100",
-              conferida: true,
-              motivo: "Valor e data batem com o saldo em aberto.",
-            }),
-            sugestaoIa({
-              pagamento: "PAG-200",
-              textoReferencia: "ref pedido 200",
-              pedidoSugerido: "PED-200",
-              conferida: false,
-              motivo: "Diferença de valor acima da tolerância.",
-            }),
-          ])),
-      })),
-    );
-
-    renderizar();
-
-    await waitFor(() => {
-      expect(formaPc()).toBeInTheDocument();
-    });
-
-    const secaoIa = secaoPc("Sugestões da IA");
-
-    // "PAG-100" também aparece no exemplo da seção "Pagamentos sem
-    // identificação" da mesma fixture — escopar a esta seção evita
-    // ambiguidade (`within`, não `screen`).
-    expect(within(secaoIa).getByText("PAG-100")).toHaveClass("mono");
-    expect(
-      within(secaoIa).getByRole("region", { name: "Sugestões da IA" }),
-    ).toBeInTheDocument();
-    expect(
-      within(secaoIa).getByText(
-        "A IA sugere o pedido de um pagamento com referência vaga. Uma regra confere valor e data; se não bater, a sugestão é rejeitada.",
-      ),
-    ).toHaveClass("caixa-formula");
-
-    expect(
-      within(secaoIa).getByRole("columnheader", { name: "Pagamento" }),
-    ).toBeInTheDocument();
-    expect(
-      within(secaoIa).getByRole("columnheader", {
-        name: "Texto da referência",
-      }),
-    ).toBeInTheDocument();
-    expect(
-      within(secaoIa).getByRole("columnheader", { name: "Pedido sugerido" }),
-    ).toBeInTheDocument();
-    expect(
-      within(secaoIa).getByRole("columnheader", { name: "Conferida?" }),
-    ).toBeInTheDocument();
-    expect(
-      within(secaoIa).getByRole("columnheader", { name: "Motivo da regra" }),
-    ).toBeInTheDocument();
-
-    // Texto da referência entre aspas.
-    expect(within(secaoIa).getByText('"ref pedido 100"')).toBeInTheDocument();
-    expect(
-      within(secaoIa).getByText(
-        "Valor e data batem com o saldo em aberto.",
-      ),
-    ).toBeInTheDocument();
-
-    const linkPedido100 = within(secaoIa).getByRole("link", {
-      name: "PED-100",
-    });
-    expect(linkPedido100).toHaveAttribute("href", "/pedido/PED-100");
-    const linkPedido200 = within(secaoIa).getByRole("link", {
-      name: "PED-200",
-    });
-    expect(linkPedido200).toHaveAttribute("href", "/pedido/PED-200");
-
-    // "Conferida?" como EtiquetaEstado: Aceita (ok) / Rejeitada (ruim).
-    const aceita = within(secaoIa).getByText("Aceita");
-    expect(aceita).toHaveClass("etiqueta", "etiqueta--ok");
-    const rejeitada = within(secaoIa).getByText("Rejeitada");
-    expect(rejeitada).toHaveClass("etiqueta", "etiqueta--ruim");
-
-    // Celular: linhas "pagamento → pedido" + etiqueta, sem tabela.
-    const detalhesIa = detalhesCelular("Sugestões da IA");
-    expect(detalhesIa).toHaveClass("achado-celular--tracejado");
-    expect(detalhesIa.querySelector("table")).toBeNull();
-    expect(
-      within(detalhesIa).getByText(
-        "Não entram nos indicadores. Uma regra confere valor e data de cada sugestão.",
-      ),
-    ).toHaveClass("caixa-formula");
-    // `querySelectorAll` (não `getAllByRole`): o <details> começa fechado.
-    const linhas = Array.from(
-      detalhesIa.querySelectorAll<HTMLElement>("li"),
-    );
-    expect(linhas).toHaveLength(2);
-    expect(obrigatorio(linhas[0], "linha 1")).toHaveTextContent("PAG-100 → PED-100");
-    expect(within(obrigatorio(linhas[0], "linha 1")).getByText("PED-100")).toHaveAttribute(
-      "href",
-      "/pedido/PED-100",
-    );
-    expect(within(obrigatorio(linhas[0], "linha 1")).getByText("Aceita")).toHaveClass("etiqueta--ok");
-    expect(within(obrigatorio(linhas[1], "linha 2")).getByText("Rejeitada")).toHaveClass(
-      "etiqueta--ruim",
-    );
-  });
-
-  it("ia.utilizada === true com sugestoes: [] mostra a mensagem de 'sem sugestões'", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: true,
-        json: () => Promise.resolve(respostaComSugestoes([])),
-      })),
-    );
-
-    renderizar();
-
-    await waitFor(() => {
-      expect(formaPc()).toBeInTheDocument();
-    });
-
-    const secaoIa = secaoPc("Sugestões da IA");
-    expect(
-      within(secaoIa).getByText(
-        'IA não utilizada nesta publicação: pagamentos ficaram "sem sugestão".',
-      ),
-    ).toBeInTheDocument();
-    expect(within(secaoIa).queryByRole("table")).not.toBeInTheDocument();
-  });
-
-  it("ia.utilizada === false continua mostrando a mesma mensagem (regressão)", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: true,
-        json: () => Promise.resolve(respostaQualidadeValida({ iaUtilizada: false })),
-      })),
-    );
-
-    renderizar();
-
-    await waitFor(() => {
-      expect(formaPc()).toBeInTheDocument();
-    });
-
-    expect(
-      screen.getAllByText(
-        'IA não utilizada nesta publicação: pagamentos ficaram "sem sugestão".',
-      ),
-    ).toHaveLength(2);
-  });
-
-  it("item malformado (sem 'motivo') é descartado; o item válido continua aparecendo", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: true,
-        json: () =>
-          Promise.resolve(respostaComSugestoes([
-            {
-              pagamento: "PAG-900",
-              textoReferencia: "ref malformada",
-              pedidoSugerido: "PED-900",
-              conferida: true,
-              // motivo ausente de propósito
-            },
-            sugestaoIa({
-              pagamento: "PAG-300",
-              textoReferencia: "ref pedido 300",
-              pedidoSugerido: "PED-300",
-              conferida: true,
-              motivo: "Candidato único com saldo compatível.",
-            }),
-          ])),
-      })),
-    );
-
-    renderizar();
-
-    await waitFor(() => {
-      expect(formaPc()).toBeInTheDocument();
-    });
-
-    // Válido aparece nas duas formas (tabela no PC, linha no celular).
-    expect(
-      within(secaoPc("Sugestões da IA")).getByText("PAG-300"),
-    ).toBeInTheDocument();
-    expect(
-      within(detalhesCelular("Sugestões da IA")).getByText("PAG-300"),
-    ).toBeInTheDocument();
-
-    expect(screen.queryByText("PAG-900")).not.toBeInTheDocument();
-    expect(screen.queryByText("ref malformada")).not.toBeInTheDocument();
-  });
-});
-
-describe("Qualidade — acessibilidade (vitest-axe)", () => {
-  it("carregando não tem violações", async () => {
-    instalarFetchMock(() => new Promise<Response>(() => {}));
-
-    const { container } = renderizar();
-
-    expect(screen.getByText("Carregando relatório…")).toBeInTheDocument();
-    expect(await axe(container)).toHaveNoViolations();
-  });
-
-  it("erro não tem violações", async () => {
-    instalarFetchMock(() => Promise.reject(new TypeError("Failed to fetch")));
-
-    const { container } = renderizar();
-
-    await waitFor(() => {
-      expect(
-        screen.getByText("Sem conexão com o servidor."),
-      ).toBeInTheDocument();
-    });
-
-    expect(await axe(container)).toHaveNoViolations();
-  });
-
-  it("sucesso (achado com contagem 0 e achado com exemplos) não tem violações", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaQualidadeValida()) })),
-    );
-
-    const { container } = renderizar();
-
-    await waitFor(() => {
-      expect(formaPc()).toBeInTheDocument();
-    });
-
-    expect(await axe(container)).toHaveNoViolations();
-  });
-
-  it("sucesso com tabela de Sugestões da IA preenchida não tem violações (TP-0085)", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: true,
-        json: () =>
-          Promise.resolve(respostaComSugestoes([
-            sugestaoIa({
-              pagamento: "PAG-100",
-              textoReferencia: "ref pedido 100",
-              pedidoSugerido: "PED-100",
-              conferida: true,
-              motivo: "Valor e data batem com o saldo em aberto.",
-            }),
-            sugestaoIa({
-              pagamento: "PAG-200",
-              textoReferencia: "ref pedido 200",
-              pedidoSugerido: "PED-200",
-              conferida: false,
-              motivo: "Diferença de valor acima da tolerância.",
-            }),
-          ])),
-      })),
-    );
-
-    const { container } = renderizar();
-
-    await waitFor(() => {
-      expect(formaPc()).toBeInTheDocument();
-    });
-
-    expect(await axe(container)).toHaveNoViolations();
   });
 });

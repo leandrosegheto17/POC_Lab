@@ -1,7 +1,7 @@
-// TP-0043 — Fixture reutilizável: monta um `D1Teste` (ver `./d1-teste.ts`)
-// já carregado com o DDL de `leitura-d1.sql` (TP-0032) + os dados de
-// exemplo (`./dados-exemplo.ts`), via o mesmo escritor de SQL de publicação
-// usado em produção (`escreverSqlPublicacao`, TP-0040) — para que o dataset
+// Fixture reutilizável: monta um `D1Teste` (ver `./d1-teste.ts`)
+// já carregado com o DDL de `leitura-d1.sql` + os dados de
+// exemplo (`./dados-exemplo.ts`) ou um dataset próprio, via o mesmo escritor
+// de SQL de publicação usado em produção (`escreverSqlPublicacao`) — para que o dataset
 // de teste passe pelo mesmo caminho de serialização que os dados reais.
 //
 // `node:fs` só é lido aqui porque este arquivo vive em `web/test/` (mesma
@@ -31,7 +31,10 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { DatabaseSync } from "node:sqlite";
 
-import { escreverSqlPublicacao } from "processamento/publicacao/escritor-sql.js";
+import {
+  escreverSqlPublicacao,
+  type TabelasParaPublicacao,
+} from "processamento/publicacao/escritor-sql.js";
 
 import { D1Teste } from "./d1-teste.js";
 import { DADOS_EXEMPLO } from "./dados-exemplo.js";
@@ -44,17 +47,25 @@ function lerDdl(): string {
 }
 
 /**
- * Cria um `D1Teste` pronto para ser injetado como `env.DB` nos testes das
- * rotas do Worker: DDL de `leitura-d1.sql` + `INSERT`s de `DADOS_EXEMPLO`,
- * gerados por `escreverSqlPublicacao` e carregados numa conexão
- * `node:sqlite` nova em memória via `db.exec(...)`.
+ * Cria um `D1Teste` com o DDL de `leitura-d1.sql` + `INSERT`s das `tabelas`
+ * informadas, gerados por `escreverSqlPublicacao` e carregados numa conexão
+ * `node:sqlite` nova em memória. Serve aos testes que precisam de um dataset
+ * próprio (ex.: eventos com payload válido contra o contrato).
  */
-export function criarD1Teste(): D1Teste {
+export function criarD1TesteComTabelas(tabelas: TabelasParaPublicacao): D1Teste {
   const ddl = lerDdl();
-  const sql = escreverSqlPublicacao(ddl, DADOS_EXEMPLO);
+  const sql = escreverSqlPublicacao(ddl, tabelas);
 
   const db = new DatabaseSync(":memory:");
   db.exec(sql);
 
   return new D1Teste(db);
+}
+
+/**
+ * Cria um `D1Teste` pronto para ser injetado como `env.DB` nos testes das
+ * rotas do Worker, carregado com `DADOS_EXEMPLO`.
+ */
+export function criarD1Teste(): D1Teste {
+  return criarD1TesteComTabelas(DADOS_EXEMPLO);
 }

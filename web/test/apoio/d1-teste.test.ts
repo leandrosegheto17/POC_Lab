@@ -1,4 +1,4 @@
-// TP-0043 — Testes do adaptador de teste `D1Teste` (sobre `node:sqlite`) e
+// Testes do adaptador de teste `D1Teste` (sobre `node:sqlite`) e
 // da fixture `criarD1Teste`: confirma a semântica D1 de `first`/`all`/`run`
 // e que o dataset de exemplo cobre os 4 cenários pedidos (pedido sem
 // divergência, pedido com divergência, múltiplas divergências para

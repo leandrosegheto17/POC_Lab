@@ -1,4 +1,4 @@
-// TP-0052 — `useConsulta`: só a chamada mais recente atualiza o estado,
+// `useConsulta`: só a chamada mais recente atualiza o estado,
 // mesmo quando a resposta da chamada anterior chega depois (fora de ordem).
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";

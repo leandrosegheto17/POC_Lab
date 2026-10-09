@@ -6,7 +6,7 @@ import { Rotas } from "../src/Rotas.tsx";
 import { NaoEncontrada } from "../src/paginas/NaoEncontrada.tsx";
 import { obrigatorio } from "./apoio/obrigatorio.ts";
 
-// TP-0055 — casca do app: nav única, rotas T1-T5, <title> por rota, foco no
+// casca do app: nav única, rotas T1-T5, <title> por rota, foco no
 // <h1> ao navegar, aria-current no item ativo e página "não encontrada".
 //
 // Nota sobre o layout responsivo (menu lateral em >=1024px vs. barra de

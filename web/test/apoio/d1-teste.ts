@@ -1,6 +1,6 @@
-// TP-0043 — Adaptador de teste: subconjunto da interface do D1
+// Adaptador de teste: subconjunto da interface do D1
 // (`prepare`/`bind`/`first`/`all`/`run`) implementado sobre `node:sqlite` em
-// memória. Existe só para os testes de rota do Worker (Lote 9 em diante)
+// memória. Existe só para os testes de rota do Worker
 // injetarem como `env.DB`, sem precisar de um D1 real nem de Miniflare.
 //
 // `node:sqlite` só é importado aqui porque este arquivo vive em `web/test/`

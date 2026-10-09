@@ -1,7 +1,7 @@
-// TP-0073 — T2: "Ver estado numa data", integrado em Pedido.tsx
-// (DetalheLinhaDoTempo) + LinhaDoTempo.tsx. `derivarEstado` (TP-0012) roda
+// T2: "Ver estado numa data", integrado em Pedido.tsx
+// (DetalheLinhaDoTempo) + LinhaDoTempo.tsx. `derivarEstado` roda
 // no navegador sobre os eventos JÁ carregados por uma única chamada —
-// nenhuma chamada extra a `fetch` ao usar o `SeletorData` (TP-0072).
+// nenhuma chamada extra a `fetch` ao usar o `SeletorData`.
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -82,8 +82,8 @@ function respostaLinhaDoTempoValida(): unknown {
       divergencias: [],
     },
     // Fora de ordem de propósito — `derivarEstado` ordena canonicamente
-    // antes de processar (TP-0012); `LinhaDoTempo` renderiza na ordem
-    // recebida (TP-0061), mas isso não afeta estes testes (checam por
+    // antes de processar; `LinhaDoTempo` renderiza na ordem
+    // recebida, mas isso não afeta estes testes (checam por
     // texto, não por posição).
     eventos: [eventoVenda(), eventoPagamento(), eventoColeta(), eventoEntrega()],
   };

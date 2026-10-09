@@ -1,152 +1,24 @@
-// TP-0062 — Tela T2 Linha do tempo do pedido: GET
-// /api/v1/pedidos/{codigo}/linha-do-tempo, cabeçalho (identidade/fontes/
-// valores/divergências) + `LinhaDoTempo` (eventos), 4 estados.
+// Tela Pedido: cabeçalho (identidade/fontes/valores/divergências) e
+// `LinhaDoTempo` em sucesso. Estados vazio/erro/carregando e acessibilidade em
+// `pedido-estados.test.tsx`.
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
-import { axe } from "vitest-axe";
-import { Pedido } from "../src/paginas/Pedido.tsx";
-
-function eventoVenda(opcoes?: Partial<Record<string, unknown>>): unknown {
-  return {
-    fonte: "vendas",
-    // Código diferente dos "fontes" do cabeçalho de propósito — evita
-    // ambiguidade de texto duplicado nos testes (cabeçalho e linha do
-    // tempo são elementos distintos, mesmo quando o valor de negócio
-    // coincidiria em dados reais).
-    codigoEvento: "EVT-V-1",
-    momentoFato: "2026-01-05T10:00:00Z",
-    tipo: "venda",
-    valor_devido: 150,
-    data_limite: "2026-01-20",
-    transportadora: "Transp. Rápida",
-    chegouForaDeOrdem: false,
-    ...opcoes,
-  };
-}
-
-function eventoPagamento(opcoes?: Partial<Record<string, unknown>>): unknown {
-  return {
-    fonte: "pagamentos",
-    codigoEvento: "EVT-P-1",
-    momentoFato: "2026-01-06T10:00:00Z",
-    tipo: "pagamento",
-    valor: 150,
-    referencia_original: "10248",
-    chegouForaDeOrdem: false,
-    ...opcoes,
-  };
-}
-
-function respostaLinhaDoTempoValida(opcoes?: {
-  codigoBuscado?: string;
-  divergencias?: unknown[];
-  devido?: number;
-  pago?: number;
-  eventos?: unknown[];
-}): unknown {
-  return {
-    pedido: {
-      identidade: "PED-000001",
-      codigoBuscado: opcoes?.codigoBuscado ?? "PED-000001",
-      fontes: [
-        { fonte: "vendas", codigo: "10248" },
-        { fonte: "pagamentos", codigo: "TX-88812" },
-        { fonte: "rastreio", codigo: "RS-5521" },
-      ],
-      // Valores do cabeçalho deliberadamente diferentes de 150 (o valor dos
-      // eventos de venda/pagamento abaixo) — mesma lógica do comentário em
-      // `eventoVenda`: evita que o cabeçalho e um evento da linha do tempo
-      // produzam o mesmo texto "R$ 150,00" e tornem a asserção ambígua
-      // (`getByText` falha com "found multiple elements" quando dois
-      // elementos distintos têm o mesmo texto).
-      devido: opcoes?.devido ?? 300,
-      pago: opcoes?.pago ?? 300,
-      dataLimite: "2026-01-20T00:00:00Z",
-      divergencias: opcoes?.divergencias ?? [],
-    },
-    eventos: opcoes?.eventos ?? [eventoVenda(), eventoPagamento()],
-  };
-}
-
-function respostaErro(opcoes: {
-  status: number;
-  codigo: string;
-  detail?: string;
-}): unknown {
-  return {
-    type: "about:blank",
-    title: "Erro",
-    status: opcoes.status,
-    detail: opcoes.detail ?? "detalhe tecnico que nao deve aparecer na tela",
-    codigo: opcoes.codigo,
-    ...(opcoes.status === 400
-      ? { erros: [{ campo: "codigo", mensagem: "formato inválido" }] }
-      : {}),
-  };
-}
-
-function respostaFake(opcoes: {
-  ok: boolean;
-  status?: number;
-  json?: () => Promise<unknown>;
-}) {
-  return {
-    ok: opcoes.ok,
-    status: opcoes.status ?? (opcoes.ok ? 200 : 500),
-    json: opcoes.json ?? (() => Promise.resolve({})),
-  } as unknown as Response;
-}
-
-function instalarFetchMock(
-  aoChamarPedido: (url: string) => Promise<Response> | Response,
-) {
-  const mock = vi.fn(async (entrada: string | URL) => {
-    const url = String(entrada);
-    if (url.startsWith("/api/v1/pedidos/")) {
-      return aoChamarPedido(url);
-    }
-    return Promise.reject(new Error(`fetch não mockado para ${url}`));
-  });
-  global.fetch = mock as unknown as typeof fetch;
-  return mock;
-}
-
-function chamadas(mock: { mock: { calls: unknown[][] } }): string[] {
-  return mock.mock.calls.map((chamada) => String(chamada[0]));
-}
-
-function renderizar(codigo = "PED-000001") {
-  return render(
-    <MemoryRouter initialEntries={[`/pedido/${codigo}`]}>
-      <Routes>
-        <Route path="/pedido/:codigo" element={<Pedido />} />
-      </Routes>
-    </MemoryRouter>,
-  );
-}
+import { screen, waitFor } from "@testing-library/react";
+import {
+  aguardarTitulo,
+  eventoPagamentoCom,
+  eventoVenda,
+  instalarPedidoFixo,
+  renderizar,
+  respostaLinhaDoTempoValida,
+} from "./apoio/pedido-simulado.tsx";
 
 afterEach(() => {
   vi.restoreAllMocks();
 });
 
-async function aguardarTitulo() {
-  await waitFor(() => {
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Pedido PED-000001" }),
-    ).toBeInTheDocument();
-  });
-}
-
-function eventoPagamentoCom(codigoEvento: string, valor: number): unknown {
-  return eventoPagamento({ codigoEvento, valor });
-}
-
 describe("Pedido — sucesso", () => {
   it("buscando pela identidade: link de volta, h1 em mono com 'Pedido ' oculto, 'Presente em 3 de 3 sistemas'", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaLinhaDoTempoValida()) })),
-    );
+    instalarPedidoFixo(respostaLinhaDoTempoValida());
 
     const { container } = renderizar();
     await aguardarTitulo();
@@ -173,9 +45,7 @@ describe("Pedido — sucesso", () => {
   });
 
   it("cartões de valor: PC com R$, Saldo e Data limite; celular sem R$ e sem Saldo", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaLinhaDoTempoValida()) })),
-    );
+    instalarPedidoFixo(respostaLinhaDoTempoValida());
 
     const { container } = renderizar();
     await aguardarTitulo();
@@ -205,12 +75,7 @@ describe("Pedido — sucesso", () => {
   });
 
   it("pago menor que o devido: saldo negativo com sinal e Pago/Saldo em vermelho", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: true,
-        json: () => Promise.resolve(respostaLinhaDoTempoValida({ devido: 440, pago: 264 })),
-      })),
-    );
+    instalarPedidoFixo(respostaLinhaDoTempoValida({ devido: 440, pago: 264 }));
 
     const { container } = renderizar();
     await aguardarTitulo();
@@ -230,12 +95,7 @@ describe("Pedido — sucesso", () => {
   });
 
   it("pago maior que o devido: saldo positivo com '+'", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: true,
-        json: () => Promise.resolve(respostaLinhaDoTempoValida({ devido: 440, pago: 880 })),
-      })),
-    );
+    instalarPedidoFixo(respostaLinhaDoTempoValida({ devido: 440, pago: 880 }));
 
     const { container } = renderizar();
     await aguardarTitulo();
@@ -245,9 +105,7 @@ describe("Pedido — sucesso", () => {
   });
 
   it("linha do tempo: h2 com nota no PC e versão curta no celular, eventos e código de vendas no cabeçalho", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaLinhaDoTempoValida()) })),
-    );
+    instalarPedidoFixo(respostaLinhaDoTempoValida());
 
     const { container } = renderizar();
     await aguardarTitulo();
@@ -272,13 +130,7 @@ describe("Pedido — sucesso", () => {
   });
 
   it("buscando por código de fonte: 'Encontrado pelo código' (PC) e 'encontrado por' (celular)", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: true,
-        json: () =>
-          Promise.resolve(respostaLinhaDoTempoValida({ codigoBuscado: "TX-88812" })),
-      })),
-    );
+    instalarPedidoFixo(respostaLinhaDoTempoValida({ codigoBuscado: "TX-88812" }));
 
     const { container } = renderizar("TX-88812");
     await aguardarTitulo();
@@ -295,12 +147,7 @@ describe("Pedido — sucesso", () => {
   });
 
   it("sem divergência mostra 'Sem divergência' (EtiquetaEstado ok)", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: true,
-        json: () => Promise.resolve(respostaLinhaDoTempoValida({ divergencias: [] })),
-      })),
-    );
+    instalarPedidoFixo(respostaLinhaDoTempoValida({ divergencias: [] }));
 
     renderizar();
 
@@ -313,11 +160,7 @@ describe("Pedido — sucesso", () => {
   });
 
   it("divergência 'duplicado': marca o segundo pagamento integral, não o primeiro", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: true,
-        json: () =>
-          Promise.resolve(respostaLinhaDoTempoValida({
+    instalarPedidoFixo(respostaLinhaDoTempoValida({
             devido: 150,
             pago: 300,
             divergencias: [{ tipo: "duplicado", motivo: "Pago duas vezes." }],
@@ -326,9 +169,7 @@ describe("Pedido — sucesso", () => {
               eventoPagamentoCom("TX-1", 150),
               eventoPagamentoCom("TX-2", 150),
             ],
-          })),
-      })),
-    );
+          }));
 
     const { container } = renderizar();
     await aguardarTitulo();
@@ -346,11 +187,7 @@ describe("Pedido — sucesso", () => {
   });
 
   it("sem a divergência 'duplicado' na API, nenhum pagamento é marcado", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: true,
-        json: () =>
-          Promise.resolve(respostaLinhaDoTempoValida({
+    instalarPedidoFixo(respostaLinhaDoTempoValida({
             devido: 150,
             pago: 300,
             divergencias: [],
@@ -359,9 +196,7 @@ describe("Pedido — sucesso", () => {
               eventoPagamentoCom("TX-1", 150),
               eventoPagamentoCom("TX-2", 150),
             ],
-          })),
-      })),
-    );
+          }));
 
     const { container } = renderizar();
     await aguardarTitulo();
@@ -371,18 +206,12 @@ describe("Pedido — sucesso", () => {
   });
 
   it("com divergência mostra uma EtiquetaTipo por item", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: true,
-        json: () =>
-          Promise.resolve(respostaLinhaDoTempoValida({
+    instalarPedidoFixo(respostaLinhaDoTempoValida({
             divergencias: [
               { tipo: "parcial", motivo: "Pago parcialmente." },
               { tipo: "entrega_atrasada", motivo: "Atraso de 5 dias." },
             ],
-          })),
-      })),
-    );
+          }));
 
     renderizar();
 
@@ -391,175 +220,5 @@ describe("Pedido — sucesso", () => {
     });
     expect(screen.getByText("Entrega atrasada")).toBeInTheDocument();
     expect(screen.queryByText("Sem divergência")).not.toBeInTheDocument();
-  });
-});
-
-describe("Pedido — vazio (404/400)", () => {
-  it("404 pedido_nao_encontrado: 'Pedido não encontrado' + dica de formatos, sem 'Tentar de novo', sem role=alert", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: false,
-        status: 404,
-        json: () =>
-          Promise.resolve(respostaErro({ status: 404, codigo: "pedido_nao_encontrado" })),
-      })),
-    );
-
-    renderizar("PED-999999");
-
-    // Aparece tanto no <h1> quanto no corpo do `EstadoVazio` — dois
-    // elementos distintos, mesmo texto.
-    await waitFor(() => {
-      expect(screen.getAllByText("Pedido não encontrado")).toHaveLength(2);
-    });
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Pedido não encontrado" }),
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText(/Use o código do pedido \(PED-nnnnnn\)/),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Tentar de novo" }),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    expect(screen.queryByText(/detalhe tecnico/)).not.toBeInTheDocument();
-  });
-
-  it("400 parametro_invalido: mesma mensagem de 'vazio', sem 'Tentar de novo'", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: false,
-        status: 400,
-        json: () =>
-          Promise.resolve(respostaErro({ status: 400, codigo: "parametro_invalido" })),
-      })),
-    );
-
-    renderizar("codigo-invalido");
-
-    await waitFor(() => {
-      expect(screen.getAllByText("Pedido não encontrado")).toHaveLength(2);
-    });
-
-    expect(
-      screen.queryByRole("button", { name: "Tentar de novo" }),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-  });
-});
-
-describe("Pedido — erro 5xx/rede/timeout", () => {
-  it("erro de rede mostra EstadoErro e 'Tentar de novo' refaz a chamada", async () => {
-    const mock = instalarFetchMock(() => Promise.reject(new TypeError("Failed to fetch")));
-
-    renderizar();
-
-    await waitFor(() => {
-      expect(screen.getByText("Sem conexão com o servidor.")).toBeInTheDocument();
-    });
-
-    const botao = screen.getByRole("button", { name: "Tentar de novo" });
-    const chamadasAntes = chamadas(mock).length;
-
-    fireEvent.click(botao);
-
-    await waitFor(() => {
-      expect(chamadas(mock).length).toBeGreaterThan(chamadasAntes);
-    });
-  });
-
-  it("erro 5xx da API mostra EstadoErro com 'Tentar de novo'", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: false,
-        status: 500,
-        json: () =>
-          Promise.resolve(respostaErro({ status: 500, codigo: "erro_interno" })),
-      })),
-    );
-
-    renderizar();
-
-    await waitFor(() => {
-      expect(
-        screen.getByText(
-          "Não foi possível consultar os dados agora. Tente de novo em alguns segundos.",
-        ),
-      ).toBeInTheDocument();
-    });
-
-    expect(
-      screen.getByRole("button", { name: "Tentar de novo" }),
-    ).toBeInTheDocument();
-  });
-});
-
-describe("Pedido — carregando", () => {
-  it("mostra 'Buscando pedido…' com aria-busy='true'", () => {
-    instalarFetchMock(() => new Promise<Response>(() => {}));
-
-    const { container } = renderizar();
-
-    expect(screen.getByText("Buscando pedido…")).toBeInTheDocument();
-    expect(container.querySelector("[aria-busy='true']")).toBeInTheDocument();
-  });
-});
-
-describe("Pedido — acessibilidade (vitest-axe)", () => {
-  it("carregando não tem violações", async () => {
-    instalarFetchMock(() => new Promise<Response>(() => {}));
-
-    const { container } = renderizar();
-
-    expect(screen.getByText("Buscando pedido…")).toBeInTheDocument();
-    expect(await axe(container)).toHaveNoViolations();
-  });
-
-  it("erro (5xx/rede) não tem violações", async () => {
-    instalarFetchMock(() => Promise.reject(new TypeError("Failed to fetch")));
-
-    const { container } = renderizar();
-
-    await waitFor(() => {
-      expect(screen.getByText("Sem conexão com o servidor.")).toBeInTheDocument();
-    });
-
-    expect(await axe(container)).toHaveNoViolations();
-  });
-
-  it("vazio (404) não tem violações", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({
-        ok: false,
-        status: 404,
-        json: () =>
-          Promise.resolve(respostaErro({ status: 404, codigo: "pedido_nao_encontrado" })),
-      })),
-    );
-
-    const { container } = renderizar("PED-999999");
-
-    await waitFor(() => {
-      expect(screen.getAllByText("Pedido não encontrado")).toHaveLength(2);
-    });
-
-    expect(await axe(container)).toHaveNoViolations();
-  });
-
-  it("sucesso não tem violações", async () => {
-    instalarFetchMock(() =>
-      Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(respostaLinhaDoTempoValida()) })),
-    );
-
-    const { container } = renderizar();
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { level: 1, name: "Pedido PED-000001" }),
-      ).toBeInTheDocument();
-    });
-
-    expect(await axe(container)).toHaveNoViolations();
   });
 });

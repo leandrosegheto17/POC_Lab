@@ -1,25 +1,21 @@
-// TP-0077 — GET /api/v2/pedidos/{codigo}/linha-do-tempo.
+// GET /api/v2/pedidos/{codigo}/linha-do-tempo.
 //
 // Dataset próprio deste teste (fixture LOCAL, não edita
 // `web/test/apoio/dados-exemplo.ts`), mesmo padrão de
-// `web/test/worker/linha-do-tempo.test.ts` (TP-0048): monta o SQL inicial
+// `web/test/worker/linha-do-tempo.test.ts`: monta o SQL inicial
 // pelo mesmo caminho de serialização usado em produção
 // (`escreverSqlPublicacao` + `leitura-d1.sql`), com pelo menos 1 evento de
 // pagamento v2 (`versao_schema: 2`, `dados` incluindo `meio_pagamento`).
 //
 // `node:fs`/`node:sqlite` só são lidos aqui porque este arquivo vive em
 // `web/test/` (mesma exceção documentada em `web/test/apoio/d1-teste.ts`).
-import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
-import { DatabaseSync } from "node:sqlite";
-
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 
-import { escreverSqlPublicacao, type TabelasParaPublicacao } from "processamento/publicacao/escritor-sql.js";
+import type { TabelasParaPublicacao } from "processamento/publicacao/escritor-sql.js";
 import { EsquemaLinhaDoTempoV2 } from "processamento/contrato/linha-do-tempo-v2.js";
 
-import { D1Teste } from "../apoio/d1-teste.js";
+import { criarD1TesteComTabelas } from "../apoio/fixture.ts";
 import type { CorpoLinhaDoTempoSolto } from "../apoio/corpo-teste.ts";
 import { obrigatorio } from "../apoio/obrigatorio.ts";
 import { rotaLinhaDoTempoV2 } from "../../worker/rotas/linha-do-tempo-v2.ts";
@@ -29,14 +25,6 @@ import appReal from "../../worker/index.ts";
 interface CorpoErroTeste {
   codigo: string;
   status: number;
-}
-
-// Verificação (2026-10-08): `import.meta.resolve` não existe no `import.meta`
-// sintético que o Vite injeta sob o pool de testes do Vitest; ver nota
-// equivalente em `web/test/apoio/fixture.ts` e `web/test/worker/linha-do-tempo.test.ts`.
-function lerDdl(): string {
-  const caminhoDdl = createRequire(import.meta.url).resolve("processamento/publicacao/leitura-d1.sql");
-  return readFileSync(caminhoDdl, "utf8");
 }
 
 const ID_PEDIDO = "PED-200001";
@@ -108,17 +96,7 @@ const TABELAS: TabelasParaPublicacao = {
   documento: [],
 };
 
-function criarD1TesteLocal(): D1Teste {
-  const ddl = lerDdl();
-  const sql = escreverSqlPublicacao(ddl, TABELAS);
-
-  const db = new DatabaseSync(":memory:");
-  db.exec(sql);
-
-  return new D1Teste(db);
-}
-
-/** Instância Hono local só para este teste, com a rota da TP-0077 registrada. */
+/** Instância Hono local só para este teste, com a rota v2 registrada. */
 function criarAppDeTeste() {
   const app = new Hono<{ Bindings: { DB: D1Database } }>();
   app.route("/", rotaLinhaDoTempoV2);
@@ -128,7 +106,7 @@ function criarAppDeTeste() {
 describe("GET /api/v2/pedidos/{codigo}/linha-do-tempo", () => {
   it("devolve 200 com a linha do tempo v2, incluindo versao_schema e meio_pagamento no evento de pagamento v2", async () => {
     const app = criarAppDeTeste();
-    const DB = criarD1TesteLocal() as unknown as D1Database;
+    const DB = criarD1TesteComTabelas(TABELAS) as unknown as D1Database;
 
     const resposta = await app.request(
       `/api/v2/pedidos/${ID_PEDIDO}/linha-do-tempo`,
@@ -160,7 +138,7 @@ describe("GET /api/v2/pedidos/{codigo}/linha-do-tempo", () => {
 
   it("resolve com código alternativo (fonte vendas) e com variação de caixa/espaço, para o mesmo id_pedido", async () => {
     const app = criarAppDeTeste();
-    const DB = criarD1TesteLocal() as unknown as D1Database;
+    const DB = criarD1TesteComTabelas(TABELAS) as unknown as D1Database;
 
     const respostaAlternativo = await app.request(
       "/api/v2/pedidos/VENDA-2/linha-do-tempo",
@@ -186,7 +164,7 @@ describe("GET /api/v2/pedidos/{codigo}/linha-do-tempo", () => {
 
   it("devolve 404 pedido_nao_encontrado para um código inexistente, mas válido no formato", async () => {
     const app = criarAppDeTeste();
-    const DB = criarD1TesteLocal() as unknown as D1Database;
+    const DB = criarD1TesteComTabelas(TABELAS) as unknown as D1Database;
 
     const resposta = await app.request(
       "/api/v2/pedidos/PED-999999/linha-do-tempo",
@@ -201,7 +179,7 @@ describe("GET /api/v2/pedidos/{codigo}/linha-do-tempo", () => {
 
   it("devolve 400 parametro_invalido para código com mais de 40 caracteres, sem consultar o banco", async () => {
     const app = criarAppDeTeste();
-    const DB = criarD1TesteLocal() as unknown as D1Database;
+    const DB = criarD1TesteComTabelas(TABELAS) as unknown as D1Database;
 
     const codigoMuitoLongo = "A".repeat(41);
     const resposta = await app.request(
@@ -217,7 +195,7 @@ describe("GET /api/v2/pedidos/{codigo}/linha-do-tempo", () => {
 
   it("devolve 400 parametro_invalido para tentativa de injeção SQL, NUNCA 200 com outro pedido", async () => {
     const app = criarAppDeTeste();
-    const DB = criarD1TesteLocal() as unknown as D1Database;
+    const DB = criarD1TesteComTabelas(TABELAS) as unknown as D1Database;
 
     const tentativaInjecao = "' OR 1=1 --";
     const resposta = await app.request(
@@ -236,7 +214,7 @@ describe("GET /api/v2/pedidos/{codigo}/linha-do-tempo", () => {
     // Usa a instância `app` real de `web/worker/index.ts` (não uma sub-app
     // isolada), para provar que nenhum prefixo genérico /api/v2/* foi
     // registrado e que só a rota desta tarefa existe de fato sob /api/v2.
-    const DB = criarD1TesteLocal() as unknown as D1Database;
+    const DB = criarD1TesteComTabelas(TABELAS) as unknown as D1Database;
 
     const caminhos = ["/api/v2/resumo", "/api/v2/pedidos", "/api/v2/indicadores"];
 

@@ -1,4 +1,4 @@
-// TP-0058 — `CartoesResumo`/`FiltroTipo`: 4 cartões (percentual/moeda) com
+// `CartoesResumo`/`FiltroTipo`: 4 cartões (percentual/moeda) com
 // "—"/"indisponível agora" sem resumo; chips em `<fieldset>`/`<legend>`
 // com contagem vinda de `porTipo` só em sucesso (e soma em "Todos"),
 // seleção via `checked` + classe (sem "✓", ajuste Modelo B 2026-10-08), e
@@ -14,63 +14,15 @@ import { axe } from "vitest-axe";
 import { ProvedorResumo } from "../src/dados/contexto-resumo.tsx";
 import { CartoesResumo } from "../src/componentes/CartoesResumo.tsx";
 import { FiltroTipo, VALOR_TODOS } from "../src/componentes/FiltroTipo.tsx";
+import {
+  simularResumoPendente as mockarPendente,
+  simularResumoValido,
+} from "./apoio/api-simulada.tsx";
 
-/** Objeto mínimo válido contra `EsquemaCartao` (processamento/contrato/resumo.ts). */
-function cartao(numerador: number, denominador = 1): unknown {
-  return {
-    titulo: "Cartão de teste",
-    formula: "numerador / denominador",
-    numerador,
-    denominador,
-    resultado: denominador === 0 ? null : numerador / denominador,
-  };
-}
-
-function resumoValido(): unknown {
-  return {
-    dataCorte: "2026-10-08T00:00:00.000Z",
-    semente: 42,
-    versaoContrato: "1.0.0",
-    idPublicacao: "pub-teste",
-    totais: {
-      pedidos: cartao(100),
-      // 7 de 100 => 7,0% (fração 0,07 no campo `resultado`).
-      pedidosComDivergencia: cartao(7, 100),
-      porTipo: [
-        { tipo: "duplicado", cartao: cartao(2, 100) },
-        { tipo: "parcial", cartao: cartao(0, 100) },
-        { tipo: "pago_nao_enviado", cartao: cartao(1, 100) },
-        { tipo: "enviado_nao_pago", cartao: cartao(3, 100) },
-        { tipo: "entrega_atrasada", cartao: cartao(1, 100) },
-      ],
-      valorEmAberto: cartao(65379257.82),
-      pagoAMais: cartao(412000),
-      // 85 de 90 => 94,4%.
-      entregasNoPrazo: cartao(85, 90),
-    },
-  };
-}
-
-function respostaFake(opcoes: {
-  ok: boolean;
-  status?: number;
-  json?: () => Promise<unknown>;
-}) {
-  return {
-    ok: opcoes.ok,
-    status: opcoes.status ?? (opcoes.ok ? 200 : 500),
-    json: opcoes.json ?? (() => Promise.resolve({})),
-  } as unknown as Response;
-}
+const VALORES_MONETARIOS = { valorEmAberto: 65379257.82, pagoAMais: 412000 };
 
 function mockarSucesso() {
-  global.fetch = vi.fn(() =>
-    Promise.resolve(respostaFake({ ok: true, json: () => Promise.resolve(resumoValido()) })),
-  );
-}
-
-function mockarPendente() {
-  global.fetch = vi.fn(() => new Promise<Response>(() => {}));
+  simularResumoValido(VALORES_MONETARIOS);
 }
 
 afterEach(() => {

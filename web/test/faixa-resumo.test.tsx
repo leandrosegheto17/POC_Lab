@@ -1,4 +1,4 @@
-// TP-0056 — `FaixaResumo`/`ProvedorResumo`: uma única chamada de rede por
+// `FaixaResumo`/`ProvedorResumo`: uma única chamada de rede por
 // carga do app, texto estático "Dados sintéticos" enquanto carrega ou em
 // erro (sem aria-live/role="alert"), e "Dados sintéticos · corte
 // AAAA-MM-DD · N pedidos" em sucesso.
@@ -10,6 +10,7 @@ import {
   useResumo,
 } from "../src/dados/contexto-resumo.tsx";
 import { FaixaResumo } from "../src/componentes/FaixaResumo.tsx";
+import { respostaFake } from "./apoio/api-simulada.tsx";
 
 /** Objeto mínimo válido contra `EsquemaResumo` (processamento/contrato/resumo.ts). */
 function cartao(numerador: number, denominador = 1): unknown {
@@ -37,18 +38,6 @@ function resumoValido(numeroPedidos: number) {
       entregasNoPrazo: cartao(10),
     },
   };
-}
-
-function respostaFake(opcoes: {
-  ok: boolean;
-  status?: number;
-  json?: () => Promise<unknown>;
-}) {
-  return {
-    ok: opcoes.ok,
-    status: opcoes.status ?? (opcoes.ok ? 200 : 500),
-    json: opcoes.json ?? (() => Promise.resolve({})),
-  } as unknown as Response;
 }
 
 afterEach(() => {

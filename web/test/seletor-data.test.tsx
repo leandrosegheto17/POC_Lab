@@ -1,4 +1,4 @@
-// TP-0072 — SeletorData: <input type="date"> controlado com <label>,
+// SeletorData: <input type="date"> controlado com <label>,
 // botões "Ver estado" e "Limpar" (este com aria-disabled quando vazio, não
 // disabled nativo), e ausência de violações de acessibilidade (axe).
 import { afterEach, describe, expect, it, vi } from "vitest";

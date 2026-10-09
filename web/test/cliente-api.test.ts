@@ -1,4 +1,4 @@
-// TP-0052 — `consultarApi`: mapeamento completo para `ResultadoConsulta`,
+// `consultarApi`: mapeamento completo para `ResultadoConsulta`,
 // sem nunca expor `detail`/status/corpo bruto.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
@@ -10,6 +10,7 @@ import {
   MENSAGEM_SEM_CONEXAO,
   MENSAGEM_TEMPO_ESGOTADO,
 } from "../src/dados/cliente-api.ts";
+import { respostaFake } from "./apoio/api-simulada.tsx";
 
 const EsquemaTeste = z.object({ nome: z.string() });
 
@@ -28,18 +29,6 @@ function corpoErro(
       ? { erros: [{ campo: "x", mensagem: "obrigatório" }] }
       : {}),
   };
-}
-
-function respostaFake(opcoes: {
-  ok: boolean;
-  status?: number;
-  json?: () => Promise<unknown>;
-}) {
-  return {
-    ok: opcoes.ok,
-    status: opcoes.status ?? (opcoes.ok ? 200 : 500),
-    json: opcoes.json ?? (() => Promise.resolve({})),
-  } as unknown as Response;
 }
 
 describe("consultarApi", () => {

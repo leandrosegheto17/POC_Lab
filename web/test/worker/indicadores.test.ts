@@ -1,6 +1,6 @@
-// TP-0049 — Rota `GET /api/v1/indicadores`.
+// Rota `GET /api/v1/indicadores`.
 //
-// RTP-0022 — usa a app real de `worker/index.ts` (rota já registrada e
+// usa a app real de `worker/index.ts` (rota já registrada e
 // cabeçalhos centrais aplicados), não uma instância Hono local.
 import { describe, expect, it } from "vitest";
 

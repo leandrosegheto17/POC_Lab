@@ -1,4 +1,4 @@
-// TP-0003 — matchers globais para os testes do pacote `web`: jest-dom
+// matchers globais para os testes do pacote `web`: jest-dom
 // (getByRole, toBeInTheDocument etc.) e vitest-axe (toHaveNoViolations).
 import "@testing-library/jest-dom/vitest";
 import { afterEach, expect } from "vitest";

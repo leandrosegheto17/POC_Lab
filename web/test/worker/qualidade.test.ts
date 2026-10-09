@@ -1,11 +1,11 @@
-// TP-0050 — Rota `GET /api/v1/qualidade`.
+// Rota `GET /api/v1/qualidade`.
 //
 // Instância LOCAL de Hono, só para este teste (mesma convenção de
 // `erros.test.ts`): registra apenas o handler sob teste, sem tocar na app
 // real de `worker/index.ts` (o registro da rota ali é feito pelo
-// orquestrador numa edição única, junto das demais rotas do Lote 9).
+// orquestrador numa edição única, junto das demais rotas).
 //
-// `criarD1Teste` (TP-0043) já publica um banco sem a chave `qualidade` em
+// `criarD1Teste` já publica um banco sem a chave `qualidade` em
 // `documento` — serve, sem alteração nenhuma, como cenário de "documento
 // ausente" (500). Para o cenário de sucesso, inserimos a linha `qualidade`
 // diretamente aqui, via `db.prepare(...).bind(...).run()` (mesma API usada
@@ -65,7 +65,7 @@ function criarD1TesteComQualidade() {
   return db;
 }
 
-/** RTP-0025 — usa a app real de `worker/index.ts`. */
+/** Usa a app real de `worker/index.ts`. */
 function montarApp() {
   return appReal;
 }

@@ -1,4 +1,4 @@
-// TP-0057 — CampoBusca: form role="search" com label visível, submit
+// CampoBusca: form role="search" com label visível, submit
 // navega para /pedido/:codigo (removendo espaços nas pontas), submit vazio
 // não navega e mostra "Informe um código" ligado por aria-describedby.
 //
@@ -190,7 +190,7 @@ describe("CampoBusca — acessibilidade (vitest-axe)", () => {
   });
 });
 
-// RTP-0018 — CampoBusca dentro da Casca (slotBusca), como no app real.
+// CampoBusca dentro da Casca (slotBusca), como no app real.
 describe("CampoBusca dentro da Casca — acessibilidade (vitest-axe)", () => {
   function renderCasca() {
     return render(

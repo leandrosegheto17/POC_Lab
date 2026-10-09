@@ -1,12 +1,11 @@
-// TP-0047 — Rota `GET /api/v1/divergencias`.
+// Rota `GET /api/v1/divergencias`.
 //
 // Instância LOCAL de Hono, só para este teste (mesma convenção de
 // `qualidade.test.ts`/`erros.test.ts`): registra apenas o sub-app sob
 // teste, sem tocar na app real de `worker/index.ts` (o registro ali é
-// feito pelo orquestrador numa edição única, junto das demais rotas do
-// Lote 9).
+// feito pelo orquestrador numa edição única, junto das demais rotas).
 //
-// `criarD1Teste()` (TP-0043) traz, por padrão, 5 linhas de `divergencia`
+// `criarD1Teste()` traz, por padrão, 5 linhas de `divergencia`
 // para PED-000002 cujo `tipo` ("valor_divergente", "data_divergente" etc.)
 // NÃO pertence ao enum `TipoDivergencia` do domínio
 // (`duplicado`/`parcial`/`pago_nao_enviado`/`enviado_nao_pago`/
@@ -23,7 +22,7 @@
 // (reportado ao coordenador; ver relato de entrega desta tarefa).
 //
 // Para não travar esta tarefa nem editar a fixture compartilhada
-// `dados-exemplo.ts` (usada por outras rotas em paralelo, TP-0046/48/49/50),
+// `dados-exemplo.ts` (usada por outras rotas),
 // substituímos aqui o conteúdo de `divergencia` por linhas próprias, com
 // `tipo` e `eventos` no formato correto — mesma técnica já usada por
 // `qualidade.test.ts` (inserir linha extra direto via `db.prepare(...)`,

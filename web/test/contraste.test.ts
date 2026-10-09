@@ -1,4 +1,4 @@
-// TP-0051 — Testes de contraste WCAG para os tokens do Modelo B e de
+// Testes de contraste WCAG para os tokens do Modelo B e de
 // existência dos arquivos de fonte referenciados em tokens.css.
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";

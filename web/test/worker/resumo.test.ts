@@ -1,7 +1,7 @@
-// TP-0046 — Testes do handler `GET /api/v1/resumo`. Monta uma instância
+// Testes do handler `GET /api/v1/resumo`. Monta uma instância
 // `Hono()` LOCAL (não a `app` de `web/worker/index.ts`, que ainda não
 // registra esta rota — isso é feito pelo orquestrador junto com as demais
-// rotas paralelas do Lote 9).
+// rotas paralelas).
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 
@@ -71,7 +71,7 @@ describe("GET /api/v1/resumo", () => {
   });
 
   it("500 erro_interno: documento `resumo` ausente — sem SQL/stack no corpo", async () => {
-    // `criarD1Teste()` (fixture padrão, TP-0043) não carrega nenhuma linha
+    // `criarD1Teste()` (fixture padrão) não carrega nenhuma linha
     // com chave='resumo' — serve diretamente como cenário de ausência.
     const db = criarD1Teste();
 

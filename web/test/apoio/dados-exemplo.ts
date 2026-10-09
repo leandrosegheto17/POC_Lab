@@ -1,7 +1,6 @@
-// TP-0043 — Linhas de exemplo mínimas e determinísticas para as 5 tabelas
-// de leitura publicadas no D1 (TP-0032), usadas pela fixture `criarD1Teste`
-// (ver `./fixture.ts`) e, por meio dela, pelos testes de rota do Worker
-// (Lote 9 em diante).
+// Linhas de exemplo mínimas e determinísticas para as 5 tabelas
+// de leitura publicadas no D1, usadas pela fixture `criarD1Teste`
+// (ver `./fixture.ts`) e, por meio dela, pelos testes de rota do Worker.
 //
 // Cenários cobertos:
 // - PED-000001: pedido pago, SEM divergência.
@@ -49,7 +48,7 @@ export const DADOS_EXEMPLO: TabelasParaPublicacao = {
 
   // `dados` de cada linha é o payload v1 real do evento (`dominio/evento.ts`),
   // igual ao que `importacao/importar.ts` grava na coluna `dados` do event
-  // store — necessário para que as rotas (TP-0046/48) consigam montar a
+  // store — necessário para que as rotas consigam montar a
   // resposta v1 de verdade a partir desta fixture.
   linha_do_tempo: [
     {
@@ -109,7 +108,7 @@ export const DADOS_EXEMPLO: TabelasParaPublicacao = {
   // `(tipo, id_pedido)`. `eventos` é o JSON de `{tipo, data, fonte, codigo}`
   // que a projeção real (`publicacao/divergencias.ts`) produz, não uma
   // lista de strings cruas — necessário para passar em
-  // `EsquemaRespostaDivergencias`/`EsquemaEventoDivergencia` (TP-0030).
+  // `EsquemaRespostaDivergencias`/`EsquemaEventoDivergencia`.
   divergencia: [
     {
       tipo: "duplicado",

@@ -1,4 +1,4 @@
-// TP-0078 — Teste "validação: contrato v1 e v2" + demonstração no README.
+// Teste "validação: contrato v1 e v2" + demonstração no README.
 //
 // Objetivo: provar, com o MESMO pedido, que a resposta v1 é idêntica
 // independentemente de o pagamento gravado na `linha_do_tempo` estar em
@@ -9,57 +9,35 @@
 // e que a v2 continua expondo `versao_schema`/`meio_pagamento` corretamente,
 // inclusive com pagamentos de versões diferentes misturados no mesmo pedido.
 //
-// Mesmo padrão de dataset de `linha-do-tempo-v2.test.ts` (TP-0077): fixture
+// Mesmo padrão de dataset de `linha-do-tempo-v2.test.ts`: fixture
 // LOCAL própria (não edita `web/test/apoio/dados-exemplo.ts`), SQL inicial
 // montado pelo mesmo caminho de serialização usado em produção
 // (`escreverSqlPublicacao` + `leitura-d1.sql`).
 //
 // "O site não muda" (aceite desta tarefa): nenhuma mudança foi feita em
 // `web/src/`. Confirmado por LEITURA (não execução) de
-// `web/test/pedido.test.tsx` (TP-0062) e `web/test/estado-em-data.test.tsx`
-// (TP-0073) — os dois testes de tela que consomem a linha do tempo montam a
+// `web/test/pedido.test.tsx` e `web/test/estado-em-data.test.tsx`
+// — os dois testes de tela que consomem a linha do tempo montam a
 // resposta esperada via `vi.fn()`/mock de `fetch` com um objeto literal no
 // formato v1 (campos `fonte`, `codigoEvento`, `momentoFato`, `tipo`, etc.,
 // SEM `versao_schema` nem `meio_pagamento`), e chamam `Pedido.tsx`, que por
 // sua vez usa `/api/v1/pedidos/{codigo}/linha-do-tempo` (nunca `/api/v2/`).
 // Nada no contrato v1 mudou de forma até aqui — `EsquemaLinhaDoTempoV1` e a
 // rota v1 (`web/worker/rotas/linha-do-tempo.ts`) não foram alterados por
-// nenhuma tarefa do contrato v2 (TP-0074 a TP-0077), então os dois testes de
+// nenhuma tarefa do contrato v2, então os dois testes de
 // tela continuam válidos sem qualquer alteração em `web/src/`.
-import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
-import { DatabaseSync } from "node:sqlite";
-
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 
-import { escreverSqlPublicacao, type TabelasParaPublicacao } from "processamento/publicacao/escritor-sql.js";
+import type { TabelasParaPublicacao } from "processamento/publicacao/escritor-sql.js";
 import { EsquemaLinhaDoTempoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
 import { EsquemaLinhaDoTempoV2 } from "processamento/contrato/linha-do-tempo-v2.js";
 
-import { D1Teste } from "../apoio/d1-teste.js";
+import { criarD1TesteComTabelas } from "../apoio/fixture.ts";
 import type { CorpoLinhaDoTempoSolto } from "../apoio/corpo-teste.ts";
 import { obrigatorio } from "../apoio/obrigatorio.ts";
 import { rotaLinhaDoTempo } from "../../worker/rotas/linha-do-tempo.ts";
 import { rotaLinhaDoTempoV2 } from "../../worker/rotas/linha-do-tempo-v2.ts";
-
-// Verificação (2026-10-08): `import.meta.resolve` não existe no `import.meta`
-// sintético que o Vite injeta sob o pool de testes do Vitest; ver nota
-// equivalente em `web/test/apoio/fixture.ts` e `web/test/worker/linha-do-tempo.test.ts`.
-function lerDdl(): string {
-  const caminhoDdl = createRequire(import.meta.url).resolve("processamento/publicacao/leitura-d1.sql");
-  return readFileSync(caminhoDdl, "utf8");
-}
-
-function criarD1TesteLocal(tabelas: TabelasParaPublicacao): D1Teste {
-  const ddl = lerDdl();
-  const sql = escreverSqlPublicacao(ddl, tabelas);
-
-  const db = new DatabaseSync(":memory:");
-  db.exec(sql);
-
-  return new D1Teste(db);
-}
 
 /** Instância Hono local com as duas rotas (v1 e v2) registradas. */
 function criarAppDeTeste() {
@@ -246,7 +224,7 @@ const TABELAS_MISTA: TabelasParaPublicacao = {
 describe("validação: contrato v1 e v2", () => {
   it("v1 devolve a mesma resposta para o mesmo pedido, com o pagamento gravado como v1 ou v2", async () => {
     const appA = criarAppDeTeste();
-    const DB_A = criarD1TesteLocal(TABELAS_A) as unknown as D1Database;
+    const DB_A = criarD1TesteComTabelas(TABELAS_A) as unknown as D1Database;
     const respostaA = await appA.request(
       `/api/v1/pedidos/${ID_PEDIDO}/linha-do-tempo`,
       undefined,
@@ -256,7 +234,7 @@ describe("validação: contrato v1 e v2", () => {
     const corpoA = await respostaA.json<CorpoLinhaDoTempoSolto>();
 
     const appB = criarAppDeTeste();
-    const DB_B = criarD1TesteLocal(TABELAS_B) as unknown as D1Database;
+    const DB_B = criarD1TesteComTabelas(TABELAS_B) as unknown as D1Database;
     const respostaB = await appB.request(
       `/api/v1/pedidos/${ID_PEDIDO}/linha-do-tempo`,
       undefined,
@@ -289,7 +267,7 @@ describe("validação: contrato v1 e v2", () => {
 
   it("v2 traz versao_schema e meio_pagamento para o pagamento gravado como v2 (fixture B)", async () => {
     const app = criarAppDeTeste();
-    const DB = criarD1TesteLocal(TABELAS_B) as unknown as D1Database;
+    const DB = criarD1TesteComTabelas(TABELAS_B) as unknown as D1Database;
 
     const resposta = await app.request(
       `/api/v2/pedidos/${ID_PEDIDO}/linha-do-tempo`,
@@ -312,7 +290,7 @@ describe("validação: contrato v1 e v2", () => {
 
   it("caso de borda — pedido com pagamentos v1 e v2 misturados: v1 mostra os 2 sem versão, v2 mostra cada um com a sua versão", async () => {
     const appV1 = criarAppDeTeste();
-    const DB_V1 = criarD1TesteLocal(TABELAS_MISTA) as unknown as D1Database;
+    const DB_V1 = criarD1TesteComTabelas(TABELAS_MISTA) as unknown as D1Database;
     const respostaV1 = await appV1.request(
       `/api/v1/pedidos/${ID_PEDIDO_MISTO}/linha-do-tempo`,
       undefined,
@@ -336,7 +314,7 @@ describe("validação: contrato v1 e v2", () => {
     expect(corpoV1.pedido.pago).toBe(250);
 
     const appV2 = criarAppDeTeste();
-    const DB_V2 = criarD1TesteLocal(TABELAS_MISTA) as unknown as D1Database;
+    const DB_V2 = criarD1TesteComTabelas(TABELAS_MISTA) as unknown as D1Database;
     const respostaV2 = await appV2.request(
       `/api/v2/pedidos/${ID_PEDIDO_MISTO}/linha-do-tempo`,
       undefined,
