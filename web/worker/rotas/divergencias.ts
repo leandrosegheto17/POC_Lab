@@ -11,8 +11,8 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 
-import { EsquemaConsultaDivergencias } from "processamento/contrato/parametros.js";
-import { EsquemaRespostaDivergencias } from "processamento/contrato/divergencias.js";
+import { EsquemaConsultaDivergencias } from "nucleo/contrato/parametros.js";
+import { EsquemaRespostaDivergencias } from "nucleo/contrato/divergencias.js";
 
 import { hookValidacaoZod } from "../erros.js";
 import { contarDivergencias, listarDivergencias } from "../consultas.js";

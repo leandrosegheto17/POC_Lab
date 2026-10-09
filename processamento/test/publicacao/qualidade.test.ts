@@ -11,7 +11,7 @@
 import { describe, expect, it } from "vitest";
 
 import { criarRepositorio, type EventoParaInserir } from "../../src/armazenamento/repositorio.ts";
-import type { AchadoQualidade } from "../../src/dominio/modelo.ts";
+import type { AchadoQualidade } from "nucleo/dominio/modelo.js";
 import { montarDocumentoQualidade } from "../../src/publicacao/qualidade.ts";
 
 const ORDEM_TIPOS_ESPERADA = [

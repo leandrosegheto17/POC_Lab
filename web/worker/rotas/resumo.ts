@@ -2,7 +2,7 @@
 // partir do GET). Este arquivo só exporta o handler — o registro fica em
 // `web/worker/index.ts` (`app.get('/api/v1/resumo', handlerResumo)`).
 import type { Context } from "hono";
-import { EsquemaResumo } from "processamento/contrato/resumo.js";
+import { EsquemaResumo } from "nucleo/contrato/resumo.js";
 
 import { buscarDocumento } from "../consultas.js";
 import { problema } from "../erros.js";

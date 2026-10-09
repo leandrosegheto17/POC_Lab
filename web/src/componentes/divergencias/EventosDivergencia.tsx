@@ -1,4 +1,4 @@
-import type { EventoDivergencia } from "processamento/contrato/divergencias.js";
+import type { EventoDivergencia } from "nucleo/contrato/divergencias.js";
 import { formatarData } from "../../dados/formatacao.ts";
 import { rotuloEvento, rotuloFonte } from "../../dados/rotulos.ts";
 

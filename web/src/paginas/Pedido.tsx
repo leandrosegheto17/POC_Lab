@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import "./Pedido.css";
-import { EsquemaLinhaDoTempoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
+import { EsquemaLinhaDoTempoV1 } from "nucleo/contrato/linha-do-tempo-v1.js";
 import { useFocoNoTitulo } from "../nav/useFocoNoTitulo.ts";
 import { useTituloDocumento } from "../nav/useTituloDocumento.ts";
 import { comTentativa, useConsulta } from "../dados/use-consulta.ts";

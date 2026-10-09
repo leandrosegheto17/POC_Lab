@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { EsquemaRespostaQualidade } from "processamento/contrato/qualidade.js";
+import { EsquemaRespostaQualidade } from "nucleo/contrato/qualidade.js";
 import { useFocoNoTitulo } from "../nav/useFocoNoTitulo.ts";
 import { useTituloDocumento } from "../nav/useTituloDocumento.ts";
 import { comTentativa, useConsulta } from "../dados/use-consulta.ts";

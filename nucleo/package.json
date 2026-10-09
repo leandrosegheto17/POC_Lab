@@ -1,0 +1,22 @@
+{
+  "name": "nucleo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./dominio/*.js": "./src/dominio/*.ts",
+    "./contrato/*.js": "./src/contrato/*.ts",
+    "./apoio/*.js": "./test/apoio/*.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

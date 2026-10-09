@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { criarRepositorio, type Repositorio } from "../../src/armazenamento/repositorio.js";
 import { montarLinhaDoTempo } from "../../src/publicacao/linha-do-tempo.js";
-import { obrigatorio } from "../apoio/obrigatorio.js";
+import { obrigatorio } from "nucleo/apoio/obrigatorio.js";
 
 /**
  * Testes da projeção `linha_do_tempo`.

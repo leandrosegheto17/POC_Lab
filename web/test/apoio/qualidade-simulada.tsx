@@ -33,7 +33,7 @@ export function achado(opcoes: {
 
 /**
  * Resposta válida com os 7 tipos em ordem EMBARALHADA (a mesma ordem dos
- * literais de `TipoAchado` em `processamento/src/dominio/modelo.ts`, que é
+ * literais de `TipoAchado` em `nucleo/src/dominio/modelo.ts`, que é
  * DIFERENTE da ordem fixa de exibição do wireframe) — prova de que a página
  * reordena por `tipo`, nunca confia na posição do array recebido.
  */

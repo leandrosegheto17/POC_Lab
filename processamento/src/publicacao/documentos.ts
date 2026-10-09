@@ -1,15 +1,15 @@
 import { createHash } from "node:crypto";
 
-import type { BlocoIndicador, LinhaIndicador } from "../dominio/indicadores.js";
-import type { Totais } from "../dominio/totais.js";
-import type { TipoDivergencia } from "../dominio/modelo.js";
-import { EsquemaResumo, type Resumo, type Cartao } from "../contrato/resumo.js";
+import type { BlocoIndicador, LinhaIndicador } from "nucleo/dominio/indicadores.js";
+import type { Totais } from "nucleo/dominio/totais.js";
+import type { TipoDivergencia } from "nucleo/dominio/modelo.js";
+import { EsquemaResumo, type Resumo, type Cartao } from "nucleo/contrato/resumo.js";
 import {
   EsquemaRespostaIndicadores,
   type RespostaIndicadores,
   type BlocoIndicador as EsquemaBlocoIndicadorType,
   type LinhaIndicador as EsquemaLinhaIndicadorType,
-} from "../contrato/indicadores.js";
+} from "nucleo/contrato/indicadores.js";
 
 /**
  * Mapeamento explícito entre as formas do domínio

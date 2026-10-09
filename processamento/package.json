@@ -4,8 +4,6 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./dominio/*.js": "./src/dominio/*.ts",
-    "./contrato/*.js": "./src/contrato/*.ts",
     "./publicacao/*.js": "./src/publicacao/*.ts",
     "./publicacao/*.sql": "./src/publicacao/*.sql"
   },
@@ -21,6 +19,7 @@
   },
   "dependencies": {
     "csv-parse": "^5.6.0",
+    "nucleo": "workspace:*",
     "zod": "^4.0.0"
   },
   "devDependencies": {

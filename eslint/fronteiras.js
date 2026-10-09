@@ -42,22 +42,9 @@ export const SELETOR_DANGER = {
   message: "dangerouslySetInnerHTML é proibido, mesmo em componente customizado (G-12).",
 };
 
-// Do `processamento`, só dominio e contrato. A entrada bare "processamento"
-// não entra: o pacote `ignore` (semântica .gitignore) não deixa reincluir por
-// negação um filho de ancestral ignorado, e isso quebraria as negações de
-// `processamento/contrato/**` e `processamento/dominio/**`.
-export const GRUPO_SO_DOMINIO_E_CONTRATO = [
-  "**/processamento/src/*",
-  "!**/processamento/src/dominio",
-  "!**/processamento/src/dominio/**",
-  "!**/processamento/src/contrato",
-  "!**/processamento/src/contrato/**",
-  "processamento/*",
-  "!processamento/dominio",
-  "!processamento/dominio/**",
-  "!processamento/contrato",
-  "!processamento/contrato/**",
-];
+// O `web` (site e Worker) depende só de `nucleo`; qualquer import de
+// `processamento` fora de test/ é barrado (G-03).
+export const GRUPO_SEM_PROCESSAMENTO = ["processamento", "processamento/**", "**/processamento/**"];
 
 export const padraoGabarito = () => ({ group: GRUPO_GABARITO, message: MSG_GABARITO });
 

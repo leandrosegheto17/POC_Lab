@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "react-router";
-import type { Achado, RespostaQualidade } from "processamento/contrato/qualidade.js";
-import type { TipoAchado } from "processamento/dominio/modelo.js";
+import type { Achado, RespostaQualidade } from "nucleo/contrato/qualidade.js";
+import type { TipoAchado } from "nucleo/dominio/modelo.js";
 import { TIPOS_ACHADO_EM_ORDEM } from "../../dados/rotulos.ts";
 import { filtrarSugestoesValidas } from "../../dados/sugestoes-ia.ts";
 import { formatarNumero } from "../../dados/formatacao.ts";

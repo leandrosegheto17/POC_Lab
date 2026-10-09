@@ -9,8 +9,8 @@
 // para PED-000002 cujo `tipo` ("valor_divergente", "data_divergente" etc.)
 // NÃO pertence ao enum `TipoDivergencia` do domínio
 // (`duplicado`/`parcial`/`pago_nao_enviado`/`enviado_nao_pago`/
-// `entrega_atrasada`, `../../../processamento/src/dominio/modelo.ts`) nem
-// ao `EsquemaConsultaDivergencias` (`processamento/src/contrato/
+// `entrega_atrasada`, `nucleo/src/dominio/modelo.ts`) nem
+// ao `EsquemaConsultaDivergencias` (`nucleo/contrato/
 // parametros.ts`), e cujo `eventos` é um array de strings cruas
 // (`["EV-0001"]`), não no formato de objeto exigido por
 // `EsquemaRespostaDivergencias`/`EsquemaEventoDivergencia`
@@ -37,7 +37,7 @@ import { describe, expect, it } from "vitest";
 import {
   EsquemaRespostaDivergencias,
   type RespostaDivergencias,
-} from "processamento/contrato/divergencias.js";
+} from "nucleo/contrato/divergencias.js";
 
 import { rotaDivergencias } from "../../worker/rotas/divergencias.ts";
 import { criarD1Teste } from "../apoio/fixture.ts";

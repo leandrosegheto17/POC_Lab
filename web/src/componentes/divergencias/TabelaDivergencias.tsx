@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 import { Link } from "react-router";
-import type { RespostaDivergencias } from "processamento/contrato/divergencias.js";
+import type { RespostaDivergencias } from "nucleo/contrato/divergencias.js";
 import { TabelaDados } from "../TabelaDados.tsx";
 import { EtiquetaTipo } from "../EtiquetaTipo.tsx";
 import { EventosDivergencia } from "./EventosDivergencia.tsx";

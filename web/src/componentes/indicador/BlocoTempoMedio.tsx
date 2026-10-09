@@ -1,4 +1,4 @@
-import type { BlocoIndicador } from "processamento/contrato/indicadores.js";
+import type { BlocoIndicador } from "nucleo/contrato/indicadores.js";
 import {
   formatarDias,
   formatarNumero,

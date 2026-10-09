@@ -13,9 +13,9 @@
 import { describe, expect, it } from "vitest";
 
 import { criarRepositorio } from "../../src/armazenamento/repositorio.ts";
-import { conferirSugestao } from "../../src/dominio/conferencia-sugestao.ts";
+import { conferirSugestao } from "nucleo/dominio/conferencia-sugestao.js";
 import { criarProvedorFalso } from "../../src/ia/provedor-falso.ts";
-import { EsquemaRespostaQualidade } from "../../src/contrato/qualidade.ts";
+import { EsquemaRespostaQualidade } from "nucleo/contrato/qualidade.js";
 import { montarDocumentoQualidade } from "../../src/publicacao/qualidade.ts";
 import { inserirPagamentoSemIdentificacao, inserirPedidoComVenda, sugerir } from "../apoio/ia.ts";
 

@@ -6,7 +6,7 @@ import {
   agruparPorData,
   codigosDoCabecalho,
 } from "./linha-do-tempo/agrupamento.ts";
-import type { EventoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
+import type { EventoV1 } from "nucleo/contrato/linha-do-tempo-v1.js";
 
 // `LinhaDoTempo`: puramente apresentacional: nenhuma chamada à API, nenhum estado próprio,
 // nunca reordena os eventos (quem decide a ordem é a API).

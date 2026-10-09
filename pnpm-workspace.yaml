@@ -1,4 +1,5 @@
 packages:
+  - "nucleo"
   - "processamento"
   - "web"
 allowBuilds:

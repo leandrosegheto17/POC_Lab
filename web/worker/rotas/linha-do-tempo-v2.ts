@@ -6,8 +6,8 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 
-import { EsquemaParametroCodigo } from "processamento/contrato/codigo.js";
-import { EsquemaLinhaDoTempoV2 } from "processamento/contrato/linha-do-tempo-v2.js";
+import { EsquemaParametroCodigo } from "nucleo/contrato/codigo.js";
+import { EsquemaLinhaDoTempoV2 } from "nucleo/contrato/linha-do-tempo-v2.js";
 
 import { hookValidacaoZod, problema } from "../erros.js";
 import { carregarLinhaDoTempo } from "../linha-do-tempo-comum.js";

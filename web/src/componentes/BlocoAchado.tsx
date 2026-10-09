@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import type {
   Achado,
   ExemploAchado,
-} from "processamento/contrato/qualidade.js";
+} from "nucleo/contrato/qualidade.js";
 import { TabelaDados } from "./TabelaDados.tsx";
 import { rotuloFonte } from "./EtiquetaFonte.tsx";
 import { formatarNumero } from "../dados/formatacao.ts";

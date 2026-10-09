@@ -4,7 +4,7 @@
 // rota fica em `worker/index.ts`.
 import type { Context } from "hono";
 
-import { EsquemaRespostaIndicadores } from "processamento/contrato/indicadores.js";
+import { EsquemaRespostaIndicadores } from "nucleo/contrato/indicadores.js";
 
 import { buscarDocumento } from "../consultas.js";
 import { problema } from "../erros.js";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { EventoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
-import { derivarEstado } from "processamento/dominio/estado.js";
+import type { EventoV1 } from "nucleo/contrato/linha-do-tempo-v1.js";
+import { derivarEstado } from "nucleo/dominio/estado.js";
 import { eventoV1ParaDominio } from "../src/dados/evento-v1.ts";
 
 const venda: EventoV1 = {

@@ -1,4 +1,4 @@
-import type { LinhaDoTempoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
+import type { LinhaDoTempoV1 } from "nucleo/contrato/linha-do-tempo-v1.js";
 import { EtiquetaEstado } from "../EtiquetaEstado.tsx";
 import { EtiquetaTipo } from "../EtiquetaTipo.tsx";
 

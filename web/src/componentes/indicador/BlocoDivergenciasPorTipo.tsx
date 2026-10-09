@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import type { BlocoIndicador } from "processamento/contrato/indicadores.js";
+import type { BlocoIndicador } from "nucleo/contrato/indicadores.js";
 import { TabelaDados } from "../TabelaDados.tsx";
 import { EtiquetaTipo } from "../EtiquetaTipo.tsx";
 import { ehTipoDivergencia } from "../../dados/rotulos.ts";

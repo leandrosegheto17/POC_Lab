@@ -4,7 +4,7 @@
 // cabeçalhos centrais aplicados), não uma instância Hono local.
 import { describe, expect, it } from "vitest";
 
-import { EsquemaRespostaIndicadores } from "processamento/contrato/indicadores.js";
+import { EsquemaRespostaIndicadores } from "nucleo/contrato/indicadores.js";
 import appReal from "../../worker/index.ts";
 import { criarD1Teste } from "../apoio/fixture.ts";
 import type { D1Teste } from "../apoio/d1-teste.ts";

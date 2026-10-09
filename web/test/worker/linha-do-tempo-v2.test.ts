@@ -12,7 +12,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { TabelasParaPublicacao } from "processamento/publicacao/escritor-sql.js";
-import { EsquemaLinhaDoTempoV2 } from "processamento/contrato/linha-do-tempo-v2.js";
+import { EsquemaLinhaDoTempoV2 } from "nucleo/contrato/linha-do-tempo-v2.js";
 
 import { criarD1TesteComTabelas } from "../apoio/fixture.ts";
 import type { CorpoLinhaDoTempoSolto } from "../apoio/corpo-teste.ts";

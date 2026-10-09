@@ -38,7 +38,7 @@ describe("lint — fronteira do gabarito (problemas-plantados)", { timeout: 6000
   });
 
   it("barra o import do nome novo no dominio", async () => {
-    const regras = await regrasVioladas("processamento/src/dominio/valores.ts", IMPORTA_NOME_NOVO);
+    const regras = await regrasVioladas("nucleo/src/dominio/valores.ts", IMPORTA_NOME_NOVO);
     expect(regras).toContain("no-restricted-imports");
   });
 

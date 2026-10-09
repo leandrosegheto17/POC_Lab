@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import type { LinhaDoTempoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
-import { derivarEstado } from "processamento/dominio/estado.js";
-import { detectarDuplicado } from "processamento/dominio/divergencias/duplicado.js";
+import type { LinhaDoTempoV1 } from "nucleo/contrato/linha-do-tempo-v1.js";
+import { derivarEstado } from "nucleo/dominio/estado.js";
+import { detectarDuplicado } from "nucleo/dominio/divergencias/duplicado.js";
 import { eventoV1ParaDominio } from "../../dados/evento-v1.ts";
 import { LinhaDoTempo } from "../LinhaDoTempo.tsx";
 import { SeletorData } from "../SeletorData.tsx";

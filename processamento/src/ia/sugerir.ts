@@ -1,6 +1,6 @@
 import type { PagamentoSemIdentificacaoArmazenado } from "../armazenamento/consultas.js";
 import type { Repositorio } from "../armazenamento/repositorio.js";
-import { conferirSugestao } from "../dominio/conferencia-sugestao.js";
+import { conferirSugestao } from "nucleo/dominio/conferencia-sugestao.js";
 import { montarCandidatos, type Candidato, type ResumoPedido } from "./candidatos.js";
 import { calcularChaveCache, RESPOSTA_CACHE_SEM_SUGESTAO } from "./chave-cache.js";
 import type { ProvedorSugestao } from "./porta.js";

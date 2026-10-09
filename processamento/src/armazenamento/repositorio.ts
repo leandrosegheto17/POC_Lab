@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import type { AchadoQualidade, Fonte } from "../dominio/modelo.js";
+import type { AchadoQualidade, Fonte } from "nucleo/dominio/modelo.js";
 import { criarConsultas, type Consultas } from "./consultas.js";
 
 /**

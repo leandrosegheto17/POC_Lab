@@ -10,7 +10,8 @@ const COMUM = ["zod", "typescript", "vitest"];
 
 const PERMITIDAS_POR_PACOTE: Record<string, string[]> = {
   "package.json": ["eslint", "@eslint/js", "typescript-eslint", "eslint-plugin-react"],
-  "processamento/package.json": ["csv-parse", "tsx"],
+  "nucleo/package.json": [],
+  "processamento/package.json": ["csv-parse", "tsx", "nucleo"],
   "web/package.json": [
     "hono",
     "@hono/zod-validator",
@@ -26,6 +27,7 @@ const PERMITIDAS_POR_PACOTE: Record<string, string[]> = {
     "@testing-library/jest-dom",
     "vitest-axe",
     "jsdom",
+    "nucleo",
     "processamento",
   ],
 };

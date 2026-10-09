@@ -20,9 +20,9 @@ import { gerarConteudo } from "../../src/aplicacao/gerar.ts";
 import { construirCodigosConhecidos } from "../../src/aplicacao/importar.ts";
 import type { Repositorio } from "../../src/armazenamento/repositorio.ts";
 import { abrirRepositorioParaTeste } from "../../src/armazenamento/repositorio-teste.ts";
-import type { Evento } from "../../src/dominio/evento.ts";
+import type { Evento } from "nucleo/dominio/evento.js";
 import { importar } from "../../src/importacao/importar.ts";
-import { calcularDivergencias } from "../../src/dominio/divergencias/index.ts";
+import { calcularDivergencias } from "nucleo/dominio/divergencias/index.js";
 import { agruparEventosPorPedido } from "../../src/publicacao/eventos-por-pedido.ts";
 import { SEMENTE_PADRAO } from "../../src/gerador/prng.ts";
 

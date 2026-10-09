@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import type { RespostaDivergencias } from "processamento/contrato/divergencias.js";
+import type { RespostaDivergencias } from "nucleo/contrato/divergencias.js";
 import { EtiquetaTipo } from "../EtiquetaTipo.tsx";
 import { EventosDivergencia } from "./EventosDivergencia.tsx";
 

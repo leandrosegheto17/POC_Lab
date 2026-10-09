@@ -1,4 +1,4 @@
-import type { SituacaoPagamento } from "../dominio/quitacao.js";
+import type { SituacaoPagamento } from "nucleo/dominio/quitacao.js";
 
 /** Tolerância monetária (mesma convenção de RN-02/RN-11). */
 export const TOLERANCIA_VALOR = 0.01;

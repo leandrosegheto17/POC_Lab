@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { criarRepositorio } from "../../src/armazenamento/repositorio.js";
 import { criarProvedorFalso } from "../../src/ia/provedor-falso.js";
-import { conferirSugestao } from "../../src/dominio/conferencia-sugestao.js";
+import { conferirSugestao } from "nucleo/dominio/conferencia-sugestao.js";
 import type { ProvedorSugestao } from "../../src/ia/porta.js";
-import { obrigatorio } from "../apoio/obrigatorio.js";
+import { obrigatorio } from "nucleo/apoio/obrigatorio.js";
 import { inserirPagamentoSemIdentificacao, inserirPedidoComVenda, sugerir } from "../apoio/ia.js";
 
 /** Provedor espião: nunca decide nada por conta própria, só registra as chamadas recebidas. */

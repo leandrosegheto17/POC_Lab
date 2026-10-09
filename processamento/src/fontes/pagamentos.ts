@@ -11,10 +11,10 @@
  * permanece puro e sem dependência de parsing de arquivo.
  */
 import { parse, type Options } from "csv-parse/sync";
-import type { Evento } from "../dominio/evento.js";
-import { casarReferencia } from "../dominio/referencia.js";
-import { verificarPagamento } from "../dominio/valores-fora-do-padrao.js";
-import type { AchadoQualidade, VinculoFonte } from "../dominio/modelo.js";
+import type { Evento } from "nucleo/dominio/evento.js";
+import { casarReferencia } from "nucleo/dominio/referencia.js";
+import { verificarPagamento } from "nucleo/dominio/valores-fora-do-padrao.js";
+import type { AchadoQualidade, VinculoFonte } from "nucleo/dominio/modelo.js";
 
 /**
  * Linha crua do CSV de pagamentos, já convertida para objeto pelas colunas

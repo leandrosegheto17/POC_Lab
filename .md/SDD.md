@@ -43,7 +43,7 @@ flowchart LR
 
 ## 2. Componentes e Fluxo de Dados
 
-Repositório em **pnpm workspace com 3 pacotes**: `nucleo`, `processamento` e `web` (ADR-008 em parte substituído pelo ADR-018). O Worker fica no pacote `web` porque site e API são publicados juntos. Estado alvo: até a tarefa de migração do BK-0003 rodar, `dominio/` e `contrato/` ainda estão em `processamento/src/`.
+Repositório em **pnpm workspace com 3 pacotes**: `nucleo`, `processamento` e `web` (ADR-008 em parte substituído pelo ADR-018). O Worker fica no pacote `web` porque site e API são publicados juntos.
 
 | Pacote / módulo | Responsabilidade | Depende de |
 |---|---|---|
@@ -76,7 +76,7 @@ Regra de dependência (ESLint `no-restricted-imports` e dependências do `packag
 
 ### Pacotes, pastas e fronteiras
 
-Estado alvo do ADR-018. A migração do código é a tarefa mecânica descrita no BK-0003; até lá, `dominio/` e `contrato/` seguem em `processamento/src/`.
+Desenho do ADR-018.
 
 **Pacotes e quem depende de quem**
 

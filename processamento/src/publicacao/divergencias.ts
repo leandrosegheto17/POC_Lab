@@ -1,7 +1,7 @@
 import type { Consultas } from "../armazenamento/consultas.js";
-import type { Evento } from "../dominio/evento.js";
-import type { TipoDivergencia } from "../dominio/modelo.js";
-import { calcularDivergencias } from "../dominio/divergencias/index.js";
+import type { Evento } from "nucleo/dominio/evento.js";
+import type { TipoDivergencia } from "nucleo/dominio/modelo.js";
+import { calcularDivergencias } from "nucleo/dominio/divergencias/index.js";
 import { agruparEventosPorPedido } from "./eventos-por-pedido.js";
 
 /**

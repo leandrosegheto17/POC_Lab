@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 import type {
   BlocoIndicador,
   LinhaIndicador,
-} from "processamento/contrato/indicadores.js";
+} from "nucleo/contrato/indicadores.js";
 import { TabelaDados } from "../TabelaDados.tsx";
 import {
   formatarNumero,

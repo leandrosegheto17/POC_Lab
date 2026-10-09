@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   EsquemaRespostaIndicadores,
   type BlocoIndicador,
-} from "processamento/contrato/indicadores.js";
+} from "nucleo/contrato/indicadores.js";
 import { useFocoNoTitulo } from "../nav/useFocoNoTitulo.ts";
 import { useTituloDocumento } from "../nav/useTituloDocumento.ts";
 import { comTentativa, useConsulta } from "../dados/use-consulta.ts";

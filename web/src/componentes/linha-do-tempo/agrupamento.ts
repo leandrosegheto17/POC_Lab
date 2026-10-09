@@ -1,4 +1,4 @@
-import type { EventoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
+import type { EventoV1 } from "nucleo/contrato/linha-do-tempo-v1.js";
 import { formatarData } from "../../dados/formatacao.ts";
 import type { Fonte } from "../../dados/rotulos.ts";
 

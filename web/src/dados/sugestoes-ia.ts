@@ -1,7 +1,7 @@
 import {
   EsquemaSugestaoIA,
   type SugestaoIA,
-} from "processamento/contrato/sugestao-ia.js";
+} from "nucleo/contrato/sugestao-ia.js";
 
 export type { SugestaoIA };
 

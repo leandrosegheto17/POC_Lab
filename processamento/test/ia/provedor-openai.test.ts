@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { criarProvedorOpenAI } from "../../src/ia/provedor-openai.js";
-import { obrigatorio } from "../apoio/obrigatorio.js";
+import { obrigatorio } from "nucleo/apoio/obrigatorio.js";
 
 /** Monta uma `Response`-like mínima, suficiente para o que o provedor lê (`ok`, `json`). */
 function criarRespostaFalsa(corpo: unknown, ok = true): Response {

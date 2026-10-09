@@ -4,7 +4,7 @@
 // mensagem técnica do erro, mesmo padrão de silêncio de `FaixaResumo`.
 //
 // Percentuais são calculados de numerador/denominador do `Cartao`
-// (processamento/contrato/resumo.ts) por `formatarPercentual`; com
+// (nucleo/contrato/resumo.ts) por `formatarPercentual`; com
 // denominador 0 o cartão mostra "—"/"indisponível agora", nunca "NaN%".
 //
 // Cartões `.kpi` dentro de
@@ -19,7 +19,7 @@ import {
   formatarNumero,
   formatarPercentual,
 } from "../dados/formatacao.ts";
-import type { Cartao } from "processamento/contrato/resumo.js";
+import type { Cartao } from "nucleo/contrato/resumo.js";
 
 type LinhaCartao = {
   titulo: string;

@@ -2,7 +2,7 @@
 // a partir do GET). Este arquivo só exporta o handler — o registro fica em
 // `web/worker/index.ts` (`app.get('/api/v1/qualidade', handlerQualidade)`).
 import type { Context } from "hono";
-import { EsquemaRespostaQualidade } from "processamento/contrato/qualidade.js";
+import { EsquemaRespostaQualidade } from "nucleo/contrato/qualidade.js";
 
 import { buscarDocumento } from "../consultas.js";
 import { problema } from "../erros.js";

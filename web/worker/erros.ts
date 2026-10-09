@@ -1,16 +1,14 @@
 // Erros centrais da API (RFC 9457 / application/problem+json).
 //
-// `EsquemaErro`/`CodigoErro` vêm de `processamento/src/contrato/erro.ts`,
-// importados via especificador de pacote
-// (`processamento/contrato/erro.js`), resolvido pelo campo `exports` de
-// `processamento/package.json` através do symlink do workspace
-// (`web/package.json` declara `"processamento": "workspace:*"`). Isso NÃO
-// está sujeito à checagem de `rootDir` do `web/tsconfig.json`, porque o
-// TypeScript trata arquivos resolvidos via `node_modules` como dependências,
-// não como arquivos de entrada do programa — diferente de um import
-// relativo profundo (`../../../processamento/src/...`), que continuaria
-// disparando `TS6059`.
-import { EsquemaErro, type CodigoErro } from "processamento/contrato/erro.js";
+// `EsquemaErro`/`CodigoErro` vêm de `nucleo/contrato/erro.ts`, importados via
+// especificador de pacote (`nucleo/contrato/erro.js`), resolvido pelo campo
+// `exports` de `nucleo/package.json` através do symlink do workspace
+// (`web/package.json` declara `"nucleo": "workspace:*"`). Isso NÃO está sujeito
+// à checagem de `rootDir` do `web/tsconfig.json`, porque o TypeScript trata
+// arquivos resolvidos via `node_modules` como dependências, não como arquivos
+// de entrada do programa — diferente de um import relativo profundo
+// (`../../../nucleo/src/...`), que continuaria disparando `TS6059`.
+import { EsquemaErro, type CodigoErro } from "nucleo/contrato/erro.js";
 
 interface ItemErroCampo {
   campo: string;

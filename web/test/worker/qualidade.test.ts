@@ -16,7 +16,7 @@ import { describe, expect, it } from "vitest";
 import {
   EsquemaRespostaQualidade,
   type RespostaQualidade,
-} from "processamento/contrato/qualidade.js";
+} from "nucleo/contrato/qualidade.js";
 
 import appReal from "../../worker/index.ts";
 import { criarD1Teste } from "../apoio/fixture.ts";

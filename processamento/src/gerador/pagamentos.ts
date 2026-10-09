@@ -1,4 +1,4 @@
-import { arredondarMoeda, calcularValorDevido } from "../dominio/valores.js";
+import { arredondarMoeda, calcularValorDevido } from "nucleo/dominio/valores.js";
 import type { PedidoVendas } from "../fontes/leitura-vendas.js";
 
 /**

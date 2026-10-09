@@ -1,8 +1,8 @@
 // Resolução, consultas e montagem de `pedido` comuns às rotas da linha do
 // tempo (v1 e v2). Cada rota só mapeia os eventos para a sua forma e valida
 // com o seu esquema. Todo acesso ao D1 passa por `./consultas.js`.
-import { normalizarCodigo } from "processamento/contrato/codigo.js";
-import { FONTES, type Fonte } from "processamento/dominio/modelo.js";
+import { normalizarCodigo } from "nucleo/contrato/codigo.js";
+import { FONTES, type Fonte } from "nucleo/dominio/modelo.js";
 
 import {
   listarDivergenciasDoPedido,

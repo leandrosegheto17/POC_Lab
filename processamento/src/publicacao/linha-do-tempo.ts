@@ -11,10 +11,10 @@
  * lê e projeta).
  */
 import type { Consultas, EventoArmazenado } from "../armazenamento/consultas.js";
-import type { Evento } from "../dominio/evento.js";
-import type { Fonte } from "../dominio/modelo.js";
-import { ordenarEventos } from "../dominio/ordenacao.js";
-import { detectarForaDeOrdem } from "../dominio/fora-de-ordem.js";
+import type { Evento } from "nucleo/dominio/evento.js";
+import type { Fonte } from "nucleo/dominio/modelo.js";
+import { ordenarEventos } from "nucleo/dominio/ordenacao.js";
+import { detectarForaDeOrdem } from "nucleo/dominio/fora-de-ordem.js";
 import { agruparEventosPorPedido } from "./eventos-por-pedido.js";
 
 /** Uma linha da projeção `linha_do_tempo` (ver `publicacao/leitura-d1.sql`). */

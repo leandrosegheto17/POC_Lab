@@ -1,8 +1,8 @@
 // Converte o evento da API v1 no evento do domínio. A API não expõe
 // `versao_schema` (a forma v1 é, por definição, a versão 1) nem devolve
 // `ordemChegada`; os demais campos seguem iguais.
-import type { EventoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
-import type { Evento } from "processamento/dominio/evento.js";
+import type { EventoV1 } from "nucleo/contrato/linha-do-tempo-v1.js";
+import type { Evento } from "nucleo/dominio/evento.js";
 
 export function eventoV1ParaDominio(evento: EventoV1): Evento {
   const envelope = {

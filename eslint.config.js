@@ -5,7 +5,7 @@ import reactPlugin from "eslint-plugin-react";
 import {
   GERACAO,
   GRUPO_GABARITO_ANTIGO,
-  GRUPO_SO_DOMINIO_E_CONTRATO,
+  GRUPO_SEM_PROCESSAMENTO,
   MSG_GABARITO,
   SELETOR_LITERAL_GABARITO,
   SELETOR_LITERAL_GABARITO_ANTIGO,
@@ -20,7 +20,7 @@ import {
  * Fronteiras do SDD §2 e GUARDRAILS G-02/G-03/G-04/G-12:
  *   - dominio    -> não importa nada do projeto, nem `zod`, nem `node:*`.
  *   - contrato   -> só `dominio` e `zod`.
- *   - web/worker e web/src -> só `dominio` e `contrato` do `processamento`;
+ *   - web/worker e web/src -> não importam `processamento` (só `nucleo`);
  *                   `node:*` só em `test/`; web/src não importa `web/worker`.
  *   - gabarito   -> só pode ser citado (import ou string) em `test/`.
  *   - UI         -> `dangerouslySetInnerHTML` proibido (G-12).
@@ -73,10 +73,10 @@ export default tseslint.config(
     },
   },
 
-  // G-02 — processamento/src/dominio: camada mais interna, sem dependência
+  // G-02 — nucleo/src/dominio: camada mais interna, sem dependência
   // de infraestrutura, validação externa, runtime Node ou gabarito.
   {
-    files: ["processamento/src/dominio/**/*.{ts,tsx}"],
+    files: ["nucleo/src/dominio/**/*.{ts,tsx}"],
     ignores: ["**/test/**"],
     rules: bloqueioImports(
       [
@@ -95,6 +95,7 @@ export default tseslint.config(
             "**/cli/**",
             "**/publicacao/**",
             "**/web/**",
+            "**/processamento/**",
           ],
           message: "dominio não importa nenhum outro módulo do projeto (G-02).",
         },
@@ -104,9 +105,9 @@ export default tseslint.config(
     ),
   },
 
-  // G-03 — processamento/src/contrato: só dominio e zod.
+  // G-03 — nucleo/src/contrato: só dominio e zod.
   {
-    files: ["processamento/src/contrato/**/*.{ts,tsx}"],
+    files: ["nucleo/src/contrato/**/*.{ts,tsx}"],
     ignores: ["**/test/**"],
     rules: bloqueioImports([
       {
@@ -123,6 +124,7 @@ export default tseslint.config(
           "**/cli/**",
           "**/publicacao/**",
           "**/web/**",
+          "**/processamento/**",
         ],
         message: "contrato só pode importar dominio e zod (G-03).",
       },
@@ -130,7 +132,7 @@ export default tseslint.config(
     ]),
   },
 
-  // G-03 — web/worker: do `processamento` só dominio e contrato; node:*
+  // G-03 — web/worker: não importa `processamento` (só `nucleo`); node:*
   // proibido (fora de test/, ver nota de interpretação acima).
   {
     files: ["web/worker/**/*.{ts,tsx}"],
@@ -141,14 +143,14 @@ export default tseslint.config(
         message: "web/worker não importa node:* fora de test/ (G-03).",
       },
       {
-        group: GRUPO_SO_DOMINIO_E_CONTRATO,
-        message: "web/worker só importa dominio e contrato do processamento (G-03).",
+        group: GRUPO_SEM_PROCESSAMENTO,
+        message: "web/worker não importa processamento; só nucleo (G-03).",
       },
       padraoGabarito(),
     ]),
   },
 
-  // G-03 — web/src: do `processamento` só dominio e contrato; node:*
+  // G-03 — web/src: não importa `processamento` (só `nucleo`); node:*
   // proibido (fora de test/); não importa web/worker.
   {
     files: ["web/src/**/*.{ts,tsx}"],
@@ -159,8 +161,8 @@ export default tseslint.config(
         message: "web/src não importa node:* fora de test/ (G-03).",
       },
       {
-        group: GRUPO_SO_DOMINIO_E_CONTRATO,
-        message: "web/src só importa dominio e contrato do processamento (G-03).",
+        group: GRUPO_SEM_PROCESSAMENTO,
+        message: "web/src não importa processamento; só nucleo (G-03).",
       },
       {
         // Imports relativos reais (`../worker/x.js`) não contêm "web/worker"
@@ -183,8 +185,8 @@ export default tseslint.config(
   {
     files: ["**/*.{ts,tsx,js,jsx}"],
     ignores: [
-      "processamento/src/dominio/**",
-      "processamento/src/contrato/**",
+      "nucleo/src/dominio/**",
+      "nucleo/src/contrato/**",
       "web/worker/**",
       "web/src/**",
       ...GERACAO,

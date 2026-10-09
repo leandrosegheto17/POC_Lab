@@ -1,5 +1,5 @@
 // Eventos v1 de exemplo e consultas de DOM para os testes de `LinhaDoTempo`.
-import type { EventoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
+import type { EventoV1 } from "nucleo/contrato/linha-do-tempo-v1.js";
 
 export function eventoVenda(overrides: Partial<EventoV1 & { tipo: "venda" }> = {}): EventoV1 {
   return {

@@ -19,16 +19,16 @@
  */
 import type { Consultas } from "../armazenamento/consultas.js";
 import type { Repositorio } from "../armazenamento/repositorio.js";
-import { conferirSugestao } from "../dominio/conferencia-sugestao.js";
+import { conferirSugestao } from "nucleo/dominio/conferencia-sugestao.js";
 import { montarCandidatos } from "../ia/candidatos.js";
 import { calcularChaveCache, RESPOSTA_CACHE_SEM_SUGESTAO } from "../ia/chave-cache.js";
-import { detectarForaDeOrdem } from "../dominio/fora-de-ordem.js";
-import { TIPOS_ACHADO, type AchadoQualidade, type TipoAchado } from "../dominio/modelo.js";
+import { detectarForaDeOrdem } from "nucleo/dominio/fora-de-ordem.js";
+import { TIPOS_ACHADO, type AchadoQualidade, type TipoAchado } from "nucleo/dominio/modelo.js";
 import {
   EsquemaRespostaQualidade,
   type RespostaQualidade,
-} from "../contrato/qualidade.js";
-import { EsquemaSugestaoIA, type SugestaoIA } from "../contrato/sugestao-ia.js";
+} from "nucleo/contrato/qualidade.js";
+import { EsquemaSugestaoIA, type SugestaoIA } from "nucleo/contrato/sugestao-ia.js";
 import { agruparEventosPorPedido } from "./eventos-por-pedido.js";
 import { montarPedidosEVinculos } from "./pedidos.js";
 

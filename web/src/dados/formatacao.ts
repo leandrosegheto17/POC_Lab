@@ -1,5 +1,5 @@
 // Formatação pura, pt-BR, usada pelas telas
-// do web. Não importa de `processamento/src/dominio/formatacao.ts` (o web
+// do web. Não importa de `nucleo/dominio/formatacao.ts` (o web
 // formata só o que exibe; o texto gerado no processamento chega pronto).
 
 const NUMERO = new Intl.NumberFormat("pt-BR");

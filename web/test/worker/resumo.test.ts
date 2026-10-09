@@ -4,7 +4,7 @@
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 
-import { EsquemaResumo } from "processamento/contrato/resumo.js";
+import { EsquemaResumo } from "nucleo/contrato/resumo.js";
 import { cabecalhos } from "../../worker/cabecalhos.ts";
 import { handlerResumo } from "../../worker/rotas/resumo.ts";
 import { criarD1Teste } from "../apoio/fixture.ts";

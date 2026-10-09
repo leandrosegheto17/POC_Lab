@@ -6,7 +6,7 @@ import { MemoryRouter } from "react-router";
 import { ProvedorResumo } from "../../src/dados/contexto-resumo.tsx";
 import { Divergencias } from "../../src/paginas/Divergencias.tsx";
 
-/** Objeto mínimo válido contra `EsquemaCartao` (processamento/contrato/resumo.ts). */
+/** Objeto mínimo válido contra `EsquemaCartao` (nucleo/contrato/resumo.ts). */
 export function cartao(numerador: number, denominador = 1): unknown {
   return {
     titulo: "Cartão de teste",

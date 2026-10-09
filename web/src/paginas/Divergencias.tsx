@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   EsquemaRespostaDivergencias,
   type RespostaDivergencias,
-} from "processamento/contrato/divergencias.js";
+} from "nucleo/contrato/divergencias.js";
 import { useFocoNoTitulo } from "../nav/useFocoNoTitulo.ts";
 import { useTituloDocumento } from "../nav/useTituloDocumento.ts";
 import {

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   LIMITE_TEXTO_CURTO_SUGESTAO,
   LIMITE_TEXTO_LONGO_SUGESTAO,
-} from "processamento/contrato/sugestao-ia.js";
+} from "nucleo/contrato/sugestao-ia.js";
 import { filtrarSugestoesValidas } from "../src/dados/sugestoes-ia.ts";
 
 function sugestao(sobrescritas: Record<string, unknown> = {}) {

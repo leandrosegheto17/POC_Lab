@@ -28,7 +28,7 @@ import { criarRepositorio } from "../../src/armazenamento/repositorio.ts";
 import { importar } from "../../src/importacao/importar.ts";
 import { montarDocumentoQualidade } from "../../src/publicacao/qualidade.ts";
 import { SEMENTE_PADRAO } from "../../src/gerador/prng.ts";
-import { obrigatorio } from "../apoio/obrigatorio.js";
+import { obrigatorio } from "nucleo/apoio/obrigatorio.js";
 
 const CAMINHO_BASE = path.join("dados", "origem", "northwind.db");
 const baseDisponivel = existsSync(CAMINHO_BASE);

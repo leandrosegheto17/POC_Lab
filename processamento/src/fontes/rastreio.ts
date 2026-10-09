@@ -1,6 +1,6 @@
 import { parse } from "csv-parse/sync";
-import type { Evento } from "../dominio/evento.js";
-import type { AchadoQualidade, VinculoFonte } from "../dominio/modelo.js";
+import type { Evento } from "nucleo/dominio/evento.js";
+import type { AchadoQualidade, VinculoFonte } from "nucleo/dominio/modelo.js";
 
 /**
  * Tipos de evento de rastreio reconhecidos em `rastreio.csv`.

@@ -10,14 +10,14 @@ import { montarDivergencias, type LinhaDivergenciaProjecao } from "./divergencia
 import { montarDocumentoQualidade } from "./qualidade.js";
 import { montarDocumentoResumo, montarDocumentoIndicadores } from "./documentos.js";
 import { escreverSqlPublicacao, type LinhaTabela, type TabelasParaPublicacao } from "./escritor-sql.js";
-import { totaisResumo, type DivergenciaComPedido, type PedidoParaTotais } from "../dominio/totais.js";
+import { totaisResumo, type DivergenciaComPedido, type PedidoParaTotais } from "nucleo/dominio/totais.js";
 import {
   indicadorEntregasNoPrazo,
   calcularTempoMedioPedidoEnvioEntrega,
   calcularValorPagoVsDevido,
   type PedidoParaIndicadorEntrega,
   type PedidoParaIndicadorTempoMedio,
-} from "../dominio/indicadores.js";
+} from "nucleo/dominio/indicadores.js";
 
 /**
  * Monta o SQL completo de publicação (DDL + dados) a partir do event store

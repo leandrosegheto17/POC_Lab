@@ -1,7 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 
-import type { Evento } from "../dominio/evento.js";
-import type { AchadoQualidade, Fonte, TipoAchado } from "../dominio/modelo.js";
+import type { Evento } from "nucleo/dominio/evento.js";
+import type { AchadoQualidade, Fonte, TipoAchado } from "nucleo/dominio/modelo.js";
 
 /**
  * Consultas de leitura do event store. Cada comando é preparado uma vez, na

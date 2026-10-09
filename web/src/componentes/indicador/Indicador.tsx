@@ -1,4 +1,4 @@
-import type { BlocoIndicador } from "processamento/contrato/indicadores.js";
+import type { BlocoIndicador } from "nucleo/contrato/indicadores.js";
 import { TabelaDados } from "../TabelaDados.tsx";
 import {
   formatarNumero,
@@ -8,7 +8,7 @@ import {
 import { TEXTO_SEM_DADOS_DEFAULT } from "./textos.ts";
 
 type IndicadorProps = {
-  /** Bloco do contrato (`EsquemaBlocoIndicador`, `processamento/contrato/indicadores.ts`). */
+  /** Bloco do contrato (`EsquemaBlocoIndicador`, `nucleo/contrato/indicadores.ts`). */
   bloco: BlocoIndicador;
   /**
    * Texto mostrado na coluna "%" quando `linha.resultado` é `null` (caso de

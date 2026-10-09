@@ -5,7 +5,7 @@
 // `ProvedorResumo`/`useResumo` — evita que cada componente que precise do
 // resumo (faixa, busca, cartões) dispare sua própria chamada.
 import { createContext, useContext, type ReactNode } from "react";
-import { EsquemaResumo, type Resumo } from "processamento/contrato/resumo.js";
+import { EsquemaResumo, type Resumo } from "nucleo/contrato/resumo.js";
 import { useConsulta, type EstadoConsulta } from "./use-consulta.ts";
 
 const URL_RESUMO = "/api/v1/resumo";

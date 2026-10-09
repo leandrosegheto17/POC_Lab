@@ -4,7 +4,7 @@ import {
   montarDocumentoResumo,
   montarDocumentoIndicadores,
 } from "../../src/publicacao/documentos.js";
-import { totaisResumo, type DivergenciaComPedido } from "../../src/dominio/totais.js";
+import { totaisResumo, type DivergenciaComPedido } from "nucleo/dominio/totais.js";
 import {
   indicadorEntregasNoPrazo,
   indicadorDivergenciasPorTipo,
@@ -13,13 +13,13 @@ import {
   type PedidoParaIndicadorEntrega,
   type PedidoParaIndicadorTempoMedio,
   type PedidoParaIndicadorValorPagoVsDevido,
-} from "../../src/dominio/indicadores.js";
-import { EsquemaResumo } from "../../src/contrato/resumo.js";
+} from "nucleo/dominio/indicadores.js";
+import { EsquemaResumo } from "nucleo/contrato/resumo.js";
 import {
   EsquemaRespostaIndicadores,
   EsquemaBlocoIndicador,
-} from "../../src/contrato/indicadores.js";
-import { obrigatorio } from "../apoio/obrigatorio.js";
+} from "nucleo/contrato/indicadores.js";
+import { obrigatorio } from "nucleo/apoio/obrigatorio.js";
 
 /**
  * Testes de `montarDocumentoResumo`/`montarDocumentoIndicadores`

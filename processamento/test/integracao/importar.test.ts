@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { abrirRepositorioParaTeste } from "../../src/armazenamento/repositorio-teste.js";
 import { importar } from "../../src/importacao/importar.js";
 import type { PedidoVendas } from "../../src/fontes/leitura-vendas.js";
-import { obrigatorio } from "../apoio/obrigatorio.js";
+import { obrigatorio } from "nucleo/apoio/obrigatorio.js";
 
 /** Pedido de vendas mínimo válido (sem achado de qualidade: formato curto, com data de envio). */
 function criarPedidoVendas(idPedido: string, transportadora = "1"): PedidoVendas {

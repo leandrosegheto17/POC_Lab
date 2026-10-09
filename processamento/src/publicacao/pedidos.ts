@@ -1,7 +1,7 @@
 import type { Consultas, EventoArmazenado, VinculoFonte } from "../armazenamento/consultas.js";
-import { calcularQuitacao, type SituacaoPagamento } from "../dominio/quitacao.js";
-import { normalizarCodigo } from "../contrato/codigo.js";
-import { FONTES, type Fonte } from "../dominio/modelo.js";
+import { calcularQuitacao, type SituacaoPagamento } from "nucleo/dominio/quitacao.js";
+import { normalizarCodigo } from "nucleo/contrato/codigo.js";
+import { FONTES, type Fonte } from "nucleo/dominio/modelo.js";
 import { agruparEventosPorPedido } from "./eventos-por-pedido.js";
 
 /**

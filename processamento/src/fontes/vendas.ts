@@ -14,10 +14,10 @@
  * `verificarItemPedido`) são chamados, nunca reimplementados.
  */
 import type { PedidoVendas } from "./leitura-vendas.js";
-import { calcularValorDevido } from "../dominio/valores.js";
-import { verificarItemPedido } from "../dominio/valores-fora-do-padrao.js";
-import type { Evento } from "../dominio/evento.js";
-import type { AchadoQualidade, VinculoFonte } from "../dominio/modelo.js";
+import { calcularValorDevido } from "nucleo/dominio/valores.js";
+import { verificarItemPedido } from "nucleo/dominio/valores-fora-do-padrao.js";
+import type { Evento } from "nucleo/dominio/evento.js";
+import type { AchadoQualidade, VinculoFonte } from "nucleo/dominio/modelo.js";
 
 /**
  * Resultado do processamento da base de vendas: tudo em memória, pronto

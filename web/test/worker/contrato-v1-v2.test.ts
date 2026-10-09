@@ -4,7 +4,7 @@
 // independentemente de o pagamento gravado na `linha_do_tempo` estar em
 // `versao_schema: 1` ou `versao_schema: 2` (a v1 nunca expõe `versao_schema`
 // nem `meio_pagamento` — `EsquemaEventoPagamentoV1`, em
-// `processamento/src/contrato/linha-do-tempo-v1.ts`, usa `z.object()` não
+// `nucleo/contrato/linha-do-tempo-v1.ts`, usa `z.object()` não
 // estrito, que descarta silenciosamente chaves desconhecidas no `.parse()`);
 // e que a v2 continua expondo `versao_schema`/`meio_pagamento` corretamente,
 // inclusive com pagamentos de versões diferentes misturados no mesmo pedido.
@@ -30,8 +30,8 @@ import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 
 import type { TabelasParaPublicacao } from "processamento/publicacao/escritor-sql.js";
-import { EsquemaLinhaDoTempoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
-import { EsquemaLinhaDoTempoV2 } from "processamento/contrato/linha-do-tempo-v2.js";
+import { EsquemaLinhaDoTempoV1 } from "nucleo/contrato/linha-do-tempo-v1.js";
+import { EsquemaLinhaDoTempoV2 } from "nucleo/contrato/linha-do-tempo-v2.js";
 
 import { criarD1TesteComTabelas } from "../apoio/fixture.ts";
 import type { CorpoLinhaDoTempoSolto } from "../apoio/corpo-teste.ts";

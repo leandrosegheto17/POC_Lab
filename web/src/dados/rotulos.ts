@@ -1,13 +1,13 @@
 // Nomes amigáveis, ordem de exibição e variante visual dos tipos que o site
 // mostra. As listas vêm do domínio (e do contrato, no caso do evento); aqui
 // só entra o texto. Os `Record` obrigam a cobrir todo valor novo do enum.
-import { FONTES, TIPOS_DIVERGENCIA } from "processamento/dominio/modelo.js";
+import { FONTES, TIPOS_DIVERGENCIA } from "nucleo/dominio/modelo.js";
 import type {
   Fonte,
   TipoAchado,
   TipoDivergencia,
-} from "processamento/dominio/modelo.js";
-import type { EventoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
+} from "nucleo/dominio/modelo.js";
+import type { EventoV1 } from "nucleo/contrato/linha-do-tempo-v1.js";
 
 export type { Fonte, TipoDivergencia };
 export { FONTES, TIPOS_DIVERGENCIA };

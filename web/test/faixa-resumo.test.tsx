@@ -12,7 +12,7 @@ import {
 import { FaixaResumo } from "../src/componentes/FaixaResumo.tsx";
 import { respostaFake } from "./apoio/api-simulada.tsx";
 
-/** Objeto mínimo válido contra `EsquemaResumo` (processamento/contrato/resumo.ts). */
+/** Objeto mínimo válido contra `EsquemaResumo` (nucleo/contrato/resumo.ts). */
 function cartao(numerador: number, denominador = 1): unknown {
   return {
     titulo: "Cartão de teste",

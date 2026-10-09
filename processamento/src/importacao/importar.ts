@@ -27,8 +27,8 @@ import { processarVendas } from "../fontes/vendas.js";
 import { processarPagamentos, type ResultadoProcessamentoPagamentos } from "../fontes/pagamentos.js";
 import { processarRastreio, type ResultadoProcessamentoRastreio } from "../fontes/rastreio.js";
 import type { PedidoVendas } from "../fontes/leitura-vendas.js";
-import type { Evento } from "../dominio/evento.js";
-import type { AchadoQualidade, Fonte } from "../dominio/modelo.js";
+import type { Evento } from "nucleo/dominio/evento.js";
+import type { AchadoQualidade, Fonte } from "nucleo/dominio/modelo.js";
 import type { Repositorio } from "../armazenamento/repositorio.js";
 
 /** Contagens de uma fonte no relatório final de uma chamada a `importar`. */

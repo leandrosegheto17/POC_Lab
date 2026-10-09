@@ -2,14 +2,14 @@
 // do corpo pelo esquema do contrato e tradução para um resultado que nunca
 // expõe `detail`/status/corpo bruto ao usuário.
 //
-// `EsquemaErro` vem de `processamento/src/contrato/erro.ts`,
-// importado via especificador de pacote (`processamento/contrato/erro.js`),
-// resolvido pelo campo `exports` de `processamento/package.json` através do
+// `EsquemaErro` vem de `nucleo/contrato/erro.ts`,
+// importado via especificador de pacote (`nucleo/contrato/erro.js`),
+// resolvido pelo campo `exports` de `nucleo/package.json` através do
 // symlink do workspace (`web/package.json` declara
-// `"processamento": "workspace:*"`) — mesmo padrão usado em
+// `"nucleo": "workspace:*"`) — mesmo padrão usado em
 // `web/worker/erros.ts`.
 import type { z } from "zod";
-import { EsquemaErro } from "processamento/contrato/erro.js";
+import { EsquemaErro } from "nucleo/contrato/erro.js";
 
 const TEMPO_LIMITE_MS = 10_000;
 
