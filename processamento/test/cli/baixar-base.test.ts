@@ -6,7 +6,7 @@ import {
   ErroHashDivergente,
   garantirBaseLocal,
   sha256DeBuffer,
-} from "../../src/cli/baixar-base.ts";
+} from "../../src/aplicacao/baixar-base.ts";
 
 const NOME_ARQUIVO = "northwind.db";
 const CONTEUDO_VALIDO = Buffer.from("conteudo fixture valido da base de teste");

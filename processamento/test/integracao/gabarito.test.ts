@@ -17,8 +17,8 @@ import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { lerBaseDeVendas } from "../../src/fontes/leitura-vendas.ts";
-import { gerarConteudo } from "../../src/cli/gerar.ts";
-import { construirCodigosConhecidos } from "../../src/cli/importar.ts";
+import { gerarConteudo } from "../../src/aplicacao/gerar.ts";
+import { construirCodigosConhecidos } from "../../src/aplicacao/importar.ts";
 import type { Repositorio } from "../../src/armazenamento/repositorio.ts";
 import { abrirRepositorioParaTeste } from "../../src/armazenamento/repositorio-teste.ts";
 import { importar } from "../../src/importacao/importar.ts";

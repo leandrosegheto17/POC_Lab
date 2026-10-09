@@ -21,9 +21,9 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { executarPreparar, decidirSugerir } from "../../src/cli/preparar.ts";
-import { DIR_DESTINO_PADRAO, NOME_ARQUIVO_PADRAO } from "../../src/cli/baixar-base.ts";
-import { executarSugerir } from "../../src/cli/sugerir.ts";
+import { executarPreparar } from "../../src/cli/preparar.ts";
+import { DIR_DESTINO_PADRAO, NOME_ARQUIVO_PADRAO } from "../../src/config/caminhos.ts";
+import { decidirSugerir, executarSugerir } from "../../src/aplicacao/sugerir.ts";
 import { criarRepositorio } from "../../src/armazenamento/repositorio.ts";
 import { criarProvedorFalso } from "../../src/ia/provedor-falso.ts";
 import { obrigatorio } from "../apoio/obrigatorio.js";
@@ -131,7 +131,7 @@ describe.skipIf(!baseDisponivel)("executarPreparar (pipeline completo, base real
   );
 });
 
-describe("decidirSugerir (TP-0045, passo 4 isolado)", () => {
+describe("decidirSugerir (passo 4 isolado)", () => {
   it("pula o passo com mensagem clara quando OPENAI_API_KEY não está definida", () => {
     const decisao = decidirSugerir({});
 
@@ -147,11 +147,11 @@ describe("decidirSugerir (TP-0045, passo 4 isolado)", () => {
     expect(decisao.mensagem).toMatch(/OPENAI_API_KEY/);
   });
 
-  it("com OPENAI_API_KEY definida, pula sem lançar erro e sem citar 'ainda não existe'", () => {
-    const decisao = decidirSugerir({ OPENAI_API_KEY: "chave-fake" });
+  it("com OPENAI_API_KEY definida, não pula e informa quantos pagamentos foram avaliados", () => {
+    const decisao = decidirSugerir({ OPENAI_API_KEY: "chave-fake" }, 3);
 
-    expect(decisao.pular).toBe(true);
-    expect(decisao.mensagem).not.toMatch(/ainda não existe/i);
+    expect(decisao.pular).toBe(false);
+    expect(decisao.mensagem).toMatch(/concluída: 3 pagamento/i);
   });
 });
 

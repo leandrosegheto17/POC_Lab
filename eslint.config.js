@@ -46,7 +46,8 @@ const SELETOR_PREPARE =
 
 // RTP-0046: o gabarito se chama `problemas-plantados.json` (o nome antigo
 // `gabarito*` continua barrado). A regra trata de LER/CITAR o gabarito fora de
-// test/; o gerador e os dois comandos da CLI que o ESCREVEM (GERACAO abaixo)
+// test/; o gerador, o caso de uso `gerar` e a configuração de caminhos, que o
+// ESCREVEM/nomeiam (GERACAO abaixo)
 // são exceção só para o nome novo — o nome antigo segue proibido neles.
 const GRUPO_GABARITO_ANTIGO = ["**/gabarito*", "*gabarito*"];
 const GRUPO_PLANTADOS = ["**/problemas-plantados*", "*problemas-plantados*"];
@@ -54,8 +55,8 @@ const GRUPO_GABARITO = [...GRUPO_GABARITO_ANTIGO, ...GRUPO_PLANTADOS];
 
 const GERACAO = [
   "processamento/src/gerador/**",
-  "processamento/src/cli/gerar.ts",
-  "processamento/src/cli/preparar.ts",
+  "processamento/src/aplicacao/gerar.ts",
+  "processamento/src/config/caminhos.ts",
 ];
 
 const SELETOR_LITERAL_GABARITO = "Literal[value=/gabarito|problemas-plantados/i]";

@@ -47,15 +47,15 @@ describe("lint — fronteira do gabarito (problemas-plantados)", { timeout: 6000
     expect(regras).toContain("no-restricted-syntax");
   });
 
-  it("permite o nome novo nos arquivos de geração (gerar.ts e gerador/)", async () => {
-    expect(await regrasVioladas("processamento/src/cli/gerar.ts", CITA_NOME_NOVO)).toEqual([]);
+  it("permite o nome novo nos arquivos de geração (aplicacao/gerar.ts e gerador/)", async () => {
+    expect(await regrasVioladas("processamento/src/aplicacao/gerar.ts", CITA_NOME_NOVO)).toEqual([]);
     expect(
       await regrasVioladas("processamento/src/gerador/plantar-rastreio.ts", IMPORTA_NOME_NOVO),
     ).toEqual([]);
   });
 
   it("segue barrando o nome antigo (gabarito) até nos arquivos de geração", async () => {
-    const regras = await regrasVioladas("processamento/src/cli/gerar.ts", IMPORTA_NOME_ANTIGO);
+    const regras = await regrasVioladas("processamento/src/aplicacao/gerar.ts", IMPORTA_NOME_ANTIGO);
     expect(regras).toContain("no-restricted-imports");
   });
 

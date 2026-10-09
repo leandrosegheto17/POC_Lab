@@ -1,6 +1,6 @@
 /**
  * TP-0044 — Testes de `montarSqlPublicacao` (`publicacao/publicar.ts`) e de
- * `publicarDados`/`executarWrangler` (`cli/publicar-dados.ts`).
+ * `publicarDados`/`executarWrangler` (`aplicacao/publicar-dados.ts`).
  *
  * Fixture montada diretamente via as funções de inserção do repositório
  * (mesma técnica de `test/publicacao/pedidos.test.ts`), num event store
@@ -18,7 +18,7 @@ import {
   executarWrangler,
   publicarDados,
   type ResultadoExecucaoWrangler,
-} from "../../src/cli/publicar-dados.ts";
+} from "../../src/aplicacao/publicar-dados.ts";
 import { obrigatorio } from "../apoio/obrigatorio.js";
 
 function eventoVenda(
