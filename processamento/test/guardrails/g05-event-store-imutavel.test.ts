@@ -14,13 +14,41 @@ const ESCRITA_PROIBIDA = [
   new RegExp(`\\bUPDATE\\s+(?:OR\\s+\\w+\\s+)?${TABELA}`, "i"),
   new RegExp(`\\bDELETE\\s+FROM\\s+${TABELA}`, "i"),
   new RegExp(`\\b(?:INSERT\\s+OR\\s+REPLACE|REPLACE)\\s+INTO\\s+${TABELA}`, "i"),
-  // Alternativas exclusivas (caractere solto não casa aspa) evitam backtracking exponencial;
-  // o ramo opcional final cobre aspa desbalanceada/escapada por barra até o fim da instrução.
-  new RegExp(
-    `\\bINSERT\\s+(?:OR\\s+\\w+\\s+)?INTO\\s+${TABELA}(?:[^;'"]|'[^']*'|"[^"]*")*?(?:['"][^;]*?)?\\bDO\\s+UPDATE\\b`,
-    "i",
-  ),
 ];
+const INSERT_NO_EVENT_STORE = new RegExp(`\\bINSERT\\s+(?:OR\\s+\\w+\\s+)?INTO\\s+${TABELA}`, "gi");
+const DO_UPDATE = /\bDO\s+UPDATE\b/iy;
+
+// Há `DO UPDATE` na mesma instrução de um INSERT no event store? O `;` só encerra a instrução fora
+// de string. Cada aspa pode abrir string balanceada ou ser caractere solto (aspa escapada por barra
+// ou desbalanceada); explora as duas leituras com cada posição visitada uma vez (tempo linear).
+function insertComDoUpdate(codigo: string): boolean {
+  const n = codigo.length;
+  const proxima = { "'": new Array<number>(n + 1).fill(-1), '"': new Array<number>(n + 1).fill(-1) };
+  for (let i = n - 1; i >= 0; i--) {
+    for (const q of ["'", '"'] as const) {
+      proxima[q][i] = codigo.charAt(i) === q ? i : proxima[q][i + 1] ?? -1;
+    }
+  }
+  for (const inicio of codigo.matchAll(INSERT_NO_EVENT_STORE)) {
+    const visitada = new Uint8Array(n + 1);
+    const pilha = [inicio.index + inicio[0].length];
+    while (pilha.length > 0) {
+      const i = pilha.pop() as number;
+      if (i >= n || visitada[i]) continue;
+      visitada[i] = 1;
+      const c = codigo.charAt(i);
+      if (c === ";") continue;
+      DO_UPDATE.lastIndex = i;
+      if (DO_UPDATE.test(codigo)) return true;
+      pilha.push(i + 1);
+      if (c === "'" || c === '"') {
+        const fim = proxima[c][i + 1] ?? -1;
+        if (fim >= 0) pilha.push(fim + 1);
+      }
+    }
+  }
+  return false;
+}
 // DDL de tabela só no DDL de leitura do D1 (recriado a cada publicação); no armazenamento local
 // só `CREATE TABLE IF NOT EXISTS`. ALTER TABLE (inclui RENAME) nas tabelas do event store e
 // PRAGMA writable_schema também são proibidos.
@@ -64,7 +92,8 @@ function semComentarios(texto: string): string {
 function violacoesG05(texto: string, arquivo = ""): string[] {
   const codigo = semComentarios(texto);
   const regras = path.basename(arquivo) === ARQUIVO_DDL_LEITURA ? ESCRITA_PROIBIDA : [...ESCRITA_PROIBIDA, ...DDL_PROIBIDO];
-  return regras.filter((re) => re.test(codigo)).map((re) => re.source);
+  const achadas = regras.filter((re) => re.test(codigo)).map((re) => re.source);
+  return insertComDoUpdate(codigo) ? [...achadas, "INSERT ... DO UPDATE"] : achadas;
 }
 
 function arquivos(pasta: string): string[] {
@@ -174,6 +203,10 @@ describe("guardrail G-05 — event store imutável", () => {
     expect(violacoesG05(`INSERT INTO pedido (a) VALUES ('it\\'s') ON CONFLICT(a) DO UPDATE SET a = 2`)).not.toEqual([]);
     expect(violacoesG05(`INSERT INTO evento (a) VALUES ('x) ON CONFLICT(a) DO UPDATE SET a = 2`)).not.toEqual([]);
     expect(violacoesG05(`INSERT INTO evento (a) VALUES ("x) ON CONFLICT(a) DO UPDATE SET a = 2`)).not.toEqual([]);
+  });
+
+  it("detecta DO UPDATE com aspa solta seguida de string com ponto e vírgula (caso negativo)", () => {
+    expect(violacoesG05(`INSERT INTO evento (a,b) VALUES ('don't', 'a;b') ON CONFLICT(a) DO UPDATE SET a=2`)).not.toEqual([]);
   });
 
   it("avalia em milissegundos instrução com muitos literais e linha enorme", () => {
