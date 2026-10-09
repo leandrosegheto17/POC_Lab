@@ -506,3 +506,9 @@ OK; 0 críticos, 1 baixo (RTP-0093: DO UPDATE do G-05 deixou de acusar aspas des
 
 ## RTP-0092 — DevSecOps — 2026-10-09
 OK; 0 críticos/altos, 1 RTP (RTP-0094: tags tipo latest e overrides/catalog do pnpm-workspace.yaml fora do G-17); checagem mais estrita que antes e cobre npm:, github:, user/repo, git+, git://, http(s):, file:, link: e overrides; CI com --frozen-lockfile.
+
+## RTP-0093 — DevSecOps — 2026-10-09
+OK; 0 críticos/altos, 0 RTP nova (ReDoS segue na RTP-0095, média/baixa: pior caso real no src tem 2 aspas por instrução); regra ficou mais estrita que a anterior.
+
+## RTP-0094 — DevSecOps — 2026-10-09
+OK; 0 alto/crítico, 1 baixo já aberto (RTP-0096); G-17 mais estrito, 53 testes passando, sem dependência/lockfile alterados.
