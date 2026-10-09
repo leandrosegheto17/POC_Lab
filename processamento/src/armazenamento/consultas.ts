@@ -52,13 +52,14 @@ type LinhaEvento = {
   dados: string;
 };
 
-/** O envelope vem das colunas; `tipo`, `versao_schema` e os campos do payload vêm do JSON em `dados`. */
+/** O envelope e o `tipo` vêm das colunas; `versao_schema` e os campos do payload vêm do JSON em `dados` (que, quando traz `tipo`, prevalece). */
 function linhaParaEvento(linha: LinhaEvento): Evento {
   const payload = JSON.parse(linha.dados) as Record<string, unknown>;
   const envelope: Record<string, unknown> = {
     fonte: linha.fonte,
     codigoEvento: linha.codigo_evento,
     momentoFato: linha.momento_fato,
+    tipo: linha.tipo,
   };
   if (linha.ordem_chegada !== null) {
     envelope.ordemChegada = linha.ordem_chegada;

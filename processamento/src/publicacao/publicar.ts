@@ -1,8 +1,9 @@
-import type { DatabaseSync } from "node:sqlite";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import type { Consultas } from "../armazenamento/consultas.js";
+import type { Repositorio } from "../armazenamento/repositorio.js";
 import { montarPedidosEVinculos } from "./pedidos.js";
 import { montarLinhaDoTempo } from "./linha-do-tempo.js";
 import { montarDivergencias, type LinhaDivergenciaProjecao } from "./divergencias.js";
@@ -19,8 +20,8 @@ import {
 } from "../dominio/indicadores.js";
 
 /**
- * TP-0044 — Monta o SQL completo de publicação (DDL + dados) a partir do
- * event store já populado em `db`, encadeando as projeções do Lote 7
+ * Monta o SQL completo de publicação (DDL + dados) a partir do event store
+ * já populado, encadeando as projeções
  * (`pedidos.ts`, `linha-do-tempo.ts`, `divergencias.ts`, `qualidade.ts`) e os
  * documentos finais (`documentos.ts`, `dominio/totais.ts`,
  * `dominio/indicadores.ts`).
@@ -35,14 +36,9 @@ import {
 const DIRETORIO_ATUAL = dirname(fileURLToPath(import.meta.url));
 const CAMINHO_DDL = join(DIRETORIO_ATUAL, "leitura-d1.sql");
 
-type LinhaEventoCorte = { momento: string | null };
-
 /** Calcula `dataCorte` (RN-14): o maior `momento_fato` entre todos os eventos do event store. */
-function calcularDataCorte(db: DatabaseSync): string {
-  const linha = db
-    .prepare(`SELECT MAX(momento_fato) AS momento FROM evento`)
-    .get() as LinhaEventoCorte;
-  return linha.momento ?? "";
+function calcularDataCorte(consultas: Pick<Consultas, "obterMaiorMomentoFato">): string {
+  return consultas.obterMaiorMomentoFato() ?? "";
 }
 
 /**
@@ -160,14 +156,14 @@ function montarDivergenciasComPedido(
  * store aberto em `db`. Determinístico: a mesma entrada (mesmo `db`, mesma
  * `semente`) produz sempre a mesma string.
  */
-export function montarSqlPublicacao(db: DatabaseSync, args: { semente: number }): string {
+export function montarSqlPublicacao(repositorio: Repositorio, args: { semente: number }): string {
   const { semente } = args;
 
-  const { pedidoResumo, vinculoCodigo } = montarPedidosEVinculos(db);
-  const dataCorte = calcularDataCorte(db);
-  const linhaDoTempo = montarLinhaDoTempo(db);
-  const divergenciasProjecao = montarDivergencias(db, dataCorte);
-  const qualidade = montarDocumentoQualidade(db);
+  const { pedidoResumo, vinculoCodigo } = montarPedidosEVinculos(repositorio);
+  const dataCorte = calcularDataCorte(repositorio);
+  const linhaDoTempo = montarLinhaDoTempo(repositorio);
+  const divergenciasProjecao = montarDivergencias(repositorio, dataCorte);
+  const qualidade = montarDocumentoQualidade(repositorio);
 
   const pedidosParaTotais: PedidoParaTotais[] = pedidoResumo.map((pedido) => ({
     idPedido: pedido.id_pedido,
@@ -207,8 +203,8 @@ export function montarSqlPublicacao(db: DatabaseSync, args: { semente: number })
   });
 
   // Ordem fixa (determinismo, RNF-05; UX-SPEC T3): blocos Must primeiro
-  // (entregas no prazo, divergências por tipo), depois os 2 blocos novos do
-  // Lote 15 (TP-0068, TP-0069), nesta ordem.
+  // (entregas no prazo, divergências por tipo), depois tempo médio e
+  // valor pago vs devido, nesta ordem.
   const indicadores = montarDocumentoIndicadores([
     blocoEntregasNoPrazo,
     totais.porTipo,

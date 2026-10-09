@@ -51,7 +51,7 @@ describe("montarDocumentoQualidade", () => {
   it("sempre devolve os 7 tipos, na ordem fixa, mesmo sem nenhum achado gravado", () => {
     const repositorio = criarRepositorio(":memory:");
 
-    const documento = montarDocumentoQualidade(repositorio.db);
+    const documento = montarDocumentoQualidade(repositorio);
 
     expect(documento.achados).toHaveLength(7);
     expect(documento.achados.map((achado) => achado.tipo)).toEqual(ORDEM_TIPOS_ESPERADA);
@@ -73,7 +73,7 @@ describe("montarDocumentoQualidade", () => {
       detalhe: "preço <= 0",
     });
 
-    const documento = montarDocumentoQualidade(repositorio.db);
+    const documento = montarDocumentoQualidade(repositorio);
 
     const valorForaDoPadrao = documento.achados.find((a) => a.tipo === "valor_fora_do_padrao");
     expect(valorForaDoPadrao?.contagem).toBe(1);
@@ -97,7 +97,7 @@ describe("montarDocumentoQualidade", () => {
       detalhe: "preço <= 0",
     });
 
-    const documento = montarDocumentoQualidade(repositorio.db);
+    const documento = montarDocumentoQualidade(repositorio);
 
     const valorForaDoPadrao = documento.achados.find((a) => a.tipo === "valor_fora_do_padrao");
     expect(valorForaDoPadrao?.exemplos).toEqual([
@@ -115,7 +115,7 @@ describe("montarDocumentoQualidade", () => {
       detalhe: "referência não casou com exatamente 1 pedido conhecido",
     });
 
-    const documento = montarDocumentoQualidade(repositorio.db);
+    const documento = montarDocumentoQualidade(repositorio);
 
     const semIdentificacao = documento.achados.find((a) => a.tipo === "sem_identificacao");
     expect(semIdentificacao?.exemplos).toEqual([
@@ -141,7 +141,7 @@ describe("montarDocumentoQualidade", () => {
       eventoPagamento("PAG-001", "PED-000002", "2024-01-01T10:00:00.000Z", 1),
     );
 
-    const documento = montarDocumentoQualidade(repositorio.db);
+    const documento = montarDocumentoQualidade(repositorio);
 
     const foraDeOrdem = documento.achados.find((a) => a.tipo === "fora_de_ordem");
     expect(foraDeOrdem?.contagem).toBe(2);
@@ -165,7 +165,7 @@ describe("montarDocumentoQualidade", () => {
       repositorio.inserirAchadoQualidade(achado);
     }
 
-    const documento = montarDocumentoQualidade(repositorio.db);
+    const documento = montarDocumentoQualidade(repositorio);
 
     const linhaInvalida = documento.achados.find((a) => a.tipo === "linha_invalida");
     expect(linhaInvalida?.contagem).toBe(15);
@@ -175,7 +175,7 @@ describe("montarDocumentoQualidade", () => {
   it("ia.utilizada é false e ia.sugestoes é array vazio", () => {
     const repositorio = criarRepositorio(":memory:");
 
-    const documento = montarDocumentoQualidade(repositorio.db);
+    const documento = montarDocumentoQualidade(repositorio);
 
     expect(documento.ia).toEqual({ utilizada: false, sugestoes: [] });
   });

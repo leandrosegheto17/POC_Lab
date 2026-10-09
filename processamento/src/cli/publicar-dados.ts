@@ -124,7 +124,7 @@ export function publicarDados(
   const repositorio = deps.criarRepositorio(args.caminhoBanco);
   let sql: string;
   try {
-    sql = montarSqlPublicacao(repositorio.db, { semente: args.semente });
+    sql = montarSqlPublicacao(repositorio,{ semente: args.semente });
   } finally {
     // Fecha esta conexão assim que a leitura termina — em Windows, um
     // handle aberto no arquivo do banco trava o `rmSync` do diretório

@@ -81,7 +81,7 @@ describe("montarPedidosEVinculos", () => {
       referenciaOriginal: "PED-000001",
     });
 
-    const { pedidoResumo } = montarPedidosEVinculos(repositorio.db);
+    const { pedidoResumo } = montarPedidosEVinculos(repositorio);
 
     expect(pedidoResumo).toHaveLength(1);
     expect(pedidoResumo[0]).toMatchObject({
@@ -112,7 +112,7 @@ describe("montarPedidosEVinculos", () => {
     });
     repositorio.inserirVinculoFonte("rastreio", "RAST-002", "PED-000002");
 
-    const { pedidoResumo } = montarPedidosEVinculos(repositorio.db);
+    const { pedidoResumo } = montarPedidosEVinculos(repositorio);
 
     const linha = pedidoResumo.find((item) => item.id_pedido === "PED-000002");
     expect(linha).toBeDefined();
@@ -132,7 +132,7 @@ describe("montarPedidosEVinculos", () => {
     repositorio.inserirVinculoFonte("vendas", "PV-000001", "PED-000003");
     repositorio.inserirVinculoFonte("vendas", "pv-000001", "PED-000004");
 
-    expect(() => montarPedidosEVinculos(repositorio.db)).toThrowError(
+    expect(() => montarPedidosEVinculos(repositorio)).toThrowError(
       /PV-000001.*PED-000003.*pv-000001.*PED-000004|pv-000001.*PED-000004.*PV-000001.*PED-000003/s,
     );
   });
@@ -157,8 +157,8 @@ describe("montarPedidosEVinculos", () => {
     });
     repositorio.inserirVinculoFonte("rastreio", "RAST-006", "PED-000006");
 
-    const primeira = montarPedidosEVinculos(repositorio.db);
-    const segunda = montarPedidosEVinculos(repositorio.db);
+    const primeira = montarPedidosEVinculos(repositorio);
+    const segunda = montarPedidosEVinculos(repositorio);
 
     expect(primeira).toEqual(segunda);
     expect(primeira.pedidoResumo.map((p) => p.id_pedido)).toEqual([
@@ -180,7 +180,7 @@ describe("montarPedidosEVinculos", () => {
     repositorio.inserirVinculoFonte("vendas", "PED-000009", "PED-000009");
     repositorio.inserirVinculoFonte("vendas", "PED-000001", "PED-000001");
 
-    const { pedidoResumo, vinculoCodigo } = montarPedidosEVinculos(repositorio.db);
+    const { pedidoResumo, vinculoCodigo } = montarPedidosEVinculos(repositorio);
 
     expect(pedidoResumo.map((p) => p.id_pedido)).toEqual([
       "PED-000001",
@@ -202,7 +202,7 @@ describe("montarPedidosEVinculos", () => {
       dataLimite: "2026-04-01",
     });
 
-    const { pedidoResumo } = montarPedidosEVinculos(repositorio.db);
+    const { pedidoResumo } = montarPedidosEVinculos(repositorio);
     const linha = pedidoResumo.find((item) => item.id_pedido === "PED-000007");
 
     expect(JSON.stringify(linha)).not.toMatch(/transportadora/i);

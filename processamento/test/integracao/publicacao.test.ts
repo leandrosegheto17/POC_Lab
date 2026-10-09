@@ -84,7 +84,7 @@ describe("montarSqlPublicacao", () => {
   it("monta uma string SQL não vazia, com o DDL e ao menos um INSERT INTO pedido_resumo", () => {
     const repositorio = montarRepositorioComFixture();
 
-    const sql = montarSqlPublicacao(repositorio.db, { semente: 20261007 });
+    const sql = montarSqlPublicacao(repositorio, { semente: 20261007 });
 
     expect(sql.length).toBeGreaterThan(0);
     expect(sql).toContain("CREATE TABLE");
@@ -96,8 +96,8 @@ describe("montarSqlPublicacao", () => {
     const repositorioA = montarRepositorioComFixture();
     const repositorioB = montarRepositorioComFixture();
 
-    const sqlA = montarSqlPublicacao(repositorioA.db, { semente: 20261007 });
-    const sqlB = montarSqlPublicacao(repositorioB.db, { semente: 20261007 });
+    const sqlA = montarSqlPublicacao(repositorioA, { semente: 20261007 });
+    const sqlB = montarSqlPublicacao(repositorioB, { semente: 20261007 });
 
     expect(sqlA).toBe(sqlB);
   });
@@ -116,7 +116,7 @@ describe("montarSqlPublicacao", () => {
   it("o documento 'resumo' publicado tem dataCorte igual ao maior momento_fato da fixture (RN-14)", () => {
     const repositorio = montarRepositorioComFixture();
 
-    const sql = montarSqlPublicacao(repositorio.db, { semente: 20261007 });
+    const sql = montarSqlPublicacao(repositorio, { semente: 20261007 });
 
     const correspondencia = sql.match(/\('resumo', '((?:[^']|'')*)'\)/);
     expect(correspondencia).not.toBeNull();
@@ -133,7 +133,7 @@ describe("montarSqlPublicacao", () => {
   it("o documento 'indicadores' no SQL final contém as 4 chaves de bloco, na ordem fixa", () => {
     const repositorio = montarRepositorioComFixture();
 
-    const sql = montarSqlPublicacao(repositorio.db, { semente: 20261007 });
+    const sql = montarSqlPublicacao(repositorio, { semente: 20261007 });
 
     const correspondencia = sql.match(/\('indicadores', '((?:[^']|'')*)'\)/);
     expect(correspondencia).not.toBeNull();

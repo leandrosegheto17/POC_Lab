@@ -76,7 +76,7 @@ describe("montarDocumentoQualidade — bloco ia (TP-0084)", () => {
   it("cache_ia vazia: ia.utilizada é false e ia.sugestoes é array vazio (regressão TP-0038)", () => {
     const repositorio = criarRepositorio(":memory:");
 
-    const documento = montarDocumentoQualidade(repositorio.db);
+    const documento = montarDocumentoQualidade(repositorio);
 
     expect(documento.ia).toEqual({ utilizada: false, sugestoes: [] });
     expect(EsquemaRespostaQualidade.safeParse(documento).success).toBe(true);
@@ -90,7 +90,7 @@ describe("montarDocumentoQualidade — bloco ia (TP-0084)", () => {
     const provedorFalso = criarProvedorFalso({ "REF-CONFERE": "PED-A" });
     await sugerir(repositorio, provedorFalso, { modelo: "falso" });
 
-    const documento = montarDocumentoQualidade(repositorio.db);
+    const documento = montarDocumentoQualidade(repositorio);
 
     expect(documento.ia.utilizada).toBe(true);
     expect(documento.ia.sugestoes).toHaveLength(1);
@@ -128,7 +128,7 @@ describe("montarDocumentoQualidade — bloco ia (TP-0084)", () => {
     const provedorFalso = criarProvedorFalso({ "REF-REJEITA": "PED-B" });
     await sugerir(repositorio, provedorFalso, { modelo: "falso" });
 
-    const documento = montarDocumentoQualidade(repositorio.db);
+    const documento = montarDocumentoQualidade(repositorio);
 
     expect(documento.ia.utilizada).toBe(true);
     expect(documento.ia.sugestoes).toHaveLength(1);
@@ -162,7 +162,7 @@ describe("montarDocumentoQualidade — bloco ia (TP-0084)", () => {
     const provedorFalso = criarProvedorFalso({ "REF-MODELO": "PED-D" });
     await sugerir(repositorio, provedorFalso, { modelo: "gpt-4o-mini" });
 
-    const documento = montarDocumentoQualidade(repositorio.db);
+    const documento = montarDocumentoQualidade(repositorio);
     const esperado = conferirSugestao(
       { devido: 100, pago: 0, dataPedido: "2026-01-01T00:00:00.000Z" },
       { valor: 100, dataPagamento: DATA_PAGAMENTO },
@@ -190,7 +190,7 @@ describe("montarDocumentoQualidade — bloco ia (TP-0084)", () => {
     const provedorFalso = criarProvedorFalso({ "REF-CUSTOM": "PED-E" });
     await sugerir(repositorio, provedorFalso, { modelo: "modelo-customizado-x" });
 
-    const documento = montarDocumentoQualidade(repositorio.db);
+    const documento = montarDocumentoQualidade(repositorio);
 
     expect(documento.ia.utilizada).toBe(true);
     expect(documento.ia.sugestoes).toHaveLength(1);
@@ -210,7 +210,7 @@ describe("montarDocumentoQualidade — bloco ia (TP-0084)", () => {
     const provedorFalso = criarProvedorFalso({ "REF-NULA": null });
     await sugerir(repositorio, provedorFalso, { modelo: "falso" });
 
-    const documento = montarDocumentoQualidade(repositorio.db);
+    const documento = montarDocumentoQualidade(repositorio);
 
     expect(documento.ia.utilizada).toBe(true);
     expect(documento.ia.sugestoes).toEqual([]);

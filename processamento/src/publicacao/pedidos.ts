@@ -1,24 +1,20 @@
-import type { DatabaseSync } from "node:sqlite";
-
+import type { Consultas, EventoArmazenado, VinculoFonte } from "../armazenamento/consultas.js";
 import { calcularQuitacao, type SituacaoPagamento } from "../dominio/quitacao.js";
 import { normalizarCodigo } from "../contrato/codigo.js";
 import type { Fonte } from "../dominio/modelo.js";
+import { agruparEventosPorPedido } from "./eventos-por-pedido.js";
 
 /**
- * TP-0035 — Projeção de `pedido_resumo` e `vinculo_codigo` (SDD §5).
+ * Projeção de `pedido_resumo` e `vinculo_codigo` (SDD §5).
  *
- * Lê o event store já populado (via a conexão `db` aberta pelo repositório —
- * `armazenamento/repositorio.ts`, TP-0018) e monta, em memória, as duas
- * tabelas de leitura publicadas no D1 (`publicacao/leitura-d1.sql`, TP-0032):
- * uma linha de resumo por pedido e uma linha de vínculo por código
- * normalizado (de cada fonte + da própria identidade `id_pedido`).
- *
- * Este módulo só lê do `db` (via `db.prepare(...).all()`) — nunca grava,
- * nunca abre uma nova conexão e nunca edita `repositorio.ts` (outras
- * instâncias também leem via `db` em paralelo).
+ * Lê o event store já populado, pelas consultas do repositório, e monta em
+ * memória as duas tabelas de leitura publicadas no D1
+ * (`publicacao/leitura-d1.sql`): uma linha de resumo por pedido e uma linha de
+ * vínculo por código normalizado (de cada fonte + da própria identidade
+ * `id_pedido`). Só lê; nunca grava.
  */
 
-/** Ordem fixa das chaves do JSON de `fontes` em `pedido_resumo` (RF — TP-0035). */
+/** Ordem fixa das chaves do JSON de `fontes` em `pedido_resumo`. */
 const ORDEM_FONTES: readonly Fonte[] = ["vendas", "pagamentos", "rastreio"];
 
 /** Linha de `pedido_resumo`, mesma forma de colunas do DDL em `leitura-d1.sql`. */
@@ -42,44 +38,6 @@ export type LinhaVinculoCodigo = {
   id_pedido: string;
 };
 
-type LinhaPedidoDb = { id_pedido: string };
-
-type LinhaVinculoFonteDb = {
-  fonte: Fonte;
-  codigo_externo: string;
-  id_pedido: string;
-};
-
-type LinhaEventoDb = {
-  fonte: Fonte;
-  codigo_evento: string;
-  id_pedido: string | null;
-  tipo: string;
-  momento_fato: string;
-  ordem_chegada: number | null;
-  versao_schema: number;
-  dados: string;
-};
-
-/**
- * Agrupa uma lista de eventos por `id_pedido`, ignorando eventos ainda sem
- * vínculo (`id_pedido === null`) — estes não entram em nenhum resumo.
- */
-function agruparEventosPorPedido(
-  eventos: LinhaEventoDb[],
-): Map<string, LinhaEventoDb[]> {
-  const mapa = new Map<string, LinhaEventoDb[]>();
-  for (const evento of eventos) {
-    if (evento.id_pedido === null) {
-      continue;
-    }
-    const lista = mapa.get(evento.id_pedido) ?? [];
-    lista.push(evento);
-    mapa.set(evento.id_pedido, lista);
-  }
-  return mapa;
-}
-
 /**
  * Monta a linha de `pedido_resumo` de um pedido a partir dos eventos já
  * vinculados a ele.
@@ -91,10 +49,10 @@ function agruparEventosPorPedido(
  */
 function montarResumoPedido(
   idPedido: string,
-  eventosDoPedido: LinhaEventoDb[],
-  vinculosDoPedido: LinhaVinculoFonteDb[],
+  eventosDoPedido: EventoArmazenado[],
+  vinculosDoPedido: VinculoFonte[],
 ): LinhaPedidoResumo {
-  const eventoVenda = eventosDoPedido.find((evento) => evento.tipo === "venda");
+  const eventoVenda = eventosDoPedido.find((armazenado) => armazenado.evento.tipo === "venda");
   const dadosVenda = eventoVenda
     ? (JSON.parse(eventoVenda.dados) as { valor_devido?: number; data_limite?: string })
     : undefined;
@@ -103,14 +61,14 @@ function montarResumoPedido(
   const dataLimite = dadosVenda?.data_limite ?? null;
 
   const valoresPagamento = eventosDoPedido
-    .filter((evento) => evento.tipo === "pagamento")
-    .map((evento) => (JSON.parse(evento.dados) as { valor: number }).valor);
+    .filter((armazenado) => armazenado.evento.tipo === "pagamento")
+    .map((armazenado) => (JSON.parse(armazenado.dados) as { valor: number }).valor);
 
   const quitacao = calcularQuitacao(valorDevido ?? 0, valoresPagamento);
 
   const fontesPedido: Partial<Record<Fonte, string>> = {};
   for (const vinculo of vinculosDoPedido) {
-    fontesPedido[vinculo.fonte] = vinculo.codigo_externo;
+    fontesPedido[vinculo.fonte] = vinculo.codigoExterno;
   }
 
   const fontesOrdenadas: Partial<Record<Fonte, string>> = {};
@@ -144,21 +102,21 @@ function montarResumoPedido(
  * descartada silenciosamente — não é uma colisão, é a mesma linha.
  */
 function montarVinculosCodigo(
-  pedidos: LinhaPedidoDb[],
-  vinculosFonte: LinhaVinculoFonteDb[],
+  idsPedido: string[],
+  vinculosFonte: VinculoFonte[],
 ): LinhaVinculoCodigo[] {
   type Candidato = { codigoOriginal: string; fonte: Fonte | "pedido"; idPedido: string };
 
   const candidatos: Candidato[] = [
     ...vinculosFonte.map((vinculo) => ({
-      codigoOriginal: vinculo.codigo_externo,
+      codigoOriginal: vinculo.codigoExterno,
       fonte: vinculo.fonte,
-      idPedido: vinculo.id_pedido,
+      idPedido: vinculo.idPedido,
     })),
-    ...pedidos.map((pedido) => ({
-      codigoOriginal: pedido.id_pedido,
+    ...idsPedido.map((idPedido) => ({
+      codigoOriginal: idPedido,
       fonte: "pedido" as const,
-      idPedido: pedido.id_pedido,
+      idPedido,
     })),
   ];
 
@@ -208,43 +166,34 @@ function montarVinculosCodigo(
  * (`leitura-d1.sql`). Determinístico: a mesma entrada produz sempre a mesma
  * saída, na mesma ordem.
  */
-export function montarPedidosEVinculos(db: DatabaseSync): {
+export function montarPedidosEVinculos(
+  consultas: Pick<Consultas, "listarIdsPedido" | "listarVinculos" | "listarEventos">,
+): {
   pedidoResumo: LinhaPedidoResumo[];
   vinculoCodigo: LinhaVinculoCodigo[];
 } {
-  const pedidos = db
-    .prepare("SELECT id_pedido FROM pedido")
-    .all() as unknown as LinhaPedidoDb[];
+  const idsPedido = consultas.listarIdsPedido();
+  const vinculosFonte = consultas.listarVinculos();
+  const eventosPorPedido = agruparEventosPorPedido(consultas.listarEventos());
 
-  const vinculosFonte = db
-    .prepare("SELECT fonte, codigo_externo, id_pedido FROM vinculo_fonte")
-    .all() as unknown as LinhaVinculoFonteDb[];
-
-  const eventos = db
-    .prepare(
-      "SELECT fonte, codigo_evento, id_pedido, tipo, momento_fato, ordem_chegada, versao_schema, dados FROM evento",
-    )
-    .all() as unknown as LinhaEventoDb[];
-
-  const eventosPorPedido = agruparEventosPorPedido(eventos);
-  const vinculosPorPedido = new Map<string, LinhaVinculoFonteDb[]>();
+  const vinculosPorPedido = new Map<string, VinculoFonte[]>();
   for (const vinculo of vinculosFonte) {
-    const lista = vinculosPorPedido.get(vinculo.id_pedido) ?? [];
+    const lista = vinculosPorPedido.get(vinculo.idPedido) ?? [];
     lista.push(vinculo);
-    vinculosPorPedido.set(vinculo.id_pedido, lista);
+    vinculosPorPedido.set(vinculo.idPedido, lista);
   }
 
-  const pedidoResumo = pedidos
-    .map((pedido) =>
+  const pedidoResumo = idsPedido
+    .map((idPedido) =>
       montarResumoPedido(
-        pedido.id_pedido,
-        eventosPorPedido.get(pedido.id_pedido) ?? [],
-        vinculosPorPedido.get(pedido.id_pedido) ?? [],
+        idPedido,
+        eventosPorPedido.get(idPedido) ?? [],
+        vinculosPorPedido.get(idPedido) ?? [],
       ),
     )
     .sort((a, b) => a.id_pedido.localeCompare(b.id_pedido));
 
-  const vinculoCodigo = montarVinculosCodigo(pedidos, vinculosFonte).sort((a, b) =>
+  const vinculoCodigo = montarVinculosCodigo(idsPedido, vinculosFonte).sort((a, b) =>
     a.codigo.localeCompare(b.codigo),
   );
 

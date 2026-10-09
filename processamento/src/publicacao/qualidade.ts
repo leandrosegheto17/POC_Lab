@@ -10,9 +10,8 @@
  * documento com os 7 tipos sempre presentes (contagem 0 quando não há
  * ocorrência), valida contra `EsquemaRespostaQualidade` e devolve.
  *
- * Acessa `repositorio.db` diretamente só com `db.prepare(...)` (nunca edita
- * `armazenamento/repositorio.ts`), mesmo padrão de
- * `publicacao/divergencias.ts`/`publicacao/linha-do-tempo.ts`.
+ * Os achados e eventos vêm das consultas do repositório; só o bloco de IA
+ * ainda lê `repositorio.db` direto.
  *
  * TP-0084 — Projeta também `ia.utilizada`/`ia.sugestoes` a partir de
  * `cache_ia` (ver seção "Reconstrução das sugestões de IA" mais abaixo).
@@ -22,14 +21,16 @@
 import { createHash } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 
+import type { Consultas } from "../armazenamento/consultas.js";
+import type { Repositorio } from "../armazenamento/repositorio.js";
 import { conferirSugestao } from "../dominio/conferencia-sugestao.js";
-import type { Evento } from "../dominio/evento.js";
 import { detectarForaDeOrdem } from "../dominio/fora-de-ordem.js";
-import type { AchadoQualidade, Fonte, TipoAchado } from "../dominio/modelo.js";
+import type { AchadoQualidade, TipoAchado } from "../dominio/modelo.js";
 import {
   EsquemaRespostaQualidade,
   type RespostaQualidade,
 } from "../contrato/qualidade.js";
+import { agruparEventosPorPedido } from "./eventos-por-pedido.js";
 import { montarPedidosEVinculos, type LinhaPedidoResumo } from "./pedidos.js";
 
 /** Ordem fixa dos 7 tipos no documento final — sempre os mesmos 7, nessa ordem. */
@@ -65,77 +66,21 @@ const REGRAS: Record<TipoAchado, string> = {
     "Pedido sem data de envio (ShippedDate nula na base de vendas de origem).",
 };
 
-/** Formato de cada linha lida de `SELECT * FROM achado_qualidade`. */
-type LinhaAchadoQualidade = {
-  tipo: string;
-  fonte: Fonte;
-  referencia: string;
-  regra: string;
-  detalhe: string;
-};
-
-/** Formato de cada linha lida de `SELECT * FROM evento` (mesmo formato de `repositorio.ts`/TP-0018). */
-type LinhaEvento = {
-  fonte: Fonte;
-  codigo_evento: string;
-  id_pedido: string | null;
-  tipo: string;
-  momento_fato: string;
-  ordem_chegada: number | null;
-  versao_schema: number;
-  dados: string;
-};
-
 /** Um achado já com o `id_pedido` resolvido (quando possível), para montar o exemplo. */
 type AchadoComPedido = AchadoQualidade & { pedido?: string };
 
 /**
- * Reconstrói um `Evento` de domínio a partir de uma linha da tabela `evento`:
- * o envelope comum vem das colunas próprias; o restante (`tipo`,
- * `versao_schema` e os campos específicos do payload) vem do JSON gravado em
- * `dados` — mesmo padrão de `publicacao/divergencias.ts` e
- * `test/integracao/gabarito.test.ts`.
+ * Recalcula RN-08 (fora de ordem) a partir de todos os eventos gravados:
+ * agrupa por `id_pedido` e chama `detectarForaDeOrdem` por pedido (a função
+ * espera eventos já de um único pedido), agregando os achados resultantes com
+ * o `id_pedido` correspondente anexado.
  */
-function linhaParaEvento(linha: LinhaEvento): Evento {
-  const payload = JSON.parse(linha.dados) as Record<string, unknown>;
-  const envelope: Record<string, unknown> = {
-    fonte: linha.fonte,
-    codigoEvento: linha.codigo_evento,
-    momentoFato: linha.momento_fato,
-  };
-  if (linha.ordem_chegada !== null) {
-    envelope.ordemChegada = linha.ordem_chegada;
-  }
-  return { ...envelope, ...payload } as Evento;
-}
-
-/** Agrupa os eventos (já reconstruídos) por `id_pedido`, descartando os sem pedido vinculado. */
-function agruparEventosPorPedido(linhas: LinhaEvento[]): Map<string, Evento[]> {
-  const porPedido = new Map<string, Evento[]>();
-  for (const linha of linhas) {
-    if (linha.id_pedido === null) {
-      continue;
-    }
-    const eventos = porPedido.get(linha.id_pedido) ?? [];
-    eventos.push(linhaParaEvento(linha));
-    porPedido.set(linha.id_pedido, eventos);
-  }
-  return porPedido;
-}
-
-/**
- * Recalcula RN-08 (fora de ordem) a partir de todos os eventos gravados: lê
- * `evento`, agrupa por `id_pedido` e chama `detectarForaDeOrdem` por pedido
- * (a função espera eventos já de um único pedido), agregando os achados
- * resultantes com o `id_pedido` correspondente anexado.
- */
-function recalcularForaDeOrdem(db: DatabaseSync): AchadoComPedido[] {
-  const linhas = db.prepare(`SELECT * FROM evento`).all() as unknown as LinhaEvento[];
-  const eventosPorPedido = agruparEventosPorPedido(linhas);
+function recalcularForaDeOrdem(consultas: Pick<Consultas, "listarEventos">): AchadoComPedido[] {
+  const eventosPorPedido = agruparEventosPorPedido(consultas.listarEventos());
 
   const achados: AchadoComPedido[] = [];
-  for (const [idPedido, eventos] of eventosPorPedido) {
-    const resultado = detectarForaDeOrdem(eventos);
+  for (const [idPedido, armazenados] of eventosPorPedido) {
+    const resultado = detectarForaDeOrdem(armazenados.map((armazenado) => armazenado.evento));
     for (const achado of resultado.achados) {
       achados.push({ ...achado, pedido: idPedido });
     }
@@ -144,36 +89,28 @@ function recalcularForaDeOrdem(db: DatabaseSync): AchadoComPedido[] {
 }
 
 /**
- * Tenta resolver o `id_pedido` interno de um achado gravado via
- * `vinculo_fonte` (mesma fonte + mesma referência). Nem todo achado tem
+ * Mapa `fonte:codigoExterno` → `id_pedido`, lido uma vez. Nem todo achado tem
  * vínculo resolvível (ex.: `sem_identificacao` é, por definição, uma
- * referência que não casou com nenhum pedido) — por isso devolve
- * `undefined` nesses casos, em vez de lançar.
+ * referência que não casou com nenhum pedido) — nesses casos a busca no mapa
+ * devolve `undefined`.
  */
-function resolverPedido(
-  db: DatabaseSync,
-  fonte: Fonte,
-  referencia: string,
-): string | undefined {
-  const linha = db
-    .prepare(`SELECT id_pedido FROM vinculo_fonte WHERE fonte = ? AND codigo_externo = ?`)
-    .get(fonte, referencia) as { id_pedido: string } | undefined;
-  return linha?.id_pedido;
+function lerPedidoPorVinculo(consultas: Pick<Consultas, "listarVinculos">): Map<string, string> {
+  return new Map(
+    consultas
+      .listarVinculos()
+      .map((vinculo) => [`${vinculo.fonte}:${vinculo.codigoExterno}`, vinculo.idPedido]),
+  );
 }
 
 /** Lê os achados gravados de um tipo específico em `achado_qualidade`, com `pedido` resolvido quando possível. */
-function lerAchadosGravados(db: DatabaseSync, tipo: TipoAchado): AchadoComPedido[] {
-  const linhas = db
-    .prepare(`SELECT * FROM achado_qualidade WHERE tipo = ?`)
-    .all(tipo) as unknown as LinhaAchadoQualidade[];
-
-  return linhas.map((linha): AchadoComPedido => ({
-    tipo: linha.tipo as TipoAchado,
-    fonte: linha.fonte,
-    referencia: linha.referencia,
-    regra: linha.regra,
-    detalhe: linha.detalhe,
-    pedido: resolverPedido(db, linha.fonte, linha.referencia),
+function lerAchadosGravados(
+  consultas: Pick<Consultas, "listarAchadosPorTipo">,
+  pedidoPorVinculo: Map<string, string>,
+  tipo: TipoAchado,
+): AchadoComPedido[] {
+  return consultas.listarAchadosPorTipo(tipo).map((achado): AchadoComPedido => ({
+    ...achado,
+    pedido: pedidoPorVinculo.get(`${achado.fonte}:${achado.referencia}`),
   }));
 }
 
@@ -365,7 +302,8 @@ function montarCandidatosIa(
  * `conferirSugestao` (RN-11) sobre o candidato indicado, sempre recalculada
  * nesta hora, nunca cacheada.
  */
-function montarBlocoIa(db: DatabaseSync): RespostaQualidade["ia"] {
+function montarBlocoIa(repositorio: Repositorio): RespostaQualidade["ia"] {
+  const db = repositorio.db;
   const cache = lerCacheIa(db);
   if (cache.length === 0) {
     return { utilizada: false, sugestoes: [] };
@@ -380,7 +318,7 @@ function montarBlocoIa(db: DatabaseSync): RespostaQualidade["ia"] {
     }
   }
   const pagamentos = lerPagamentosSemIdentificacaoIa(db);
-  const { pedidoResumo } = montarPedidosEVinculos(db);
+  const { pedidoResumo } = montarPedidosEVinculos(repositorio);
 
   const sugestoes: SugestaoQualidade[] = [];
 
@@ -447,12 +385,15 @@ function montarBlocoIa(db: DatabaseSync): RespostaQualidade["ia"] {
  * `EsquemaRespostaQualidade` antes de devolver — uma falha aqui é bug de
  * montagem, não é absorvida.
  */
-export function montarDocumentoQualidade(db: DatabaseSync): RespostaQualidade {
-  const achadosForaDeOrdem = recalcularForaDeOrdem(db);
+export function montarDocumentoQualidade(repositorio: Repositorio): RespostaQualidade {
+  const achadosForaDeOrdem = recalcularForaDeOrdem(repositorio);
+  const pedidoPorVinculo = lerPedidoPorVinculo(repositorio);
 
   const achados = ORDEM_TIPOS.map((tipo) => {
     const achadosDoTipo =
-      tipo === "fora_de_ordem" ? achadosForaDeOrdem : lerAchadosGravados(db, tipo);
+      tipo === "fora_de_ordem"
+        ? achadosForaDeOrdem
+        : lerAchadosGravados(repositorio, pedidoPorVinculo, tipo);
 
     return {
       tipo,
@@ -464,7 +405,7 @@ export function montarDocumentoQualidade(db: DatabaseSync): RespostaQualidade {
 
   const documento: RespostaQualidade = {
     achados,
-    ia: montarBlocoIa(db),
+    ia: montarBlocoIa(repositorio),
   };
 
   return EsquemaRespostaQualidade.parse(documento);

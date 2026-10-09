@@ -75,7 +75,7 @@ describe("montarLinhaDoTempo", () => {
       montarEventoDeRastreio(idPedido, "RAST-002", "entrega", "2026-01-03T10:00:00Z", 3),
     );
 
-    const linhas = montarLinhaDoTempo(repositorio.db);
+    const linhas = montarLinhaDoTempo(repositorio);
 
     expect(linhas).toHaveLength(3);
     expect(linhas.map((linha) => linha.posicao)).toEqual([0, 1, 2]);
@@ -99,7 +99,7 @@ describe("montarLinhaDoTempo", () => {
       montarEventoDeRastreio(idPedido, "RAST-TRA", "transporte", "2026-01-03T10:00:00Z", 2),
     );
 
-    const linhas = montarLinhaDoTempo(repositorio.db);
+    const linhas = montarLinhaDoTempo(repositorio);
 
     expect(linhas).toHaveLength(3);
 
@@ -141,7 +141,7 @@ describe("montarLinhaDoTempo", () => {
       }),
     });
 
-    const linhas = montarLinhaDoTempo(repositorio.db);
+    const linhas = montarLinhaDoTempo(repositorio);
 
     expect(linhas).toHaveLength(1);
     expect(obrigatorio(linhas[0]).codigo_evento).toBe(`VENDA-${idPedido}`);
@@ -167,7 +167,7 @@ describe("montarLinhaDoTempo", () => {
       dados: dadosOriginais,
     });
 
-    const linhas = montarLinhaDoTempo(repositorio.db);
+    const linhas = montarLinhaDoTempo(repositorio);
 
     expect(linhas).toHaveLength(1);
     expect(obrigatorio(linhas[0]).dados).toBe(dadosOriginais);
@@ -189,8 +189,8 @@ describe("montarLinhaDoTempo", () => {
       montarEventoDeRastreio(idPedidoB, "RAST-B1", "entrega", "2026-01-02T10:00:00Z", 2),
     );
 
-    const primeira = montarLinhaDoTempo(repositorio.db);
-    const segunda = montarLinhaDoTempo(repositorio.db);
+    const primeira = montarLinhaDoTempo(repositorio);
+    const segunda = montarLinhaDoTempo(repositorio);
 
     expect(JSON.stringify(segunda)).toBe(JSON.stringify(primeira));
 

@@ -63,7 +63,7 @@ describe.skipIf(!baseDisponivel)("montarDocumentoQualidade (pipeline completo, b
     });
     await ceder();
 
-    documentoCompartilhado = montarDocumentoQualidade(repositorio.db);
+    documentoCompartilhado = montarDocumentoQualidade(repositorio);
   }, 600_000);
 
   function montarDocumento() {
@@ -164,7 +164,7 @@ describe.skipIf(!baseDisponivel)("montarDocumentoQualidade (pipeline completo, b
     "banco :memory: sem ocorrências devolve os 7 tipos com contagem 0 e exemplos []",
     { timeout: 300_000 },
     () => {
-      const documento = montarDocumentoQualidade(criarRepositorio(":memory:").db);
+      const documento = montarDocumentoQualidade(criarRepositorio(":memory:"));
 
       expect(documento.achados).toHaveLength(7);
       for (const achado of documento.achados) {

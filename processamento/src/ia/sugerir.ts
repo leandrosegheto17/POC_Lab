@@ -293,7 +293,7 @@ export async function sugerir(
   const tetoChamadas = resolverTetoChamadas(opcoes);
   const dataCorte = resolverDataCorte(repositorio, opcoes);
 
-  const { pedidoResumo } = montarPedidosEVinculos(repositorio.db);
+  const { pedidoResumo } = montarPedidosEVinculos(repositorio);
 
   let chamadasEfetivas = 0;
 

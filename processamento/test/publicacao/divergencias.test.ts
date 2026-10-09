@@ -86,7 +86,7 @@ describe("montarDivergencias", () => {
       eventoPagamento("PAG-002", "PED-000001", 100, "2024-01-03T10:00:00Z"),
     );
 
-    const linhas = montarDivergencias(repositorio.db, DATA_CORTE);
+    const linhas = montarDivergencias(repositorio, DATA_CORTE);
 
     expect(linhas).toHaveLength(1);
     expect(linhas[0]).toMatchObject({ tipo: "duplicado", id_pedido: "PED-000001" });
@@ -111,7 +111,7 @@ describe("montarDivergencias", () => {
       eventoColeta("COL-002", "PED-000002", "2024-01-03T10:00:00Z"),
     );
 
-    const linhas = montarDivergencias(repositorio.db, DATA_CORTE);
+    const linhas = montarDivergencias(repositorio, DATA_CORTE);
 
     expect(linhas).toHaveLength(0);
   });
@@ -137,7 +137,7 @@ describe("montarDivergencias", () => {
       eventoPagamento("PAG-003B", "PED-000003", 50, "2024-01-03T10:00:00Z"),
     );
 
-    const linhas = montarDivergencias(repositorio.db, DATA_CORTE);
+    const linhas = montarDivergencias(repositorio, DATA_CORTE);
 
     expect(linhas.map((linha) => linha.id_pedido)).toEqual(["PED-000003", "PED-000009"]);
   });
@@ -173,7 +173,7 @@ describe("montarDivergencias", () => {
       }),
     });
 
-    const linhas = montarDivergencias(repositorio.db, DATA_CORTE);
+    const linhas = montarDivergencias(repositorio, DATA_CORTE);
 
     expect(linhas.map((linha) => linha.tipo)).toEqual(["entrega_atrasada", "parcial"]);
     expect(linhas.every((linha) => linha.id_pedido === "PED-000005")).toBe(true);
@@ -190,8 +190,8 @@ describe("montarDivergencias", () => {
       eventoPagamento("PAG-002", "PED-000001", 100, "2024-01-03T10:00:00Z"),
     );
 
-    const primeira = montarDivergencias(repositorio.db, DATA_CORTE);
-    const segunda = montarDivergencias(repositorio.db, DATA_CORTE);
+    const primeira = montarDivergencias(repositorio, DATA_CORTE);
+    const segunda = montarDivergencias(repositorio, DATA_CORTE);
 
     expect(segunda).toEqual(primeira);
     expect(obrigatorio(segunda[0]).eventos).toBe(obrigatorio(primeira[0]).eventos);
