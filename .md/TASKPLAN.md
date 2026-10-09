@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-09 09:22
+Atualizado: 2026-10-09 09:31
 
-Resumo: Não executada 4 · Aprovada 189 · total 193
+Resumo: Executada (aguarda teste) 4 · Aprovada 189 · total 193
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -185,7 +185,7 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 170 | RTP-0084 | executor | ✔ | Apertar checagens G-17 e G-22: lista permitida por pacote, optional/peer deps e outros... | Refatoração Revisão 2026-10-08 | — | Aprovada |
 | 171 | RTP-0085 | executor | ✔ | Limitar tamanho dos textos de EsquemaSugestaoIA (contrato) e testar descarte de item gr... | Refatoração Revisão 2026-10-08 | — | Aprovada |
 | 172 | BK-0006 | coordenador | ✔ | Decidir como registrar a regra de convergência de identidade de pedido: a skill adr-drafti | — | — | Aprovada |
-| 173 | RTP-0086 | executor | ✔ | Registrar no ADR-004 a regra de convergência de identidade de pedido | Refatoração Revisão 2026-10-08 | BK-0006, RTP-0071 | Não executada |
+| 173 | RTP-0086 | executor | ✔ | Registrar no ADR-004 a regra de convergência de identidade de pedido | Refatoração Revisão 2026-10-08 | BK-0006, RTP-0071 | Executada (aguarda teste) |
 | 174 | RTP-0087 | executor | ✔ | Investigar falha rara do teste de foco após erro de paginação (1 em 80 execuções) | Refatoração Revisão 2026-10-08 | RTP-0076 | Aprovada |
 | 175 | RTP-0088 | executor | ✔ | Extrair os pares de 10 linhas que restam em linha-do-tempo v1/v2 e nos testes de acessi... | Refatoração Revisão 2026-10-08 | RTP-0080 | Aprovada |
 | 176 | RTP-0089 | executor | ✔ | Mensagem do teste g17 indicar a lista do pacote certo | Refatoração Revisão 2026-10-08 | RTP-0084 | Aprovada |
@@ -200,9 +200,9 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 185 | RTP-0098 | executor | ✔ | Tirar IDs de tarefa dos comentários de web/vite.config.ts e web/wrangler.jsonc | Refatoração Revisão 2026-10-09 | — | Aprovada |
 | 186 | RTP-0099 | executor | ✔ | gabarito.test.ts usa consultas.listarEventos em vez de recriar a leitura do event store | Refatoração Revisão 2026-10-09 | — | Aprovada |
 | 187 | RTP-0100 | executor | ✔ | Teste de desempenho do G-05 sem limite fixo de 50 ms (instável sob carga) | Refatoração Revisão 2026-10-09 | — | Aprovada |
-| 188 | RTP-0101 | executor | ✔ | Migrar dominio e contrato para o novo pacote nucleo | Refatoração Revisão 2026-10-09 | RTP-0056, RTP-0057, RTP-0058, RTP-0062 | Não executada |
-| 189 | RTP-0102 | executor | ✔ | Teste: T2 só marca pagamento duplicado quando a API declarou a divergência duplicado | Refatoração Revisão 2026-10-09 | — | Não executada |
-| 190 | RTP-0103 | executor | ✔ | Publicar: guardar bookmark do Time Travel antes da carga do D1 e conferir version produ... | Refatoração Revisão 2026-10-09 | — | Não executada |
+| 188 | RTP-0101 | executor | ✔ | Migrar dominio e contrato para o novo pacote nucleo | Refatoração Revisão 2026-10-09 | RTP-0056, RTP-0057, RTP-0058, RTP-0062 | Executada (aguarda teste) |
+| 189 | RTP-0102 | executor | ✔ | Teste: T2 só marca pagamento duplicado quando a API declarou a divergência duplicado | Refatoração Revisão 2026-10-09 | — | Executada (aguarda teste) |
+| 190 | RTP-0103 | executor | ✔ | Publicar: guardar bookmark do Time Travel antes da carga do D1 e conferir version produ... | Refatoração Revisão 2026-10-09 | — | Executada (aguarda teste) |
 | 191 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Aprovada |
 | 192 | BK-0004 | coordenador | ✔ | Decidir onde roda a marcação de pagamentos duplicados (RN-03) da tela T2: hoje Pedido.tsx | — | — | Aprovada |
 | 193 | BK-0005 | coordenador | ✔ | Decidir como o D1 é trocado em produção e escrever a subseção Troca de dados em produção d | — | — | Aprovada |
