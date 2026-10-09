@@ -90,8 +90,12 @@ describe("Divergencias — paginação via URL: casos de borda", () => {
         true,
       );
     });
-    // Dá tempo de a resposta de erro ser processada.
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    // A consulta de erro terminou quando "Próxima" deixa de estar desabilitado.
+    await waitFor(() => {
+      expect(
+        formaCompleta(container).getByRole("button", { name: "Próxima" }),
+      ).not.toHaveAttribute("aria-disabled");
+    });
 
     fireEvent.click(screen.getByRole("radio", { name: /Pagamento parcial/ }));
 
