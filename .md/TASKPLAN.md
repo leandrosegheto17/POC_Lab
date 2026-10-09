@@ -7,7 +7,7 @@ dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuá
 
 Atualizado: 2026-10-09 15:32
 
-Resumo: Não executada 2 · Em execução 1 · Testada (aguarda segurança) 2 · Aprovada 194 · total 199
+Resumo: Não executada 2 · Em execução 1 · Aprovada 196 · total 199
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -203,10 +203,10 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 188 | RTP-0101 | executor | ✔ | Migrar dominio e contrato para o novo pacote nucleo | Refatoração Revisão 2026-10-09 | RTP-0056, RTP-0057, RTP-0058, RTP-0062 | Aprovada |
 | 189 | RTP-0102 | executor | ✔ | Teste: T2 só marca pagamento duplicado quando a API declarou a divergência duplicado | Refatoração Revisão 2026-10-09 | — | Aprovada |
 | 190 | RTP-0103 | executor | ✔ | Publicar: guardar bookmark do Time Travel antes da carga do D1 e conferir version produ... | Refatoração Revisão 2026-10-09 | — | Aprovada |
-| 191 | RTP-0104 | executor | ✔ | Tirar os helpers de teste do exports do nucleo (apoio/*) | Refatoração Revisão 2026-10-09 | RTP-0101 | Testada (aguarda segurança) |
+| 191 | RTP-0104 | executor | ✔ | Tirar os helpers de teste do exports do nucleo (apoio/*) | Refatoração Revisão 2026-10-09 | RTP-0101 | Aprovada |
 | 192 | RTP-0105 | executor | ✔ | Lint: tirar o ?. desnecessário no teste de duplicado só com divergência | Refatoração Revisão 2026-10-09 | RTP-0102 | Aprovada |
 | 193 | RTP-0106 | executor | ✔ | Testes pesados de integração do processamento: Unhandled Error de timeout do Vitest (on... | Refatoração Revisão 2026-10-09 | RTP-0101 | Em execução |
-| 194 | RTP-0107 | executor | ✔ | Teste: colunas de INSERCOES na fixture do web conferidas contra o DDL copiado | Refatoração Revisão 2026-10-09 | RTP-0101 | Testada (aguarda segurança) |
+| 194 | RTP-0107 | executor | ✔ | Teste: colunas de INSERCOES na fixture do web conferidas contra o DDL copiado | Refatoração Revisão 2026-10-09 | RTP-0101 | Aprovada |
 | 195 | RTP-0109 | executor | ✔ | Lint: barrar import de apoio-teste fora de test/ (nucleo, processamento e web) | Refatoração Revisão 2026-10-09 | RTP-0104 | Não executada |
 | 196 | RTP-0110 | executor | ✔ | web/test/apoio/obrigatorio.ts duplica apoio-teste/obrigatorio.ts: usar o comum | Refatoração Revisão 2026-10-09 | RTP-0104 | Não executada |
 | 197 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Aprovada |

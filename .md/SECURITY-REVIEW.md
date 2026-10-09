@@ -545,3 +545,9 @@ APROVADA — ci.yml sem mudança (ações por SHA, contents: read, sem segredo),
 
 ## RTP-0105 — DevSecOps — 2026-10-09
 APROVADA; 0 achados; diff de 2 linhas só em teste do web, sem dependência, segredo ou código de produção (revisão de leitura, nada executado).
+
+## RTP-0104 — DevSecOps — 2026-10-09
+APROVADA em segurança, 0 críticos e 0 não críticos novos (RTP-0109 e RTP-0110 já cobrem os riscos); exports do nucleo sem código de teste, apoio-teste privado e sem dependência externa, nenhum import em src/worker (grep executado; resto revisão de leitura).
+
+## RTP-0107 — DevSecOps — 2026-10-09
+APROVADA; 0 críticos, 0 não críticos; diff só de teste com banco em memória, sem dependência nova nem segredo (grep 0), SAST/gitleaks não executados.
