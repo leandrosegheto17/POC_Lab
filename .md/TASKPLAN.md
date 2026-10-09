@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-09 00:08
+Atualizado: 2026-10-09 02:59
 
-Resumo: Não executada 24 · Aprovada 135 · total 159
+Resumo: Não executada 17 · Testada (aguarda segurança) 21 · Aprovada 135 · total 173
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -148,27 +148,41 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 133 | RTP-0024 | executor | ✔ | Teste de ordenação secundária por tipo em divergencias | Refatoração Lote-7 | TP-0037 | Aprovada |
 | 134 | RTP-0031 | executor | ✔ | Teste de qualidade: tipos com contagem 0 e os 830 pedidos de formato curto | Refatoração Lote-7 | TP-0038 | Aprovada |
 | 135 | RTP-0032 | executor | ✔ | Testar dataCorte = maior momento_fato na publicação | Refatoração Lote-7 | TP-0039 | Aprovada |
-| 136 | RTP-0050 | executor | ✔ | Repositório do event store com consultas de leitura, transação e comandos preparados um... | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 137 | RTP-0051 | executor | ✔ | publicacao lê o event store só pelo repositório, com uma única conversão linha→Evento | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 138 | RTP-0052 | executor | ✔ | importar sem SQL próprio e sem repetir o corpo por fonte | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 139 | RTP-0053 | executor | ✔ | Candidatos e chave de cache da IA em um só lugar; repositório sem conexão exposta | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 140 | RTP-0054 | executor | ✔ | CLIs finas sobre uma camada de casos de uso e um módulo de configuração | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 141 | RTP-0055 | executor | ✔ | plantar-pagamentos sem blocos repetidos por caso | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 142 | RTP-0056 | executor | ✔ | Listas de tipos e fontes em um só módulo; evento v2 derivado do v1 no contrato | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 143 | RTP-0057 | executor | ✔ | Rotas v1 e v2 da linha do tempo com resolução e montagem comuns | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 144 | RTP-0058 | executor | ✔ | Rótulos e listas de tipos do site em um só módulo | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 145 | RTP-0059 | executor | ✔ | T3: um componente de bloco de indicador por arquivo | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 146 | RTP-0060 | executor | ✔ | T2: página Pedido fina, LinhaDoTempo dividida e adaptador tipado de evento | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 147 | RTP-0061 | executor | ✔ | T1: página Divergências fina | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 148 | RTP-0062 | executor | ✔ | T4: página Qualidade fina e sugestão da IA validada pelo contrato | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 149 | RTP-0063 | executor | ✔ | casca.css dividida e ícones sobre um invólucro comum | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 150 | RTP-0064 | executor | ✔ | Testes do site divididos por comportamento, com fábricas comuns | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 151 | RTP-0065 | executor | ✔ | Testes do processamento: gerador dividido e dados de teste comuns | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 152 | RTP-0066 | executor | ✔ | Comentários do processamento sem ID de tarefa, sem narração e sem texto desatualizado | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 153 | RTP-0067 | executor | ✔ | Comentários do web sem ID de tarefa, sem narração e sem texto desatualizado | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 154 | RTP-0068 | executor | ✔ | eslint.config.js sem grupos de fronteira repetidos | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 155 | RTP-0069 | executor | ✔ | Cache do CI no caminho certo e publicação num script dedicado | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 156 | RTP-0070 | executor | ✔ | Checagem automática para os guardrails G-05, G-17 e G-22 | Refatoração Revisão 2026-10-08 | — | Não executada |
-| 157 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Não executada |
-| 158 | BK-0004 | coordenador | ✔ | Decidir onde roda a marcação de pagamentos duplicados (RN-03) da tela T2: hoje Pedido.tsx | — | — | Não executada |
-| 159 | BK-0005 | coordenador | ✔ | Decidir como o D1 é trocado em produção e escrever a subseção Troca de dados em produção d | — | — | Não executada |
+| 136 | RTP-0050 | executor | ✔ | Repositório do event store com consultas de leitura, transação e comandos preparados um... | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 137 | RTP-0051 | executor | ✔ | publicacao lê o event store só pelo repositório, com uma única conversão linha→Evento | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 138 | RTP-0052 | executor | ✔ | importar sem SQL próprio e sem repetir o corpo por fonte | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 139 | RTP-0053 | executor | ✔ | Candidatos e chave de cache da IA em um só lugar; repositório sem conexão exposta | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 140 | RTP-0054 | executor | ✔ | CLIs finas sobre uma camada de casos de uso e um módulo de configuração | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 141 | RTP-0055 | executor | ✔ | plantar-pagamentos sem blocos repetidos por caso | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 142 | RTP-0056 | executor | ✔ | Listas de tipos e fontes em um só módulo; evento v2 derivado do v1 no contrato | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 143 | RTP-0057 | executor | ✔ | Rotas v1 e v2 da linha do tempo com resolução e montagem comuns | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 144 | RTP-0058 | executor | ✔ | Rótulos e listas de tipos do site em um só módulo | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 145 | RTP-0059 | executor | ✔ | T3: um componente de bloco de indicador por arquivo | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 146 | RTP-0060 | executor | ✔ | T2: página Pedido fina, LinhaDoTempo dividida e adaptador tipado de evento | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 147 | RTP-0061 | executor | ✔ | T1: página Divergências fina | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 148 | RTP-0062 | executor | ✔ | T4: página Qualidade fina e sugestão da IA validada pelo contrato | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 149 | RTP-0063 | executor | ✔ | casca.css dividida e ícones sobre um invólucro comum | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 150 | RTP-0064 | executor | ✔ | Testes do site divididos por comportamento, com fábricas comuns | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 151 | RTP-0065 | executor | ✔ | Testes do processamento: gerador dividido e dados de teste comuns | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 152 | RTP-0066 | executor | ✔ | Comentários do processamento sem ID de tarefa, sem narração e sem texto desatualizado | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 153 | RTP-0067 | executor | ✔ | Comentários do web sem ID de tarefa, sem narração e sem texto desatualizado | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 154 | RTP-0068 | executor | ✔ | eslint.config.js sem grupos de fronteira repetidos | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 155 | RTP-0069 | executor | ✔ | Cache do CI no caminho certo e publicação em scripts dedicados (site separado dos dados) | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 156 | RTP-0070 | executor | ✔ | Checagem automática para os guardrails G-05, G-17 e G-22 | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 157 | RTP-0071 | executor | ✔ | importar.ts dentro de 300 linhas | Refatoração Revisão 2026-10-08 | RTP-0052 | Não executada |
+| 158 | RTP-0072 | executor | ✔ | Mensagem do passo sugerir impressa uma só vez | Refatoração Revisão 2026-10-08 | RTP-0054 | Não executada |
+| 159 | RTP-0073 | executor | ✔ | plantar-rastreio reaproveita a partição de pagamentos | Refatoração Revisão 2026-10-08 | RTP-0055 | Não executada |
+| 160 | RTP-0074 | executor | ✔ | Comentário de plantarCasosPagamento sem a linha quebrada | Refatoração Revisão 2026-10-08 | RTP-0055 | Não executada |
+| 161 | RTP-0075 | executor | ✔ | Teste das listas do domínio cobre também o z.enum de TIPOS_ACHADO | Refatoração Revisão 2026-10-08 | RTP-0056 | Não executada |
+| 162 | RTP-0076 | executor | ✔ | Teste de foco após erro de paginação sem falha intermitente | Refatoração Revisão 2026-10-08 | — | Não executada |
+| 163 | RTP-0077 | executor | ✔ | Mover VALOR_TODOS para dados/rotulos e tirar a importacao nav para componentes | Refatoração Revisão 2026-10-08 | RTP-0061 | Não executada |
+| 164 | RTP-0078 | executor | ✔ | Corrigir espaco perdido em SITUACOES_PAGAMENTO em dados/rotulos.ts | Refatoração Revisão 2026-10-08 | — | Não executada |
+| 165 | RTP-0079 | executor | ✔ | Atualizar comentário de test/casca.test.tsx que cita o casca.css removido | Refatoração Revisão 2026-10-08 | — | Não executada |
+| 166 | RTP-0080 | executor | ✔ | Extrair para fábricas os trechos de teste ainda repetidos em web/test (linha-do-tempo W... | Refatoração Revisão 2026-10-08 | — | Não executada |
+| 167 | RTP-0081 | executor | ✔ | Remover imports não usados deixados nos testes do processamento após extração das fábricas | Refatoração Revisão 2026-10-08 | — | Não executada |
+| 168 | RTP-0082 | executor | ✔ | Enxugar o cabeçalho de eslint.config.js (nota de interpretação longa) e a linha em bran... | Refatoração Revisão 2026-10-08 | — | Não executada |
+| 169 | RTP-0083 | executor | ✔ | Fechar brechas da checagem G-05: identificador entre aspas, REPLACE e ON CONFLICT DO UP... | Refatoração Revisão 2026-10-08 | — | Não executada |
+| 170 | RTP-0084 | executor | ✔ | Apertar checagens G-17 e G-22: lista permitida por pacote, optional/peer deps e outros... | Refatoração Revisão 2026-10-08 | — | Não executada |
+| 171 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Não executada |
+| 172 | BK-0004 | coordenador | ✔ | Decidir onde roda a marcação de pagamentos duplicados (RN-03) da tela T2: hoje Pedido.tsx | — | — | Não executada |
+| 173 | BK-0005 | coordenador | ✔ | Decidir como o D1 é trocado em produção e escrever a subseção Troca de dados em produção d | — | — | Não executada |

@@ -401,3 +401,66 @@ APROVADA — lint e 6/6 testes da regra passam; 0 críticos, 2 não críticos (t
 
 ## RTP-0049 — QA — 2026-10-08
 APROVADA — timeout explícito 60000 ms válido no vitest 3.2.7, 6/6 testes e lint passam; 0 achados.
+
+## RTP-0050 — QA — 2026-10-09
+APROVADA — 0 críticos, 0 não críticos; 26/26 testes de armazenamento e 437/437 da suíte passando, tsc limpo, funções do aceite testadas.
+
+## RTP-0051 — QA — 2026-10-09
+APROVADA - 0 críticos, 0 não críticos; sem acesso direto ao banco em publicacao/, conversão linha->Evento e agrupamento únicos, 143 testes do escopo e tsc passando.
+
+## RTP-0052 — QA — 2026-10-09
+APROVADA; 0 críticos, 1 não crítico (importar.ts com 325 linhas > 300, RTP-0071); importar.test 3/3 e tsc ok, SQL próprio removido.
+
+## RTP-0053 — QA — 2026-10-09
+APROVADA — 0 críticos, 0 não críticos; tsc limpo e 76 testes de ia/qualidade/armazenamento/cli passando; candidatos e chave de cache únicos em ia/, repositório sem db, arquivos ≤ 300 linhas.
+
+## RTP-0054 — QA — 2026-10-09
+APROVADA — aceite cumprido (27 testes de cli/lint/preparar, tsc e eslint do escopo limpos, CLIs sem import cruzado, preparar com 140 linhas); 0 críticos, 1 não crítico (RTP-0072: mensagem de sugerir impressa duas vezes); fronteiras de aplicacao/config no SDD seguem em BK-0003.
+
+## RTP-0055 — QA — 2026-10-09
+APROVADA; 0 críticos, 2 não críticos (RTP-0073 cópia de embaralhar/particionarPedidos em plantar-rastreio; RTP-0074 JSDoc quebrado); tsc limpo e 19 testes do gerador/gabarito passando.
+
+## RTP-0056 — QA — 2026-10-09
+APROVADA; 0 críticos, 1 não crítico (RTP-0075: teste de TIPOS_ACHADO não cobre o z.enum); tsc ok, processamento 250 e web 389 testes verdes.
+
+## RTP-0057 — QA — 2026-10-09
+APROVADA, 0 críticos e 0 não críticos; 42 testes do Worker e tsc passando, resolução/montagem únicas em linha-do-tempo-comum.ts, sem TP/RTP nos arquivos tocados.
+
+## RTP-0058 — QA — 2026-10-09
+APROVADA; 0 críticos, 1 não crítico (RTP-0076, teste de foco intermitente fora da tarefa); web test 388/389 e tsc limpo, rótulos únicos em rotulos.ts.
+
+## RTP-0059 — QA — 2026-10-09
+APROVADA — 0 críticos, 0 não críticos; vitest indicadores 12/12 (com axe), tsc limpo, 5 arquivos ≤ 200 linhas com 1 export cada, BarraProporcao compartilhada.
+
+## RTP-0060 — QA — 2026-10-09
+APROVADA; 0 críticos e 0 não críticos; 117 testes e typecheck passando, Pedido 114 e LinhaDoTempo 110 linhas, adaptador tipado testado, sem `as unknown as`.
+
+## RTP-0061 — QA — 2026-10-09
+APROVADA; 0 críticos e 1 não crítico (RTP-0077: nav importa VALOR_TODOS de componentes); 41 testes, tsc e eslint limpos, página com 194 linhas, comparação visual não rodada (marcação/CSS intactos).
+
+## RTP-0062 — QA — 2026-10-09
+APROVADA; 0 críticos, 1 não crítico (RTP-0078, espaço perdido em rotulos.ts); qualidade+rotulos 12/12, tsc e ESLint ok, sugestão da IA validada pelo contrato.
+
+## RTP-0063 — QA — 2026-10-09
+APROVADA; 0 críticos, 1 não crítico (RTP-0079: comentário de teste cita casca.css removido); tsc limpo, 389 testes passando, conjunto de regras CSS idêntico antes/depois; comparação visual não rodada (exige autorização).
+
+## RTP-0064 — QA — 2026-10-09
+APROVADA; 0 críticos, 1 não crítico (RTP-0080: trechos de teste de 10 linhas ainda repetidos); 389 testes passando, 329=329 casos antes/depois, maior arquivo 339 linhas, tsc/eslint limpos.
+
+## RTP-0065 — QA — 2026-10-09
+APROVADA; 0 críticos, 1 não crítico (RTP-0081: 6 imports não usados quebram eslint em processamento/test); 32 casos antes/depois, suíte 437 passando, tsc limpo.
+
+## RTP-0066 — QA — 2026-10-09
+APROVADA — diff só de comentários/nomes de teste (+ prefixo "TP-0020: " das REGRA_* sem consumidores), grep de ID zerado, tsc ok, 437 testes passam; 0 críticos, 0 novos não críticos (lint já na RTP-0081).
+
+## RTP-0067 — QA — 2026-10-09
+APROVADA — só comentários e 2 nomes de describe mudaram (código executável idêntico), grep de TP-/RTP-/Lote/Ajuste Modelo B/mockup à risca zerado, tsc limpo, 389 testes passando, 0 achados.
+
+## RTP-0068 — QA — 2026-10-09
+APROVADA — 0 críticos, 1 não crítico (RTP-0082, cabeçalho do eslint.config.js longo); print-config idêntico em 13 arquivos de todos os pacotes, imports proibidos seguem barrados, test/lint 6/6; `eslint/**` em ignores aceito.
+
+## RTP-0069 — QA — 2026-10-09
+APROVADA, 0 críticos e 0 não críticos; 8 testes do script e eslint ok, regex do idPublicacao validado no leitura.sql real, consulta remota só SELECT e falha/vazio leva à carga, cache do CI em processamento/dados/origem.
+
+## RTP-0070 — QA — 2026-10-09
+APROVADA; 0 críticos, 2 não críticos (RTP-0083 brechas do G-05, RTP-0084 G-17/G-22 mais estritos); 20 testes novos passando, casos negativos acusam de fato; texto do GUARDRAILS e lista ampliada do G-17 aguardam o usuário.
