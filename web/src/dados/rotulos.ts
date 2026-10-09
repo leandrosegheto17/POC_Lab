@@ -121,7 +121,7 @@ export const TIPOS_ACHADO_EM_ORDEM: ReadonlyArray<{
   titulo: string;
 }> = ORDEM_ACHADOS.map((tipo) => ({ tipo, titulo: TITULOS_ACHADO[tipo] }));
 
-const SITUACOES_PAGAMENTO:Record<string, string> = {
+const SITUACOES_PAGAMENTO: Record<string, string> = {
   sem_pagamento: "Sem pagamento",
   parcial: "Parcial",
   quitado: "Quitado",
