@@ -7,56 +7,21 @@
  * existir) uma interface/registro genérico de "fonte" — cada chamada aos
  * adaptadores é direta e nomeada.
  *
- * ## Identidade de pedido (`PED-nnnnnn`) e convergência entre fontes
+ * ## Identidade de pedido (`PED-nnnnnn`)
  *
- * Os adaptadores de fonte devolvem vínculos cujo campo `idPedido` tem
- * significado diferente por fonte:
- * - `vendas`: `idPedido` é o próprio código bruto do pedido na base de
- *   vendas (ex. `"10248"`) — a identidade **canônica** entre fontes.
- * - `rastreio`: `idPedido` é o `pedido_venda` da linha do CSV, ou seja, já é
- *   o código bruto de vendas (a chave cruzada), não um código próprio de
- *   rastreio.
- * - `pagamentos`: `idPedido` (quando a referência casa) é o código bruto de
- *   vendas resolvido por `casarReferencia` (RN-09) — de novo, a chave
- *   cruzada, não um código próprio de pagamentos.
- *
- * Ou seja: as 3 fontes, quando têm um vínculo, sempre o expressam em termos
- * do código bruto de vendas. Esse código bruto de vendas é a chave usada
- * para achar ou criar o `id_pedido` interno (`PED-nnnnnn`):
- *
- * - O par `(fonte: "vendas", codigo_externo: <código bruto de vendas>)` na
- *   tabela `vinculo_fonte` É o índice de identidade: se já existe, o
- *   `id_pedido` associado é reaproveitado; se não existe, um novo
- *   `PED-nnnnnn` é criado (próximo número sequencial) e esse vínculo
- *   `vendas` é inserido.
- * - Isso vale **independente de qual fonte dispara a resolução**: se um
- *   evento de rastreio ou pagamento chega citando um código de vendas que
- *   ainda não tem `id_pedido`, este módulo cria o `id_pedido` e o vínculo
- *   `vendas` correspondente **antecipadamente** (mesmo a venda em si ainda
- *   não tendo sido importada). Quando a venda for importada depois (nesta
- *   chamada ou em uma chamada futura sobre o mesmo repositório), ela
- *   encontra o vínculo `vendas` já existente e reaproveita o mesmo
- *   `id_pedido` — convergindo as 3 fontes no mesmo pedido.
- * - Cada fonte também grava seu próprio vínculo em `vinculo_fonte` com o seu
- *   próprio `codigo_externo` (o `codigo_rastreio` para rastreio, o
- *   `codigo_transacao` para pagamentos, o próprio código de vendas para
- *   vendas) apontando para o `id_pedido` resolvido.
- *
- * ## Ordem de atribuição de `PED-nnnnnn`
- *
- * Dentro de uma mesma chamada a `importar`, a ordem em que novos
- * `PED-nnnnnn` são cunhados é: vendas primeiro (por código bruto crescente),
- * depois rastreio, depois pagamentos (ambos por ordem de linha/lista). Um
- * número de pedido já cunhado (nesta chamada ou em chamada anterior sobre o
- * mesmo repositório) nunca é reatribuído — o contador sempre continua do
- * maior `PED-nnnnnn` já existente na tabela `pedido`.
+ * As 3 fontes expressam o vínculo com o pedido pelo código bruto de vendas.
+ * O par `(fonte: "vendas", codigo_externo: <código bruto>)` em `vinculo_fonte`
+ * é o índice de identidade: se existe, reaproveita o `id_pedido`; se não, cunha
+ * o próximo `PED-nnnnnn` e insere o vínculo `vendas` (mesmo que a venda ainda
+ * não tenha sido importada), convergindo as fontes no mesmo pedido. Cada fonte
+ * grava também o próprio vínculo (rastreio, transação, código de vendas).
+ * Ordem de cunhagem: vendas (código crescente), rastreio, pagamentos; o
+ * contador continua do maior `PED-nnnnnn` existente. Regra completa: ADR-004.
  *
  * ## Transação
  *
- * Toda a gravação de uma chamada a `importar` roda dentro de uma única
- * transação (`Repositorio.emTransacao`: `ROLLBACK` em caso de erro). Nenhum `UPDATE`/`DELETE` é emitido em nenhum ponto
- * deste módulo: só `INSERT` (via as funções de `inserirX` do repositório, que
- * já usam `ON CONFLICT DO NOTHING`) e `SELECT` (para resolver identidade).
+ * Toda a gravação roda em uma única transação (`Repositorio.emTransacao`,
+ * `ROLLBACK` em erro). Só `INSERT` (com `ON CONFLICT DO NOTHING`) e `SELECT`.
  */
 import { processarVendas } from "../fontes/vendas.js";
 import { processarPagamentos, type ResultadoProcessamentoPagamentos } from "../fontes/pagamentos.js";
