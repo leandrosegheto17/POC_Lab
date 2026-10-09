@@ -24,7 +24,7 @@ type CascaProps = {
 // Não há mais um <header> de largura cheia acima do conteúdo: logo, busca,
 // NavegacaoPrincipal (único <nav> do DOM) e FaixaResumo são os MESMOS 4
 // elementos em qualquer largura de tela, só reagrupados visualmente por
-// CSS (ver casca.css):
+// CSS (ver casca-*.css):
 // - >=1024px: `.casca__barra` é o menu lateral fixo do mockup — coluna
 //   única, sticky, altura da janela, com logo no topo, busca abaixo,
 //   depois a navegação (cresce para ocupar o espaço restante) e, encostada
@@ -35,7 +35,7 @@ type CascaProps = {
 //   §6) — sem duplicar nenhum dos 4 elementos.
 //
 // Ordem no DOM (não muda por CSS `order`, exceto a regra de altura
-// <=480px documentada em casca.css) para bater com a navegação por
+// <=480px documentada em casca-*.css) para bater com a navegação por
 // teclado/leitor de tela: pular para o conteúdo -> busca -> navegação ->
 // main. Logo e faixa não são focáveis, então a posição deles no DOM não
 // afeta essa ordem.

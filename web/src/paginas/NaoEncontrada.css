@@ -54,7 +54,7 @@
 }
 
 /* Celular em paisagem (altura <= 480px): a barra de abas deixa de ser
- * fixa (casca.css), então o espaço extra embaixo não é necessário. */
+ * fixa (casca-*.css), então o espaço extra embaixo não é necessário. */
 @media (max-height: 480px) and (max-width: 1023px) {
   .casca--simples .casca__conteudo {
     padding-bottom: 18px;

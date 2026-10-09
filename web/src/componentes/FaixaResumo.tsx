@@ -7,7 +7,7 @@
 // Ajuste Modelo B (2026-10-08): três <span> separados por "·" (aria-hidden).
 // PC: três linhas encostadas embaixo, separadores ocultos. Celular: uma
 // linha "dados sintéticos · 1998-05-06" à direita do logo, total oculto
-// (ver casca.css).
+// (ver casca-*.css).
 import { useResumo } from "../dados/contexto-resumo.tsx";
 import { formatarData, formatarNumero } from "../dados/formatacao.ts";
 

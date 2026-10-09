@@ -1,0 +1,102 @@
+/* Navegação principal: barra de abas fixa (celular) e lista lateral (PC).
+ * Mobile-first; breakpoint em 1024px (menu lateral vs. cabeçalho + barra de
+ * abas) e altura 480px. A ordem de import em main.tsx preserva a cascata. */
+
+/* Navegação principal — celular: barra de abas fixa no rodapé. */
+.navegacao-principal {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--cor-lateral);
+  border-top: 1px solid var(--cor-divisoria);
+  padding-bottom: 8px;
+  z-index: 50;
+}
+
+.navegacao-principal__lista {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navegacao-principal__lista li {
+  display: flex;
+  flex: 1;
+}
+
+.navegacao-principal__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 0;
+  min-height: 52px;
+  color: var(--cor-texto-2);
+  text-decoration: none;
+  font-size: 11px;
+}
+
+.navegacao-principal__item--ativo {
+  color: var(--cor-destaque);
+  font-weight: 700;
+}
+
+.icone-nav {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .navegacao-principal {
+    position: static;
+    padding-bottom: 0;
+    background: transparent;
+    border-top: none;
+  }
+
+  .navegacao-principal__lista {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .navegacao-principal__lista li {
+    flex: none;
+  }
+
+  .navegacao-principal__item {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    min-height: 40px;
+    border-radius: var(--raio-8);
+    font-size: 15px;
+    color: var(--cor-texto-menu);
+  }
+
+  .navegacao-principal__item--ativo {
+    background: var(--cor-menu-ativo);
+    color: var(--cor-destaque);
+    font-weight: 600;
+  }
+
+  .icone-nav {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Telas muito baixas: a barra de abas deixa de ser fixa e vai para o fim
+ * do cabeçalho (só a posição visual muda, não a ordem de tab). */
+@media (max-height: 480px) and (max-width: 1023px) {
+  .navegacao-principal {
+    position: static;
+    grid-column: 1 / -1;
+    padding-bottom: 0;
+  }
+}

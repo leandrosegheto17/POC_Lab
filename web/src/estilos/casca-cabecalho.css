@@ -1,0 +1,179 @@
+/* Cabeçalho (celular) / menu lateral (PC): barra, link de pular, logo e faixa de resumo.
+ * Mobile-first; breakpoint em 1024px (menu lateral vs. cabeçalho + barra de
+ * abas) e altura 480px. A ordem de import em main.tsx preserva a cascata. */
+
+/* ---------------------------------------------------------------------
+ * Celular (< 1024px): cabeçalho em grade "logo faixa" / "busca busca".
+ * ------------------------------------------------------------------- */
+.casca__barra {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "logo faixa"
+    "busca busca";
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--cor-divisoria);
+}
+
+/* Link "Pular para o conteúdo": fora da tela até receber foco. */
+.pular-para-conteudo {
+  position: absolute;
+  left: -999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.pular-para-conteudo:focus {
+  position: fixed;
+  left: var(--espaco-3);
+  top: var(--espaco-3);
+  width: auto;
+  height: auto;
+  overflow: visible;
+  padding: var(--espaco-2) var(--espaco-4);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-8);
+  z-index: 200;
+}
+
+/* Logo/marca do produto. */
+.logo-marca {
+  grid-area: logo;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.logo-marca__selo {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  background: var(--cor-destaque);
+  color: var(--cor-sobre-destaque);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.logo-marca__texto {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.logo-marca__nome {
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--cor-texto);
+}
+
+.logo-marca__subtitulo {
+  display: none;
+  font-size: 12px;
+  color: var(--cor-texto-2);
+}
+
+/* Faixa de resumo — celular: uma linha à direita do logo,
+ * "dados sintéticos · 1998-05-06" (sem a palavra "corte" e sem o total). */
+.faixa-resumo {
+  grid-area: faixa;
+  justify-self: end;
+  margin: 0;
+  font-size: 11px;
+  color: var(--cor-texto-2);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.faixa-resumo__item:first-child {
+  display: inline-block;
+}
+
+.faixa-resumo__item:first-child::first-letter {
+  text-transform: lowercase;
+}
+
+.faixa-resumo__corte,
+.faixa-resumo__total,
+.faixa-resumo__separador--total {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .casca__barra {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    width: var(--largura-menu-lateral);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+    padding: 20px 14px;
+    background: var(--cor-lateral);
+    border-bottom: none;
+    border-right: 1px solid var(--cor-divisoria);
+    overflow-y: auto;
+  }
+
+  .logo-marca {
+    padding: 0 6px;
+  }
+
+  .logo-marca__selo {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--raio-8);
+    font-size: 14px;
+  }
+
+  .logo-marca__nome {
+    font-size: 17px;
+  }
+
+  .logo-marca__subtitulo {
+    display: block;
+  }
+
+  /* Faixa: três linhas encostadas embaixo, sem separadores. */
+  .faixa-resumo {
+    justify-self: auto;
+    margin: auto 0 0;
+    padding: 0 6px;
+    font-size: 12px;
+    white-space: normal;
+  }
+
+  .faixa-resumo__item,
+  .faixa-resumo__item:first-child {
+    display: block;
+  }
+
+  .faixa-resumo__item:first-child::first-letter {
+    text-transform: none;
+  }
+
+  .faixa-resumo__corte {
+    display: inline;
+  }
+
+  .faixa-resumo__total {
+    display: block;
+  }
+
+  .faixa-resumo__separador,
+  .faixa-resumo__separador--total {
+    display: none;
+  }
+}

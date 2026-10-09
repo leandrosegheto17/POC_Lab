@@ -1,0 +1,148 @@
+/* Campo de busca de pedido: variante "barra" (casca) e "pagina".
+ * Mobile-first; breakpoint em 1024px (menu lateral vs. cabeçalho + barra de
+ * abas) e altura 480px. A ordem de import em main.tsx preserva a cascata. */
+
+.campo-busca {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.casca__barra .campo-busca {
+  grid-area: busca;
+}
+
+.campo-busca__rotulo {
+  font-size: 12px;
+  color: var(--cor-texto-2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.campo-busca__linha {
+  display: flex;
+  gap: 6px;
+}
+
+.campo-busca__input {
+  flex: 1;
+  min-width: 0;
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-borda-controle);
+  font-family: var(--fonte-mono);
+  color-scheme: dark;
+}
+
+.campo-busca__input::placeholder {
+  color: var(--cor-texto-2);
+}
+
+.campo-busca__botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--cor-destaque);
+  color: var(--cor-sobre-destaque);
+  border: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.campo-busca__erro {
+  margin: 0;
+  color: var(--cor-erro-texto);
+  font-size: 12px;
+}
+
+/* Variante "barra", celular: rótulo só para leitor de tela. */
+.campo-busca--barra .campo-busca__rotulo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.campo-busca--barra .campo-busca__input {
+  height: 44px;
+  padding: 0 12px;
+  background: var(--cor-superficie);
+  border-radius: var(--raio-10);
+  font-size: 14px;
+}
+
+/* Sem valor digitado, o placeholder fica em Manrope; com valor, mono. */
+.campo-busca--barra .campo-busca__input:placeholder-shown {
+  font-family: var(--fonte-texto);
+}
+
+.campo-busca--barra .campo-busca__botao {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--raio-10);
+}
+
+/* Variante "pagina" (T5). */
+.campo-busca--pagina .campo-busca__linha {
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.campo-busca--pagina .campo-busca__input {
+  flex: 0 1 300px;
+  width: 300px;
+  max-width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  background: var(--cor-superficie);
+  border-radius: var(--raio-8);
+  font-size: 14px;
+}
+
+.campo-busca--pagina .campo-busca__botao {
+  height: 44px;
+  padding: 0 18px;
+  border-radius: var(--raio-8);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@media (min-width: 1024px) {
+  .casca__barra .campo-busca {
+    padding: 0 6px;
+  }
+
+  /* Variante "barra", PC: rótulo visível, input mono 13px, botão 40x40. */
+  .campo-busca--barra .campo-busca__rotulo {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  .campo-busca--barra .campo-busca__input,
+  .campo-busca--barra .campo-busca__input:placeholder-shown {
+    height: 40px;
+    padding: 0 10px;
+    background: var(--cor-fundo);
+    border-radius: var(--raio-8);
+    font-family: var(--fonte-mono);
+    font-size: 13px;
+  }
+
+  .campo-busca--barra .campo-busca__botao {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--raio-8);
+  }
+}

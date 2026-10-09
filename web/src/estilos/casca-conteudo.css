@@ -1,0 +1,46 @@
+/* Casca do app: contêiner e conteúdo principal.
+ * A ordem no DOM nunca muda (logo, busca, nav, faixa); a troca entre menu
+ * lateral e abas inferiores é só CSS, sem JS.
+ * Mobile-first; breakpoint em 1024px (menu lateral vs. cabeçalho + barra de
+ * abas) e altura 480px. A ordem de import em main.tsx preserva a cascata. */
+
+.casca {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.casca__conteudo {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  /* 100px embaixo: espaço da barra de abas fixa (~60px) + respiro. */
+  padding: 18px 16px 100px;
+  scroll-padding-bottom: 60px;
+}
+
+@media (min-width: 1024px) {
+  .casca {
+    flex-direction: row;
+  }
+
+  .casca__conteudo {
+    gap: 22px;
+    padding: 28px 32px 48px;
+    scroll-padding-bottom: 0;
+  }
+}
+
+/* Telas muito baixas (altura <= 480px, ex. celular em paisagem): a barra
+ * de abas fixa comeria espaço vertical demais. Ela deixa de ser `fixed` e
+ * passa para o fim do cabeçalho (linha própria da grade) — a ordem no DOM
+ * não muda, então a ordem de tab também não; só a posição VISUAL muda. */
+@media (max-height: 480px) and (max-width: 1023px) {
+  .casca__conteudo {
+    padding-bottom: 18px;
+    scroll-padding-bottom: 0;
+  }
+}
