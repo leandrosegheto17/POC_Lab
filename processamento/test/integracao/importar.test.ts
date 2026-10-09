@@ -234,4 +234,34 @@ describe("importar (TP-0027)", () => {
       expect(contarPedidos(repositorio.db)).toBe(1);
     });
   });
+
+  describe("atomicidade", () => {
+    it("erro no meio da importação desfaz tudo: nenhuma linha gravada", () => {
+      const repositorio = criarRepositorio(":memory:");
+      let eventosGravados = 0;
+      const repositorioComFalha = {
+        ...repositorio,
+        inserirEvento: (evento: Parameters<typeof repositorio.inserirEvento>[0]) => {
+          eventosGravados += 1;
+          if (eventosGravados === 2) {
+            throw new Error("falha simulada");
+          }
+          return repositorio.inserirEvento(evento);
+        },
+      };
+
+      expect(() =>
+        importar(repositorioComFalha, {
+          vendas: [criarPedidoVendas("1"), criarPedidoVendas("2")],
+          pagamentosCsv: "",
+          rastreioCsv: "",
+          codigosConhecidos: new Set(["1", "2"]),
+        }),
+      ).toThrow("falha simulada");
+
+      expect(contarPedidos(repositorio.db)).toBe(0);
+      expect(contarVinculosFonte(repositorio.db)).toBe(0);
+      expect(contarEventos(repositorio.db)).toBe(0);
+    });
+  });
 });

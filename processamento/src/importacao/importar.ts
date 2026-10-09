@@ -1,9 +1,9 @@
 /**
- * Caso de uso `importar` (TP-0027).
+ * Caso de uso `importar`.
  *
  * Orquestra os 3 adaptadores de fonte (`processarVendas`, `processarPagamentos`,
- * `processarRastreio`) e grava o resultado no event store via `Repositorio`
- * (TP-0018). Este módulo é explícito para as 3 fontes: não existe (e não deve
+ * `processarRastreio`) e grava o resultado no event store via `Repositorio`.
+ * Este módulo é explícito para as 3 fontes: não existe (e não deve
  * existir) uma interface/registro genérico de "fonte" — cada chamada aos
  * adaptadores é direta e nomeada.
  *
@@ -54,18 +54,16 @@
  * ## Transação
  *
  * Toda a gravação de uma chamada a `importar` roda dentro de uma única
- * transação SQLite (`BEGIN`/`COMMIT`, com `ROLLBACK` em caso de erro) — ver
- * `Repositorio.db.exec`. Nenhum `UPDATE`/`DELETE` é emitido em nenhum ponto
+ * transação (`Repositorio.emTransacao`: `ROLLBACK` em caso de erro). Nenhum `UPDATE`/`DELETE` é emitido em nenhum ponto
  * deste módulo: só `INSERT` (via as funções de `inserirX` do repositório, que
  * já usam `ON CONFLICT DO NOTHING`) e `SELECT` (para resolver identidade).
  */
-import type { DatabaseSync } from "node:sqlite";
-
 import { processarVendas } from "../fontes/vendas.js";
 import { processarPagamentos, type ResultadoProcessamentoPagamentos } from "../fontes/pagamentos.js";
 import { processarRastreio, type ResultadoProcessamentoRastreio } from "../fontes/rastreio.js";
 import type { PedidoVendas } from "../fontes/leitura-vendas.js";
 import type { Evento } from "../dominio/evento.js";
+import type { AchadoQualidade, Fonte } from "../dominio/modelo.js";
 import type { Repositorio } from "../armazenamento/repositorio.js";
 
 /** Contagens de uma fonte no relatório final de uma chamada a `importar`. */
@@ -114,26 +112,6 @@ function contarRejeitadas(achados: { tipo: string }[]): number {
 /** Contador mutável do próximo número de `PED-nnnnnn` a cunhar nesta chamada. */
 type ContadorPedido = { atual: number };
 
-/**
- * Descobre o maior número de `PED-nnnnnn` já existente na tabela `pedido`
- * (0 se a tabela estiver vazia), para que o contador desta chamada sempre
- * continue de onde a última chamada (ou chamada anterior nesta mesma
- * transação) parou — nunca reatribuindo um número já cunhado.
- *
- * `id_pedido` é `TEXT` com largura fixa (`PED-` + 6 dígitos), então a ordem
- * lexicográfica (`ORDER BY ... DESC`) coincide com a ordem numérica.
- */
-function obterMaiorNumeroPedido(db: DatabaseSync): number {
-  const linha = db
-    .prepare(`SELECT id_pedido FROM pedido ORDER BY id_pedido DESC LIMIT 1`)
-    .get() as { id_pedido: string } | undefined;
-  if (!linha) {
-    return 0;
-  }
-  const casamento = linha.id_pedido.match(/^PED-(\d+)$/);
-  return casamento ? Number(casamento[1]) : 0;
-}
-
 function formatarIdPedido(numero: number): string {
   return `PED-${String(numero).padStart(6, "0")}`;
 }
@@ -154,12 +132,9 @@ function resolverOuCriarIdPedido(
   contador: ContadorPedido,
   codigoVenda: string,
 ): { idPedido: string; nova: boolean } {
-  const existente = repositorio.db
-    .prepare(`SELECT id_pedido FROM vinculo_fonte WHERE fonte = 'vendas' AND codigo_externo = ?`)
-    .get(codigoVenda) as { id_pedido: string } | undefined;
-
-  if (existente) {
-    return { idPedido: existente.id_pedido, nova: false };
+  const existente = repositorio.obterIdPedidoPorVinculo("vendas", codigoVenda);
+  if (existente !== undefined) {
+    return { idPedido: existente, nova: false };
   }
 
   contador.atual += 1;
@@ -204,197 +179,147 @@ function compararCodigoVendasCrescente(a: string, b: string): number {
   return a.localeCompare(b);
 }
 
+/** Grava o evento de uma fonte; `ordemChegada` só existe nas fontes que a informam. */
+function gravarEventoDaFonte(
+  repositorio: Repositorio,
+  fonte: Fonte,
+  evento: Evento,
+  idPedido: string | null,
+): void {
+  repositorio.inserirEvento({
+    fonte,
+    codigoEvento: evento.codigoEvento,
+    idPedido,
+    tipo: evento.tipo,
+    momentoFato: evento.momentoFato,
+    ordemChegada: evento.ordemChegada ?? null,
+    versaoSchema: evento.versao_schema,
+    dados: serializarDados(evento),
+  });
+}
+
+function gravarAchados(repositorio: Repositorio, achados: AchadoQualidade[]): void {
+  for (const achado of achados) {
+    repositorio.inserirAchadoQualidade(achado);
+  }
+}
+
+/** Contagem de vínculos novos e já existentes de uma fonte. */
+type Contagem = { novas: number; jaExistentes: number };
+
+function contar(contagem: Contagem, nova: boolean): void {
+  if (nova) {
+    contagem.novas += 1;
+  } else {
+    contagem.jaExistentes += 1;
+  }
+}
+
+function importarVendas(
+  repositorio: Repositorio,
+  contador: ContadorPedido,
+  vendas: PedidoVendas[],
+): RelatorioFonte {
+  const resultado = processarVendas(vendas);
+  const contagem: Contagem = { novas: 0, jaExistentes: 0 };
+
+  // `vinculos[i]` e `eventos[i]` andam juntos; os pares são ordenados por
+  // código de vendas crescente para a atribuição de `PED-nnnnnn` não depender
+  // da ordem da lista recebida.
+  const paresOrdenados = resultado.vinculos
+    .map((vinculo, indice) => ({ vinculo, evento: eventoDoIndice(resultado.eventos, indice) }))
+    .sort((a, b) => compararCodigoVendasCrescente(a.vinculo.codigoExterno, b.vinculo.codigoExterno));
+
+  for (const { vinculo, evento } of paresOrdenados) {
+    const { idPedido, nova } = resolverOuCriarIdPedido(repositorio, contador, vinculo.codigoExterno);
+    contar(contagem, nova);
+    gravarEventoDaFonte(repositorio, "vendas", evento, idPedido);
+  }
+  gravarAchados(repositorio, resultado.achados);
+
+  return { lidas: vendas.length, ...contagem, rejeitadas: vendas.length - resultado.eventos.length };
+}
+
+function importarRastreio(
+  repositorio: Repositorio,
+  contador: ContadorPedido,
+  rastreioCsv: string,
+): RelatorioFonte {
+  const resultado: ResultadoProcessamentoRastreio =
+    rastreioCsv.trim() === ""
+      ? { vinculos: [], eventos: [], achados: [] }
+      : processarRastreio(rastreioCsv);
+  const contagem: Contagem = { novas: 0, jaExistentes: 0 };
+
+  // `vinculos[i]` e `eventos[i]` andam juntos (um par por linha válida do CSV).
+  resultado.vinculos.forEach((vinculo, indice) => {
+    const evento = eventoDoIndice(resultado.eventos, indice);
+    // `vinculo.idPedido` é o código bruto de vendas (`pedido_venda`), não um `PED-nnnnnn`.
+    const { idPedido } = resolverOuCriarIdPedido(repositorio, contador, vinculo.idPedido);
+    contar(contagem, repositorio.inserirVinculoFonte("rastreio", vinculo.codigoExterno, idPedido).nova);
+    gravarEventoDaFonte(repositorio, "rastreio", evento, idPedido);
+  });
+  gravarAchados(repositorio, resultado.achados);
+
+  const rejeitadas = contarRejeitadas(resultado.achados);
+  return { lidas: resultado.eventos.length + rejeitadas, ...contagem, rejeitadas };
+}
+
+function importarPagamentos(
+  repositorio: Repositorio,
+  contador: ContadorPedido,
+  pagamentosCsv: string,
+  codigosConhecidos: Set<string>,
+): RelatorioFonte {
+  const resultado: ResultadoProcessamentoPagamentos =
+    pagamentosCsv.trim() === ""
+      ? { vinculos: [], eventos: [], achados: [] }
+      : processarPagamentos(pagamentosCsv, codigosConhecidos);
+  const contagem: Contagem = { novas: 0, jaExistentes: 0 };
+
+  // Nem todo pagamento tem vínculo (RN-09: referência sem identificação
+  // única); o casamento é por `codigo_transacao`, não por índice.
+  const codigoVendaPorTransacao = new Map(
+    resultado.vinculos.map((vinculo): [string, string] => [vinculo.codigoExterno, vinculo.idPedido]),
+  );
+
+  for (const evento of resultado.eventos) {
+    const codigoVenda = codigoVendaPorTransacao.get(evento.codigoEvento);
+    let idPedido: string | null = null;
+    if (codigoVenda !== undefined) {
+      idPedido = resolverOuCriarIdPedido(repositorio, contador, codigoVenda).idPedido;
+      contar(contagem, repositorio.inserirVinculoFonte("pagamentos", evento.codigoEvento, idPedido).nova);
+    }
+    gravarEventoDaFonte(repositorio, "pagamentos", evento, idPedido);
+  }
+  gravarAchados(repositorio, resultado.achados);
+
+  const rejeitadas = contarRejeitadas(resultado.achados);
+  return { lidas: resultado.eventos.length + rejeitadas, ...contagem, rejeitadas };
+}
+
 /**
- * Importa vendas, pagamentos e rastreio para o `repositorio` (event store
- * SQLite), numa única transação, resolvendo/convergindo identidade de
- * pedido entre as 3 fontes (ver cabeçalho do módulo).
+ * Importa vendas, rastreio e pagamentos para o `repositorio` numa única
+ * transação, convergindo a identidade de pedido entre as 3 fontes (ver
+ * cabeçalho do módulo).
  *
- * Idempotente: chamar `importar` 2x com os mesmos `dados` sobre o mesmo
- * `repositorio` (sem recriar o banco) produz, na 2ª vez, as mesmas
- * contagens finais com tudo em "já existente" e zero "novo" — nenhuma linha
- * duplicada em `pedido`, `vinculo_fonte` ou `evento`.
+ * Idempotente: repetir a chamada com os mesmos `dados` sobre o mesmo
+ * `repositorio` dá tudo "já existente" e nenhuma linha duplicada.
  */
 export function importar(
   repositorio: Repositorio,
   dados: DadosParaImportar,
 ): RelatorioImportacao {
-  const db = repositorio.db;
-
-  db.exec("BEGIN");
-  try {
-    const contador: ContadorPedido = { atual: obterMaiorNumeroPedido(db) };
-
-    // --- vendas -----------------------------------------------------------
-    const resultadoVendas = processarVendas(dados.vendas);
-    let vendasNovas = 0;
-    let vendasJaExistentes = 0;
-
-    // `vinculos[i]` e `eventos[i]` sempre correspondem ao mesmo índice: o
-    // adaptador de vendas empurra os dois juntos para cada pedido, sem
-    // nenhum caminho que pule um dos dois (ver `fontes/vendas.ts`). Os pares
-    // são combinados aqui e então ordenados por código de vendas crescente,
-    // para a atribuição de `PED-nnnnnn` seguir a ordem exigida (não a ordem
-    // da lista recebida).
-    const paresVendasOrdenados = resultadoVendas.vinculos
-      .map((vinculo, indice) => ({ vinculo, evento: eventoDoIndice(resultadoVendas.eventos, indice) }))
-      .sort((a, b) => compararCodigoVendasCrescente(a.vinculo.codigoExterno, b.vinculo.codigoExterno));
-
-    for (const { vinculo, evento } of paresVendasOrdenados) {
-      const { idPedido, nova } = resolverOuCriarIdPedido(
-        repositorio,
-        contador,
-        vinculo.codigoExterno,
-      );
-      if (nova) {
-        vendasNovas += 1;
-      } else {
-        vendasJaExistentes += 1;
-      }
-
-      repositorio.inserirEvento({
-        fonte: "vendas",
-        codigoEvento: evento.codigoEvento,
-        idPedido,
-        tipo: evento.tipo,
-        momentoFato: evento.momentoFato,
-        ordemChegada: evento.ordemChegada ?? null,
-        versaoSchema: evento.versao_schema,
-        dados: serializarDados(evento),
-      });
-    }
-    for (const achado of resultadoVendas.achados) {
-      repositorio.inserirAchadoQualidade(achado);
-    }
-
-    const relatorioVendas: RelatorioFonte = {
-      lidas: dados.vendas.length,
-      novas: vendasNovas,
-      jaExistentes: vendasJaExistentes,
-      rejeitadas: dados.vendas.length - resultadoVendas.eventos.length,
-    };
-
-    // --- rastreio -----------------------------------------------------------
-    const resultadoRastreio: ResultadoProcessamentoRastreio =
-      dados.rastreioCsv.trim() === ""
-        ? { vinculos: [], eventos: [], achados: [] }
-        : processarRastreio(dados.rastreioCsv);
-    let rastreioNovas = 0;
-    let rastreioJaExistentes = 0;
-
-    // `vinculos[i]` e `eventos[i]` sempre correspondem ao mesmo índice: o
-    // adaptador de rastreio só empurra os dois juntos, ou nenhum dos dois,
-    // por linha do CSV (ver `fontes/rastreio.ts`).
-    const paresRastreio = resultadoRastreio.vinculos.map((vinculo, indice) => ({
-      vinculo,
-      evento: eventoDoIndice(resultadoRastreio.eventos, indice),
-    }));
-
-    for (const { vinculo, evento } of paresRastreio) {
-      // `vinculo.idPedido` aqui é o código bruto de vendas (`pedido_venda`
-      // da linha do CSV) — a chave cruzada, não um `PED-nnnnnn` ainda.
-      const { idPedido } = resolverOuCriarIdPedido(repositorio, contador, vinculo.idPedido);
-
-      const { nova } = repositorio.inserirVinculoFonte(
-        "rastreio",
-        vinculo.codigoExterno,
-        idPedido,
-      );
-      if (nova) {
-        rastreioNovas += 1;
-      } else {
-        rastreioJaExistentes += 1;
-      }
-
-      repositorio.inserirEvento({
-        fonte: "rastreio",
-        codigoEvento: evento.codigoEvento,
-        idPedido,
-        tipo: evento.tipo,
-        momentoFato: evento.momentoFato,
-        ordemChegada: evento.ordemChegada ?? null,
-        versaoSchema: evento.versao_schema,
-        dados: serializarDados(evento),
-      });
-    }
-    for (const achado of resultadoRastreio.achados) {
-      repositorio.inserirAchadoQualidade(achado);
-    }
-
-    const relatorioRastreio: RelatorioFonte = {
-      lidas: resultadoRastreio.eventos.length + contarRejeitadas(resultadoRastreio.achados),
-      novas: rastreioNovas,
-      jaExistentes: rastreioJaExistentes,
-      rejeitadas: contarRejeitadas(resultadoRastreio.achados),
-    };
-
-    // --- pagamentos ---------------------------------------------------------
-    const resultadoPagamentos: ResultadoProcessamentoPagamentos =
-      dados.pagamentosCsv.trim() === ""
-        ? { vinculos: [], eventos: [], achados: [] }
-        : processarPagamentos(dados.pagamentosCsv, dados.codigosConhecidos);
-    let pagamentosNovas = 0;
-    let pagamentosJaExistentes = 0;
-
-    // Diferente de rastreio, nem todo evento de pagamento tem vínculo (RN-09:
-    // referência sem identificação única) — por isso o casamento aqui é por
-    // `codigo_transacao` (chave única por linha), não por índice.
-    const mapaTransacaoParaCodigoVenda = new Map(
-      resultadoPagamentos.vinculos.map(
-        (vinculo): [string, string] => [vinculo.codigoExterno, vinculo.idPedido],
-      ),
+  return repositorio.emTransacao(() => {
+    const contador: ContadorPedido = { atual: repositorio.obterMaiorNumeroPedido() };
+    const vendas = importarVendas(repositorio, contador, dados.vendas);
+    const rastreio = importarRastreio(repositorio, contador, dados.rastreioCsv);
+    const pagamentos = importarPagamentos(
+      repositorio,
+      contador,
+      dados.pagamentosCsv,
+      dados.codigosConhecidos,
     );
-
-    for (const evento of resultadoPagamentos.eventos) {
-      const codigoVenda = mapaTransacaoParaCodigoVenda.get(evento.codigoEvento);
-      let idPedido: string | null = null;
-
-      if (codigoVenda !== undefined) {
-        const resolvido = resolverOuCriarIdPedido(repositorio, contador, codigoVenda);
-        idPedido = resolvido.idPedido;
-
-        const { nova } = repositorio.inserirVinculoFonte(
-          "pagamentos",
-          evento.codigoEvento,
-          idPedido,
-        );
-        if (nova) {
-          pagamentosNovas += 1;
-        } else {
-          pagamentosJaExistentes += 1;
-        }
-      }
-
-      repositorio.inserirEvento({
-        fonte: "pagamentos",
-        codigoEvento: evento.codigoEvento,
-        idPedido,
-        tipo: evento.tipo,
-        momentoFato: evento.momentoFato,
-        ordemChegada: null,
-        versaoSchema: evento.versao_schema,
-        dados: serializarDados(evento),
-      });
-    }
-    for (const achado of resultadoPagamentos.achados) {
-      repositorio.inserirAchadoQualidade(achado);
-    }
-
-    const relatorioPagamentos: RelatorioFonte = {
-      lidas: resultadoPagamentos.eventos.length + contarRejeitadas(resultadoPagamentos.achados),
-      novas: pagamentosNovas,
-      jaExistentes: pagamentosJaExistentes,
-      rejeitadas: contarRejeitadas(resultadoPagamentos.achados),
-    };
-
-    db.exec("COMMIT");
-
-    return {
-      vendas: relatorioVendas,
-      pagamentos: relatorioPagamentos,
-      rastreio: relatorioRastreio,
-    };
-  } catch (erro) {
-    db.exec("ROLLBACK");
-    throw erro;
-  }
+    return { vendas, pagamentos, rastreio };
+  });
 }
