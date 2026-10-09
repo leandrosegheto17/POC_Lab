@@ -64,11 +64,11 @@ describe("DetalheLinhaDoTempo — marca 'duplicado' só com a divergência decla
 
     const lista = cartoes(container);
     const primeiro = obrigatorio(
-      lista.find((cartao) => cartao.textContent?.includes("TX-1")),
+      lista.find((cartao) => cartao.textContent.includes("TX-1")),
       "cartão do primeiro pagamento",
     );
     const segundo = obrigatorio(
-      lista.find((cartao) => cartao.textContent?.includes("TX-2")),
+      lista.find((cartao) => cartao.textContent.includes("TX-2")),
       "cartão do segundo pagamento",
     );
     expect(within(primeiro).queryByText("duplicado")).toBeNull();
