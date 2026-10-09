@@ -13,30 +13,30 @@ import {
  * `linha-do-tempo-v1.ts`, intocado.
  */
 describe("linha-do-tempo-v2", () => {
+  const eventoPagamentoV1 = {
+    fonte: "pagamentos",
+    codigoEvento: "evt-pagamento-1",
+    momentoFato: "2026-01-01T10:05:00Z",
+    tipo: "pagamento",
+    versao_schema: 1,
+    valor: 199.9,
+    referencia_original: "ref-pedido-1",
+    chegouForaDeOrdem: false,
+  };
+
+  const eventoPagamentoV2 = {
+    fonte: "pagamentos",
+    codigoEvento: "evt-pagamento-2",
+    momentoFato: "2026-01-02T10:05:00Z",
+    tipo: "pagamento",
+    versao_schema: 2,
+    valor: 250,
+    referencia_original: "ref-pedido-2",
+    meio_pagamento: "pix",
+    chegouForaDeOrdem: false,
+  };
+
   describe("EsquemaEventoV2 - pagamento", () => {
-    const eventoPagamentoV1 = {
-      fonte: "pagamentos",
-      codigoEvento: "evt-pagamento-1",
-      momentoFato: "2026-01-01T10:05:00Z",
-      tipo: "pagamento",
-      versao_schema: 1,
-      valor: 199.9,
-      referencia_original: "ref-pedido-1",
-      chegouForaDeOrdem: false,
-    };
-
-    const eventoPagamentoV2 = {
-      fonte: "pagamentos",
-      codigoEvento: "evt-pagamento-2",
-      momentoFato: "2026-01-02T10:05:00Z",
-      tipo: "pagamento",
-      versao_schema: 2,
-      valor: 250,
-      referencia_original: "ref-pedido-2",
-      meio_pagamento: "pix",
-      chegouForaDeOrdem: false,
-    };
-
     it("evento 'pagamento' v1 válido (versao_schema: 1, sem meio_pagamento) passa", () => {
       const resultado = EsquemaEventoV2.parse(eventoPagamentoV1);
 
@@ -65,29 +65,6 @@ describe("linha-do-tempo-v2", () => {
   });
 
   describe("EsquemaLinhaDoTempoV2", () => {
-    const eventoPagamentoV1 = {
-      fonte: "pagamentos",
-      codigoEvento: "evt-pagamento-1",
-      momentoFato: "2026-01-01T10:05:00Z",
-      tipo: "pagamento",
-      versao_schema: 1,
-      valor: 199.9,
-      referencia_original: "ref-pedido-1",
-      chegouForaDeOrdem: false,
-    };
-
-    const eventoPagamentoV2 = {
-      fonte: "pagamentos",
-      codigoEvento: "evt-pagamento-2",
-      momentoFato: "2026-01-02T10:05:00Z",
-      tipo: "pagamento",
-      versao_schema: 2,
-      valor: 250,
-      referencia_original: "ref-pedido-2",
-      meio_pagamento: "pix",
-      chegouForaDeOrdem: false,
-    };
-
     const eventoVenda = {
       fonte: "vendas",
       codigoEvento: "evt-venda-1",

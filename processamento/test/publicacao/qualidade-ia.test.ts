@@ -1,5 +1,5 @@
 /**
- * TP-0084 — Testes da projeção de `ia.utilizada`/`ia.sugestoes` no documento
+ * Testes da projeção de `ia.utilizada`/`ia.sugestoes` no documento
  * `qualidade` (`publicacao/qualidade.ts`), a partir de `cache_ia`.
  *
  * Fixture via event store `:memory:` (`criarRepositorio`): para os casos com
@@ -7,7 +7,7 @@
  * para popular `cache_ia` com uma entrada real — garante que a chave
  * recalculada por `qualidade.ts` bate com a chave gravada por `sugerir`, sem
  * duplicar o cálculo de hash no teste. Os testes de `ia.utilizada === false`
- * (regressão TP-0038) e de forma dos 7 tipos já estão em
+ * e de forma dos 7 tipos já estão em
  * `test/publicacao/qualidade.test.ts` — este arquivo cobre só o bloco `ia`.
  */
 import { describe, expect, it } from "vitest";
@@ -15,68 +15,11 @@ import { describe, expect, it } from "vitest";
 import { criarRepositorio, type Repositorio } from "../../src/armazenamento/repositorio.ts";
 import { conferirSugestao } from "../../src/dominio/conferencia-sugestao.ts";
 import { criarProvedorFalso } from "../../src/ia/provedor-falso.ts";
-import { sugerir as sugerirComResumo, type OpcoesSugerir } from "../../src/ia/sugerir.ts";
-import type { ProvedorSugestao } from "../../src/ia/porta.ts";
-import { montarPedidosEVinculos } from "../../src/publicacao/pedidos.ts";
 import { EsquemaRespostaQualidade } from "../../src/contrato/qualidade.ts";
 import { montarDocumentoQualidade } from "../../src/publicacao/qualidade.ts";
+import { inserirPagamentoSemIdentificacao, inserirPedidoComVenda, sugerir } from "../apoio/ia.ts";
 
 const DATA_PAGAMENTO = "2026-03-01T00:00:00.000Z";
-
-function sugerir(repositorio: Repositorio, provedor: ProvedorSugestao | undefined, opcoes?: OpcoesSugerir) {
-  return sugerirComResumo(repositorio, montarPedidosEVinculos(repositorio).pedidoResumo, provedor, opcoes);
-}
-
-/** Mesmo helper de `test/ia/sugerir.test.ts`: pedido com evento de venda (valor_devido/data_limite). */
-function inserirPedidoComVenda(
-  repositorio: Repositorio,
-  idPedido: string,
-  valorDevido: number,
-  dataLimite: string,
-): void {
-  repositorio.inserirPedido(idPedido);
-  repositorio.inserirEvento({
-    fonte: "vendas",
-    codigoEvento: `VENDA-${idPedido}`,
-    idPedido,
-    tipo: "venda",
-    momentoFato: dataLimite,
-    ordemChegada: 1,
-    versaoSchema: 1,
-    dados: JSON.stringify({
-      valor_devido: valorDevido,
-      data_limite: dataLimite,
-      transportadora: "Transportadora X",
-    }),
-  });
-}
-
-/** Mesmo helper de `test/ia/sugerir.test.ts`: pagamento sem identificação (evento + achado `sem_identificacao`). */
-function inserirPagamentoSemIdentificacao(
-  repositorio: Repositorio,
-  codigoTransacao: string,
-  valor: number,
-  momentoFato: string,
-  referenciaOriginal: string,
-): void {
-  repositorio.inserirEvento({
-    fonte: "pagamentos",
-    codigoEvento: codigoTransacao,
-    idPedido: null,
-    tipo: "pagamento",
-    momentoFato,
-    ordemChegada: null,
-    versaoSchema: 1,
-    dados: JSON.stringify({ valor, referencia_original: referenciaOriginal }),
-  });
-  repositorio.inserirAchadoQualidade({
-    tipo: "sem_identificacao",
-    fonte: "pagamentos",
-    referencia: codigoTransacao,
-    regra: "RN-09: referência de pagamento sem casamento único com pedido conhecido",
-    detalhe: `referência "${referenciaOriginal}" não casou com exatamente 1 código de pedido conhecido`,
-  });
-}
 
 describe("montarDocumentoQualidade — bloco ia (TP-0084)", () => {
   it("cache_ia vazia: ia.utilizada é false e ia.sugestoes é array vazio (regressão TP-0038)", () => {

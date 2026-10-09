@@ -2,51 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Evento } from "../../src/dominio/evento.js";
 import { derivarEstado } from "../../src/dominio/estado.js";
 import { obrigatorio } from "../apoio/obrigatorio.js";
-
-function venda(partial: {
-  codigoEvento: string;
-  momentoFato: string;
-  valor_devido: number;
-}): Evento {
-  return {
-    fonte: "vendas",
-    codigoEvento: partial.codigoEvento,
-    momentoFato: partial.momentoFato,
-    tipo: "venda",
-    versao_schema: 1,
-    valor_devido: partial.valor_devido,
-    data_limite: "2026-01-10T00:00:00Z",
-    transportadora: "Transportadora 1",
-  };
-}
-
-function pagamento(partial: {
-  codigoEvento: string;
-  momentoFato: string;
-  valor: number;
-}): Evento {
-  return {
-    fonte: "vendas",
-    codigoEvento: partial.codigoEvento,
-    momentoFato: partial.momentoFato,
-    tipo: "pagamento",
-    versao_schema: 1,
-    valor: partial.valor,
-    referencia_original: "ref-1",
-  };
-}
-
-function coleta(partial: { codigoEvento: string; momentoFato: string }): Evento {
-  return {
-    fonte: "rastreio",
-    codigoEvento: partial.codigoEvento,
-    momentoFato: partial.momentoFato,
-    tipo: "coleta",
-    versao_schema: 1,
-    transportadora: "Transportadora 1",
-    codigo_rastreio: "BR123",
-  };
-}
+import { coleta, pagamento, venda } from "../apoio/eventos.js";
 
 function transporte(partial: { codigoEvento: string; momentoFato: string }): Evento {
   return {
