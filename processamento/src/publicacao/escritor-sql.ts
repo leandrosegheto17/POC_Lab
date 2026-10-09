@@ -13,6 +13,8 @@
  * (RNF-05/ADR-002).
  */
 
+import type { LinhaTabela, TabelasParaPublicacao } from "nucleo/contrato/tabelas-publicacao.js";
+
 /** Ordem fixa das tabelas no arquivo gerado — mesma ordem do DDL em `leitura-d1.sql`. */
 const ORDEM_TABELAS = [
   "pedido_resumo",
@@ -54,18 +56,6 @@ const COLUNAS_POR_TABELA: Record<NomeTabela, readonly string[]> = {
   ],
   divergencia: ["tipo", "id_pedido", "motivo", "eventos"],
   documento: ["chave", "conteudo"],
-};
-
-/** Linha genérica de uma tabela: mapa coluna → valor já pronto para publicação. */
-export type LinhaTabela = Record<string, unknown>;
-
-/** Entrada de `escreverSqlPublicacao`: linhas já montadas/ordenadas por tabela. */
-export type TabelasParaPublicacao = {
-  pedido_resumo: LinhaTabela[];
-  vinculo_codigo: LinhaTabela[];
-  linha_do_tempo: LinhaTabela[];
-  divergencia: LinhaTabela[];
-  documento: LinhaTabela[];
 };
 
 /** Tamanho máximo, em bytes UTF-8, de uma única instrução `INSERT` gerada. */

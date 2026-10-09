@@ -9,7 +9,8 @@ import { montarLinhaDoTempo } from "./linha-do-tempo.js";
 import { montarDivergencias, type LinhaDivergenciaProjecao } from "./divergencias.js";
 import { montarDocumentoQualidade } from "./qualidade.js";
 import { montarDocumentoResumo, montarDocumentoIndicadores } from "./documentos.js";
-import { escreverSqlPublicacao, type LinhaTabela, type TabelasParaPublicacao } from "./escritor-sql.js";
+import { escreverSqlPublicacao } from "./escritor-sql.js";
+import type { LinhaTabela, TabelasParaPublicacao } from "nucleo/contrato/tabelas-publicacao.js";
 import { totaisResumo, type DivergenciaComPedido, type PedidoParaTotais } from "nucleo/dominio/totais.js";
 import {
   indicadorEntregasNoPrazo,

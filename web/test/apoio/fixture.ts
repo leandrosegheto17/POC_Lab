@@ -1,63 +1,74 @@
 // Fixture reutilizável: monta um `D1Teste` (ver `./d1-teste.ts`)
-// já carregado com o DDL de `leitura-d1.sql` + os dados de
-// exemplo (`./dados-exemplo.ts`) ou um dataset próprio, via o mesmo escritor
-// de SQL de publicação usado em produção (`escreverSqlPublicacao`) — para que o dataset
-// de teste passe pelo mesmo caminho de serialização que os dados reais.
+// já carregado com o DDL de `./leitura-d1.sql` + os dados de
+// exemplo (`./dados-exemplo.ts`) ou um dataset próprio.
+//
+// `./leitura-d1.sql` é cópia de `processamento/src/publicacao/leitura-d1.sql`
+// (o web não importa `processamento`). Para regravar a cópia:
+// `node scripts/sincronizar-ddl-web.mjs` (e `--check` só confere; o
+// `pnpm test:scripts` falha se a cópia estiver desatualizada). As linhas são
+// inseridas por instruções preparadas (colunas na ordem do DDL).
 //
 // `node:fs` só é lido aqui porque este arquivo vive em `web/test/` (mesma
 // exceção documentada em `d1-teste.ts`/`eslint.config.js` para `node:*`
 // dentro de `test/`).
-//
-// Import de módulo TS (`escreverSqlPublicacao`) via especificador de
-// pacote (`processamento/publicacao/escritor-sql.js`), resolvido pelo
-// campo `exports` de `processamento/package.json` através do symlink do
-// workspace — não sujeito à checagem de `rootDir` do `web/tsconfig.json`.
-// Já a leitura do `.sql` é feita via `node:fs` (não é um import de módulo
-// TypeScript, então nunca esteve sujeita a `TS6059`); mantemos o caminho
-// resolvido por `import.meta.resolve`, que também respeita o `exports` de
-// `processamento/package.json`, em vez de caminho relativo entre pacotes —
-// assim o caminho não depende de a estrutura de diretórios de `processamento`
-// não mudar.
-//
-// Verificação (2026-10-08): sob o pool de testes do Vitest (transformado via
-// `vite-node`/SSR), `import.meta.resolve` chega como `undefined` no módulo
-// transformado (`__vite_ssr_import_meta__.resolve is not a function`) — Vite
-// não implementa esse método no objeto `import.meta` sintético que injeta.
-// `createRequire(import.meta.url).resolve(...)` faz a mesma resolução pelo
-// campo `exports` de `processamento/package.json`, mas por `node:module`
-// (não passa pela transformação de `import.meta` do Vite), e funciona tanto
-// em teste quanto em execução Node direta.
 import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
-import { DatabaseSync } from "node:sqlite";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 
-import {
-  escreverSqlPublicacao,
-  type TabelasParaPublicacao,
-} from "processamento/publicacao/escritor-sql.js";
+import type { TabelasParaPublicacao } from "nucleo/contrato/tabelas-publicacao.js";
 
 import { D1Teste } from "./d1-teste.js";
 import { DADOS_EXEMPLO } from "./dados-exemplo.js";
 
-function lerDdl(): string {
-  const caminhoDdl = createRequire(import.meta.url).resolve(
-    "processamento/publicacao/leitura-d1.sql",
-  );
-  return readFileSync(caminhoDdl, "utf8");
+const DDL = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "leitura-d1.sql"), "utf8");
+
+/** INSERT por tabela, com as colunas na ordem do DDL de `./leitura-d1.sql`. */
+const INSERCOES: Record<keyof TabelasParaPublicacao, { sql: string; colunas: string[] }> = {
+  pedido_resumo: {
+    sql: "INSERT INTO pedido_resumo (id_pedido, valor_devido, valor_pago, data_limite, situacao_pagamento, fontes) VALUES (?, ?, ?, ?, ?, ?)",
+    colunas: ["id_pedido", "valor_devido", "valor_pago", "data_limite", "situacao_pagamento", "fontes"],
+  },
+  vinculo_codigo: {
+    sql: "INSERT INTO vinculo_codigo (codigo, fonte, id_pedido) VALUES (?, ?, ?)",
+    colunas: ["codigo", "fonte", "id_pedido"],
+  },
+  linha_do_tempo: {
+    sql: "INSERT INTO linha_do_tempo (id_pedido, posicao, codigo_evento, fonte, tipo, momento_fato, versao_schema, dados, fora_de_ordem) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    colunas: ["id_pedido", "posicao", "codigo_evento", "fonte", "tipo", "momento_fato", "versao_schema", "dados", "fora_de_ordem"],
+  },
+  divergencia: {
+    sql: "INSERT INTO divergencia (tipo, id_pedido, motivo, eventos) VALUES (?, ?, ?, ?)",
+    colunas: ["tipo", "id_pedido", "motivo", "eventos"],
+  },
+  documento: {
+    sql: "INSERT INTO documento (chave, conteudo) VALUES (?, ?)",
+    colunas: ["chave", "conteudo"],
+  },
+};
+
+function valorSqlite(valor: unknown): SQLInputValue {
+  if (valor === undefined || valor === null) return null;
+  if (typeof valor === "boolean") return valor ? 1 : 0;
+  return valor as SQLInputValue;
 }
 
 /**
- * Cria um `D1Teste` com o DDL de `leitura-d1.sql` + `INSERT`s das `tabelas`
- * informadas, gerados por `escreverSqlPublicacao` e carregados numa conexão
- * `node:sqlite` nova em memória. Serve aos testes que precisam de um dataset
- * próprio (ex.: eventos com payload válido contra o contrato).
+ * Cria um `D1Teste` com o DDL de `leitura-d1.sql` + as linhas das `tabelas`
+ * informadas, numa conexão `node:sqlite` nova em memória. Serve aos testes que
+ * precisam de um dataset próprio (ex.: eventos com payload válido contra o contrato).
  */
 export function criarD1TesteComTabelas(tabelas: TabelasParaPublicacao): D1Teste {
-  const ddl = lerDdl();
-  const sql = escreverSqlPublicacao(ddl, tabelas);
-
   const db = new DatabaseSync(":memory:");
-  db.exec(sql);
+  db.exec(DDL);
+
+  for (const nome of Object.keys(INSERCOES) as (keyof TabelasParaPublicacao)[]) {
+    const { sql, colunas } = INSERCOES[nome];
+    const insercao = db.prepare(sql);
+    for (const linha of tabelas[nome]) {
+      insercao.run(...colunas.map((coluna) => valorSqlite(linha[coluna])));
+    }
+  }
 
   return new D1Teste(db);
 }

@@ -530,3 +530,12 @@ APROVADA; 0 achados; teste só lê o event store via consultas, gabarito continu
 
 ## RTP-0100 — DevSecOps — 2026-10-09
 APROVADA; 0 críticos e 0 não críticos; só limites de tempo e um caso de razão mudaram, nenhuma regra de detecção afrouxada, sem segredo/rede; test/guardrails 103/103 verdes.
+
+## RTP-0086 — DevSecOps — 2026-10-09
+APROVADA — diff é só um comentário em importar.ts, sem superfície de segurança; revisão de leitura, nada executado; 0 críticos, 0 não críticos.
+
+## RTP-0102 — DevSecOps — 2026-10-09
+APROVADA — só teste com dados fictícios em memória; sem segredo, sem `dangerouslySetInnerHTML`, sem dependência nova (lido no diff; busca por texto executada, 0 ocorrências); 0 achados.
+
+## RTP-0103 — DevSecOps — 2026-10-09
+APROVADA em segurança — sem segredo, só execFileSync com lista de argumentos, falha segura antes da carga destrutiva, bookmark fora do git, sem dependência nova, 15/15 testes; 0 críticos, 0 não críticos.

@@ -10,12 +10,7 @@
 // - `vinculo_codigo` traz, para PED-000001, dois códigos distintos
 //   apontando para o MESMO `id_pedido`: o código de vendas original
 //   (`VENDA-0001`) e a própria identidade (`PED-000001`).
-// Import de módulo TS via especificador de pacote
-// (`processamento/publicacao/escritor-sql.js`), resolvido pelo campo
-// `exports` de `processamento/package.json` através do symlink do
-// workspace — não sujeito à checagem de `rootDir` do `web/tsconfig.json`
-// (ver nota equivalente em `./fixture.ts`).
-import type { TabelasParaPublicacao } from "processamento/publicacao/escritor-sql.js";
+import type { TabelasParaPublicacao } from "nucleo/contrato/tabelas-publicacao.js";
 
 export const DADOS_EXEMPLO: TabelasParaPublicacao = {
   pedido_resumo: [

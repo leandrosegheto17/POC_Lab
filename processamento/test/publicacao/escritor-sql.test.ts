@@ -3,10 +3,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import {
-  escreverSqlPublicacao,
-  type TabelasParaPublicacao,
-} from "../../src/publicacao/escritor-sql.js";
+import type { TabelasParaPublicacao } from "nucleo/contrato/tabelas-publicacao.js";
+import { escreverSqlPublicacao } from "../../src/publicacao/escritor-sql.js";
 
 /**
  * Testa o escritor do `leitura.sql`: serialização de DDL + INSERT

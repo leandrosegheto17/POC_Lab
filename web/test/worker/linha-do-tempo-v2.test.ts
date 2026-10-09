@@ -2,16 +2,15 @@
 //
 // Dataset próprio deste teste (fixture LOCAL, não edita
 // `web/test/apoio/dados-exemplo.ts`), mesmo padrão de
-// `web/test/worker/linha-do-tempo.test.ts`: monta o SQL inicial
-// pelo mesmo caminho de serialização usado em produção
-// (`escreverSqlPublicacao` + `leitura-d1.sql`), com pelo menos 1 evento de
+// `web/test/worker/linha-do-tempo.test.ts`: carrega o DDL
+// (`leitura-d1.sql`) com pelo menos 1 evento de
 // pagamento v2 (`versao_schema: 2`, `dados` incluindo `meio_pagamento`).
 //
 // `node:fs`/`node:sqlite` só são lidos aqui porque este arquivo vive em
 // `web/test/` (mesma exceção documentada em `web/test/apoio/d1-teste.ts`).
 import { describe, expect, it } from "vitest";
 
-import type { TabelasParaPublicacao } from "processamento/publicacao/escritor-sql.js";
+import type { TabelasParaPublicacao } from "nucleo/contrato/tabelas-publicacao.js";
 import { EsquemaLinhaDoTempoV2 } from "nucleo/contrato/linha-do-tempo-v2.js";
 
 import { criarD1TesteComTabelas } from "../apoio/fixture.ts";

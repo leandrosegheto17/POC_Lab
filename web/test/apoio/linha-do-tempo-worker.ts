@@ -1,7 +1,7 @@
 // Apoio comum aos testes de rota da linha do tempo no Worker (v1 e v2).
 import { Hono } from "hono";
 
-import type { TabelasParaPublicacao } from "processamento/publicacao/escritor-sql.js";
+import type { TabelasParaPublicacao } from "nucleo/contrato/tabelas-publicacao.js";
 
 type Divergencia = TabelasParaPublicacao["divergencia"][number];
 

@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-09 10:18
+Atualizado: 2026-10-09 10:20
 
-Resumo: Não executada 2 · Em execução 1 · Testada (aguarda segurança) 3 · Aprovada 189 · total 195
+Resumo: Não executada 2 · Em execução 1 · Aprovada 192 · total 195
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -185,7 +185,7 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 170 | RTP-0084 | executor | ✔ | Apertar checagens G-17 e G-22: lista permitida por pacote, optional/peer deps e outros... | Refatoração Revisão 2026-10-08 | — | Aprovada |
 | 171 | RTP-0085 | executor | ✔ | Limitar tamanho dos textos de EsquemaSugestaoIA (contrato) e testar descarte de item gr... | Refatoração Revisão 2026-10-08 | — | Aprovada |
 | 172 | BK-0006 | coordenador | ✔ | Decidir como registrar a regra de convergência de identidade de pedido: a skill adr-drafti | — | — | Aprovada |
-| 173 | RTP-0086 | executor | ✔ | Registrar no ADR-004 a regra de convergência de identidade de pedido | Refatoração Revisão 2026-10-08 | BK-0006, RTP-0071 | Testada (aguarda segurança) |
+| 173 | RTP-0086 | executor | ✔ | Registrar no ADR-004 a regra de convergência de identidade de pedido | Refatoração Revisão 2026-10-08 | BK-0006, RTP-0071 | Aprovada |
 | 174 | RTP-0087 | executor | ✔ | Investigar falha rara do teste de foco após erro de paginação (1 em 80 execuções) | Refatoração Revisão 2026-10-08 | RTP-0076 | Aprovada |
 | 175 | RTP-0088 | executor | ✔ | Extrair os pares de 10 linhas que restam em linha-do-tempo v1/v2 e nos testes de acessi... | Refatoração Revisão 2026-10-08 | RTP-0080 | Aprovada |
 | 176 | RTP-0089 | executor | ✔ | Mensagem do teste g17 indicar a lista do pacote certo | Refatoração Revisão 2026-10-08 | RTP-0084 | Aprovada |
@@ -201,8 +201,8 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 186 | RTP-0099 | executor | ✔ | gabarito.test.ts usa consultas.listarEventos em vez de recriar a leitura do event store | Refatoração Revisão 2026-10-09 | — | Aprovada |
 | 187 | RTP-0100 | executor | ✔ | Teste de desempenho do G-05 sem limite fixo de 50 ms (instável sob carga) | Refatoração Revisão 2026-10-09 | — | Aprovada |
 | 188 | RTP-0101 | executor | ✔ | Migrar dominio e contrato para o novo pacote nucleo | Refatoração Revisão 2026-10-09 | RTP-0056, RTP-0057, RTP-0058, RTP-0062 | Em execução |
-| 189 | RTP-0102 | executor | ✔ | Teste: T2 só marca pagamento duplicado quando a API declarou a divergência duplicado | Refatoração Revisão 2026-10-09 | — | Testada (aguarda segurança) |
-| 190 | RTP-0103 | executor | ✔ | Publicar: guardar bookmark do Time Travel antes da carga do D1 e conferir version produ... | Refatoração Revisão 2026-10-09 | — | Testada (aguarda segurança) |
+| 189 | RTP-0102 | executor | ✔ | Teste: T2 só marca pagamento duplicado quando a API declarou a divergência duplicado | Refatoração Revisão 2026-10-09 | — | Aprovada |
+| 190 | RTP-0103 | executor | ✔ | Publicar: guardar bookmark do Time Travel antes da carga do D1 e conferir version produ... | Refatoração Revisão 2026-10-09 | — | Aprovada |
 | 191 | RTP-0104 | executor | ✔ | Tirar os helpers de teste do exports do nucleo (apoio/*) | Refatoração Revisão 2026-10-09 | RTP-0101 | Não executada |
 | 192 | RTP-0105 | executor | ✔ | Lint: tirar o ?. desnecessário no teste de duplicado só com divergência | Refatoração Revisão 2026-10-09 | RTP-0102 | Não executada |
 | 193 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Aprovada |

@@ -10,9 +10,8 @@
 // inclusive com pagamentos de versões diferentes misturados no mesmo pedido.
 //
 // Mesmo padrão de dataset de `linha-do-tempo-v2.test.ts`: fixture
-// LOCAL própria (não edita `web/test/apoio/dados-exemplo.ts`), SQL inicial
-// montado pelo mesmo caminho de serialização usado em produção
-// (`escreverSqlPublicacao` + `leitura-d1.sql`).
+// LOCAL própria (não edita `web/test/apoio/dados-exemplo.ts`), dados
+// carregados no DDL (`leitura-d1.sql`).
 //
 // "O site não muda" (aceite desta tarefa): nenhuma mudança foi feita em
 // `web/src/`. Confirmado por LEITURA (não execução) de
@@ -29,7 +28,7 @@
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 
-import type { TabelasParaPublicacao } from "processamento/publicacao/escritor-sql.js";
+import type { TabelasParaPublicacao } from "nucleo/contrato/tabelas-publicacao.js";
 import { EsquemaLinhaDoTempoV1 } from "nucleo/contrato/linha-do-tempo-v1.js";
 import { EsquemaLinhaDoTempoV2 } from "nucleo/contrato/linha-do-tempo-v2.js";
 

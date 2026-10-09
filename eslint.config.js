@@ -180,6 +180,17 @@ export default tseslint.config(
     ]),
   },
 
+  // G-03 — web/test também não importa `processamento` (node:* é permitido).
+  {
+    files: ["web/test/**/*.{ts,tsx}"],
+    rules: bloqueioImports([
+      {
+        group: GRUPO_SEM_PROCESSAMENTO,
+        message: "web/test não importa processamento; só nucleo (G-03).",
+      },
+    ]),
+  },
+
   // G-04 (RN-13) — qualquer outro arquivo fora de test/ também não pode
   // citar o gabarito por import.
   {

@@ -113,9 +113,6 @@ importers:
       jsdom:
         specifier: ^25.0.0
         version: 25.0.1(supports-color@10.2.2)
-      processamento:
-        specifier: workspace:*
-        version: link:../processamento
       typescript:
         specifier: ^5.7.0
         version: 5.9.3

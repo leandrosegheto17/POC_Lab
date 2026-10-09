@@ -6,15 +6,14 @@
 // validar a resposta real da rota (que usa `EsquemaEventoV1`/discriminated
 // union por `tipo`, e `TIPOS_DIVERGENCIA` do esquema v1) contra esse dataset.
 // Em vez disso, montamos aqui um dataset mínimo com payloads de evento e
-// tipo de divergência válidos, pelo mesmo caminho de serialização usado em
-// produção (`escreverSqlPublicacao` + `leitura-d1.sql`),
+// tipo de divergência válidos, carregados no DDL (`leitura-d1.sql`),
 // igual ao padrão de `web/test/apoio/fixture.ts`.
 //
 // `node:fs`/`node:sqlite` só são lidos aqui porque este arquivo vive em
 // `web/test/` (mesma exceção documentada em `web/test/apoio/d1-teste.ts`).
 import { describe, expect, it } from "vitest";
 
-import type { TabelasParaPublicacao } from "processamento/publicacao/escritor-sql.js";
+import type { TabelasParaPublicacao } from "nucleo/contrato/tabelas-publicacao.js";
 import { EsquemaLinhaDoTempoV1 } from "nucleo/contrato/linha-do-tempo-v1.js";
 
 import { criarD1TesteComTabelas } from "../apoio/fixture.ts";
