@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "poc-lab",
   "main": "worker/index.ts",
-  // TP-0041 — data real na criação deste arquivo; mantida fixa (não usar "latest").
+  // Data real na criação deste arquivo; mantida fixa (não usar "latest").
   "compatibility_date": "2026-10-08",
   "assets": {
     "directory": "./dist/client",
@@ -14,7 +14,7 @@
       "binding": "DB",
       "database_name": "poc-lab",
       // database_id do banco D1 remoto, gerado por "wrangler d1 create poc-lab"
-      // (TP-0065, ver web/PUBLICAR.md). Não é segredo (G-01).
+      // (ver web/PUBLICAR.md). Não é segredo (G-01).
       "database_id": "78bf7cc7-a1bb-4b1e-86b9-880b9a3c29c8"
     }
   ]
