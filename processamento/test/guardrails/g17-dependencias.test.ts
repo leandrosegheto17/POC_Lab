@@ -40,7 +40,12 @@ type Pacote = Partial<Record<(typeof SECOES)[number], Record<string, string>>> &
 
 // Especificador aceito: workspace:* ou faixa semver iniciada por dígito ou operador (sem protocolo, caminho nem tag
 // de texto: npm:, git+, github:, http(s):, file:, link:, latest, next).
-const ESPECIFICADOR_VALIDO = /^(workspace:[\w^~.*-]+|[\d^~<>=*][\w\s.^~<>=|*+-]*)$/;
+// Faixas com || são divididas e cada alternativa precisa começar por dígito, operador ou *.
+const ESPECIFICADOR_VALIDO = /^(workspace:[\w^~.*-]+|[\d^~<>=*][\w\s.^~<>=*+-]*)$/;
+
+function especificadorValido(versao: string): boolean {
+  return versao.split("||").every((parte) => ESPECIFICADOR_VALIDO.test(parte.trim()));
+}
 
 // Chaves de topo do pnpm-workspace.yaml que trocam versões ou aplicam patches fora do package.json.
 const CHAVES_PROIBIDAS_NO_WORKSPACE = ["overrides", "catalog", "catalogs", "packageExtensions", "patchedDependencies"];
@@ -53,7 +58,7 @@ function dependenciasNaoPermitidas(pacote: Pacote, arquivo: string): string[] {
 
 function especificadoresInvalidos(pacote: Pacote): string[] {
   return SECOES.flatMap((secao) => Object.entries(pacote[secao] ?? {}))
-    .filter(([, versao]) => !ESPECIFICADOR_VALIDO.test(versao))
+    .filter(([, versao]) => !especificadorValido(versao))
     .map(([nome, versao]) => `${nome}@${versao}`);
 }
 
@@ -70,7 +75,8 @@ function pacotesDoWorkspaceSemLista(yaml: string): string[] {
 }
 
 function chavesProibidasDoWorkspace(yaml: string): string[] {
-  const chaves = [...yaml.matchAll(/^["']?([A-Za-z][\w-]*)["']?\s*:/gm)].map((m) => m[1] ?? "");
+  const semBom = yaml.charCodeAt(0) === 0xfeff ? yaml.slice(1) : yaml;
+  const chaves = [...semBom.matchAll(/^["']?([A-Za-z][\w-]*)["']?\s*:/gm)].map((m) => m[1] ?? "");
   return chaves.filter((chave) => CHAVES_PROIBIDAS_NO_WORKSPACE.includes(chave));
 }
 
@@ -148,6 +154,30 @@ describe("guardrail G-17 — dependências permitidas", () => {
   it.each(CHAVES_PROIBIDAS_NO_WORKSPACE)("acusa %s de topo no pnpm-workspace.yaml (caso negativo)", (chave) => {
     const yaml = `packages:\n  - "web"\n${chave}:\n  zod: 1.0.0\nallowBuilds:\n  esbuild: true\n`;
     expect(chavesProibidasDoWorkspace(yaml)).toEqual([chave]);
+  });
+
+  it("acusa overrides no pnpm-workspace.yaml que começa com BOM (caso negativo)", () => {
+    const bom = String.fromCharCode(0xfeff);
+    expect(chavesProibidasDoWorkspace(`${bom}overrides:\n  zod: 1.0.0\n`)).toEqual(["overrides"]);
+    expect(chavesProibidasDoWorkspace(`${bom}packages:\n  - "web"\noverrides:\n  zod: 1.0.0\n`)).toEqual(["overrides"]);
+  });
+
+  it.each([["^1 || latest"], ["1.0.0 || next"], ["^1 ||"], ["|| ^1"], ["^1 || npm:x"], ["^1 | latest"], ["latest || ^1"]])(
+    "acusa faixa com || e alternativa inválida '%s' (caso negativo)",
+    (versao) => {
+      expect(especificadoresInvalidos({ dependencies: { zod: versao } })).toEqual([`zod@${versao}`]);
+    },
+  );
+
+  it.each([["^1 || ^2"], ["1.x || >=2 <3"], ["^1||^2"]])("aceita faixa com || '%s'", (versao) => {
+    expect(especificadoresInvalidos({ dependencies: { zod: versao } })).toEqual([]);
+  });
+
+  it("valida especificadores longos em tempo linear", () => {
+    const longo = `${"^1 || ".repeat(20000)}latest`;
+    const inicio = performance.now();
+    expect(especificadoresInvalidos({ dependencies: { zod: longo, hono: `${"1 ".repeat(50000)}!` } })).toHaveLength(2);
+    expect(performance.now() - inicio).toBeLessThan(1000);
   });
 
   it("não acusa chave aninhada nem allowBuilds no pnpm-workspace.yaml", () => {
