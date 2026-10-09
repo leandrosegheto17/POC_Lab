@@ -16,7 +16,7 @@
  * não tenha sido importada), convergindo as fontes no mesmo pedido. Cada fonte
  * grava também o próprio vínculo (rastreio, transação, código de vendas).
  * Ordem de cunhagem: vendas (código crescente), rastreio, pagamentos; o
- * contador continua do maior `PED-nnnnnn` existente. Regra completa: ADR-004.
+ * contador continua do maior `PED-nnnnnn` existente. Regra completa: ADR-017 (idempotência: ADR-004).
  *
  * ## Transação
  *
