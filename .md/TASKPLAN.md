@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-09 05:37
+Atualizado: 2026-10-09 05:44
 
-Resumo: Não executada 6 · Aprovada 177 · Bloqueada 1 · total 184
+Resumo: Não executada 6 · Testada (aguarda segurança) 2 · Aprovada 177 · Bloqueada 1 · total 186
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -190,10 +190,12 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 175 | RTP-0090 | executor | ✔ | Publicação da qualidade não pode abortar por texto de sugestão acima do limite | Refatoração Revisão 2026-10-08 | RTP-0085 | Aprovada |
 | 176 | RTP-0091 | executor | ✔ | Cobrir ALTER TABLE, PRAGMA writable_schema e ponto e vírgula em string na checagem G-05 | Refatoração Revisão 2026-10-08 | — | Aprovada |
 | 177 | RTP-0092 | executor | ✔ | G-17 checar especificadores de versão, overrides e pacotes novos do workspace | Refatoração Revisão 2026-10-08 | RTP-0084 | Aprovada |
-| 178 | RTP-0093 | executor | ✔ | Regra DO UPDATE do G-05 voltar a acusar SQL com aspas desbalanceadas ou escapadas por b... | Refatoração Revisão 2026-10-08 | RTP-0091 | Não executada |
-| 179 | RTP-0094 | executor | ✔ | G-17 cobrir overrides/catalog do pnpm-workspace.yaml e tags de texto como especificador | Refatoração Revisão 2026-10-08 | RTP-0092 | Não executada |
-| 180 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Não executada |
-| 181 | BK-0004 | coordenador | ✔ | Decidir onde roda a marcação de pagamentos duplicados (RN-03) da tela T2: hoje Pedido.tsx | — | — | Não executada |
-| 182 | BK-0005 | coordenador | ✔ | Decidir como o D1 é trocado em produção e escrever a subseção Troca de dados em produção d | — | — | Não executada |
-| 183 | BK-0006 | coordenador | ✔ | Decidir como registrar a regra de convergência de identidade de pedido: a skill adr-drafti | — | — | Não executada |
-| 184 | RTP-0086 | executor | ✔ | Registrar no ADR-004 a regra de convergência de identidade de pedido | Refatoração Revisão 2026-10-08 | BK-0006, RTP-0071 | Bloqueada |
+| 178 | RTP-0093 | executor | ✔ | Regra DO UPDATE do G-05 voltar a acusar SQL com aspas desbalanceadas ou escapadas por b... | Refatoração Revisão 2026-10-08 | RTP-0091 | Testada (aguarda segurança) |
+| 179 | RTP-0094 | executor | ✔ | G-17 cobrir overrides/catalog do pnpm-workspace.yaml e tags de texto como especificador | Refatoração Revisão 2026-10-08 | RTP-0092 | Testada (aguarda segurança) |
+| 180 | RTP-0095 | executor | ✔ | Regex DO UPDATE do G-05 sem backtracking exponencial | Refatoração Revisão 2026-10-08 | RTP-0093 | Não executada |
+| 181 | RTP-0096 | executor | ✔ | G-17 rejeitar tag de texto dentro de faixa com // e ler pnpm-workspace.yaml com BOM | Refatoração Revisão 2026-10-08 | RTP-0094 | Não executada |
+| 182 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Não executada |
+| 183 | BK-0004 | coordenador | ✔ | Decidir onde roda a marcação de pagamentos duplicados (RN-03) da tela T2: hoje Pedido.tsx | — | — | Não executada |
+| 184 | BK-0005 | coordenador | ✔ | Decidir como o D1 é trocado em produção e escrever a subseção Troca de dados em produção d | — | — | Não executada |
+| 185 | BK-0006 | coordenador | ✔ | Decidir como registrar a regra de convergência de identidade de pedido: a skill adr-drafti | — | — | Não executada |
+| 186 | RTP-0086 | executor | ✔ | Registrar no ADR-004 a regra de convergência de identidade de pedido | Refatoração Revisão 2026-10-08 | BK-0006, RTP-0071 | Bloqueada |

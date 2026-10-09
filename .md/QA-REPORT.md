@@ -527,3 +527,9 @@ APROVADA; 0 críticos, 0 não críticos; 34 testes G-05 passando, repositório r
 
 ## RTP-0092 — QA — 2026-10-09
 APROVADA; 0 críticos, 0 não críticos; 41 testes G-17 passando, repositório real limpo, casos negativos para cada forma de especificador, overrides e pacote de workspace; tags tipo "latest" aceitas (fora do aceite, registrado).
+
+## RTP-0093 — QA — 2026-10-09
+APROVADA; 0 críticos, 1 não crítico (RTP-0095, backtracking exponencial na regex DO UPDATE com ~24 literais entre aspas); g05 35/35 passando e casos negativos acusando.
+
+## RTP-0094 — QA — 2026-10-09
+APROVADA; 0 críticos, 1 não crítico (RTP-0096: tag após `||` e BOM); 53 testes passando, regex linear.
