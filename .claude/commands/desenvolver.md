@@ -1,9 +1,12 @@
 ---
-description: Orquestra o ciclo completo sem supervisão (pensado para rodar à noite) — chama o /executar enquanto houver tarefas elegíveis, depois o /testar enquanto houver tarefas para testar, depois o /validar enquanto houver tarefas para validar, e volta ao /executar para uma nova rodada, até as filas acabarem ou ficarem travadas por bloqueios que dependem de você. Sem --continuar faz uma única passada. Repassa --nocontext, --nocommit, --paralelo e --lotes-distintos às etapas. Não dispara /deploy.
+description: Orquestra o ciclo completo sem supervisão (pensado para rodar à noite) — chama o /executar enquanto houver tarefas elegíveis, depois o /testar enquanto houver tarefas para testar, depois o /validar enquanto houver tarefas para validar, e volta ao /executar para uma nova rodada, até as filas acabarem ou ficarem travadas por bloqueios que dependem de você. Ao esvaziar as filas roda o /revisar (até 2 vezes por chamada) e, se ele abrir RTP, faz nova passada. Sem --continuar faz uma única passada. Repassa --nocontext, --nocommit, --paralelo e --lotes-distintos às etapas. Não dispara /deploy.
 argument-hint: [--continuar] [--nocontext] [--nocommit] [--paralelo [N]] [--lotes-distintos] [--rodadas N]
 ---
 
 # Comando `/desenvolver` — executar → testar → validar, em ciclo
+
+Ao esvaziar as filas, ele também roda o `/revisar` (revisão de arquitetura do projeto inteiro) e, se a revisão
+abrir `RTP`, volta a executar — ver Seção 3, item 2.
 
 Este comando é o **único** que encadeia os outros três (`/executar`, `/testar`, `/validar` continuam sem
 chamar um ao outro). Ele não implementa, testa nem audita nada por conta própria: só decide **qual etapa
@@ -56,7 +59,12 @@ digital de todas as tarefas: se não muda, nada andou.)
       reserva alheia, plano ausente…): anote o motivo e passe à próxima etapa. Se a contagem ainda for > 0 mas
       o `estado` mudou, houve progresso: repita 1.2–1.3.
 2. Fim da passada: rode `fila`.
-   - **Todas as contagens = 0** → filas vazias: **pare** (Seção 4).
+   - **Todas as contagens = 0** → filas vazias: antes de parar, rode **`/revisar`** (pela
+     ferramenta Skill, com `--nocommit` se esse foi um dos repasses), **no máximo 2 vezes
+     por chamada do `/desenvolver`**. Se a revisão abriu `RTP`, a fila de execução volta
+     a ter tarefas: comece nova passada (mesmo sem `--continuar`, já que é a continuação
+     do mesmo trabalho). Se não abriu nenhuma `RTP`, ou o limite de 2 revisões foi
+     atingido, **pare** (Seção 4).
    - **`estado` igual ao do início da passada** → sem progresso: **pare**.
    - **Sem `--continuar`** → **pare** depois desta passada.
    - **`--rodadas N` atingido** → **pare**.
@@ -79,6 +87,8 @@ Rode `python .claude/scripts/taskplan.py consolidar` e depois `python .claude/sc
 - **Por que parou**: filas vazias · sem progresso · `--rodadas` · teto de contexto · falha de ambiente.
 - **Balanço**: passadas feitas e, somando as etapas, quantas tarefas foram executadas, aprovadas em QA, aprovadas
   em Sec (`Aprovada`), devolvidas, bloqueadas e quantas RTP foram abertas; `aprovadas` antes → depois.
+- **Revisão de arquitetura**: quantas vezes o `/revisar` rodou, `RTP`/`BK` que ele abriu e se ainda há
+  achado Alto aberto (que segura o `/deploy`).
 - **O que depende de você**: os `BK-`/`SPK-` abertos (ID + o que fazer, uma linha cada) e as tarefas
   `Bloqueada` que eles seguram. Trate com `/executar --tarefa BK-nnnn`.
 - **Despriorizadas**: quantas (`despriorizadas=`) e quais (`fila --bloqueios` as lista); o ciclo as ignora, mas a versão de distribuição exige todas `Aprovada`.
@@ -88,4 +98,4 @@ Rode `python .claude/scripts/taskplan.py consolidar` e depois `python .claude/sc
 - **Sem commit**: se usou `--nocommit`, lembre que as alterações estão acumuladas na `main` para você commitar.
 - **Próximo passo**: `/listar`, e `/deploy` se algum lote ficou todo pronto.
 
-Nunca dispare `/deploy`, `/organizar` nem qualquer outro comando além dos três.
+Nunca dispare `/deploy`, `/organizar` nem qualquer outro comando além dos três e do `/revisar`.

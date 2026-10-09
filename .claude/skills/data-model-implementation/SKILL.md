@@ -48,6 +48,15 @@ Usa `tactical-ddd` como referência de padrão:
    um DTO com getters/setters que empurra toda regra para fora.
 4. **Migration/schema.** A estrutura de persistência reflete o modelo, com migration
    versionada e reversível quando a stack permitir.
+5. **Um só módulo fala com o banco.** O repositório (ou equivalente) é o único lugar
+   com SQL/consulta. Ele expõe **funções de consulta e de gravação com nome de
+   negócio** (`listarPagamentosSemIdentificacao()`), nunca a conexão crua (`db`) no
+   tipo público — quando outro módulo precisa de um dado novo, a tarefa acrescenta
+   uma função aqui, não um `db.prepare` lá. Se os testes precisam da conexão, ela
+   sai por um caminho separado de teste, não pelo tipo usado em produção.
+6. **Consulta preparada uma vez.** Comando SQL preparado na criação do repositório e
+   reaproveitado; nunca `prepare` dentro de função chamada por linha. Sem consulta
+   dentro de laço (N+1) quando um `JOIN`/`IN` resolve.
 
 ## Workflow
 
@@ -76,6 +85,10 @@ Usa `tactical-ddd` como referência de padrão:
 - [ ] Migration/schema versionado e, quando a stack permitir, reversível
 - [ ] Toda regra de negócio do PRD-TECNICO.md que restringe o dado está protegida
       pelo modelo
+- [ ] Nenhum SQL/consulta fora do módulo de dados; o tipo público dele não expõe a
+      conexão
+- [ ] Comandos preparados uma vez; nenhuma consulta dentro de laço que um
+      `JOIN`/`IN` resolveria
 
 ### MUST DO
 - Classificar toda entidade/Value Object/Aggregate com `tactical-ddd` antes de
@@ -88,3 +101,4 @@ Usa `tactical-ddd` como referência de padrão:
   negócio exige proteção de invariante.
 - Espelhar o contrato de API 1:1 no modelo de persistência — são preocupações
   diferentes, mesmo quando parecidas.
+- Expor a conexão do banco para que outros módulos escrevam SQL por conta própria.

@@ -51,7 +51,15 @@ Para cada ADR/restrição relevante:
    geral (pensar antes de codificar, simplicidade); esta skill adiciona só o que é
    específico deste projeto (stack, padrão arquitetural, requisito de segurança) —
    não repete o que já está na camada base.
-5. **Documentação mínima obrigatória.** Convenção fixa deste ambiente: `backend/` e
+5. **Convenções de código do ambiente.** `.claude/CONVENCOES-DE-CODIGO.md` é a
+   camada base de regras de código (reaproveitar em vez de copiar, fronteiras de
+   camada, tamanho de arquivo, comentários sem ID de tarefa). A Seção 1 do TASK.md
+   **referencia** esse arquivo e só acrescenta o que é específico do projeto: os
+   nomes reais das pastas/pacotes da subseção "Pacotes, pastas e fronteiras" do
+   SDD.md, o módulo único de acesso a cada banco, limites de tamanho diferentes
+   (se houver) e a checagem automática de cada fronteira (regra de lint, teste ou
+   comando).
+6. **Documentação mínima obrigatória.** Convenção fixa deste ambiente: `backend/` e
    `frontend/` cada um leva seu próprio `README.md` (setup, comandos de run/test) e
    `.env.example` versionado com todas as variáveis de ambiente necessárias (nunca
    o `.env` real com valores reais). Regra obrigatória, não recomendada — bloqueia
@@ -65,6 +73,9 @@ Para cada ADR/restrição relevante:
    criptografia que afeta como o código é escrito vira diretriz aqui.
 3. Inclua a diretriz obrigatória de `README.md` + `.env.example` em `backend/` e
    `frontend/`.
+3a. Referencie `.claude/CONVENCOES-DE-CODIGO.md` e escreva, para cada fronteira da
+   subseção "Pacotes, pastas e fronteiras" do SDD.md, a regra prática com os nomes
+   reais do projeto e como ela é checada automaticamente.
 4. Classifique cada diretriz como obrigatória, proibida ou recomendada.
 5. Adicione exemplo mínimo quando fizer diferença real para quem vai seguir a regra.
 6. Escreva a Seção 1 do `TASK.md` (Diretrizes de Implementação), referenciando
@@ -86,6 +97,10 @@ Para cada ADR/restrição relevante:
       geral
 - [ ] Diretriz obrigatória de `README.md` + `.env.example` em `backend/` e
       `frontend/` está presente
+- [ ] `.claude/CONVENCOES-DE-CODIGO.md` referenciado como camada base, sem copiar o
+      texto dele
+- [ ] Toda fronteira do SDD.md tem regra prática com nomes reais e checagem
+      automática indicada
 
 ### MUST DO
 - Traduzir todo ADR com implicação prática em regra concreta de implementação, não

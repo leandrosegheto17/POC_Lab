@@ -53,6 +53,10 @@ comando: o controle volta ao `/desenvolver`.
    linha da seção, `Resumo para o relatório: <uma linha>` (o `consolidar` monta a entrada de
    `.md/SECURITY-REVIEW.md`; **o agente não edita esse arquivo**). **Não altera código da tarefa e não grava status.** Peça o
    **retorno em até 4 linhas** (OK/DEVOLVIDA/BLOQUEIO, achados em contagem) e **não releia a seção 6**.
+   **Este nível é revisão do diff**, não auditoria completa: se a tarefa adicionou/atualizou dependência, ele
+   roda a auditoria de dependências; e a seção 6 separa o que foi **lido** do que foi **executado** (comando +
+   resultado). A varredura completa com ferramentas e o teste ativo contra a aplicação rodando são do
+   `/deploy` (auditoria de release, `security-release-audit`).
 3. **Resultado** (`concluir`):
    - **OK de segurança** (sem achado alto/crítico, compliance obrigatório atendido):
      `concluir <ID> <token> sec-ok` — `Concluída · QA ✔ · Sec ✔`; a tarefa fica **`Aprovada`** e libera

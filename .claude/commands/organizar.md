@@ -79,6 +79,18 @@ linhas dessas tarefas e das suas dependências —, `SDD.md`, `GUARDRAILS.md`,
    Reqs: <requisitos> · Aceite: <critério de aceite, copiado do TASK.md>
 
    ## 1. Plano de execução
+   **Reaproveitamento:** <o que já existe no código e esta tarefa deve USAR (módulo,
+   função, componente, com caminho); o que esta tarefa precisa e já existe em outro
+   lugar só como trecho dentro de outro arquivo — e, nesse caso, o passo de
+   EXTRAIR para um módulo comum e fazer os dois usarem; ou "nada a reaproveitar">
+   **Camada:** <em qual pacote/camada da subseção "Pacotes, pastas e fronteiras" do
+   SDD.md cada arquivo novo entra>
+   **Referência visual** (só tarefa de tela/componente): <páginas do mockup que valem
+   (`.md/mockup/telas/<tela>--<estado>.html`), seletores/classes do mockup a
+   reproduzir, tokens usados, e o comando de comparação
+   (`node .claude/scripts/comparar-visual.mjs --tela <id> --base-url <url> --pacote <pacote da interface>`);
+   ou "não se aplica">
+
    <passos ordenados para implementar, arquivos a criar/alterar (a coluna Arquivos
    é o ponto de partida, não o limite), contratos/ADRs/diretrizes que valem aqui,
    ordem TDD, dependências que precisam estar prontas, pontos de atenção e o que
@@ -109,7 +121,18 @@ linhas dessas tarefas e das suas dependências —, `SDD.md`, `GUARDRAILS.md`,
 5. **Dúvida de escopo, lacuna no `SDD.md`/`UX-SPEC.md` ou critério de aceite
    ambíguo**: não invente — grave o arquivo com a seção afetada marcando
    `PENDENTE: <pergunta>` e relate no retorno.
-6. Retorne um relatório de até 10 linhas: IDs gravados, IDs com `PENDENTE` e a
+6. **Reaproveitar, nunca espelhar** (`.claude/CONVENCOES-DE-CODIGO.md`, regra 1):
+   antes de escrever o plano, procure no código (`Grep`/`Glob`) o que a tarefa vai
+   precisar e preencha o bloco **Reaproveitamento**. É proibido escrever no plano
+   "espelhar a estrutura de X", "copiar de X" ou "X continua intocado" quando a
+   tarefa reaproveita a lógica de X — escreva "extrair o comum de X para `<módulo>`
+   e usar nos dois". Preservar o **contrato** de X (forma da resposta, schema) é
+   diferente de não poder editar o **arquivo** X: os testes de contrato garantem o
+   primeiro, e o segundo não é regra.
+7. **Tarefa de tela:** preencha **Referência visual** lendo o `telas.json` e as
+   páginas do mockup; o plano de teste (`## 2.`) inclui a comparação visual da tela
+   nos estados e tamanhos do aceite, com o limite de pixels.
+8. Retorne um relatório de até 10 linhas: IDs gravados, IDs com `PENDENTE` e a
    pergunta de cada um.
 
 ## 3. Conferir e encerrar

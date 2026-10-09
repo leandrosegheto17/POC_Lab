@@ -125,7 +125,10 @@ outras tarefas em paralelo e alterações pendentes na mesma árvore):
 3. **Edição segura em árvore compartilhada.** Leia o arquivo **imediatamente antes** de
    editá-lo; use `Edit` (nunca `Write` sobre arquivo que já existe); se o `Edit` falhar porque o
    conteúdo mudou, releia e refaça. Não toque em arquivo fora dos que o plano lista — se for
-   inevitável, edite o mínimo e registre em `## 4` quais e por quê. **Nunca** desfaça,
+   inevitável, edite o mínimo e registre em `## 4` quais e por quê. **Extrair lógica que você
+   precisa reaproveitar conta como inevitável** (regra 1 de `.claude/CONVENCOES-DE-CODIGO.md`):
+   editar o arquivo de origem para tirar dele a função comum é o caminho certo, copiar não é.
+   **Nunca** desfaça,
    reverta ou limpe alteração que não é sua (`git checkout`, `reset`, `stash`, `clean`). Não
    rode instalação/atualização de dependências nem altere lockfile, a menos que a própria
    tarefa peça — e então registre.
@@ -136,6 +139,42 @@ outras tarefas em paralelo e alterações pendentes na mesma árvore):
 5. **Retorno curto.** O relato completo já está no arquivo. Devolva ao orquestrador **no máximo 4
    linhas**: `OK` ou `BLOQUEIO: <motivo>`, nº de arquivos alterados, testes (n passando/falhando) e
    risco principal. Sem copiar o relato nem listas longas.
+
+## Convenções de código (todos os chapéus)
+
+As regras de código deste ambiente estão em **`.claude/CONVENCOES-DE-CODIGO.md`** — leia o
+arquivo (é curto) antes da primeira tarefa da sessão. Elas valem **por cima** da skill
+`coding-guidelines`: onde aquela diz "mexa só no necessário", código duplicado conta como
+quebrado e deve ser extraído. Resumo do que mais escapa:
+
+- reaproveitar em vez de copiar (regra do segundo uso; contrato ≠ arquivo);
+- acesso a dados só no módulo de dados, sem expor a conexão; ponto de entrada não importa
+  ponto de entrada; a tela não recalcula regra de negócio;
+- arquivo de código até ~300 linhas, um componente exportado por arquivo de tela;
+- comentário sem ID de tarefa/lote e sem narrar o processo; quem muda o comportamento
+  atualiza o comentário.
+
+**Antes de devolver a tarefa**, confira no seu próprio diff (e registre em `## 4` o que achou):
+
+- [ ] Nenhum trecho de mais de ~10 linhas copiado de outro arquivo; nenhum comentário
+      "mesma lógica de…"/"duplicado aqui".
+- [ ] Nenhum `TP-`/`RTP-`/`Lote` em código ou comentário que você escreveu ou tocou.
+- [ ] Nenhum comentário que você deixou falso com a sua mudança.
+- [ ] Nenhum arquivo que você criou ou fez crescer passou de ~300 linhas sem justificativa.
+- [ ] Nenhum import que fura a subseção "Pacotes, pastas e fronteiras" do `SDD.md`.
+- [ ] **Tarefa de tela:** comparação visual com o mockup rodada
+      (`.claude/scripts/comparar-visual.mjs`), PNGs abertos e conferidos, dentro do
+      limite do aceite e com a mesma altura de página; tabela do resultado em `## 4`.
+
+## Fidelidade ao mockup (chapéu Frontend/Mobile)
+
+O mockup aprovado em `.md/mockup/` (UX-SPEC §0) é a fonte da aparência. Leia o
+HTML/CSS da página da tela e **copie** os valores; não reproduza a partir de uma
+imagem nem do texto da §3. `tokens.css` e as fontes do mockup entram no app sem
+alteração (tarefa de base visual). A tarefa de tela só volta com a comparação visual
+dentro do limite. Se o mockup e o texto do UX-SPEC divergem, ou se a tela não fica
+igual sem contrariar um requisito, é lacuna do planejamento: registre e sinalize ao
+Coordenador — não decida sozinho, não ajuste "a olho", não altere `tokens.css`.
 
 ## Skills
 
@@ -199,7 +238,8 @@ Skill de apoio, de uso **opcional**:
 Comum a todos os chapéus:
 
 - `coding-guidelines` — camada comportamental geral referenciada pela Seção 1 do
-  TASK.md.
+  TASK.md. Fica **abaixo** de `.claude/CONVENCOES-DE-CODIGO.md` quando as duas
+  divergem (ver "Convenções de código" acima).
 - `code-review` — usada pelo orquestrador (não pelo próprio Executor) contra o
   `git diff` da tarefa antes de marcar `Concluída`, ver EXECUTION-FLOW.md.
 - `codenavi` — investigação cirúrgica de código desconhecido antes de
@@ -246,6 +286,10 @@ Comum a todos os chapéus:
   padrão estabelecido.
 - NUNCA viola uma regra do `GUARDRAILS.md` já aprovado, mesmo que o TASK.md não a
   repita explicitamente na tarefa.
+- NUNCA copia lógica de outro módulo para "não mexer no arquivo dele" — extrai para
+  um lugar comum (ou abre `BK` se a extração não couber), conforme
+  `.claude/CONVENCOES-DE-CODIGO.md`, regra 1.
+- NUNCA escreve ID de tarefa, lote ou rodada em código ou comentário.
 - Limite de autoridade: implementa dentro do que o SDD.md, o UX-SPEC.md, o
   TASK.md, o API-CONTRACT.yaml e o GUARDRAILS.md permitem; lacuna/inconsistência
   do UX-SPEC.md e qualquer desvio grande de escopo/estimativa sempre voltam para
@@ -277,6 +321,8 @@ Definition of done por tarefa (Backend/Frontend/Mobile) — checklist binário:
 
 - [ ] Código implementado seguindo as diretrizes de implementação e o UX-SPEC.md
       (quando aplicável)
+- [ ] Lista "Antes de devolver a tarefa" (seção Convenções de código) conferida e
+      registrada em `## 4`
 - [ ] Testes automatizados escritos e passando, cobrindo o critério de aceite
 - [ ] Contrato de API documentado, quando a tarefa expõe endpoint
 - [ ] Requisitos de segurança aplicados na implementação, não pendentes

@@ -63,6 +63,12 @@ Do NOT use for:
    mínimo 70-80% de cobertura de linha/branch, medida por ferramenta do próprio
    framework de teste. Abaixo do mínimo, a tarefa não é candidata a `Concluída`
    independente de o critério de aceite formal já estar coberto.
+6. **Teste organizado por comportamento.** Um arquivo de teste por comportamento
+   (ou por unidade testada), não um arquivo por tela que cresce a cada tarefa.
+   Arquivo de teste acima de ~400 linhas é sinal para dividir. Dado de teste
+   repetido (montar o banco de teste, criar um pedido válido, um evento de
+   exemplo) vira **fábrica compartilhada** em `test/apoio/` (ou a pasta de apoio do
+   projeto) — antes de criar uma fixture nova, procure se já existe uma.
 
 ## Workflow
 
@@ -95,6 +101,8 @@ Do NOT use for:
 - [ ] Todos os testes passam (rodados via Bash) antes da tarefa ser marcada
       concluída
 - [ ] Cobertura de regra de negócio/lógica de componente/tela atinge 70-80%
+- [ ] Nenhum arquivo de teste criado/ampliado passou de ~400 linhas sem
+      justificativa; dados repetidos vêm de fábricas compartilhadas
 
 ### MUST DO
 - Rodar os testes de fato (via Bash) antes de considerar a tarefa concluída — nunca
@@ -109,3 +117,5 @@ Do NOT use for:
   critério de aceite.
 - Marcar uma tarefa como concluída com cobertura de regra de negócio/lógica abaixo
   de 70%.
+- Copiar a montagem de dados de outro arquivo de teste em vez de reaproveitar (ou
+  criar) a fábrica compartilhada.

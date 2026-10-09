@@ -154,6 +154,17 @@ resultado final. Rodada 2 em diante: feedback do usuário vai para a mesma
 instância via `SendMessage`, até ele aprovar `SDD.md` + `UX-SPEC.md` juntos. Esse
 é o **checkpoint**: o Loop C só começa depois do Loop B fechar.
 
+**Mockup visual (projetos com interface).** Dentro do Loop B, na mesma instância:
+**B1** SDD + rascunho do UX-SPEC (fluxos, telas, estados) → **B2** 2-3 direções
+visuais de uma tela-chave para o usuário escolher → **B3** mockup completo da direção
+escolhida em `.md/mockup/` (toda tela × PC e celular × estados, `tokens.css`, fontes,
+respostas da API no formato do contrato, `telas.json`), skill `visual-mockup-drafting`.
+O `/definir` publica a galeria como Artifact a cada rodada. O Loop B só fecha com
+SDD + UX-SPEC + mockup aprovados juntos. Depois disso o mockup é a **fonte de verdade
+da aparência**: a implementação copia `tokens.css` e é comparada com ele pixel a pixel
+(`.claude/scripts/comparar-visual.mjs`) no `/executar`, no `/testar`, no `/revisar` e
+no `/deploy`. Mudança visual posterior começa no mockup.
+
 ### Loop C — Coordenador, chapéu Tech Lead (decomposição)
 
 Rodada 1 é **sempre um dispatch novo** (nunca continua a instância do Loop B) —

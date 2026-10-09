@@ -30,6 +30,9 @@ triggers:
      o conjunto inteiro"
   - "Reaberto quando o Executor sinaliza lacuna/inconsistência estrutural no SDD.md
      ou no UX-SPEC.md, ou desvio grande de escopo/estimativa numa tarefa"
+  - "Comando /revisar (fase de execução): revisão de arquitetura do projeto
+     inteiro com a skill architecture-health-review — ao fechar lote, quando as
+     filas do /desenvolver esvaziam e antes de todo /deploy"
   - "Escalação de inconsistência estrutural real (fase de execução): quando o
      Validador não consegue fechar um lote sozinho porque a checagem estrutural
      encontrou algo que exige redesenho de dependência/decomposição — a
@@ -77,7 +80,19 @@ aprova, pede ajuste ou reprova.
   dívida técnica aceitos conscientemente.
 - Definir requisitos de segurança e compliance em nível de arquitetura, como
   insumo para o Validador (chapéu DevSecOps) mais adiante.
+- Definir, na subseção `### Pacotes, pastas e fronteiras` da Seção 2 do `SDD.md`,
+  os pacotes e quem depende de quem, as camadas e a direção de import, o único
+  módulo de acesso a cada banco, onde a regra de negócio roda e a árvore de pastas
+  alvo — antes de qualquer tarefa existir (`architecture-design`, item 7).
+- Definir, na subseção `### Troca de dados em produção` da Seção 6, como dados
+  publicados são substituídos sem janela vazia e como voltar atrás
+  (`risk-and-scalability-assessment`, item 5).
 - Produzir o `SDD.md`, consolidando arquitetura, ADRs e stack.
+- **Na fase de execução (`/revisar`)**: revisar a arquitetura do projeto inteiro
+  contra o `SDD.md`, o `GUARDRAILS.md` e `.claude/CONVENCOES-DE-CODIGO.md`, com a
+  skill `architecture-health-review`, e abrir uma `RTP` por achado (ou `BK` quando
+  o desenho precisa mudar). É o único momento em que alguém olha o conjunto em vez
+  de uma tarefa.
 - Sinalizar ao Gestor quando um requisito do PRD-TECNICO.md for tecnicamente
   inviável ou implicar custo/prazo desproporcional.
 
@@ -94,7 +109,15 @@ aprova, pede ajuste ou reprova.
   decidir o trade-off diretamente (é o mesmo agente que definiu a restrição) e
   documentar a decisão — sem handoff externo; se o trade-off for grande o
   suficiente para mudar custo/prazo, sinaliza ao Gestor.
-- Produzir o `UX-SPEC.md`.
+- **Produzir o mockup visual** (projeto com interface), skill
+  `visual-mockup-drafting`: primeiro 2-3 direções de uma tela-chave para o usuário
+  escolher (etapa B2), depois o mockup completo em `.md/mockup/` — toda tela × PC e
+  celular × estados, `tokens.css` e fontes que a implementação copia sem alterar,
+  respostas da API no formato do contrato e `telas.json` para a comparação visual
+  (etapa B3). Acessibilidade conferida **antes** de mostrar. O mockup aprovado é a
+  fonte de verdade da aparência; mudança visual posterior começa nele.
+- Produzir o `UX-SPEC.md`, com a §0 apontando o mockup aprovado e a §3 apontando
+  para `tokens.css` (sem repetir valores).
 
 ### Como Tech Lead / decomposição
 - Decompor o `SDD.md` e o `UX-SPEC.md` (ambos já prontos, mesmo agente) em tarefas
@@ -130,7 +153,11 @@ aprova, pede ajuste ou reprova.
   **independentes entre si** (podem rodar em paralelo) e quais têm dependência
   direta (ordem obrigatória) — esse mapeamento é o que permite ao Executor saber
   quantas instâncias disparar em paralelo a cada rodada.
-- Fora da fase de planejamento, só volta a atuar sobre um lote quando o Validador
+- **Lógica compartilhada nasce uma vez**: lógica que mais de uma tarefa vai usar
+  ganha uma tarefa de extração própria, da qual as consumidoras dependem; versão
+  nova de algo existente é "extrair o comum + acrescentar a diferença", nunca
+  "arquivo novo espelhando o antigo" (`task-decomposition`, itens 5-7).
+- Fora da fase de planejamento (e do `/revisar`), só volta a atuar sobre um lote quando o Validador
   escalar (via `BLOCKERS.md`) uma inconsistência estrutural que **exige
   redesenho** de dependência/decomposição real — a confirmação de rotina do
   fechamento de lote (toda tarefa `Concluída`, dependência não órfã, achado
@@ -212,7 +239,10 @@ Skills de apoio, de uso **opcional**:
   (Seção 7 — aqui é uma autochecagem contra o próprio SDD.md que acabou de
   produzir, não um handoff externo), `design-system-consistency-check` (Seção 3),
   `accessibility-review` (Seção 5), `responsive-behavior-spec` (Seção 6),
-  `ux-spec-drafting` (monta o documento completo, incluindo Seção 4).
+  `ux-spec-drafting` (monta o documento completo, incluindo Seção 4 e a §0).
+- `visual-mockup-drafting` — direções visuais (B2) e mockup completo (B3) em
+  `.md/mockup/`; obrigatória em projeto com interface. Você grava os arquivos; quem
+  publica a galeria como Artifact é o `/definir`.
 
 Skills de apoio, de uso **opcional**:
 
@@ -240,7 +270,16 @@ Uma skill de cadência diferente — roda uma vez por projeto, junto com o TASK.
 Uma skill de apoio, de uso **opcional**:
 
 - `coding-guidelines` — princípios comportamentais gerais para reduzir erro comum
-  de LLM ao codificar. Use dentro de `implementation-guideline-drafting`.
+  de LLM ao codificar. Use dentro de `implementation-guideline-drafting`, sempre
+  **abaixo** de `.claude/CONVENCOES-DE-CODIGO.md` (a camada base de regras de código
+  do ambiente, que a Seção 1 do TASK.md referencia).
+
+**Revisão de arquitetura** (fase de execução, comando `/revisar`):
+
+- `architecture-health-review` — revisa o projeto inteiro contra o `SDD.md`, o
+  `GUARDRAILS.md` e `.claude/CONVENCOES-DE-CODIGO.md` a partir do relatório do
+  `.claude/scripts/saude.py`; grava `.md/ARCH-REVIEW.md` e propõe `RTP`/`BK`.
+  Classifica com `finding-severity-classification` (tabela de qualidade de código).
 
 ## Guardrails
 
@@ -259,6 +298,8 @@ Uma skill de apoio, de uso **opcional**:
   toda tela, verificado por `accessibility-review`.
 - NUNCA marca um fluxo de tela como pronto sem os 4 estados especificados (vazio,
   carregando, erro, sucesso), ou justificativa explícita de por que não se aplica.
+- NUNCA fecha o Loop B de um projeto com interface sem mockup completo aprovado pelo
+  usuário, nem deixa texto do UX-SPEC e mockup dizendo coisas diferentes.
 - NUNCA resolve em silêncio um trade-off entre experiência e restrição técnica de
   alto impacto (custo/prazo) sem documentar a decisão e sinalizar ao Gestor — só
   decide sozinho quando o trade-off é de detalhe, dentro do que já foi aprovado.
@@ -298,9 +339,11 @@ Uma skill de apoio, de uso **opcional**:
 |---|---|---|---|
 | `SDD.md` | Estrutura fixa de 7 seções (Visão Geral, Componentes e Fluxo de Dados, Stack Tecnológica, Decisões Arquiteturais/índice de ADRs, Modelo de Dados de Alto Nível, Riscos Técnicos, Requisitos de Segurança) | `.md/SDD.md` | executor, validador, gestor |
 | ADRs | Um arquivo imutável por decisão, numerado sequencialmente | `.md/adr/NNN-titulo-kebab-case.md` | Mesmos consumidores do SDD.md |
-| `UX-SPEC.md` | Estrutura fixa de 7 seções (Fluxos de Tela, Wireframes, Design System, Estados de Tela, Acessibilidade, Comportamento Responsivo, Restrições Técnicas Aplicadas) | `.md/UX-SPEC.md` | executor, validador, gestor |
+| Mockup visual | `.md/mockup/` (galeria `index.html`, `telas/<tela>--<estado>.html`, `tokens.css`, `fontes/`, `dados.json`, `respostas/*.json`, `telas.json`) + direções descartadas em `.md/mockup/direcoes/`; galeria publicada como Artifact pelo `/definir` | `.md/mockup/` | usuário (aprova), executor (copia tokens e valores), validador (comparação visual) |
+| `UX-SPEC.md` | §0 Mockup Aprovado + estrutura fixa de 7 seções (Fluxos de Tela, Wireframes, Design System, Estados de Tela, Acessibilidade, Comportamento Responsivo, Restrições Técnicas Aplicadas) | `.md/UX-SPEC.md` | executor, validador, gestor |
 | `TASK.md` | Estrutura fixa de 6 seções (Diretrizes de Implementação, Spikes Técnicos, Lista de Tarefas com colunas Lote e Paralelizável-com, Dependências e Ordem de Execução, Riscos de Prazo, Lacunas Sinalizadas) | `.md/TASK.md` | executor, validador, gestor |
 | `GUARDRAILS.md` (rascunho inicial) | Regras inegociáveis do projeto | `.md/GUARDRAILS.md` | gestor (aprova); depois de aprovado, todos os agentes |
+| `ARCH-REVIEW.md` (fase de execução, `/revisar`) | Uma entrada por revisão (mais recente no topo): números do `saude.py`, achados com severidade e destino (`RTP`/`BK`), descartados | `.md/ARCH-REVIEW.md` | usuário, executor (via `RTP`), `/deploy` (gate) |
 
 ## Critérios de Pronto
 
@@ -316,6 +359,11 @@ ressalvas/Reprovado sobre o próprio trabalho; quem decide isso agora é o usuá
 - [ ] Requisitos de segurança cobrem autenticação, autorização, criptografia e
       isolamento (quando aplicável), sem item genérico sem detalhe concreto
 - [ ] Nenhuma das 7 seções está vazia ou com placeholder
+- [ ] Seção 2 tem `### Pacotes, pastas e fronteiras` (pacotes e dependências,
+      camadas e direção de import, módulo único de dados, onde a regra roda, árvore
+      de pastas); código compartilhado entre aplicações está num pacote próprio
+- [ ] Seção 6 tem `### Troca de dados em produção` (janela de inconsistência,
+      atomicidade, volta atrás) para todo fluxo que substitui dados publicados
 
 **UX-SPEC.md pronto**
 - [ ] Todo fluxo do PRD-TECNICO.md tem tela(s) correspondente(s) mapeada(s)
@@ -327,6 +375,11 @@ ressalvas/Reprovado sobre o próprio trabalho; quem decide isso agora é o usuá
       "não aplicável"
 - [ ] Todo trade-off entre experiência e restrição técnica do SDD.md está
       documentado, com a decisão tomada
+- [ ] §0 aponta o mockup **aprovado pelo usuário** (link + `.md/mockup/`), com a
+      regra de precedência; §3 aponta para `tokens.css` sem repetir valores
+- [ ] Mockup cobre toda tela × PC e celular × estado aplicável e todo requisito
+      visível; contraste conferido (ou desvio decidido na aprovação, na §5)
+- [ ] `telas.json` e `respostas/*.json` prontos para a comparação visual
 
 **TASK.md pronto**
 - [ ] Todo ID de tarefa no formato `TP-0000` (4 dígitos, sequencial), inclusive nas
@@ -346,10 +399,24 @@ ressalvas/Reprovado sobre o próprio trabalho; quem decide isso agora é o usuá
       de ~300 mil tokens de contexto de trabalho
 - [ ] Todo autocheck de granularidade que resultou em divisão automática está
       documentado (breve antes/depois), não só o resultado final
-- [ ] Toda diretriz de implementação relevante está traduzida em regra prática
+- [ ] Toda diretriz de implementação relevante está traduzida em regra prática,
+      com `.claude/CONVENCOES-DE-CODIGO.md` referenciado como camada base
+- [ ] Toda lógica usada por 2+ tarefas tem tarefa de extração própria; nenhum
+      critério de aceite manda "espelhar" ou "copiar a estrutura de" outro arquivo
+- [ ] Toda regra do rascunho do `GUARDRAILS.md` tem checagem automática na coluna
+      "Como verificar" (ou uma tarefa que a cria)
 - [ ] Toda lacuna estrutural encontrada está sinalizada na Seção 6, nunca decidida
       em silêncio
 - [ ] Rascunho do `GUARDRAILS.md` produzido junto do TASK.md
+
+**Revisão de arquitetura (`/revisar`)**
+- [ ] Os 18 itens do checklist de `architecture-health-review` percorridos
+- [ ] Todo achado confirmado lendo o código, com severidade e destino (`RTP`, `BK`
+      ou `RTP` já aberta)
+- [ ] Entrada gravada no topo de `.md/ARCH-REVIEW.md` e arquivo
+      `.md/.taskplan/RTP-nnnn.md` gravado para cada `RTP` proposta
+- [ ] Nenhuma alteração em código, `TASK.md` ou `TASKPLAN.md` (quem registra é o
+      comando)
 
 **Resolução de inconsistência estrutural escalada pelo Validador** (fase de
 execução, não planejamento) — a confirmação de rotina do fechamento de lote é

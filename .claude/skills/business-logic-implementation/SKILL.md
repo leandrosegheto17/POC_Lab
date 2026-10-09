@@ -46,7 +46,13 @@ Do NOT use for:
    de uma única entidade que não é dona da operação inteira.
 4. **Rastreabilidade ao requisito.** Todo trecho de lógica de negócio remonta a um
    requisito/regra específico do PRD-TECNICO.md — se não remonta a nada, é código
-   não solicitado (fora do escopo da tarefa).
+   não solicitado (fora do escopo da tarefa). A rastreabilidade fica no taskplan e
+   na mensagem de commit; no código, cite no máximo a regra estável (`RN-08`,
+   `ADR-004`) quando ela explica o porquê — **nunca** o ID da tarefa (`TP-0048`).
+5. **Regra pura reaproveitável mora no domínio.** Um cálculo de regra (ex.: escolher
+   candidatos, decidir quitação) que mais de um módulo usa é uma função pura no
+   domínio, chamada por todos — nunca uma cópia em cada módulo de leitura,
+   projeção ou integração.
 
 ## Workflow
 
@@ -56,7 +62,11 @@ Do NOT use for:
    local; em Domain Service quando cruza agregados), seguindo `tactical-ddd`.
 3. Cubra todo caso de exceção já mapeado, não só o caminho feliz.
 4. Verifique que nenhuma lógica de negócio vazou para controller/endpoint ou para a
-   camada de apresentação.
+   camada de apresentação — inclusive a tela importando o domínio para recalcular
+   no navegador (ver `.claude/CONVENCOES-DE-CODIGO.md`, regra 2).
+5. Antes de escrever uma regra, procure (`Grep`) se ela já existe em outro módulo;
+   se existir como trecho dentro de outro arquivo, extraia para o domínio e use nos
+   dois lugares.
 
 ## Output Esperado
 
@@ -82,4 +92,6 @@ Do NOT use for:
 - Implementar lógica de negócio que não remonta a nenhum requisito/regra do
   PRD-TECNICO.md — isso é escopo não solicitado.
 - Duplicar a mesma regra de negócio em mais de um lugar do código em vez de
-  centralizar numa única fonte de verdade.
+  centralizar numa única fonte de verdade — inclusive "temporariamente", com
+  comentário avisando que é cópia.
+- Escrever ID de tarefa (`TP-`, `RTP-`, `Lote`) no código ou nos comentários.

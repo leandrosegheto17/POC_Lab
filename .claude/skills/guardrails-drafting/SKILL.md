@@ -46,19 +46,33 @@ Uma regra vira candidata a `GUARDRAILS.md` quando:
 2. **Tem origem rastreável.** Toda regra aponta para a decisão que a originou
    (Gate do CTO, seção do SDD.md, ou número do ADR) — nunca uma regra "porque faz
    sentido" sem fonte.
-3. **É verificável.** Alguém (humano ou agente) consegue checar objetivamente se a
-   regra foi seguida ou violada — "código deve ser de qualidade" não é regra
-   verificável; "toda rota de autenticação exige rate-limiting" é.
-4. **Vale para todo o projeto, não uma tarefa isolada.** Uma restrição que só se
+3. **É verificável por máquina.** A coluna "Como verificar" aponta **algo que roda**:
+   uma regra de lint, um teste, um comando (`grep`, script) ou uma restrição de
+   dependência no `package.json`/equivalente — não uma frase. "O repositório é o
+   único acesso ao banco" sozinho não é verificável; "o tipo do repositório não
+   expõe a conexão + `grep -rn 'db.prepare' src --exclude-dir=armazenamento` vazio"
+   é. Regra que hoje não tem como ser checada por máquina só entra se vier junto
+   de uma tarefa no TASK.md criando essa checagem.
+4. **Contrato ≠ arquivo.** Regra de compatibilidade fala do **comportamento
+   observável** (forma da resposta, schema, comando), nunca de "não editar o
+   arquivo X". Escreva explicitamente que refatorar o código por trás é permitido
+   enquanto os testes de contrato passarem — senão o Executor lê "a v1 não muda"
+   como "o arquivo da v1 não pode ser tocado" e copia tudo para um arquivo novo.
+5. **Coerente com as fronteiras do SDD.** Nenhuma regra libera um import ou acesso
+   que a subseção `### Pacotes, pastas e fronteiras` do `SDD.md` proíbe (ex.: liberar
+   a tela a importar o domínio para recalcular regra).
+6. **Vale para todo o projeto, não uma tarefa isolada.** Uma restrição que só se
    aplica a uma tarefa específica fica na Seção 1 do TASK.md junto com aquela
    tarefa, não no GUARDRAILS.md.
 
 ## Workflow
 
 1. Percorra `CTO-REVIEW.md`, `SDD.md` (Seções 6-7) e os ADRs em busca de restrição
-   que atenda aos 4 critérios do framework.
+   que atenda aos 6 critérios do framework. Inclua as fronteiras da subseção
+   `### Pacotes, pastas e fronteiras` da Seção 2 do SDD.md (acesso a dados num só
+   lugar, direção de import, onde a regra de negócio roda).
 2. Para cada uma, escreva a regra em linguagem direta e verificável, com a origem
-   citada.
+   citada e a coluna "Como verificar" apontando o lint/teste/comando que a checa.
 3. Monte o rascunho do `GUARDRAILS.md` com a tabela `## Log de Alterações` vazia
    (será preenchida pelo CTO ao aprovar, conforme PIPELINE-CONVENTIONS.md §5).
 4. Envie o rascunho para o CTO — a aprovação roda via `guardrails-governance`, não
@@ -73,8 +87,13 @@ Uma regra vira candidata a `GUARDRAILS.md` quando:
 
 ## Critério de Aceite
 
-- [ ] Toda regra atende aos 4 critérios do framework (inegociável, rastreável,
-      verificável, vale para o projeto todo)
+- [ ] Toda regra atende aos 6 critérios do framework (inegociável, rastreável,
+      verificável por máquina, contrato ≠ arquivo, coerente com as fronteiras do
+      SDD, vale para o projeto todo)
+- [ ] Toda linha da coluna "Como verificar" aponta um lint, teste, comando ou
+      restrição de dependência — ou uma tarefa do TASK.md que vai criar essa checagem
+- [ ] Nenhuma regra de compatibilidade proíbe editar um arquivo; ela protege o
+      comportamento observável e libera refatorar por trás
 - [ ] Toda regra cita a decisão de origem (Gate, seção do SDD.md, ou ADR-NNN)
 - [ ] Nenhuma convenção de estilo/preferência misturada como se fosse regra
       inegociável
@@ -90,3 +109,5 @@ Uma regra vira candidata a `GUARDRAILS.md` quando:
 - Incluir convenção de estilo/preferência de código como se fosse regra
   inegociável — isso dilui o que realmente é inegociável.
 - Considerar o rascunho como versão final antes da aprovação do CTO.
+- Escrever "Como verificar" só em prosa ("conferir no diff que…") — regra que
+  ninguém roda é quebrada sem ninguém perceber.

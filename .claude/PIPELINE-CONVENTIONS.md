@@ -8,7 +8,7 @@ GUARDRAILS.md.
 > **Modelo ativo: 5 agentes consolidados.** Desde a consolidação registrada aqui, os
 > fluxos ativos (`PLANNING-FLOW.md`, `EXECUTION-FLOW.md` e os comandos
 > `/avaliar_ideia`, `/planejar`, `/definir`, `/organizar`, `/executar`, `/listar`,
-> `/limpar`, `/deploy`) usam só 5
+> `/revisar`, `/limpar`, `/deploy`) usam só 5
 > agentes: `dono` (Business Owner / planejamento comercial), `gestor` (CTO + PM + Business Analyst), `coordenador` (Software Architect
 > + Tech Lead + UX/UI), `executor` (Backend + Frontend + Mobile) e `validador` (QA +
 > DevSecOps + DevOps). O usuário é o orquestrador — decide quando cada comando roda;
@@ -73,13 +73,16 @@ ativo o referencia mais.
 | 2 | `PRD.md` | Gestor | Coordenador, Executor (contexto), Validador (contexto) | Requisitos funcionais e não-funcionais, regras de negócio, critérios de aceite |
 | 3 | `PRD-TECNICO.md` | Gestor | Coordenador, Executor (contexto), Validador (contexto) | Tradução dos requisitos em restrições/contratos técnicos |
 | 4 | `SDD.md` | Coordenador | Executor, Validador, Gestor | Arquitetura, schemas de dados, contratos de API, decisões estruturais |
-| 5 | `UX-SPEC.md` | Coordenador | Executor, Validador, Gestor | Fluxos de tela, wireframes, design system, estados de tela, acessibilidade (WCAG), comportamento responsivo |
+| 5 | `UX-SPEC.md` | Coordenador | Executor, Validador, Gestor | §0 Mockup Aprovado (link, tela × página × rota, regra de precedência: mockup vale para aparência, texto para comportamento/dados/acessibilidade) + fluxos de tela, wireframes, design system (apontando para `tokens.css`), estados de tela, acessibilidade (WCAG), comportamento responsivo |
+| 5a | `mockup/` (pasta) | Coordenador (skill `visual-mockup-drafting`, Loop B do `/definir`) | Usuário (aprova), Executor, Validador | Mockup navegável de toda tela × PC e celular × estados: `index.html` (galeria publicada como Artifact), `telas/*.html`, `tokens.css` e `fontes/` (copiados sem alteração pela implementação), `dados.json`, `respostas/*.json` (formato do contrato), `telas.json` (mapa da comparação visual `.claude/scripts/comparar-visual.mjs`). Prints da comparação ficam em `.md/.visual/<data>/` |
 | 6 | `GUARDRAILS.md` | Coordenador (propõe) + Gestor (aprova) | Todos | Regras inegociáveis do projeto — documento vivo, ver seção 5 |
 | 7 | `TASK.md` | Coordenador | Executor, Validador, Gestor | Tarefas pequenas, ordenadas por dependência, com coluna de paralelismo dentro do lote, cada uma com dono (chapéu) e Status atualizado pelo Executor conforme progresso. Validador também escreve (Seção 3): reverte Status em reprovação crítica, confirma fechamento estrutural de lote, e cria/atualiza o lote `Refatoração Lote-X` para achado simples/débito baixo-médio — sem precisar do Coordenador para isso (ver EXECUTION-FLOW.md, Comando 2). O Coordenador continua dono do documento como um todo e só volta a editá-lo quando o Validador escalar uma inconsistência estrutural real via `BLOCKERS.md` |
 | 8 | `TEST-PLAN.md` | Validador | Gestor | Estratégia de teste (funcional, integração, regressão, e2e) derivada de PRD-TECNICO.md + TASK.md |
 | 9 | `QA-REPORT.md` | Validador | Executor, Coordenador, Gestor | Validação por tarefa/lote (aprovado/reprovado/aprovado com ressalva), log de bugs com severidade e evidência, veredito de release-readiness |
-| 10 | `SECURITY-REVIEW.md` | Validador | Gestor | Achados de segurança por severidade (SAST, dependências, secrets, OWASP, requisitos do SDD.md), status (bloqueia deploy / débito registrado com prazo), requisitos de segurança operacional |
+| 10 | `SECURITY-REVIEW.md` | Validador | Gestor | Achados de segurança por severidade (SAST, dependências, secrets, OWASP, requisitos do SDD.md), status (bloqueia deploy / débito registrado com prazo), requisitos de segurança operacional. No topo, as entradas de **auditoria de release** do `/deploy` (local e staging): evidência executada por item, itens não executados, riscos aceitos pelo usuário com prazo. Saídas brutas das ferramentas em `.md/.seguranca/<data>/` |
+| 13 | `THREAT-MODEL.md` | Validador (chapéu DevSecOps, auditoria de release) | Validador, Coordenador, Gestor | Threat model atualizado a cada release (skill `security-threat-model`): ativos, entradas, fronteiras de confiança, abusos possíveis e mitigação esperada. Dele saem as sondas do teste ativo (`.md/.seguranca/sondas.json`) |
 | 11 | `DEPLOY.md` | Validador | Gestor | IaC, pipeline de CI/CD, execução de deploy por ambiente, observabilidade, estratégia de rollback, relatório de cada deploy (status, versão, incidente) |
+| 12 | `ARCH-REVIEW.md` | Coordenador (comando `/revisar`) | Usuário, Executor (via `RTP`), Validador (gate do `/deploy`) | Uma entrada por revisão de arquitetura do projeto inteiro (mais recente no topo): números do `.claude/scripts/saude.py`, achados com severidade e destino (`RTP`/`BK`), descartados. Os relatórios brutos do script ficam em `.md/.revisao/` |
 | — | `BLOCKERS.md` | Qualquer agente que reporta bloqueio | Usuário (orquestrador) | Log de inconsistências/bloqueios — ver seção 4 |
 | — | `adr/NNN-titulo-kebab-case.md` | Coordenador | Executor, Validador, Gestor | Um arquivo por decisão arquitetural, imutável — ver exceção de nomenclatura abaixo |
 | — | `API-CONTRACT.yaml` | Executor | Executor (outras instâncias), Validador | OpenAPI 3.x, publicado incrementalmente por endpoint — ver exceção de nomenclatura abaixo |
@@ -93,7 +96,9 @@ junto.
 válidas): dois artefatos citados em versões anteriores deste documento nunca chegaram
 a ter um produtor real e foram consolidados em artefatos já existentes:
 - `CLAUDE.md` (guia de estilo/convenções de código) → Seção 1 do `TASK.md`
-  ("Diretrizes de Implementação").
+  ("Diretrizes de Implementação"), que referencia `.claude/CONVENCOES-DE-CODIGO.md`
+  (regras de código válidas para todo projeto deste ambiente — não é artefato de
+  projeto, é configuração do ambiente, como este documento).
 - `VISAO-PRODUTO.md` (problema, objetivo de negócio, escopo do MVP) → Seções 1-3 do
   `PRD.md` ("Problema e Contexto", "Público-Alvo", "Objetivo de Sucesso").
 - `CHANGELOG.md` (registro do que foi entregue por tarefa) → coluna Status + notas

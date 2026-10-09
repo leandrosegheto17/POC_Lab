@@ -48,6 +48,16 @@ qualquer deploy.
 4. **Monitoramento imediato pós-deploy.** A janela imediatamente após o deploy em
    produção é acompanhada ativamente (não só configurada e esquecida) — ver
    `observability-setup`.
+5. **Publicação é um script, não uma linha.** O passo a passo de publicação (build,
+   carga de dados, deploy) vive num script dedicado versionado (ou num workflow
+   manual do CI), com cada etapa nomeada e falha clara — nunca uma cadeia de `&&`
+   dentro do `package.json` (ou equivalente).
+6. **Troca de dados sem janela vazia.** A carga de dados em produção segue o que a
+   subseção `### Troca de dados em produção` da Seção 6 do `SDD.md` definiu
+   (transação, tabelas versionadas com troca no fim, ou equivalente). Antes do
+   primeiro deploy, confirme na prática que a ferramenta usada se comporta assim
+   (ex.: se o comando de execução de SQL roda o arquivo numa transação ou não) e
+   registre a evidência no `DEPLOY.md`.
 
 ## Workflow
 
@@ -75,6 +85,10 @@ qualquer deploy.
 - [ ] Deploy passou por staging antes de produção
 - [ ] Débito de segurança de baixa severidade registrado não pausou o deploy
 - [ ] Toda execução de deploy está registrada no DEPLOY.md, sucesso ou rollback
+- [ ] Publicação feita por script dedicado ou workflow, não por cadeia de `&&` no
+      `package.json`
+- [ ] Carga de dados em produção sem janela de tabela vazia/meio carregada, com a
+      evidência do comportamento da ferramenta registrada no DEPLOY.md
 
 ### MUST DO
 - Confirmar que QA e DevSecOps aprovaram exatamente o mesmo build antes de

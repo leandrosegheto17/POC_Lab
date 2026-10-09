@@ -54,6 +54,31 @@ Sem o PRD-TECNICO.md liberado, esta skill não roda — ver guardrail do agente
    claramente API/lógica de servidor da interface — independente do padrão
    arquitetural escolhido no item 4. Essa convenção deve ser registrada
    explicitamente no `SDD.md`, não assumida implicitamente.
+7. **Pacotes, pastas e fronteiras.** Subseção obrigatória da Seção 2 do `SDD.md`
+   (`### Pacotes, pastas e fronteiras`), escrita antes de qualquer tarefa existir —
+   é o que impede cada Executor de inventar sua própria organização. Ela define:
+   - **Pacotes e quem depende de quem.** Código usado por mais de um runtime ou
+     aplicação (ex.: contrato de API usado pelo servidor e pela tela; regra de
+     domínio usada pelo processamento e pela API) vive num **pacote próprio**, do
+     qual os consumidores dependem. Nunca um pacote de aplicação (CLI, servidor,
+     site) importando outro pacote de aplicação inteiro só para reaproveitar um
+     pedaço dele.
+   - **A fronteira é garantida pela dependência, não por lint.** Se a tela não pode
+     usar código de Node, ela não deve ter como importá-lo (o pacote não está nas
+     dependências dela). Regra de lint de import entra só como reforço.
+   - **Camadas dentro de cada pacote**, com a direção permitida de import (ex.:
+     `dominio` ← `aplicacao` (casos de uso) ← `entrada` (CLI, rotas) e
+     `infraestrutura` (banco, arquivos, APIs externas)). Um ponto de entrada
+     **nunca** importa outro ponto de entrada (CLI não importa CLI, rota não
+     importa rota); o que é comum aos dois vai para `aplicacao`.
+   - **Acesso a dados num só lugar.** Diga qual módulo é o único que fala com cada
+     banco/arquivo e que ele **não expõe a conexão** para fora — quem precisa de
+     dado chama uma função de consulta dele.
+   - **Onde a regra de negócio roda.** A tela consome o contrato da API e não
+     recalcula regra de negócio. Se uma tela precisa de um cálculo (ex.: "estado
+     numa data"), o cálculo é exposto pela API ou já vem pronto na projeção.
+   - **Árvore de pastas alvo**, até o segundo nível, com uma linha dizendo o que
+     mora em cada pasta.
 
 ## Workflow
 
@@ -67,7 +92,8 @@ Sem o PRD-TECNICO.md liberado, esta skill não roda — ver guardrail do agente
 5. Renderize o diagrama de componentes e de fluxo de dados com `mermaid-studio`.
 6. Escreva as Seções 1-2 do `SDD.md` (Visão Geral da Arquitetura, Componentes e Fluxo
    de Dados), incluindo a convenção de pastas `backend/` e `frontend/` na raiz do
-   projeto.
+   projeto e a subseção `### Pacotes, pastas e fronteiras` (item 7 do Core
+   Framework).
 
 ## Output Esperado
 
@@ -86,13 +112,24 @@ Sem o PRD-TECNICO.md liberado, esta skill não roda — ver guardrail do agente
 - [ ] Diagrama de componentes e de fluxo de dados renderizado e embutido na Seção 2
 - [ ] Convenção de pastas `backend/` e `frontend/` na raiz registrada explicitamente
       no SDD.md
+- [ ] Subseção `### Pacotes, pastas e fronteiras` presente, com: pacotes e
+      dependências entre eles, camadas e direção de import, o único módulo de
+      acesso a cada banco, onde a regra de negócio roda e a árvore de pastas alvo
+- [ ] Todo código compartilhado entre runtimes/aplicações está num pacote próprio
+      — nenhuma aplicação depende de outra aplicação inteira
 
 ### MUST DO
 - Rastrear cada componente de volta a um requisito real do PRD-TECNICO.md.
 - Cobrir toda integração externa já identificada pelo Business Analyst — nenhuma
   esquecida na arquitetura.
+- Definir as fronteiras de pacote e de camada antes da decomposição em tarefas —
+  depois que o código existe, fronteira vira refatoração cara.
 
 ### MUST NOT DO
 - Introduzir um componente sem requisito que o justifique ("por via das dúvidas" não é
   justificativa arquitetural).
 - Decidir tecnologia específica aqui — isso é `tech-stack-selection`, o próximo passo.
+- Deixar a tela importar regra de negócio para recalcular no navegador o que a API
+  ou a projeção deveriam entregar pronto.
+- Confiar só em regra de lint para separar camadas que poderiam ser separadas por
+  pacote.

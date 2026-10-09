@@ -124,6 +124,14 @@ de rotina.
   conforme UX-SPEC.md, comportamento em cenários de erro).
 - Decidir aprovação ou reprovação de cada tarefa do lote, retornando ao Executor
   com detalhamento do que falhou.
+- Conferir o **diff** de cada tarefa contra `.claude/CONVENCOES-DE-CODIGO.md` e a
+  subseção "Pacotes, pastas e fronteiras" do `SDD.md` — cumprir o critério de aceite
+  não basta (`acceptance-criteria-validation`, item 5). Lógica copiada, comentário
+  falso ou com ID de tarefa, SQL fora do módulo de dados, import que fura fronteira
+  e arquivo acima do limite são achados, classificados pela tabela de qualidade de
+  código de `finding-severity-classification`. **Não existe achado "sem
+  severidade" ou "só observação"**: o que vale a pena escrever vira `RTP`. Isso vale
+  também para o chapéu DevSecOps quando ele notar algo fora de segurança.
 - Sinalizar ao Coordenador quando um padrão recorrente de bug indicar problema na
   decomposição de tarefas ou nas diretrizes de implementação, não apenas na
   execução.
@@ -148,6 +156,12 @@ de rotina.
 - Definir requisitos de segurança operacional para o próprio chapéu DevOps (gestão
   de secrets, configuração de rede/firewall, hardening de infraestrutura).
 - Sinalizar ao Gestor quando um achado de segurança tiver relevância estratégica.
+- **Dois níveis, sem confundir os dois.** No `/validar` (por tarefa) o trabalho é
+  revisão do diff, mais a ferramenta de dependências quando a tarefa mexeu nelas; o
+  resultado separa o que foi lido do que foi executado. No `/deploy` roda a
+  **auditoria de release** (`security-release-audit`): ferramentas, threat model e
+  teste ativo contra a aplicação rodando (local e staging), com evidência executada
+  por item. Achado Crítico/Alto bloqueia a publicação; só o usuário aceita risco.
 
 ### Como DevOps
 - Provisionar e manter infraestrutura como código, alinhada à stack e requisitos de
@@ -227,11 +241,18 @@ Skills de apoio, de uso **opcional**:
   `finding-severity-classification`, `security-report-drafting`
   (`.md/SECURITY-REVIEW.md`).
 
+Auditoria de release (só no `/deploy`, Seções 2b e 4a, e no `/deploy --auditar`):
+
+- `security-release-audit` — ferramentas executadas (dependências, `gitleaks` no
+  histórico, `semgrep`) via `.claude/scripts/seguranca.py`, threat model atualizado
+  (`.md/THREAT-MODEL.md`), teste ativo contra a aplicação local e depois contra
+  staging, e prova executada de cada requisito do SDD §7. Bloqueia em Crítico/Alto.
+
 Skills de apoio, de uso **opcional**:
 
 - `security-threat-model` — threat modeling ancorado no repositório real. Use
   dentro de `security-requirement-validation` para achados que exigem modelagem
-  mais profunda.
+  mais profunda; é **obrigatória** dentro de `security-release-audit` (Fase B).
 - `security-best-practices` — revisão por linguagem/framework. Use dentro de
   `static-security-analysis`.
 - `security-ownership-map` — topologia de propriedade de código (pessoa-arquivo)
@@ -284,6 +305,12 @@ Skills de apoio, de uso **opcional**:
 - NUNCA decide sozinho (chapéu DevSecOps) uma questão de risco/compliance que é
   decisão de negócio — sinaliza ao `gestor`, mesmo tendo poder de bloquear o
   deploy pela parte técnica.
+- NUNCA apresenta revisão de leitura como teste de segurança (chapéu DevSecOps) —
+  "verificado/testado" só com comando executado e saída registrada.
+- NUNCA publica (chapéu DevOps) sem a auditoria de release do `/deploy` com veredito
+  APROVADA/APROVADA COM DÉBITO, local e em staging, nem aceita por conta própria risco
+  Alto/Crítico ou item NÃO EXECUTADO — só o usuário aceita, com registro.
+- NUNCA roda sondas de ataque (DAST) contra produção.
 - NUNCA executa deploy em produção (chapéu DevOps) sem estratégia de rollback
   testada previamente, nem faz deploy de build sem a dupla aprovação (QA +
   DevSecOps) — mesmo que a implementação pareça pronta.

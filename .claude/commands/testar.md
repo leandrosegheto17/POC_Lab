@@ -49,7 +49,11 @@ comando: o controle volta ao `/desenvolver`.
    **lê o `.md/.taskplan/<ID>.md`** (plano de teste e resultado da execução) e o diff da tarefa
    (`python .claude/scripts/taskplan.py diff <ID>`; se a tarefa tocou arquivo compartilhado, o diff pode
    incluir edição de outra — leia-o junto com a lista de arquivos de `## 4`), executa o plano de teste,
-   valida o critério de aceite sem reinterpretá-lo e **escreve o resultado em `## 5. Resultado do QA`**
+   valida o critério de aceite sem reinterpretá-lo, **em tarefa de tela roda ele mesmo a comparação visual**
+   (`.claude/scripts/comparar-visual.mjs`, estados e tamanhos do aceite) e abre os PNGs — fora do limite ou
+   divergência visível reprova —, **confere o diff contra `.claude/CONVENCOES-DE-CODIGO.md`**
+   (duplicação, comentário falso ou com ID de tarefa, fronteira furada, tamanho — achado não crítico vira
+   `RTP`, nunca "observação sem severidade") e **escreve o resultado em `## 5. Resultado do QA`**
    (veredito, o que foi testado, evidências, achados com severidade; `### Rodada n` em reteste), e, como
    última linha da seção, `Resumo para o relatório: <uma linha>` (o `consolidar` monta a entrada de
    `.md/QA-REPORT.md`; **o agente não edita esse arquivo**). **Não altera código da tarefa e não grava status.** Peça o

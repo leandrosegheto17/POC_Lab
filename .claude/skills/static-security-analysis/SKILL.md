@@ -46,6 +46,18 @@ Do NOT use for:
    claramente resolvido por um scanner direto (ex.: fluxo de dado sensível
    atravessando múltiplos componentes), invoca `security-threat-model` para
    analisar o trust boundary específico.
+5. **Ferramenta de verdade quando houver ferramenta.** No `/validar` (por tarefa)
+   esta skill revisa o **diff** — mas, se a tarefa **adicionou ou atualizou
+   dependência**, rode a auditoria de dependências (`pnpm audit --prod`/`npm audit
+   --omit=dev`/`pip-audit`) e registre o comando e o resultado; se a tarefa mexeu em
+   arquivo de configuração ou de ambiente, rode `gitleaks` sobre a árvore. Diga
+   explicitamente no resultado o que foi **revisão de leitura** e o que foi
+   **ferramenta executada** — nunca apresente leitura como se fosse teste.
+6. **Varredura completa é da auditoria de release.** SAST do projeto inteiro
+   (`semgrep`), segredos no histórico git inteiro (`gitleaks`), todas as dependências
+   (`osv-scanner`) e teste ativo contra a aplicação rodando ficam com
+   `security-release-audit`, no `/deploy`. Esta skill não precisa repeti-los por
+   tarefa.
 
 ## Workflow
 
@@ -73,6 +85,9 @@ Do NOT use for:
 - [ ] Todo segredo hardcoded encontrado está marcado como severidade alta/crítica
 - [ ] Achado que exige análise de fluxo/trust boundary foi passado por
       `security-threat-model`, não deixado como "suspeito" sem investigação
+- [ ] Tarefa que mexeu em dependência teve a auditoria de dependências executada,
+      com comando e resultado registrados
+- [ ] O resultado separa "revisão de leitura" de "ferramenta executada"
 
 ### MUST DO
 - Rodar a varredura continuamente, não só uma vez no final.
@@ -82,3 +97,4 @@ Do NOT use for:
 - Esperar o build completo para começar a escanear.
 - Ignorar CVE de dependência só porque "provavelmente não é explorável neste
   contexto" sem registrar a avaliação.
+- Escrever "verificado"/"testado" sobre algo que só foi lido.

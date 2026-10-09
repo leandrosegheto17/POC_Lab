@@ -46,6 +46,26 @@ Do NOT use for:
    checagem).
 4. **Falha rastreável.** Todo estágio que falha produz log claro o suficiente para
    diagnosticar sem precisar reproduzir localmente do zero.
+5. **Caminhos que batem com onde o comando roda.** Todo `path` de cache, artefato
+   ou upload é relativo à pasta onde o comando que gera o arquivo **realmente
+   roda**. Em monorepo isso engana: `pnpm --filter <pacote> run x` (e equivalentes
+   de npm/yarn workspaces) roda dentro de `<pacote>/`, então um arquivo gravado em
+   `dados/origem` vai parar em `<pacote>/dados/origem`, não na raiz. Para cada
+   cache, confirme lendo o script de destino (ou a saída do primeiro run) onde o
+   arquivo cai, e confira no **segundo** run que o log mostra "cache hit".
+6. **Fronteiras checadas no CI.** As checagens automáticas indicadas na coluna
+   "Como verificar" do `GUARDRAILS.md` (lint de import, testes de contrato, `grep`
+   de SQL fora do módulo de dados) rodam como estágio do pipeline — regra que só
+   existe no papel não protege nada.
+7. **Segurança desde o CI.** O estágio "scan de segurança" roda ferramentas de
+   verdade em todo push, para o problema aparecer cedo e a auditoria do `/deploy`
+   (`security-release-audit`) ser confirmação, não descoberta:
+   - auditoria de dependências de produção (`pnpm audit --prod --audit-level high` ou
+     equivalente) — falha em Alta/Crítica;
+   - `gitleaks` (ação oficial ou binário) sobre o histórico — falha em qualquer
+     segredo;
+   - `semgrep` com as regras do stack — falha em severidade ERROR.
+   Actions fixadas por hash e `permissions` mínimas no workflow.
 
 ## Workflow
 
@@ -55,6 +75,11 @@ Do NOT use for:
 3. Configure o gate de produção para exigir a dupla aprovação (QA + DevSecOps)
    antes de acionar `deployment-execution`.
 4. Verifique que falha em qualquer estágio produz log diagnosticável.
+5. Para cada cache/artefato, confirme o caminho real contra a pasta de execução do
+   comando e registre no `DEPLOY.md` como confirmou (item 5 do Core Framework).
+6. Inclua as checagens automáticas do `GUARDRAILS.md` como estágio do pipeline.
+7. Inclua auditoria de dependências, `gitleaks` e `semgrep` no estágio de scan de
+   segurança (item 7 do Core Framework).
 
 ## Output Esperado
 
@@ -70,6 +95,11 @@ Do NOT use for:
 - [ ] Gate de produção exige dupla aprovação (QA + DevSecOps), nunca deploy
       automático sem checagem
 - [ ] Falha em qualquer estágio produz log diagnosticável
+- [ ] Todo caminho de cache/artefato confere com a pasta onde o comando roda
+      (inclusive em monorepo com `--filter`); "cache hit" confirmado no 2º run
+- [ ] As checagens automáticas do `GUARDRAILS.md` rodam como estágio do pipeline
+- [ ] Auditoria de dependências, `gitleaks` e `semgrep` rodam em todo push e falham
+      o pipeline em Alta/Crítica
 
 ### MUST DO
 - Configurar o gate de produção para exigir a dupla aprovação antes de qualquer

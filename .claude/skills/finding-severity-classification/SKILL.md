@@ -1,6 +1,6 @@
 ---
 name: finding-severity-classification
-description: Classifica achados de segurança por severidade e decide o que bloqueia deploy versus o que vira débito registrado com prazo. Use depois que static-security-analysis, security-requirement-validation, compliance-validation e sensitive-data-exposure-check já produziram achados. Do NOT use for encontrar o achado em si (isso é das outras 4 skills) ou para consolidar o relatório final (isso é security-report-drafting).
+description: Classifica achados de segurança — e também de qualidade de código e arquitetura (duplicação, fronteira de camada furada, comentário desatualizado, arquivo grande) — por severidade e decide o que bloqueia versus o que vira débito/RTP. Use depois que static-security-analysis, security-requirement-validation, compliance-validation e sensitive-data-exposure-check já produziram achados, e sempre que o QA ou o /revisar encontrarem achado de qualidade de código. Do NOT use for encontrar o achado em si (isso é das outras 4 skills) ou para consolidar o relatório final (isso é security-report-drafting).
 metadata:
   author: devsecops
   version: '1.0.0'
@@ -47,6 +47,29 @@ Do NOT use for:
 Achado de compliance obrigatório (LGPD e afins) é sempre tratado como Crítica,
 independente do impacto técnico isolado — a obrigação legal não admite débito.
 
+### Achados de qualidade de código e arquitetura (não segurança)
+
+Esta skill também classifica o que o QA, o DevSecOps ou o `/revisar` encontram fora
+de segurança, contra `.claude/CONVENCOES-DE-CODIGO.md` e a subseção "Pacotes,
+pastas e fronteiras" do `SDD.md`. **"Sem severidade" não existe**: todo achado
+recebe uma das classes abaixo e, se não for bloqueante, vira `RTP`.
+
+| Achado | Severidade | Destino |
+|---|---|---|
+| Regra do `GUARDRAILS.md` violada (ex.: SQL fora do módulo de dados quando o guardrail proíbe) | Alta | Devolve a tarefa (crítico) |
+| Regra de negócio recalculada na tela; aplicação dependendo de outra aplicação inteira para reaproveitar código | Média | `RTP` |
+| Lógica copiada de outro módulo (> ~10 linhas) ou comentário "mesma lógica de…/duplicado aqui"; rota/versão nova que é cópia da anterior | Média | `RTP` |
+| SQL/consulta fora do módulo de dados, ou conexão exposta, sem guardrail específico | Média | `RTP` |
+| Ponto de entrada importando ponto de entrada (CLI→CLI, rota→rota) | Média | `RTP` |
+| Arquivo acima do limite de tamanho; mais de um componente exportado no arquivo; mapa de rótulos repetido | Baixa | `RTP` |
+| Comentário desatualizado (diz algo que o código não faz mais) | Baixa | `RTP` |
+| ID de tarefa/lote/rodada (`TP-`, `RTP-`, `Lote`) em código ou comentário | Baixa | `RTP` |
+| Caminho de cache/artefato do CI que não bate com a pasta onde o comando roda | Média | `RTP` |
+| Tela fora do mockup: comparação visual acima do limite, altura diferente ou divergência visível (elemento faltando, fora do lugar, cor/fonte errada) | Alta (é critério de aceite) | Devolve a tarefa |
+| Valor visual solto (cor/espaço/fonte fora de `tokens.css`) ou `tokens.css` do app diferente do mockup, mesmo com a comparação dentro do limite | Média | `RTP` |
+
+Achados do mesmo tipo na mesma tarefa viram **uma** `RTP`, não uma por linha.
+
 ## Workflow
 
 1. Para cada achado das outras 4 skills, classifique usando o framework acima.
@@ -72,6 +95,8 @@ independente do impacto técnico isolado — a obrigação legal não admite dé
 - [ ] Todo achado Médio/Baixo tem prazo de correção proporcional
 - [ ] Todo achado de compliance obrigatório está classificado como Crítico,
       independente do impacto técnico isolado
+- [ ] Todo achado de qualidade de código/arquitetura tem severidade da tabela acima
+      e, se não bloqueante, uma `RTP` — nenhum "sem severidade"/"só observação"
 
 ### MUST DO
 - Aplicar o critério de severidade de forma consistente entre achados, não caso a
@@ -81,3 +106,5 @@ independente do impacto técnico isolado — a obrigação legal não admite dé
 ### MUST NOT DO
 - Rebaixar severidade de um achado para evitar bloquear o deploy.
 - Deixar achado sem prazo de correção quando classificado como débito.
+- Registrar um achado como "observação sem severidade" — se vale a pena escrever,
+  vale uma `RTP`.

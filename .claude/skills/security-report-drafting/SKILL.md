@@ -47,6 +47,32 @@ Do NOT use for:
    "Reprovado" (Crítico/Alto ou compliance obrigatório aberto).
 4. **Rastreabilidade.** Todo achado sinalizado ao CTO (relevância estratégica)
    está referenciado aqui, mesmo que a decisão final seja dele, não do DevSecOps.
+5. **Entrada de auditoria de release** (produzida por `security-release-audit` no
+   `/deploy`), no topo do arquivo, separada das entradas por tarefa:
+
+   ```markdown
+   ## Auditoria de release <AAAA-MM-DD> — <local | staging>
+
+   Veredito: APROVADA | APROVADA COM DÉBITO | REPROVADA · Saídas brutas: `.md/.seguranca/<data>/`
+
+   ### Evidências
+   | Item | Comando | Versão da ferramenta | Resultado | Saída completa |
+   |---|---|---|---|---|
+
+   ### Achados
+   | # | Achado | Severidade | Origem (ferramenta/sonda/leitura) | Destino (TP/RTP/risco aceito) |
+   |---|---|---|---|---|
+
+   ### Não executados
+   <item, motivo, "aceito pelo usuário em <data>" ou "bloqueia">
+
+   ### Riscos aceitos
+   | Achado | Motivo | Prazo | Aceito por | Data |
+   |---|---|---|---|---|
+   ```
+
+   Risco aceito só existe com decisão do usuário; com prazo vencido, volta a
+   bloquear na próxima auditoria.
 
 ## Workflow
 
@@ -72,6 +98,8 @@ Do NOT use for:
 - [ ] Veredito consolidado é objetivo (aprovado / aprovado com débito / reprovado),
       coerente com os achados listados
 - [ ] Todo achado sinalizado ao CTO está referenciado
+- [ ] Entrada de auditoria de release (quando houver) com evidência executada por
+      item, itens não executados e riscos aceitos pelo usuário com prazo
 
 ### MUST DO
 - Derivar requisito operacional de algo concreto (achado real ou requisito real do
@@ -83,3 +111,4 @@ Do NOT use for:
 - Omitir um achado do relatório final para simplificar o veredito.
 - Aprovar o build com achado Crítico/Alto ou compliance obrigatório ainda em
   aberto.
+- Registrar risco como aceito sem decisão explícita do usuário.

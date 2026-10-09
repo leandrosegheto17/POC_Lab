@@ -7,7 +7,8 @@ ciclo de volta ao Gestor.
 
 Este documento cobre a lógica dos **comandos** da fase de execução —
 `/executar` (Executor implementa, QA testa e DevSecOps audita, tarefa a tarefa, no
-mesmo fluxo) e `/deploy` (Validador publica) — e do comando somente-leitura
+mesmo fluxo), `/revisar` (Coordenador revisa a arquitetura do projeto inteiro) e
+`/deploy` (Validador publica) — e do comando somente-leitura
 `/listar` (todas as tarefas em aberto, em ordem sugerida de execução). Antes
 deles, `/organizar` (Executor) quebra o `TASK.md` em `.md/.taskplan/<ID>.md`. Nenhum
 deles dispara o próximo automaticamente: **o usuário é o orquestrador**, decide
@@ -267,6 +268,31 @@ Detalhe operacional em `.claude/commands/executar.md` (mecânica comum), `testar
   retomável: todo o estado está em disco. Bloqueios não o interrompem; ao fim ele lista os `BK-`/`SPK-` que esperam o
   usuário. Nunca dispara `/deploy`.
 
+---
+
+## Comando 1b: `/revisar` — revisão de arquitetura do projeto inteiro (Coordenador)
+
+`/testar` e `/validar` conferem **cada tarefa** contra o próprio critério de aceite e
+também o diff dela contra `.claude/CONVENCOES-DE-CODIGO.md`. O que só aparece
+somando as tarefas (a mesma lógica em vários módulos, a versão nova que copia a antiga, o
+arquivo que cresceu tarefa a tarefa, o SQL espalhado, o comentário que ficou falso, o
+cache do CI que nunca acerta) é papel do `/revisar`.
+
+| Dispara quando | Agente | Ação | Saída |
+|---|---|---|---|
+| Lote fechado; filas do `/desenvolver` vazias; antes de todo `/deploy`; sob demanda | `coordenador` (skill `architecture-health-review`) | O comando roda `.claude/scripts/saude.py` (números objetivos); o Coordenador confere o projeto inteiro contra o SDD.md (fronteiras e troca de dados), o GUARDRAILS.md e as convenções | Entrada em `.md/ARCH-REVIEW.md`; uma `RTP` por achado (grupo `Refatoração Lote-N` ou `Refatoração Revisão <data>`); `BK` quando o desenho do SDD precisa mudar |
+
+- **Não corrige código**: as `RTP` entram na fila normal e passam por `/executar` → `/testar`
+  → `/validar` como qualquer tarefa.
+- **Severidade**: tabela "Achados de qualidade de código e arquitetura" de
+  `finding-severity-classification`. Achado **Alto** aberto segura o `/deploy`.
+- **`/desenvolver`**: ao esvaziar as filas, roda o `/revisar` (até 2 vezes por chamada);
+  se ele abrir `RTP`, faz nova passada.
+- **`/deploy`**: exige revisão mais nova que o último código commitado (Seção 2a de
+  `commands/deploy.md`).
+
+---
+
 **Infra em paralelo (oportunista)**: se `.md/DEPLOY.md` ainda não existir e o
 `SDD.md` já estiver aprovado, este é um bom momento para disparar em paralelo o
 mesmo dispatch de preparação de infraestrutura do chapéu DevOps (Comando 2, Seção
@@ -305,6 +331,39 @@ funcionava.
 2. Se não houver nenhum lote pronto pendente de publicação, informe isso ao
    usuário e pare — rode `/executar` primeiro.
 
+### Fidelidade ao mockup (projeto com interface)
+
+O mockup aprovado no `/definir` (`.md/mockup/`, UX-SPEC §0) é a fonte da aparência e a
+comparação `.claude/scripts/comparar-visual.mjs` (prints do mockup × app com as mesmas
+respostas de API, diferença pixel a pixel, limite padrão 1%) é conferida em quatro
+pontos: o **Executor** roda antes de devolver a tarefa de tela; o **QA** (`/testar`) roda
+de novo e olha os PNGs — fora do limite reprova; o **`/revisar`** roda todas as telas
+(regressão por componente compartilhado); o **`/deploy`** roda todas na validação final
+(Seção 3). Mudança de aparência começa no mockup, nunca só no código.
+
+### 2a. Revisão de arquitetura em dia
+
+O `/deploy` só segue se `.md/ARCH-REVIEW.md` tiver uma revisão mais nova que o último
+código commitado e nenhum achado **Alto** aberto (Comando 1b). Senão, para e sugere
+`/revisar --pre-deploy` ou `/executar`.
+
+### 2b. Auditoria de segurança de release (bloqueante)
+
+O `/validar` revisa o diff de cada tarefa; antes de publicar, o chapéu DevSecOps roda a
+**auditoria de release** (skill `security-release-audit`) sobre o projeto inteiro, com
+**evidência executada** por item:
+
+| Fase | O quê | Como |
+|---|---|---|
+| A | Dependências de produção, segredos no histórico git inteiro, SAST | `.claude/scripts/seguranca.py` (`pnpm/npm audit` ou `pip-audit`, `osv-scanner`, `gitleaks`, `semgrep`; Docker como alternativa) |
+| B | Threat model da release | `security-threat-model` → `.md/THREAT-MODEL.md` |
+| C | Teste ativo (DAST) contra a aplicação **local** | `seguranca.py --dast` com as sondas de `.md/.seguranca/sondas.json` + OWASP ZAP baseline |
+| D | Prova executada de cada requisito do SDD §7 e da configuração | testes/sondas/comandos |
+
+Crítico/Alto ou item NÃO EXECUTADO → **não publica**; a correção vira tarefa e passa pelo
+ciclo completo. Média/Baixa → `RTP` de débito. Só o usuário aceita risco, com motivo e
+prazo no `SECURITY-REVIEW.md`. `/deploy --auditar` roda só esta etapa.
+
 ### 3. Validação final (chapéu QA + DevSecOps, de confirmação)
 
 Para cada lote a publicar: dispare `validador` (chapéus QA + DevSecOps) de novo,
@@ -324,6 +383,12 @@ Com a validação final limpa: dispare `validador` (chapéu DevOps:
 `deployment-execution`, `observability-setup`,
 `non-functional-requirement-validation`) para staging, para o conjunto de lotes
 desta chamada — **sem pausa**.
+
+### 4a. Teste ativo contra staging
+
+Com o staging no ar, a Fase C da auditoria roda de novo contra ele (mesmas sondas):
+cabeçalhos, CORS, bindings e segredos reais só existem no ambiente publicado. Falha
+Crítica/Alta → para antes de produção. Sondas **nunca** rodam contra produção.
 
 ### 5. Deploy em produção
 

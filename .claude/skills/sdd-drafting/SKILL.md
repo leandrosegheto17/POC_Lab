@@ -54,6 +54,13 @@ PIPELINE-CONVENTIONS.md):
 6. Riscos Técnicos e Dívida Técnica Aceita
 7. Requisitos de Segurança e Compliance
 
+Duas subseções são obrigatórias dentro dessas 7 (sem criar seção nova):
+
+- Seção 2 → `### Pacotes, pastas e fronteiras` (produzida por `architecture-design`,
+  item 7 do Core Framework).
+- Seção 6 → `### Troca de dados em produção` (produzida por
+  `risk-and-scalability-assessment`).
+
 A Seção 5 (Modelo de Dados de Alto Nível) é produzida por esta skill, derivando das
 entidades já implícitas no fluxo de dados (Seção 2) e no modelo de dados que o
 PRD-TECNICO.md sugere — não uma modelagem física detalhada (isso cabe ao Backend
@@ -61,7 +68,9 @@ Developer depois), só as entidades principais e seus relacionamentos.
 
 ## Workflow
 
-1. Confira que as Seções 1-3, 6 e 7 existem e não têm placeholder.
+1. Confira que as Seções 1-3, 6 e 7 existem e não têm placeholder, incluindo as
+   subseções `### Pacotes, pastas e fronteiras` (Seção 2) e `### Troca de dados em
+   produção` (Seção 6). Faltando alguma, devolva para a skill dona dela.
 2. Monte a Seção 4 — índice de todos os ADRs em `.md/adr/`, com título e status
    (Accepted/Superseded) de cada um.
 3. Escreva a Seção 5 — entidades principais e relacionamentos, a partir do fluxo de
@@ -88,7 +97,10 @@ Developer depois), só as entidades principais e seus relacionamentos.
       `.md/adr/`, com status correto (Accepted/Superseded)
 - [ ] Seção 5 (Modelo de Dados) lista entidades principais e relacionamentos, sem
       entrar em modelagem física detalhada
-- [ ] Nenhuma contradição entre seções
+- [ ] Subseções `### Pacotes, pastas e fronteiras` (Seção 2) e `### Troca de dados
+      em produção` (Seção 6) presentes e preenchidas
+- [ ] Nenhuma contradição entre seções (inclusive: nenhum guardrail ou ADR
+      autoriza um import que a subseção de fronteiras proíbe)
 - [ ] Documento passa no checklist "Critérios de Pronto" do agente
       `software-architect`
 

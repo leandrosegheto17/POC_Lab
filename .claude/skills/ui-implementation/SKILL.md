@@ -37,9 +37,16 @@ Do NOT use for:
 Usa `frontend-design` para qualidade visual de produção e `web-design-guidelines`
 para revisar o resultado contra padrões de interação:
 
-1. **Fidelidade ao UX-SPEC.md.** Todo elemento, hierarquia e ação principal da tela
-   batem com o que foi especificado — divergência exige sinalizar ao UX/UI, não
-   decidir por conta própria.
+1. **Fidelidade ao UX-SPEC.md e ao mockup.** Todo elemento, hierarquia e ação
+   principal da tela batem com o que foi especificado — divergência exige sinalizar
+   ao UX/UI, não decidir por conta própria. **Para aparência, o mockup aprovado
+   (`.md/mockup/`, §0 do UX-SPEC) é a fonte**: abra o HTML/CSS da página da tela e
+   **copie os valores** (tamanho, peso, espaçamento, cor via token, raio, disposição)
+   — nunca estime olhando uma imagem, nunca use um valor "parecido". `tokens.css` e
+   as fontes do mockup já estão no app (tarefa de base visual); use as variáveis,
+   não números soltos. Mockup e texto do UX-SPEC em conflito sobre aparência: vale o
+   mockup; sobre comportamento/dados/acessibilidade: vale o texto — e sinalize o
+   conflito como lacuna do planejamento.
 2. **Componente do design system.** Reutiliza o componente já definido na Seção 3
    do UX-SPEC.md; se a tela pede um componente marcado como "novo" lá, implementa
    como tal (não como variação ad-hoc de um componente existente).
@@ -48,6 +55,17 @@ para revisar o resultado contra padrões de interação:
 4. **Qualidade de produção.** Atenção real a detalhe visual (espaçamento,
    tipografia, hierarquia) — usa `frontend-design` para evitar a estética genérica
    de IA, depois `web-design-guidelines` para revisar o resultado.
+5. **Arquivos pequenos e página fina.** Um componente exportado por arquivo;
+   componente acima de ~200 linhas é sinal para dividir. A página lê parâmetros,
+   chama o gancho de dados e compõe componentes — rótulos, conversões de URL e
+   formatações ficam em módulos próprios.
+6. **Rótulos num lugar só.** Nome amigável e ordem de exibição dos tipos do domínio
+   ficam num único módulo, derivado do enum do contrato. Antes de escrever um mapa
+   de rótulos, procure se ele já existe.
+7. **A tela mostra, não calcula regra.** A tela consome o contrato da API; se precisa
+   de um cálculo de regra de negócio que a API não entrega, sinaliza ao Coordenador
+   em vez de importar o domínio para calcular no navegador
+   (`.claude/CONVENCOES-DE-CODIGO.md`, regra 2).
 
 ## Workflow
 
@@ -58,6 +76,14 @@ para revisar o resultado contra padrões de interação:
 5. Revise o resultado com `web-design-guidelines` antes de considerar a estrutura
    visual pronta (a integração com API e responsividade vêm depois, nas próximas
    skills).
+5a. **Comparação visual antes de devolver.** Suba o app e rode
+   `node .claude/scripts/comparar-visual.mjs --tela <id> --base-url <url> --pacote <pacote da interface>`
+   (ou com `--iniciar "<comando de dev>"`). Abra os três PNGs de cada comparação
+   (`--mockup`, `--app`, `--diff`) e corrija até ficar dentro do limite e com a
+   mesma altura de página. Registre em `## 4` a tabela do `resumo.md` e o caminho das
+   imagens. Divergência que você não consegue eliminar sem contrariar o UX-SPEC
+   (ex.: dado real diferente do mockup) é lacuna: registre e sinalize, não aumente o
+   limite.
 6. Se algo no UX-SPEC.md for ambíguo ou impossível de implementar como escrito,
    sinaliza para `ux-ui` (não decide sozinho).
 
@@ -77,6 +103,12 @@ para revisar o resultado contra padrões de interação:
 - [ ] Todos os 4 estados de tela implementados
 - [ ] Resultado passou por `web-design-guidelines` sem violação relevante não
       resolvida
+- [ ] Um componente exportado por arquivo; nenhum componente novo acima de ~200
+      linhas sem justificativa
+- [ ] Nenhum mapa de rótulos duplicado; nenhuma regra de negócio calculada na tela
+- [ ] Valores visuais copiados do mockup / `tokens.css`, nenhum número solto
+- [ ] Comparação visual da tela (estados e tamanhos do aceite) dentro do limite e
+      com a mesma altura do mockup, com o resumo registrado em `## 4`
 
 ### MUST DO
 - Implementar todos os 4 estados de tela, não só o caminho de sucesso.
@@ -87,3 +119,5 @@ para revisar o resultado contra padrões de interação:
 - Criar variação ad-hoc de componente existente quando o UX-SPEC.md já define um
   componente novo específico para o caso.
 - Deixar algum dos 4 estados de tela sem implementação "para depois".
+- Ajustar a aparência "a olho" ou aumentar o limite da comparação para a tela passar.
+- Mudar `tokens.css` no app — mudança de token começa no mockup (`/definir`).

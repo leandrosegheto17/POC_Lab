@@ -45,6 +45,21 @@ Do NOT use for:
 4. **Veredito por tarefa.** Aprovado (tudo passa) / Aprovado com ressalva (passa,
    com bug de severidade baixa/média registrado como débito) / Reprovado (bug de
    severidade alta/crítica, ou critério de aceite não satisfeito).
+6. **Tarefa de tela: o QA roda e olha a comparação visual.** Rode
+   `.claude/scripts/comparar-visual.mjs` para a tela, nos estados e tamanhos do aceite,
+   **independente** do resultado que o Executor registrou. Abra os PNGs (`--mockup`,
+   `--app`, `--diff`) e confira também o que a porcentagem não pega (um botão no
+   lugar errado com poucos pixels, um texto cortado). Acima do limite, altura de
+   página diferente ou divergência visível relevante = **critério de aceite não
+   cumprido → reprova** (achado crítico, devolve ao `/executar`), porque fidelidade ao
+   mockup é aceite, não estética.
+5. **Passar no aceite não basta: o diff também é conferido.** Além do comportamento,
+   leia o diff da tarefa contra `.claude/CONVENCOES-DE-CODIGO.md` e a subseção
+   "Pacotes, pastas e fronteiras" do `SDD.md`. Uma tarefa pode cumprir 100% do
+   aceite e ainda assim copiar 100 linhas de outro arquivo — isso é achado. Cada
+   violação é classificada pela tabela "Achados de qualidade de código e
+   arquitetura" de `finding-severity-classification` e vira `RTP` quando não
+   bloqueia.
 
 ## Workflow
 
@@ -53,9 +68,14 @@ Do NOT use for:
 3. Toda divergência encontrada: documente via `bug-documentation`, com severidade.
 4. Se houver dependência cruzada com Backend/Frontend/Mobile, invoque
    `cross-platform-integration-testing`.
-5. Decida o veredito conforme a regra de severidade (alta/crítica reprova; baixa/
+5. Confira o diff contra as convenções (item 5 do Core Framework). Atalhos rápidos:
+   procure no diff `TP-`/`RTP-`/`Lote` em código, comentários com "mesma lógica",
+   "duplicad", "espelha", trechos parecidos com outro arquivo, SQL fora do módulo
+   de dados, import que fura fronteira e arquivo que passou do limite de tamanho.
+   Comentário que o diff deixou falso também conta.
+6. Decida o veredito conforme a regra de severidade (alta/crítica reprova; baixa/
    média aprova com ressalva e débito registrado).
-6. Se Reprovado: reverta o status da tarefa de `Concluída` para `Em andamento` no
+7. Se Reprovado: reverta o status da tarefa de `Concluída` para `Em andamento` no
    TASK.md, com nota apontando para o bug no QA-REPORT.md.
 
 ## Output Esperado
@@ -74,6 +94,10 @@ Do NOT use for:
 - [ ] Toda divergência entre código e critério original está documentada, não
       corrigida silenciosamente no critério
 - [ ] Tarefa reprovada tem o status revertido no TASK.md, com nota apontando o bug
+- [ ] Diff conferido contra `.claude/CONVENCOES-DE-CODIGO.md`; toda violação
+      classificada e, se não bloqueante, transformada em `RTP`
+- [ ] Tarefa de tela: comparação visual rodada pelo próprio QA, PNGs conferidos,
+      resultado (tabela + caminho das imagens) registrado
 
 ### MUST DO
 - Validar contra o critério de aceite original, nunca contra o que o código
@@ -85,3 +109,5 @@ Do NOT use for:
 - Aprovar uma tarefa só porque os testes automatizados do próprio time já
   passaram — a validação do QA é independente.
 - Reinterpretar o critério de aceite para caber no que foi entregue.
+- Aprovar com "0 achados" uma tarefa cujo diff duplica código, deixa comentário
+  falso ou fura uma fronteira do SDD — o aceite cumprido não apaga o achado.

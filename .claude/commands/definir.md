@@ -1,5 +1,5 @@
 ---
-description: Aciona o agente Coordenador em dois loops de refinamento sequenciais — Loop B (Software Architect + UX/UI, produz SDD.md+ADRs+UX-SPEC.md) e, só depois de fechado, Loop C (Tech Lead, produz TASK.md com autocheck automático de granularidade — 1 dia-pessoa por tarefa, sem misturar tela/endpoint/regra/SQL, canário de ~300k tokens) — seguido de uma aprovação rápida do Gestor sobre o rascunho de GUARDRAILS.md. Fecha relatando N tarefas/N lotes/paralelismo por lote. Você aprova o pacote técnico diretamente — não existe mais gate do CTO sobre SDD.md/TASK.md.
+description: Aciona o agente Coordenador em dois loops de refinamento sequenciais — Loop B (Software Architect + UX/UI, produz SDD.md+ADRs+UX-SPEC.md e o mockup visual — 2-3 direções para escolher, depois o mockup completo de todas as telas, publicado como Artifact para aprovação e usado depois na comparação visual da implementação) e, só depois de fechado, Loop C (Tech Lead, produz TASK.md com autocheck automático de granularidade — 1 dia-pessoa por tarefa, sem misturar tela/endpoint/regra/SQL, canário de ~300k tokens) — seguido de uma aprovação rápida do Gestor sobre o rascunho de GUARDRAILS.md. Fecha relatando N tarefas/N lotes/paralelismo por lote. Você aprova o pacote técnico diretamente — não existe mais gate do CTO sobre SDD.md/TASK.md.
 argument-hint: [vazio = continua o loop aberto ou roda a partir do PRD-TECNICO.md aprovado | texto = ajuste pontual sobre um artefato já aprovado]
 ---
 
@@ -45,10 +45,19 @@ Identifique em qual estado o planejamento técnico está:
 
 ## 2. Loop B — Coordenador (Software Architect + UX/UI)
 
+O Loop B tem três etapas, todas com a **mesma instância** do Coordenador. Projeto sem
+interface gráfica (só API/CLI) pula B2 e B3 e diz isso no UX-SPEC §0.
+
+| Etapa | O que o Coordenador entrega | O que o usuário decide |
+|---|---|---|
+| **B1** | `SDD.md` + ADRs + rascunho do `UX-SPEC.md` (§1 fluxos, §2 telas, §4 estados, §5 acessibilidade, §6 responsivo, §7 restrições) | Ajustes de arquitetura e de fluxo |
+| **B2** | 2-3 **direções visuais** (uma tela-chave, PC e celular) em `.md/mockup/direcoes/` (skill `visual-mockup-drafting`) | Qual direção (ou mistura) |
+| **B3** | **Mockup completo** em `.md/mockup/` (toda tela × PC e celular × estados, `tokens.css`, fontes, respostas da API, `telas.json`) + `UX-SPEC.md` fechado com §0 e §3 apontando para o mockup | Aprovação de SDD + UX-SPEC + mockup juntos |
+
 ### 2a. Rodada inicial (dispatch novo)
 
 1. **Anuncie** que vai acionar o Coordenador para produzir um rascunho de SDD.md
-   + UX-SPEC.md.
+   + UX-SPEC.md (etapa B1).
 2. **Dispare o agente** via `Agent` (`subagent_type: coordenador`,
    `run_in_background: false`). O prompt de dispatch: aponte o `PRD-TECNICO.md`
    já disponível — o próprio agente cobre Architect → UX/UI internamente (não
@@ -60,13 +69,33 @@ Identifique em qual estado o planejamento técnico está:
 
 Enquanto o usuário pedir ajuste: continue a **mesma instância** via `SendMessage`
 (nunca dispatch novo), sem teto de rodadas. Cada rodada reescreve `SDD.md`/ADRs/
-`UX-SPEC.md` no disco. "Descartar e recomeçar" → próxima rodada é dispatch novo
-(volte para 2a).
+`UX-SPEC.md`/`.md/mockup/` no disco. "Descartar e recomeçar" → próxima rodada é
+dispatch novo (volte para 2a). Quando o usuário aprovar a etapa corrente, peça a
+próxima (B1 → B2 → B3) pela mesma instância.
+
+### 2b-1. Publicar o mockup para aprovação (B2 e B3)
+
+O Coordenador grava os arquivos; **quem publica é este comando** (o agente não tem a
+ferramenta de Artifact):
+
+1. Na primeira publicação da sessão, carregue a skill `artifact-design` (contrato da
+   página publicada). A **galeria** (`index.html`) segue esse contrato; as páginas das
+   telas são publicadas como arquivos de apoio e **não** são reescritas para o
+   contrato — elas têm que ficar exatamente como a implementação vai copiar.
+2. Publique com a ferramenta `Artifact`: `file_path` = `.md/mockup/direcoes/index.html`
+   (B2) ou `.md/mockup/index.html` (B3), e em `files` todas as páginas de tela, CSS,
+   fontes e JSON que a galeria referencia (caminhos relativos à galeria). Cada rodada
+   de ajuste republica **o mesmo arquivo** (mesmo link).
+3. Mostre o link ao usuário com o resumo da rodada: telas × estados cobertos, tabela
+   de contraste, requisitos por tela e o que mudou desde a rodada anterior.
+4. Grave o link na §0 do `UX-SPEC.md` (o Coordenador faz isso na rodada seguinte, ou
+   você edita só essa linha).
 
 ### 2c. Fechamento do Loop B
 
-Só fecha quando o usuário aprova `SDD.md` + `UX-SPEC.md` **juntos** — é o
-checkpoint antes do Loop C poder começar.
+Só fecha quando o usuário aprova `SDD.md` + `UX-SPEC.md` + **mockup completo (B3)**
+**juntos** — é o checkpoint antes do Loop C poder começar. Sem mockup aprovado
+(projeto com interface), o Loop B não fecha.
 
 ## 3. Loop C — Coordenador (Tech Lead / decomposição)
 
@@ -119,7 +148,7 @@ No **fechamento final** (depois da Seção 4), apresente:
 
 - Pontos principais do `SDD.md` (arquitetura, stack, principais ADRs, riscos).
 - Pontos principais do `UX-SPEC.md` (fluxos mapeados, componentes novos,
-  restrições técnicas aplicadas).
+  restrições técnicas aplicadas) e o **link do mockup aprovado**.
 - Pontos principais do `TASK.md`, incluindo o que foi auto-dividido pelo
   autocheck do Loop C.
 - **A contagem explícita: N tarefas, M lotes, e por lote quantas tarefas são
@@ -139,6 +168,11 @@ Se o usuário quiser um parecer de risco/trade-off adicional antes de aprovar
 explicitamente um parecer ad hoc ao `gestor` — isso não roda por padrão.
 
 ## 6. Reabertura pontual
+
+Pedido de mudança **visual** depois da aprovação muda **primeiro o mockup** (e
+`tokens.css`, se for o caso), que é republicado para aprovação (Seção 2b-1); só então
+o Coordenador aponta as tarefas que precisam refazer a tela. Nunca ajuste a aparência
+só no código.
 
 Sempre um **dispatch novo** (nunca `SendMessage` para uma instância de loop já
 encerrado), lendo o artefato afetado do disco, só sobre o ponto pedido — a menos

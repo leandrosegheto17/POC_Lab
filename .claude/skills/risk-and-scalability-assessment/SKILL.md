@@ -46,6 +46,20 @@ Do NOT use for:
    documentada é risco escondido, não decisão consciente.
 4. **Severidade.** Cada risco/gargalo classificado (baixo/médio/alto) pelo impacto se
    se concretizar e pela probabilidade dado o volume esperado.
+5. **Troca de dados em produção.** Toda vez que dados novos substituem os antigos
+   no ambiente publicado (migration, carga de projeção, republicação de tabelas,
+   importação), responda:
+   - **Janela de inconsistência:** existe um momento em que quem lê vê tabela
+     vazia, metade nova e metade velha, ou schema novo com dado velho? (Ex.: script
+     com `DROP TABLE` + `CREATE TABLE` + `INSERT` aplicado direto no banco que a API
+     está lendo.)
+   - **Atomicidade:** a troca é feita de uma vez (transação, tabelas versionadas com
+     troca de ponteiro no fim, banco novo e troca de binding)? Se a ferramenta
+     escolhida não garante transação, isso precisa estar escrito.
+   - **Volta atrás:** se a carga falhar no meio, como volta para a versão anterior,
+     e em quanto tempo?
+   A resposta vai na subseção `### Troca de dados em produção` da Seção 6. "Não se
+   aplica" só vale se nada é substituído em produção, e precisa dizer por quê.
 
 ## Workflow
 
@@ -56,13 +70,18 @@ Do NOT use for:
    sob a qual ela precisa ser revisitada (ex.: "reavaliar quando o volume passar de
    X").
 4. Classifique severidade de cada item.
-5. Escreva a Seção 6 do `SDD.md` (Riscos Técnicos e Dívida Técnica Aceita).
+5. Para cada fluxo que substitui dados em produção, responda janela de
+   inconsistência, atomicidade e volta atrás (item 5 do Core Framework).
+6. Escreva a Seção 6 do `SDD.md` (Riscos Técnicos e Dívida Técnica Aceita), com a
+   subseção `### Troca de dados em produção`.
 
 ## Output Esperado
 
 - **Formato**: Seção 6 do `SDD.md` — duas tabelas: `| Risco/Gargalo | Componente |
   Severidade | Mitigação ou plano |` e `| Dívida Técnica Aceita | Motivo | Condição
-  de revisão |`.
+  de revisão |`, mais a subseção `### Troca de dados em produção` com a tabela `|
+  Fluxo que substitui dados | Janela de inconsistência | Como fica atômico | Como
+  volta atrás |`.
 - **Onde salva**: `.md/SDD.md`.
 
 ## Critério de Aceite
@@ -73,6 +92,9 @@ Do NOT use for:
 - [ ] Toda dívida técnica aceita tem motivo e condição de revisão registrados — nunca
       uma dívida silenciosa
 - [ ] Todo risco/gargalo tem severidade classificada com justificativa
+- [ ] Todo fluxo que substitui dados em produção tem janela de inconsistência,
+      atomicidade e volta atrás respondidas na subseção `### Troca de dados em
+      produção`
 
 ### MUST DO
 - Comparar todo gargalo contra o requisito não-funcional real (volume, latência,
