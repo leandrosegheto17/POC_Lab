@@ -11,7 +11,8 @@ import {
 } from "../nav/useFiltroDivergencias.ts";
 import { useConsulta } from "../dados/use-consulta.ts";
 import { CartoesResumo } from "../componentes/CartoesResumo.tsx";
-import { FiltroTipo, VALOR_TODOS } from "../componentes/FiltroTipo.tsx";
+import { FiltroTipo } from "../componentes/FiltroTipo.tsx";
+import { VALOR_TODOS } from "../dados/rotulos.ts";
 import { Paginacao } from "../componentes/Paginacao.tsx";
 import { EstadoCarregando } from "../componentes/EstadoCarregando.tsx";
 import { EstadoVazio } from "../componentes/EstadoVazio.tsx";

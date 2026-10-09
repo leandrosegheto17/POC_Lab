@@ -59,6 +59,9 @@ export const OPCOES_TIPO_DIVERGENCIA: ReadonlyArray<
   { tipo: TipoDivergencia } & RotuloTipo
 > = TIPOS_DIVERGENCIA.map((tipo) => ({ tipo, ...TIPOS[tipo] }));
 
+/** Valor do filtro de tipo que significa "sem filtro" (explícito, nunca vazio). */
+export const VALOR_TODOS = "todos";
+
 const FONTES_ROTULO: Record<Fonte, string> = {
   vendas: "Vendas",
   pagamentos: "Pagamentos",

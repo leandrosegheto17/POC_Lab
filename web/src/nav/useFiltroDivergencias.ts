@@ -1,7 +1,7 @@
 import { useSearchParams } from "react-router";
 import { comTentativa } from "../dados/use-consulta.ts";
 import { ehTipoDivergencia, type TipoDivergencia } from "../dados/rotulos.ts";
-import { VALOR_TODOS } from "../componentes/FiltroTipo.tsx";
+import { VALOR_TODOS } from "../dados/rotulos.ts";
 
 export const TAMANHO_PAGINA = 50;
 

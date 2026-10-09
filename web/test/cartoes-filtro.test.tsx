@@ -13,7 +13,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import { ProvedorResumo } from "../src/dados/contexto-resumo.tsx";
 import { CartoesResumo } from "../src/componentes/CartoesResumo.tsx";
-import { FiltroTipo, VALOR_TODOS } from "../src/componentes/FiltroTipo.tsx";
+import { FiltroTipo } from "../src/componentes/FiltroTipo.tsx";
+import { VALOR_TODOS } from "../src/dados/rotulos.ts";
 import {
   simularResumoPendente as mockarPendente,
   simularResumoValido,

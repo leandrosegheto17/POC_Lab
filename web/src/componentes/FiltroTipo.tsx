@@ -18,9 +18,7 @@
 import "./CartoesResumo.css";
 import { useResumo } from "../dados/contexto-resumo.tsx";
 import { formatarNumero } from "../dados/formatacao.ts";
-import { OPCOES_TIPO_DIVERGENCIA } from "../dados/rotulos.ts";
-
-export const VALOR_TODOS = "todos";
+import { OPCOES_TIPO_DIVERGENCIA, VALOR_TODOS } from "../dados/rotulos.ts";
 
 const OPCOES: ReadonlyArray<{ valor: string; rotulo: string; curto: string }> = [
   { valor: VALOR_TODOS, rotulo: "Todos", curto: "Todos" },
