@@ -14,7 +14,7 @@ const ESCRITA_PROIBIDA = [
   new RegExp(`\\bUPDATE\\s+(?:OR\\s+\\w+\\s+)?${TABELA}`, "i"),
   new RegExp(`\\bDELETE\\s+FROM\\s+${TABELA}`, "i"),
   new RegExp(`\\b(?:INSERT\\s+OR\\s+REPLACE|REPLACE)\\s+INTO\\s+${TABELA}`, "i"),
-  new RegExp(`\\bINSERT\\s+(?:OR\\s+\\w+\\s+)?INTO\\s+${TABELA}(?:[^;'"]|'[^']*'|"[^"]*")*?\\bDO\\s+UPDATE\\b`, "i"),
+  new RegExp(`\\bINSERT\\s+(?:OR\\s+\\w+\\s+)?INTO\\s+${TABELA}(?:'[^']*'|"[^"]*"|[^;])*?\\bDO\\s+UPDATE\\b`, "i"),
 ];
 // DDL de tabela só no DDL de leitura do D1 (recriado a cada publicação); no armazenamento local
 // só `CREATE TABLE IF NOT EXISTS`. ALTER TABLE (inclui RENAME) nas tabelas do event store e
@@ -162,6 +162,13 @@ describe("guardrail G-05 — event store imutável", () => {
   it("detecta DO UPDATE mesmo com ponto e vírgula em string do VALUES (caso negativo)", () => {
     expect(violacoesG05(`INSERT INTO pedido (a) VALUES ('x;y') ON CONFLICT(a) DO UPDATE SET a = 2`)).not.toEqual([]);
     expect(violacoesG05(`db.run("INSERT INTO evento (a) VALUES ('x;y') ON CONFLICT DO UPDATE SET a = 2")`)).not.toEqual([]);
+  });
+
+  it("detecta DO UPDATE com aspas escapadas por barra ou desbalanceadas (caso negativo)", () => {
+    expect(violacoesG05(`'INSERT INTO evento (a) VALUES ('it's') ON CONFLICT(a) DO UPDATE SET a = 2'`)).not.toEqual([]);
+    expect(violacoesG05(`INSERT INTO pedido (a) VALUES ('it\\'s') ON CONFLICT(a) DO UPDATE SET a = 2`)).not.toEqual([]);
+    expect(violacoesG05(`INSERT INTO evento (a) VALUES ('x) ON CONFLICT(a) DO UPDATE SET a = 2`)).not.toEqual([]);
+    expect(violacoesG05(`INSERT INTO evento (a) VALUES ("x) ON CONFLICT(a) DO UPDATE SET a = 2`)).not.toEqual([]);
   });
 
   it("não atravessa instrução: DO UPDATE em outra tabela não acusa", () => {
