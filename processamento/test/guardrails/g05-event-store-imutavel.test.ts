@@ -216,8 +216,27 @@ describe("guardrail G-05 — event store imutável", () => {
     for (const sql of [muitos, aspasSoltas, enorme]) {
       const inicio = performance.now();
       expect(violacoesG05(sql)).toEqual([]);
-      expect(performance.now() - inicio).toBeLessThan(50);
+      // Backtracking exponencial levaria minutos; a margem folgada tolera máquina ocupada.
+      expect(performance.now() - inicio).toBeLessThan(1000);
     }
+  });
+
+  it("não cresce de forma quadrática ao dobrar o tamanho da linha", () => {
+    const medir = (repeticoes: number): number => {
+      const sql = `INSERT INTO evento (a) VALUES (${"x, ".repeat(repeticoes)}1);`;
+      const tempos: number[] = [];
+      for (let i = 0; i < 3; i++) {
+        const inicio = performance.now();
+        violacoesG05(sql);
+        tempos.push(performance.now() - inicio);
+      }
+      return Math.min(...tempos);
+    };
+    medir(10_000);
+    const base = medir(100_000);
+    const dobro = medir(200_000);
+    // Crescimento linear daria ~2x; quadrático ~4x. O piso evita ruído em tempos muito curtos.
+    expect(dobro).toBeLessThan(Math.max(base * 3.5, 200));
   });
 
   it("não atravessa instrução: DO UPDATE em outra tabela não acusa", () => {

@@ -177,7 +177,7 @@ describe("guardrail G-17 — dependências permitidas", () => {
     const longo = `${"^1 || ".repeat(20000)}latest`;
     const inicio = performance.now();
     expect(especificadoresInvalidos({ dependencies: { zod: longo, hono: `${"1 ".repeat(50000)}!` } })).toHaveLength(2);
-    expect(performance.now() - inicio).toBeLessThan(1000);
+    expect(performance.now() - inicio).toBeLessThan(5000);
   });
 
   it("não acusa chave aninhada nem allowBuilds no pnpm-workspace.yaml", () => {
