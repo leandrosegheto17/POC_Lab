@@ -1,11 +1,11 @@
 /**
- * TP-0040 — Escritor do arquivo `leitura.sql` (SDD §5).
+ * Escritor do arquivo `leitura.sql` (SDD §5).
  *
  * Módulo puro em relação a I/O de disco: recebe o DDL já pronto (texto
- * verbatim de `publicacao/leitura-d1.sql`, TP-0032) e as linhas de cada
- * tabela já montadas/ordenadas pelo chamador (ex. `publicacao/pedidos.ts`,
- * TP-0035) e devolve uma única string com o SQL completo a ser gravado em
- * disco por outra tarefa. Nunca lê nem escreve arquivo, nunca roda
+ * verbatim de `publicacao/leitura-d1.sql`) e as linhas de cada
+ * tabela já montadas/ordenadas pelo chamador (ex. `publicacao/pedidos.ts`)
+ * e devolve uma única string com o SQL completo, a ser gravado em
+ * disco pelo chamador. Nunca lê nem escreve arquivo, nunca roda
  * `wrangler d1 execute`, nunca reordena as linhas recebidas.
  *
  * Determinístico: a mesma entrada produz sempre a mesma string, byte a
@@ -26,7 +26,7 @@ type NomeTabela = (typeof ORDEM_TABELAS)[number];
 
 /**
  * Lista de colunas FIXA por tabela, na mesma ordem do `CREATE TABLE` em
- * `leitura-d1.sql` (TP-0032). Não usa `Object.keys` dos objetos de linha:
+ * `leitura-d1.sql`. Não usa `Object.keys` dos objetos de linha:
  * a ordem de chaves de um objeto JS não é garantida de forma estável entre
  * runtimes/versões, e a lista de colunas do `INSERT` precisa bater
  * exatamente com o DDL.

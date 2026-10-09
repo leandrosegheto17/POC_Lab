@@ -1,4 +1,4 @@
--- TP-0018 — Schema do event store (SDD §5).
+-- Schema do event store (SDD §5).
 --
 -- Todas as tabelas usam `CREATE TABLE IF NOT EXISTS`: mudança de schema é
 -- sempre aditiva (TASK.md §1, GUARDRAILS G-05/G-06). Este módulo nunca gera
@@ -41,11 +41,11 @@ CREATE TABLE IF NOT EXISTS achado_qualidade (
   UNIQUE (tipo, fonte, referencia)
 );
 
--- TP-0079 — Cache de respostas de IA (chave = hash SHA-256 do prompt/entrada).
+-- Cache de respostas de IA (chave = hash SHA-256 do prompt/entrada).
 CREATE TABLE IF NOT EXISTS cache_ia (
   chave TEXT PRIMARY KEY,
   resposta TEXT NOT NULL,
   criado_em TEXT NOT NULL,
-  -- RTP-0041 — modelo usado na chave (NULL em entradas antigas; ver criarRepositorio).
+  -- Modelo usado na chave (NULL em entradas antigas; ver criarRepositorio).
   modelo TEXT
 );

@@ -2,8 +2,8 @@
  * Item de pedido usado no cálculo de valor devido (RN-01).
  *
  * `desconto` é fracionário (0 a 1, ex.: 0.1 = 10%). A validação de faixa
- * (ex.: preço <= 0, desconto fora de 0–1) é responsabilidade de outra tarefa
- * (RN-10) e não é feita aqui.
+ * (ex.: preço <= 0, desconto fora de 0–1) é responsabilidade de
+ * `valores-fora-do-padrao.ts` (RN-10) e não é feita aqui.
  */
 export type ItemPedido = {
   precoUnitario: number;

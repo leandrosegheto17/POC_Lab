@@ -7,11 +7,7 @@ import { EsquemaResumo } from "../../src/contrato/resumo.js";
 import { obrigatorio } from "../apoio/obrigatorio.js";
 
 /**
- * TP-0030: esquemas de resposta v1 (resumo, divergências e linha do tempo).
- *
- * Nota: este `describe` é exclusivo da TP-0030. A TP-0031 acrescenta outro
- * `describe` neste mesmo arquivo, nomeado conforme o escopo dela — não
- * altera o bloco abaixo.
+ * Esquemas de resposta v1 (resumo, divergências e linha do tempo).
  */
 describe("resumo/divergencias/linha-do-tempo-v1", () => {
   describe("EsquemaResumo", () => {
@@ -191,10 +187,7 @@ describe("resumo/divergencias/linha-do-tempo-v1", () => {
 });
 
 /**
- * TP-0031: esquemas de resposta v1 (indicadores e qualidade).
- *
- * Nota: este `describe` é irmão do `describe` da TP-0030 acima — não altera
- * o bloco dela.
+ * Esquemas de resposta v1 (indicadores e qualidade).
  */
 describe("indicadores/qualidade", () => {
   describe("EsquemaBlocoIndicador", () => {

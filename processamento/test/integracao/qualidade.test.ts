@@ -1,16 +1,16 @@
 /**
- * TP-0038 — Teste de integração ponta a ponta contra a base real: gerar
+ * Teste de integração ponta a ponta contra a base real: gerar
  * (semente padrão) → importar → `montarDocumentoQualidade`.
  *
- * Depende da base real `dados/origem/northwind.db` (TP-0004, `pnpm
- * baixar-base`) e do pipeline gerar→importar (TP-0023 a TP-0027). Se o
+ * Depende da base real `dados/origem/northwind.db` (`pnpm
+ * baixar-base`) e do pipeline gerar→importar. Se o
  * arquivo ainda não existir neste ambiente, os testes abaixo são pulados em
  * vez de falhar — mesmo padrão de `test/integracao/leitura-vendas.test.ts` e
  * `test/integracao/gabarito.test.ts`.
  *
  * ## Nota sobre `formato_data` e `pedido_sem_envio`
  *
- * `src/fontes/vendas.ts` (TP-0031) grava esses dois casos com os tipos
+ * `src/fontes/vendas.ts` grava esses dois casos com os tipos
  * dedicados `formato_data` e `pedido_sem_envio`, não mais com o genérico
  * `linha_invalida`. Para a base real, as contagens esperadas são:
  * `formato_data` = 15.452 (só os pedidos com `dataPedido` em formato longo —
@@ -34,7 +34,7 @@ const CAMINHO_BASE = path.join("dados", "origem", "northwind.db");
 const baseDisponivel = existsSync(CAMINHO_BASE);
 
 describe.skipIf(!baseDisponivel)("montarDocumentoQualidade (pipeline completo, base real)", () => {
-  // RTP-0030: o pipeline pesado roda UMA vez (beforeAll), cedendo o event loop
+  // O pipeline pesado roda UMA vez (beforeAll), cedendo o event loop
   // entre as etapas, para o worker do vitest não perder o RPC `onTaskUpdate`
   // ("Unhandled Error: Timeout calling onTaskUpdate", exit 1).
   let documentoCompartilhado: ReturnType<typeof montarDocumentoQualidade>;

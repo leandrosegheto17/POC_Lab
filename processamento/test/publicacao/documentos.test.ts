@@ -22,7 +22,7 @@ import {
 import { obrigatorio } from "../apoio/obrigatorio.js";
 
 /**
- * TP-0039 — Testes de `montarDocumentoResumo`/`montarDocumentoIndicadores`
+ * Testes de `montarDocumentoResumo`/`montarDocumentoIndicadores`
  * e das funções de mapeamento domínio → contrato.
  */
 
@@ -255,22 +255,22 @@ describe("montarDocumentoIndicadores", () => {
 });
 
 /**
- * TP-0070 — Os 2 blocos novos do Lote 15 (`calcularTempoMedioPedidoEnvioEntrega`,
- * TP-0068, e `calcularValorPagoVsDevido`, TP-0069) entram como itens novos da
+ * Os 2 blocos de tempo médio e de valor pago×devido
+ * (`calcularTempoMedioPedidoEnvioEntrega` e `calcularValorPagoVsDevido`) entram como itens novos da
  * lista de `montarDocumentoIndicadores`, na ordem fixa: Must primeiro
  * (entregas no prazo, divergências por tipo), depois tempo médio, depois
  * valor pago×devido (mesma ordem usada em `publicacao/publicar.ts`).
  *
- * Nota de regressão (confirmada por leitura, não por execução): o teste de
- * contrato do TP-0049 (`web/test/worker/indicadores.test.ts`) monta sua
+ * Nota: o teste de contrato do worker
+ * (`web/test/worker/indicadores.test.ts`) monta sua
  * própria fixture de D1 com um documento `indicadores` independente deste
- * módulo e não foi alterado — ele só valida `EsquemaRespostaIndicadores`
+ * módulo — ele só valida `EsquemaRespostaIndicadores`
  * contra o conteúdo gravado na fixture, sem depender de quantos/quais blocos
  * `montarDocumentoIndicadores` produz em produção. Como o esquema v1
  * (`contrato/indicadores.ts`) continua "lista genérica de blocos", sem campo
- * novo, esse teste continua verde sem qualquer alteração nele.
+ * novo, esse teste não depende dos blocos acrescentados aqui.
  */
-describe("montarDocumentoIndicadores — blocos novos do Lote 15 (TP-0070)", () => {
+describe("montarDocumentoIndicadores — blocos de tempo médio e valor pago×devido", () => {
   function construirQuatroBlocosFixture() {
     const pedidosEntrega: PedidoParaIndicadorEntrega[] = [
       {

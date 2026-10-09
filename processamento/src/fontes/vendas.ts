@@ -1,5 +1,5 @@
 /**
- * Adaptador de vendas (TP-0020).
+ * Adaptador de vendas.
  *
  * Consome a lista de pedidos já lida e normalizada por `lerBaseDeVendas`
  * (`fontes/leitura-vendas.ts`) e devolve vínculos, eventos `venda` v1 e
@@ -31,9 +31,9 @@ export type ResultadoProcessamentoVendas = {
 };
 
 const REGRA_FORMATO_DATA_LONGO =
-  "TP-0020: dataPedido em formato longo (com hora), fora do padrão curto (sem hora) esperado da base";
+  "dataPedido em formato longo (com hora), fora do padrão curto (sem hora) esperado da base";
 const REGRA_SEM_DATA_ENVIO =
-  "TP-0020: pedido sem data de envio (ShippedDate nula na base de origem)";
+  "pedido sem data de envio (ShippedDate nula na base de origem)";
 
 /**
  * Traduz o código cru de transportadora (`ShipVia`) para um identificador
@@ -74,11 +74,11 @@ export function construirMapaTransportadoras(
  * - Achado de formato de data: o formato `curto` (`YYYY-MM-DD`, sem hora) é
  *   considerado o padrão esperado da base e NÃO gera achado; só o formato
  *   `longo` (com componente de hora) é tratado como desvio do padrão
- *   esperado, usando o tipo dedicado `formato_data` (TP-0031; a linha
+ *   esperado, usando o tipo dedicado `formato_data` (a linha
  *   continua sendo processada normalmente — "achado" aqui significa "fora
  *   do formato padrão", não "descartada").
  * - Achado de pedido sem data de envio (`dataEnvio === null`): tipo dedicado
- *   `pedido_sem_envio` (TP-0031).
+ *   `pedido_sem_envio`.
  * - Achado de item fora do padrão (RN-10, via `verificarItemPedido`), tipo
  *   `valor_fora_do_padrao`.
  */

@@ -217,7 +217,7 @@ TX-008,PV-000123,-50,2024-01-16
     expect(resultado.vinculos).toHaveLength(2);
   });
 
-  it("linha com meio_pagamento preenchido gera evento pagamento v2 com o campo (TP-0075)", () => {
+  it("linha com meio_pagamento preenchido gera evento pagamento v2 com o campo", () => {
     const csv = `codigo_transacao,referencia,valor,data_pagamento,meio_pagamento
 TX-009,PV-000123,150.5,2024-01-15,pix
 `;
@@ -240,7 +240,7 @@ TX-009,PV-000123,150.5,2024-01-15,pix
     ]);
   });
 
-  it("linha com meio_pagamento vazio (coluna presente, sem valor) gera evento pagamento v1 sem o campo (TP-0075)", () => {
+  it("linha com meio_pagamento vazio (coluna presente, sem valor) gera evento pagamento v1 sem o campo", () => {
     const csv = `codigo_transacao,referencia,valor,data_pagamento,meio_pagamento
 TX-010,PV-000123,150.5,2024-01-15,
 `;
@@ -263,7 +263,7 @@ TX-010,PV-000123,150.5,2024-01-15,
     expect(resultado.eventos[0]).not.toHaveProperty("meio_pagamento");
   });
 
-  it("CSV misto (algumas linhas com meio_pagamento, outras sem) gera a versão correta para cada linha sem erro (TP-0075)", () => {
+  it("CSV misto (algumas linhas com meio_pagamento, outras sem) gera a versão correta para cada linha sem erro", () => {
     const csv = `codigo_transacao,referencia,valor,data_pagamento,meio_pagamento
 TX-011,PV-000123,100,2024-01-15,boleto
 TX-012,PV-000456,200,2024-01-16,

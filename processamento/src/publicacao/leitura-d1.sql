@@ -1,4 +1,4 @@
--- TP-0032 — Schema das visões de leitura publicadas no D1 (SDD §5).
+-- Schema das visões de leitura publicadas no D1 (SDD §5).
 --
 -- DDL puro: só `DROP TABLE IF EXISTS` + `CREATE TABLE` por tabela, para que o
 -- script possa ser reaplicado do zero a cada publicação (idempotente por

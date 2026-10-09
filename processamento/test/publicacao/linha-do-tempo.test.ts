@@ -5,7 +5,7 @@ import { montarLinhaDoTempo } from "../../src/publicacao/linha-do-tempo.js";
 import { obrigatorio } from "../apoio/obrigatorio.js";
 
 /**
- * TP-0036 — Testes da projeção `linha_do_tempo`.
+ * Testes da projeção `linha_do_tempo`.
  *
  * Usa `criarRepositorio(":memory:")` (event store real em memória) e insere
  * eventos via `inserirPedido`/`inserirVinculoFonte`/`inserirEvento` —

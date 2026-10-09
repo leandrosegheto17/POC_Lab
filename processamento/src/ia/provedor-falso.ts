@@ -1,7 +1,7 @@
 import type { ProvedorSugestao } from "./porta.js";
 
 /**
- * TP-0081 — Provedor falso de `ProvedorSugestao`, só para testes.
+ * Provedor falso de `ProvedorSugestao`, só para testes.
  *
  * Determinístico e sem rede: se `mapa` tiver uma entrada para o `texto`
  * recebido, devolve o valor mapeado (uma identidade de pedido, ou `null`

@@ -1,5 +1,5 @@
 /**
- * TP-0038 — Testes unitários/deterministas da projeção `qualidade`
+ * Testes unitários/deterministas da projeção `qualidade`
  * (`publicacao/qualidade.ts`), sem depender da base real.
  *
  * Fixture via event store `:memory:` (`criarRepositorio`), inserindo

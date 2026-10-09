@@ -1,7 +1,7 @@
 /**
  * Teste de integração contra a base real (Northwind expandido).
  *
- * Depende de `pnpm baixar-base` já ter sido executado antes (TP-0004), que
+ * Depende de `pnpm baixar-base` já ter sido executado antes, que
  * baixa e verifica por SHA-256 o arquivo em `dados/origem/northwind.db`. Se o
  * arquivo ainda não existir neste ambiente (ex. checkout limpo sem o passo de
  * download), os testes abaixo são pulados em vez de falhar — ver

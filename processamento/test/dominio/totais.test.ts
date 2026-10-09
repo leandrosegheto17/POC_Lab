@@ -10,7 +10,7 @@ const BLOCO_ENTREGAS_VAZIO: BlocoIndicador = {
   linhas: [],
 };
 
-describe("totaisResumo (TP-0034)", () => {
+describe("totaisResumo", () => {
   it("soma valorEmAberto dos pedidos parcial e enviado_nao_pago juntos (saldo 10 + 20 + 50 = 80)", () => {
     const pedidos: PedidoParaTotais[] = [
       { idPedido: "P1", devido: 30, pago: 20, situacao: "parcial" }, // saldo 10

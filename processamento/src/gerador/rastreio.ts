@@ -48,7 +48,7 @@ function formatarLinhaCsv(
  * Gera as linhas de rastreio (`rastreio.csv`) para os pedidos recebidos, de
  * forma determinística a partir do PRNG informado.
  *
- * Decisões desta tarefa (TP-0024):
+ * Decisões:
  * - Só pedidos com `dataEnvio !== null` geram eventos. Pedidos sem envio não
  *   produzem nenhuma linha aqui — não há o que rastrear.
  * - Para cada pedido elegível, são geradas exatamente 3 linhas, sempre na
@@ -72,10 +72,10 @@ function formatarLinhaCsv(
  *   contrário da `referencia` de `pagamentos.csv`, que é prefixada com
  *   `PV-` — não há exigência equivalente aqui).
  * - `transportadora` é traduzida para `Transportadora N` com o mesmo mapa de
- *   `fontes/vendas.ts` (RTP-0008), construído sobre a lista completa de
+ *   `fontes/vendas.ts`, construído sobre a lista completa de
  *   pedidos; o código cru de `ShipVia` nunca chega ao CSV.
  * - Nenhum problema de rastreio (atraso, evento fora de ordem, etc.) é
- *   plantado aqui — isso é responsabilidade de uma tarefa futura. Esta
+ *   plantado aqui — isso é feito por `plantar-rastreio.ts`. Esta
  *   função só produz a base "limpa".
  *
  * Consome exatamente 2 números do PRNG por pedido elegível (um para a

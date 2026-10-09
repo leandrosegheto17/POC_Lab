@@ -2,14 +2,14 @@ import type { PedidoVendas } from "../fontes/leitura-vendas.js";
 import type { EntradaGabarito } from "./problemas-plantados.js";
 
 /**
- * Verificação de 2026-10-08 (TP-0028): a base real tem pedidos cuja própria
+ * Verificação de 2026-10-08: a base real tem pedidos cuja própria
  * combinação `dataEnvio`/`dataLimite` já é, por si só, divergente — sem
  * nenhum plantio envolvido:
  *
  * - Pedidos sem `dataEnvio` (21 na base real) recebem, da mesma forma que
  *   qualquer outro pedido "limpo", um pagamento integral/quitado
- *   (`gerarPagamentos`, TP-0023, não distingue por envio) mas nunca recebem
- *   rastreio (`gerarRastreio`, TP-0024, pula quem não tem `dataEnvio`) — ou
+ *   (`gerarPagamentos`, não distingue por envio) mas nunca recebem
+ *   rastreio (`gerarRastreio` pula quem não tem `dataEnvio`) — ou
  *   seja, acabam "quitado e não coletado": RN-05 `pago_nao_enviado`.
  * - Pedidos com `dataEnvio` POSTERIOR à própria `dataLimite` (milhares na
  *   base real, um atraso real já presente nos dados de origem) tornam
@@ -20,8 +20,8 @@ import type { EntradaGabarito } from "./problemas-plantados.js";
  * Essas 2 divergências não são "plantadas" (não há sorteio por tipo
  * envolvido, não dependem de `plantarCasosPagamento`/`plantarCasosRastreio`)
  * — são consequência direta e determinística dos dados de origem reais mais
- * a forma como a base "limpa" é gerada. Por isso TP-0028 (teste de M1 contra
- * o gabarito, 100% cobertura e 0 falso positivo) as considera igualmente:
+ * a forma como a base "limpa" é gerada. Por isso o teste de M1 contra
+ * o gabarito (100% cobertura e 0 falso positivo) as considera igualmente:
  * precisam estar no gabarito, senão aparecem como falso positivo no teste.
  *
  * Regras de exclusão (quando NÃO acrescentar), uma por tipo natural:

@@ -1,5 +1,5 @@
 /**
- * TP-0037 — Testes da projeção `divergencia` (`publicacao/divergencias.ts`).
+ * Testes da projeção `divergencia` (`publicacao/divergencias.ts`).
  *
  * Fixture via event store `:memory:` (`criarRepositorio`), inserindo eventos
  * diretamente com `repositorio.inserirEvento` (sem reimplementar nenhuma

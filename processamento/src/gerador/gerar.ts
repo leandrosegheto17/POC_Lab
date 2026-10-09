@@ -2,22 +2,19 @@ import type { PedidoVendas } from "../fontes/leitura-vendas.js";
 
 /**
  * Seleciona, de forma determinística, o universo de pedidos "limpos"
- * elegíveis para o gerador de dados sintéticos (TP-0023 em diante).
+ * elegíveis para o gerador de dados sintéticos.
  *
- * Decisão desta tarefa (TP-0023): o conceito de "plantio" de problemas
- * (duplicidade, atraso, pagamento parcial, etc.) ainda não existe — isso é
- * responsabilidade de tarefas futuras. Por isso, nesta tarefa,
- * `pedidosLimpos` devolve **todos** os pedidos recebidos, sem excluir
- * nenhum: não há ainda nenhum "problema" para reservar pedidos para.
+ * Devolve **todos** os pedidos recebidos, sem excluir nenhum: o plantio de
+ * problemas (duplicidade, atraso, pagamento parcial, etc.) acontece depois,
+ * em `plantar-pagamentos.ts` e `plantar-rastreio.ts`, que escolhem entre
+ * esses pedidos.
  *
- * Ainda assim, a função já consome o PRNG recebido de forma determinística
- * (uma chamada por pedido, na mesma ordem da lista de entrada) mesmo não
- * usando o valor sorteado para decidir nada nesta tarefa. Isso é
- * proposital: reserva, na sequência do PRNG, exatamente os números que as
- * tarefas futuras de plantio vão precisar consumir para decidir quais
- * pedidos recebem problema — garantindo que, quando o plantio for
- * implementado, a ordem de consumo do PRNG (e portanto o resultado
- * determinístico ponta a ponta do gerador) não mude por causa desta função.
+ * A função consome o PRNG recebido de forma determinística (uma chamada por
+ * pedido, na mesma ordem da lista de entrada), sem usar o valor sorteado
+ * para decidir nada. Isso é proposital: reserva, na sequência do PRNG, os
+ * números que o plantio consome depois, de modo que a ordem de consumo do
+ * PRNG (e portanto o resultado determinístico ponta a ponta do gerador) não
+ * mude por causa desta função.
  */
 export function pedidosLimpos(
   pedidos: PedidoVendas[],
@@ -26,7 +23,7 @@ export function pedidosLimpos(
   for (let indice = 0; indice < pedidos.length; indice += 1) {
     // Consome um número do PRNG por pedido, na ordem de entrada, só para
     // reservar a sequência (ver comentário da função). O valor em si não é
-    // usado nesta tarefa.
+    // usado.
     prng();
   }
 

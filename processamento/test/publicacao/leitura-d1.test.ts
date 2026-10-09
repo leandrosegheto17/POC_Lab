@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * TP-0032 — Testa o DDL das visões de leitura do D1.
+ * Testa o DDL das visões de leitura do D1.
  *
  * Mesmo padrão de armazenamento/repositorio.test.ts: lê o `.sql` do disco e
  * aplica via `db.exec(...)` numa conexão `node:sqlite` em memória.

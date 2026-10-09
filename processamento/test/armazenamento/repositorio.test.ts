@@ -182,7 +182,7 @@ describe("cache_ia", () => {
     });
   });
 
-  it("RTP-0041: gravarCache persiste o modelo na coluna modelo (NULL quando omitido)", () => {
+  it("gravarCache persiste o modelo na coluna modelo (NULL quando omitido)", () => {
     const { repositorio, db } = abrirRepositorioParaTeste(":memory:");
 
     repositorio.gravarCache("h1", "r", "2026-01-01T10:00:00Z", "meu-modelo");
@@ -210,7 +210,7 @@ describe("cache_ia", () => {
   });
 });
 
-describe("migração do cache_ia em banco legado (RTP-0047)", () => {
+describe("migração do cache_ia em banco legado", () => {
   let pasta: string;
 
   beforeEach(() => {

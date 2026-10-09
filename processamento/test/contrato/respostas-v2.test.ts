@@ -5,12 +5,11 @@ import {
 } from "../../src/contrato/linha-do-tempo-v2.js";
 
 /**
- * TP-0076: esquema v2 da linha do tempo — `versao_schema` explícito em cada
+ * Esquema v2 da linha do tempo — `versao_schema` explícito em cada
  * variante de evento, e `pagamento` como união por `versao_schema` (1 ou 2),
  * expondo `meioPagamento` quando `versao_schema: 2`.
  *
- * `linha-do-tempo-v1.ts` não é alterado por esta tarefa (G-21) — ver
- * `linha-do-tempo-v1.ts`, intocado.
+ * `linha-do-tempo-v1.ts` permanece intocado (G-21).
  */
 describe("linha-do-tempo-v2", () => {
   const eventoPagamentoV1 = {

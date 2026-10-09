@@ -100,6 +100,6 @@ export type EnvelopeEvento = {
 
 /**
  * Evento completo: envelope comum + payload discriminado por `tipo`.
- * Consumido pelas tarefas futuras de ordenação e de máquina de estados.
+ * Consumido pela ordenação e pela máquina de estados do domínio.
  */
 export type Evento = EnvelopeEvento & PayloadEvento;

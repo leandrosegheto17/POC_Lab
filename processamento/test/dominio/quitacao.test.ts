@@ -53,14 +53,14 @@ describe("calcularQuitacao (RN-02)", () => {
     expect(resultado.situacao).toBe("parcial");
   });
 
-  it("tolerância de R$ 0,01 é robusta a ponto flutuante (RTP-0019)", () => {
+  it("tolerância de R$ 0,01 é robusta a ponto flutuante", () => {
     expect(calcularQuitacao(100, [99.99]).situacao).toBe("quitado");
     expect(calcularQuitacao(100, [100.01]).situacao).toBe("quitado");
     expect(calcularQuitacao(100, [99.98]).situacao).toBe("parcial");
     expect(calcularQuitacao(100, [100.02]).situacao).toBe("excedente");
   });
 
-  it("saldo sub-centavo de R$ 0,011 não é absorvido pela tolerância (RTP-0040)", () => {
+  it("saldo sub-centavo de R$ 0,011 não é absorvido pela tolerância", () => {
     expect(calcularQuitacao(100, [99.989]).situacao).toBe("parcial");
     expect(calcularQuitacao(100, [100.011]).situacao).toBe("excedente");
   });

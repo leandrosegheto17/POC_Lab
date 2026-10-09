@@ -11,7 +11,7 @@ import {
 import type { TipoDivergencia } from "../../src/dominio/modelo.js";
 import { obrigatorio } from "../apoio/obrigatorio.js";
 
-describe("indicadorEntregasNoPrazo (TP-0033)", () => {
+describe("indicadorEntregasNoPrazo", () => {
   it("gera resultado 1 por grupo quando todas as entregas estão no prazo, para 2 transportadoras x 2 meses", () => {
     const pedidos: PedidoParaIndicadorEntrega[] = [
       { transportadora: "Transportadora 1", dataLimite: "2026-01-10", eventoEntrega: { momento_fato: "2026-01-05" } },
@@ -99,7 +99,7 @@ describe("indicadorEntregasNoPrazo (TP-0033)", () => {
   });
 });
 
-describe("indicadorDivergenciasPorTipo (TP-0033)", () => {
+describe("indicadorDivergenciasPorTipo", () => {
   const ORDEM_ESPERADA: TipoDivergencia[] = [
     "duplicado",
     "parcial",
@@ -156,7 +156,7 @@ describe("indicadorDivergenciasPorTipo (TP-0033)", () => {
   });
 });
 
-describe("calcularTempoMedioPedidoEnvioEntrega (TP-0068)", () => {
+describe("calcularTempoMedioPedidoEnvioEntrega", () => {
   it("pedido com envio e entrega entra nas duas linhas", () => {
     const pedidos: PedidoParaIndicadorTempoMedio[] = [
       { dataPedido: "2026-01-01", dataEnvio: "2026-01-04", dataEntrega: "2026-01-09" },
@@ -240,7 +240,7 @@ describe("calcularTempoMedioPedidoEnvioEntrega (TP-0068)", () => {
   });
 });
 
-describe("calcularValorPagoVsDevido (TP-0069)", () => {
+describe("calcularValorPagoVsDevido", () => {
   const pedidosBase: PedidoParaIndicadorValorPagoVsDevido[] = [
     { devido: 100, pago: 0, situacao: "sem_pagamento" },
     { devido: 100, pago: 40, situacao: "parcial" },

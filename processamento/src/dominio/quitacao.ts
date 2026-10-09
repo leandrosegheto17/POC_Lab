@@ -39,7 +39,7 @@ export function calcularQuitacao(
   const saldoBruto = valorDevido - pagoBruto;
   // Remove só o ruído de ponto flutuante (ex.: 100 − 99.99 = 0.01000000000000512)
   // sem arredondar a centavos: saldos sub-centavo como 0,011 continuam fora
-  // da tolerância (RTP-0040).
+  // da tolerância.
   const saldoComparavel = Number(saldoBruto.toPrecision(12));
   const tolerancia = TOLERANCIA_QUITACAO_CENTAVOS / 100;
 

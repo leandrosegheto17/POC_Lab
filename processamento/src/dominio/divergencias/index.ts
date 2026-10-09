@@ -6,7 +6,7 @@ import { detectarEnvioPagamento } from "./envio-pagamento.js";
 import { detectarAtraso } from "./atraso.js";
 
 /**
- * TP-0028 — Aplica as 4 regras de divergência (RN-03 a RN-06) a TODOS os
+ * Aplica as 4 regras de divergência (RN-03 a RN-06) a TODOS os
  * eventos de UM pedido e devolve a lista de achados, numa ordem estável:
  * `duplicado`, `parcial`, `pago_nao_enviado`/`enviado_nao_pago`,
  * `entrega_atrasada` — a ordem em que as regras são chamadas abaixo, com os

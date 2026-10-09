@@ -120,7 +120,7 @@ function calcularProximoTransacaoSeq(linhasCsvBase: string[]): number {
 /**
  * Planta, de forma determinística, casos de problema de pagamento SOMENTE
  * sobre os pedidos "limpos" recebidos — nunca sobre pedidos já reservados
- * para outros tipos de problema por tarefas futuras.
+ * para outros tipos de problema (plantio de rastreio).
  *
  * Recebe as linhas de `pagamentos.csv` já geradas por `gerarPagamentos`
  e devolve uma nova lista de linhas (substituindo/acrescentando

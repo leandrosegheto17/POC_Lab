@@ -2,26 +2,26 @@ import type { PedidoVendas } from "../fontes/leitura-vendas.js";
 import type { EntradaGabarito } from "./problemas-plantados.js";
 
 /**
- * Plantio de casos de problema de rastreio (TP-0026), feito SOMENTE sobre
+ * Plantio de casos de problema de rastreio, feito SOMENTE sobre
  * pedidos "limpos" que têm linhas de rastreio geradas por `gerarRastreio`
- * (TP-0024) — ou seja, pedidos com `dataEnvio !== null`. Pedidos sem envio já
- * não produzem nenhuma linha em `rastreio.csv` (ausência "natural"); esta
- * tarefa planta a ausência/inconsistência DELIBERADA sobre pedidos que, sem
+ * — ou seja, pedidos com `dataEnvio !== null`. Pedidos sem envio já
+ * não produzem nenhuma linha em `rastreio.csv` (ausência "natural"); este
+ * módulo planta a ausência/inconsistência DELIBERADA sobre pedidos que, sem
  * o plantio, teriam rastreio normal.
  *
  * Mesma técnica de particionamento disjunto por PRNG usada em
- * `plantar-pagamentos.ts` (TP-0025): embaralha o pool de pedidos elegíveis
+ * `plantar-pagamentos.ts`: embaralha o pool de pedidos elegíveis
  * (Fisher-Yates determinístico) e retira, por tipo e em ordem fixa
  * (`ORDEM_TIPOS_PARTICAO`), a fração correspondente — nenhum pedido recebe
  * mais de 1 tipo de caso de rastreio.
  *
- * Coerência com o plantio de pagamento (TP-0025, verificação de 2026-10-08):
+ * Coerência com o plantio de pagamento (verificação de 2026-10-08):
  * `pedidosExcluidos` (4º parâmetro) recebe os ids dos pedidos já usados por
  * `plantarCasosPagamento`, para que nenhum pedido receba simultaneamente um
  * caso de pagamento (que altera sua `situacaoPagamento`) e um caso de
  * rastreio que pressupõe outra situação (ex. "pago_nao_enviado" pressupõe
  * pedido quitado) — sem essa exclusão, a base real produzia falso negativo
- * na comparação com o gabarito (TP-0028).
+ * na comparação com o gabarito.
  */
 export const PROPORCAO_PAGO_NAO_ENVIADO = 0.05;
 export const PROPORCAO_ENTREGA_ATRASADA = 0.05;
@@ -74,13 +74,13 @@ function embaralhar<T>(itens: T[], prng: () => number): T[] {
 /**
  * Pedidos elegíveis a receber caso de rastreio: só os que têm `dataEnvio`
  * (e, portanto, linhas em `rastreio.csv`) e que NÃO foram usados por
- * `plantarCasosPagamento` (TP-0025) — `pedidosExcluidos` chega com os ids dos
+ * `plantarCasosPagamento` — `pedidosExcluidos` chega com os ids dos
  * pedidos já reservados para algum caso de pagamento. Sem essa exclusão, um
  * pedido poderia receber simultaneamente um caso de pagamento que altera sua
  * `situacaoPagamento` (ex. "enviado_nao_pago"/"duplicado"/"parcial") E um
  * caso de rastreio que pressupõe outra situação (ex. "pago_nao_enviado"
  * pressupõe pedido quitado) — produzindo falso negativo na divergência
- * calculada (RN-05) contra o gabarito (TP-0028), já observado na base real.
+ * calculada (RN-05) contra o gabarito, já observado na base real.
  */
 function pedidosElegiveis(
   pedidos: PedidoVendas[],
@@ -134,7 +134,7 @@ function encontrarIndiceLinha(
  * sobre os pedidos elegíveis (com `dataEnvio`) recebidos.
  *
  * Recebe as linhas de `rastreio.csv` já geradas por `gerarRastreio`
- * (TP-0024) e devolve uma nova lista de linhas (substituindo/removendo/
+ * e devolve uma nova lista de linhas (substituindo/removendo/
  * reordenando conforme o caso) junto com as entradas de gabarito
  * correspondentes.
  *
@@ -207,7 +207,7 @@ export function plantarCasosRastreio(
   // `coleta`) colocando um `tipo` fora do enum coleta/transporte/entrega —
   // corromper a de `coleta` faria essa linha ser rejeitada na importação,
   // apagando o `coletado` do pedido e produzindo uma divergência RN-05
-  // "pago_nao_enviado" não plantada (verificação de 2026-10-08, TP-0028).
+  // "pago_nao_enviado" não plantada (verificação de 2026-10-08).
   // `transporte` não é lido por nenhuma regra de divergência, então
   // corrompê-la é seguro.
   for (const pedido of grupos.linha_invalida) {

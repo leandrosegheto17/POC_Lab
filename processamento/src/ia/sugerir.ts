@@ -95,8 +95,8 @@ function conferirContraCandidato(
  * um `ResultadoSugestao` por pagamento (mesma ordem de leitura de
  * `achado_qualidade`).
  *
- * Quando `provedor` é `undefined` (sem chave de IA configurada — fora de
- * escopo desta tarefa como essa chave chega), TODOS os pagamentos viram "sem
+ * Quando `provedor` é `undefined` (sem chave de IA configurada; como a chave chega
+ * é responsabilidade do chamador), TODOS os pagamentos viram "sem
  * sugestão" imediatamente: não há candidatos montados, não há consulta de
  * cache, nenhuma chamada é contada. Decisão simples e deliberada — sem
  * provedor não há nada que `sugerir` possa fazer além de devolver "sem

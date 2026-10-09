@@ -43,8 +43,7 @@ type GrupoEntrega = {
 };
 
 /**
- * Bloco "entregas no prazo por transportadora e mês" (RF a que a TP-0033 se
- * refere). Agrupa por `(transportadora, mês da entrega)`; só gera linha para
+ * Bloco "entregas no prazo por transportadora e mês". Agrupa por `(transportadora, mês da entrega)`; só gera linha para
  * grupos com pelo menos uma entrega conhecida. Pedidos sem entrega conhecida
  * entram apenas no total "à parte", sem quebra por transportadora/mês.
  */

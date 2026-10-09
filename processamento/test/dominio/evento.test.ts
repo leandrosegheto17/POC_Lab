@@ -150,7 +150,7 @@ describe("união discriminada de evento", () => {
   });
 });
 
-describe("união discriminada de evento — pagamento v2 (TP-0074, aditivo)", () => {
+describe("união discriminada de evento — pagamento v2 (aditivo)", () => {
   const eventoPagamentoV2: Evento = {
     fonte: "pagamentos",
     codigoEvento: "evt-pagamento-v2-1",

@@ -21,7 +21,7 @@ import type { AchadoQualidade, VinculoFonte } from "../dominio/modelo.js";
  * do cabeçalho. Colunas obrigatórias podem vir ausentes/vazias quando a
  * linha é malformada — por isso tudo é opcional aqui; a validação de
  * obrigatoriedade acontece em `processarPagamentos`. `meio_pagamento`
- * (TP-0075) é opcional: quando presente e não vazia, o evento gerado é
+ * é opcional: quando presente e não vazia, o evento gerado é
  * `PayloadPagamentoV2`; quando ausente/vazia, é `PayloadPagamentoV1` — ver
  * `dominio/evento.ts`.
  */
@@ -188,8 +188,8 @@ export function processarPagamentos(
     // valorDevido neutraliza a checagem de limite máximo de
     // `verificarPagamento` (nenhum valor finito é maior que 2 * Infinity),
     // isolando só a checagem de "maior que zero" sem reimplementá-la aqui.
-    // (Infinity passou a ser rejeitado por `verificarPagamento` (RTP-0036);
-    // `Number.MAX_VALUE / 2` mantém o mesmo efeito: limite 2x = MAX_VALUE.)
+    // (`verificarPagamento` rejeita Infinity; `Number.MAX_VALUE / 2` dá o
+    // mesmo efeito: limite 2x = MAX_VALUE.)
     const achadoValor = verificarPagamento(valor, Number.MAX_VALUE / 2);
     if (achadoValor) {
       achados.push({

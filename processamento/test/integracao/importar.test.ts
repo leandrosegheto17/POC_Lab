@@ -42,7 +42,7 @@ function contarEventos(db: DatabaseSync): number {
   return linha.total;
 }
 
-describe("importar (TP-0027)", () => {
+describe("importar", () => {
   describe("validação: idempotência", () => {
     it("importa vendas/pagamentos/rastreio, atribui PED-nnnnnn na ordem certa e repete as mesmas contagens numa 2ª chamada", () => {
       const { repositorio, db } = abrirRepositorioParaTeste(":memory:");

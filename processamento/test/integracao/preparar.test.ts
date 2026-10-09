@@ -1,9 +1,9 @@
 /**
- * TP-0045 — Testes de `executarPreparar`/`decidirSugerir` (`cli/preparar.ts`).
+ * Testes de `executarPreparar`/`decidirSugerir` (`cli/preparar.ts`).
  *
  * Os dois primeiros testes (pipeline completo) dependem da base real
  * (`dados/origem/northwind.db`) e são pulados quando ela não está presente
- * neste ambiente (nada foi executado nesta sessão) — mesmo padrão de
+ * neste ambiente — mesmo padrão de
  * `leitura-vendas.test.ts`/`gabarito.test.ts`/`qualidade.test.ts`.
  *
  * Mesmo quando a base real existe, o `wrangler` NUNCA é executado de
@@ -103,7 +103,7 @@ describe.skipIf(!baseDisponivel)("executarPreparar (pipeline completo, base real
     },
     // Pipeline completo (baixar-base/gerar/importar/publicar-dados) contra a
     // base real: bem acima do timeout padrão de 5s do vitest (mesma
-    // necessidade dos testes "TP-0083, pipeline completo" abaixo, que já
+    // necessidade dos testes de "passo 4, pipeline completo" abaixo, que já
     // usam este mesmo valor).
     300_000,
   );
@@ -140,7 +140,7 @@ describe("decidirSugerir (passo 4 isolado)", () => {
     expect(() => decidirSugerir({})).not.toThrow();
   });
 
-  it("sem chave, a mensagem não cita 'ainda não existe' (RTP-0027)", () => {
+  it("sem chave, a mensagem não cita 'ainda não existe'", () => {
     const decisao = decidirSugerir({});
 
     expect(decisao.mensagem).not.toMatch(/ainda não existe/i);
@@ -156,17 +156,17 @@ describe("decidirSugerir (passo 4 isolado)", () => {
 });
 
 /**
- * TP-0083 — CLI `sugerir` e sua chamada dentro de `preparar` (passo 4).
+ * CLI `sugerir` e sua chamada dentro de `preparar` (passo 4).
  *
  * `executarSugerir` é testada diretamente (em vez de só através de
  * `executarPreparar`) nos casos de fixture controlada, porque montar um
  * pagamento "sem identificação" através do pipeline completo dependeria da
  * base real e do conteúdo exato gerado por `gerar.ts` para aquela semente —
- * incerto e desnecessário para provar o comportamento desta tarefa. O
+ * incerto e desnecessário para provar o comportamento. O
  * provedor de IA real NUNCA é chamado nestes testes — sempre
- * `criarProvedorFalso` (TP-0081), injetado via `opcoes.provedor`.
+ * `criarProvedorFalso`, injetado via `opcoes.provedor`.
  */
-describe("executarSugerir (TP-0083)", () => {
+describe("executarSugerir", () => {
   it("sem OPENAI_API_KEY: não lança, imprime a mensagem esperada e não abre nenhuma conexão de escrita", async () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
@@ -253,7 +253,7 @@ describe("executarSugerir (TP-0083)", () => {
   });
 });
 
-describe("executarPreparar + passo 4 (TP-0083, pipeline completo, base real)", () => {
+describe("executarPreparar + passo 4 (pipeline completo, base real)", () => {
   it.skipIf(!baseDisponivel)(
     "com OPENAI_API_KEY e provedor falso: roda o passo de sugestão entre importar e publicar-dados sem lançar",
     async () => {
@@ -270,12 +270,12 @@ describe("executarPreparar + passo 4 (TP-0083, pipeline completo, base real)", (
     },
     // Pipeline completo contra a base real (download/import): bem acima do
     // timeout padrão de 5s do vitest, mesma necessidade dos 2 testes
-    // "pipeline completo, base real" de TP-0045 acima.
+    // "pipeline completo, base real" acima.
     300_000,
   );
 
   it.skipIf(!baseDisponivel)(
-    "ordem dos passos: importar -> sugerir -> publicar-dados (RTP-0027)",
+    "ordem dos passos: importar -> sugerir -> publicar-dados",
     async () => {
       const { opcoes } = montarOpcoesIsoladas();
       const eventos: string[] = [];

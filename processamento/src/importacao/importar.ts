@@ -92,7 +92,7 @@ export type DadosParaImportar = {
   vendas: PedidoVendas[];
   /** Conteúdo de `pagamentos.csv`; string vazia = nenhum dado de pagamentos nesta chamada. */
   pagamentosCsv: string;
-  /** Conteúdo de `rastreio.csv`; string vazia = nenhum dado de rastreio nesta chamada (gerador ainda não existe). */
+  /** Conteúdo de `rastreio.csv`; string vazia = nenhum dado de rastreio nesta chamada. */
   rastreioCsv: string;
   /**
    * Códigos de pedido de vendas conhecidos, já normalizados (RN-09: sem

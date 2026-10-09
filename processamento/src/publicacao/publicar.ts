@@ -114,8 +114,7 @@ function montarPedidosParaIndicadorEntrega(
 }
 
 /**
- * Monta a lista de `PedidoParaIndicadorTempoMedio` (`dominio/indicadores.ts`,
- * TP-0068), um item por pedido de `pedidoResumo`. Um pedido sem `momentoPedido`
+ * Monta a lista de `PedidoParaIndicadorTempoMedio` (`dominio/indicadores.ts`), um item por pedido de `pedidoResumo`. Um pedido sem `momentoPedido`
  * (não deveria ocorrer — todo pedido tem evento `venda`) usa string vazia, na
  * mesma convenção de `momentoEntregaPedido ?? ""` já usada para o indicador de
  * entregas no prazo; pedidos sem envio/entrega simplesmente não preenchem

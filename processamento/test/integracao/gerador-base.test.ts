@@ -50,7 +50,7 @@ describe("pedidosLimpos + gerarPagamentos (determinismo)", () => {
     expect(resultado1).toEqual(resultado2);
   });
 
-  it("pedidosLimpos devolve todos os pedidos recebidos (nenhum problema ainda plantado nesta tarefa)", () => {
+  it("pedidosLimpos devolve todos os pedidos recebidos (nenhum pedido é excluído)", () => {
     const prng = mulberry32(20261007);
     const limpos = pedidosLimpos(PEDIDOS_FIXTURE, prng);
 

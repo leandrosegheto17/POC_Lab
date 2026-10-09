@@ -45,9 +45,9 @@ describe("montarSqlPublicacao", () => {
   });
 
   /**
-   * TP-0070 — Fim a fim: o documento `indicadores` publicado no SQL final
-   * contém os 2 blocos Must (TP-0033) + os 2 blocos novos do Lote 15
-   * (TP-0068, TP-0069), na ordem fixa esperada. Extrai o JSON da tupla
+   * Fim a fim: o documento `indicadores` publicado no SQL final
+   * contém os 2 blocos Must + os 2 blocos de tempo médio e valor
+   * pago×devido, na ordem fixa esperada. Extrai o JSON da tupla
    * `('indicadores', '<conteudo>')` dentro do `INSERT INTO documento` (via
    * regex sobre a string SQL — `escritor-sql.ts` gera um único `INSERT` com
    * várias tuplas separadas por vírgula/quebra de linha, não um `INSERT` por

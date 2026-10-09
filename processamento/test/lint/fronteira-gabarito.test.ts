@@ -2,7 +2,7 @@ import path from "node:path";
 import { ESLint } from "eslint";
 import { describe, expect, it } from "vitest";
 
-// RTP-0046 — regra de fronteira G-04/RN-13: o nome `problemas-plantados`
+// Regra de fronteira G-04/RN-13: o nome `problemas-plantados`
 // (gabarito) fica barrado fora de test/, exceto nos arquivos de geração, que
 // ESCREVEM o arquivo. Usa os caminhos reais do repositório (o projectService
 // do typescript-eslint exige arquivo existente em algum tsconfig).

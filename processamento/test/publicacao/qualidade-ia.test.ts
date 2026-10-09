@@ -21,8 +21,8 @@ import { inserirPagamentoSemIdentificacao, inserirPedidoComVenda, sugerir } from
 
 const DATA_PAGAMENTO = "2026-03-01T00:00:00.000Z";
 
-describe("montarDocumentoQualidade — bloco ia (TP-0084)", () => {
-  it("cache_ia vazia: ia.utilizada é false e ia.sugestoes é array vazio (regressão TP-0038)", () => {
+describe("montarDocumentoQualidade — bloco ia", () => {
+  it("cache_ia vazia: ia.utilizada é false e ia.sugestoes é array vazio", () => {
     const repositorio = criarRepositorio(":memory:");
 
     const documento = montarDocumentoQualidade(repositorio);
@@ -103,7 +103,7 @@ describe("montarDocumentoQualidade — bloco ia (TP-0084)", () => {
     expect(EsquemaRespostaQualidade.safeParse(documento).success).toBe(true);
   });
 
-  it("RTP-0028: sugestão gerada com modelo gpt-4o-mini aparece em ia.sugestoes com conferida/motivo corretos", async () => {
+  it("sugestão gerada com modelo gpt-4o-mini aparece em ia.sugestoes com conferida/motivo corretos", async () => {
     const repositorio = criarRepositorio(":memory:");
     inserirPedidoComVenda(repositorio, "PED-D", 100, "2026-01-01T00:00:00.000Z");
     inserirPagamentoSemIdentificacao(repositorio, "TRANS-043", 100, DATA_PAGAMENTO, "REF-MODELO");
@@ -131,7 +131,7 @@ describe("montarDocumentoQualidade — bloco ia (TP-0084)", () => {
     expect(sugestao.motivo).toBe(esperado.motivo);
   });
 
-  it("RTP-0041: sugestão gerada com modelo customizado (fora da lista) aparece em ia.sugestoes", async () => {
+  it("sugestão gerada com modelo customizado (fora da lista) aparece em ia.sugestoes", async () => {
     const repositorio = criarRepositorio(":memory:");
     inserirPedidoComVenda(repositorio, "PED-E", 100, "2026-01-01T00:00:00.000Z");
     inserirPagamentoSemIdentificacao(repositorio, "TRANS-044", 100, DATA_PAGAMENTO, "REF-CUSTOM");

@@ -55,11 +55,10 @@ function formatarLinhaCsv(
  * - usa `codigo_transacao` sequencial determinístico (`TX-000001`,
  *   `TX-000002`, ...), continuando a sequência entre pedidos;
  * - usa como `referencia` o código do pedido (`PV-` + zeros à esquerda até
- *   6 dígitos — sem variação de formatação, isso é de outra tarefa futura);
+ *   6 dígitos — sem variação de formatação; variações de formato são plantadas depois);
  * - usa como `data_pagamento` a mesma data do pedido
- *   (`pedido.dataPedido.iso`): decisão desta tarefa, já que ainda não há
- *   regra de negócio que justifique uma data de pagamento diferente da data
- *   do pedido (isso poderá mudar em tarefas futuras de plantio de atraso).
+ *   (`pedido.dataPedido.iso`): não há regra de negócio que justifique
+ *   uma data de pagamento diferente da data do pedido nesta base "limpa".
  *
  * Função pura: não lê nem escreve nada em disco.
  */

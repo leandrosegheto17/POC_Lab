@@ -9,7 +9,7 @@ import {
 } from "../../src/publicacao/escritor-sql.js";
 
 /**
- * TP-0040 — Testa o escritor do `leitura.sql`: serialização de DDL + INSERT
+ * Testa o escritor do `leitura.sql`: serialização de DDL + INSERT
  * a partir de linhas já montadas por tabela.
  */
 
@@ -29,7 +29,7 @@ function tabelasVazias(): TabelasParaPublicacao {
   };
 }
 
-describe("escreverSqlPublicacao — valores inválidos (RTP-0037)", () => {
+describe("escreverSqlPublicacao — valores inválidos", () => {
   it.each([
     ["NaN", Number.NaN],
     ["Infinity", Number.POSITIVE_INFINITY],
@@ -145,7 +145,7 @@ describe("escreverSqlPublicacao", () => {
     const sql = escreverSqlPublicacao(ddl, tabelas);
 
     // O escritor só é responsável pela parte de INSERT que ele mesmo gera —
-    // o DDL é recebido verbatim de `leitura-d1.sql` (TP-0032) e pode conter
+    // o DDL é recebido verbatim de `leitura-d1.sql` e pode conter
     // as palavras "BEGIN"/"COMMIT" em comentários de documentação (como de
     // fato contém, explicando por que o DDL não usa transação). O que o
     // critério de aceite exige é que o escritor nunca emita essas

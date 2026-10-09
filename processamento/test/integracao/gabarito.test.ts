@@ -1,12 +1,12 @@
 /**
- * TP-0028 — Teste de integração ponta a ponta: gerar (semente padrão) →
+ * Teste de integração ponta a ponta: gerar (semente padrão) →
  * importar → `calcularDivergencias` por pedido → comparar com o gabarito.
  *
  * ÚNICO arquivo do projeto autorizado a ler/usar o `problemas-plantados.json` (aqui, o
  * `gabarito` devolvido em memória por `gerarConteudo`, sem nenhuma leitura de
  * disco) fora de teste.
  *
- * Depende da base real `dados/origem/northwind.db` (TP-0004, `pnpm
+ * Depende da base real `dados/origem/northwind.db` (`pnpm
  * baixar-base`). Se o arquivo ainda não existir neste ambiente, os testes
  * abaixo são pulados em vez de falhar — mesmo padrão de
  * `test/integracao/leitura-vendas.test.ts`.
@@ -36,7 +36,7 @@ function ceder(): Promise<void> {
 
 /** Os 5 tipos de `TipoDivergencia` do domínio — o gabarito também contém
  * tipos de achado de qualidade (ex. `sem_identificacao`, `linha_invalida`,
- * `registro_repetido`, `fora_de_ordem`), que não são escopo desta tarefa e
+ * `registro_repetido`, `fora_de_ordem`), que não são divergências e
  * são filtrados fora. */
 const TIPOS_DIVERGENCIA = new Set([
   "duplicado",
@@ -100,7 +100,7 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
   // divergências) sobre a base real inteira (~16 mil pedidos) é pesado —
   // mesmo padrão já usado em `test/integracao/qualidade.test.ts`
   // (verificação de 2026-10-08).
-  // RTP-0030: o pipeline pesado (gerar → importar → divergências) roda UMA
+  // O pipeline pesado (gerar → importar → divergências) roda UMA
   // vez, aqui, cedendo o event loop entre as etapas e a cada lote de pedidos.
   // Sem isso, o trabalho síncrono longo bloqueava o worker do vitest, que
   // perdia o RPC `onTaskUpdate` ("Unhandled Error: Timeout calling
@@ -169,7 +169,7 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
     }
   }, 600_000);
 
-  it("o pipeline compartilhado importou eventos e calculou divergências por pedido (RTP-0030)", () => {
+  it("o pipeline compartilhado importou eventos e calculou divergências por pedido", () => {
     expect(dataCorte).not.toBeNull();
     expect(calculadoPorPedido.size).toBeGreaterThan(0);
   });

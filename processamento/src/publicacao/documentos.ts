@@ -12,7 +12,7 @@ import {
 } from "../contrato/indicadores.js";
 
 /**
- * TP-0039 — Mapeamento explícito entre as formas do domínio
+ * Mapeamento explícito entre as formas do domínio
  * (`dominio/totais.ts`, `dominio/indicadores.ts`) e as formas do contrato
  * (`contrato/resumo.ts`, `contrato/indicadores.ts`).
  *
@@ -86,7 +86,7 @@ export function mapearPorTipoParaContrato(
  * uma `EsquemaLinhaIndicador` do contrato (`rotulo: string`, singular).
  * Junta os rótulos com `' / '` como separador legível (ex.
  * `["Transportadora 1", "2026-01"]` → `"Transportadora 1 / 2026-01"`) —
- * decisão desta tarefa, documentada aqui por não haver campo de lista no
+ * decisão tomada aqui por não haver campo de lista no
  * contrato para preservar a quebra original.
  */
 function mapearLinhaParaEsquemaLinha(linha: LinhaIndicador): EsquemaLinhaIndicadorType {
@@ -108,7 +108,7 @@ function mapearLinhaParaEsquemaLinha(linha: LinhaIndicador): EsquemaLinhaIndicad
  * fora da quebra principal do bloco); no contrato é só um booleano
  * (`aParte?: boolean`, marca apenas SE existe uma parte separada). Como o
  * esquema de contrato já está fixado (G-21) e não tem campo dedicado para o
- * valor/rótulo da parte separada, esta tarefa decide não perder essa
+ * valor/rótulo da parte separada, decide-se não perder essa
  * informação: ela entra como uma `linha` extra dentro de `linhas[]`, com
  * `rotulo: bloco.aParte.rotulo`, `denominador: 1` (sem razão natural, mesma
  * convenção de `blocoSimples` no domínio) e `resultado` igual ao próprio
@@ -191,7 +191,7 @@ export type ArgsMontarDocumentoResumo = {
 
 /**
  * Monta o documento `resumo` (`contrato/resumo.ts`), mapeando `Totais` do
- * domínio (`dominio/totais.ts`, TP-0034) para `EsquemaTotais` do contrato, e
+ * domínio (`dominio/totais.ts`) para `EsquemaTotais` do contrato, e
  * valida o resultado contra `EsquemaResumo.parse(...)` antes de devolver.
  */
 export function montarDocumentoResumo(args: ArgsMontarDocumentoResumo): Resumo {

@@ -2,7 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 
 /**
  * Item de um pedido, conforme a tabela "Order Details" da base de vendas
- * (Northwind). Valores crus, sem nenhum cálculo (valor devido é RN de TP-0020).
+ * (Northwind). Valores crus, sem nenhum cálculo (valor devido é RN de `fontes/vendas.ts`).
  */
 export type ItemPedidoVendas = {
   precoUnitario: number;
@@ -32,7 +32,7 @@ export type DataPedido = {
  * Pedido de vendas lido diretamente da base Northwind, com datas normalizadas
  * para ISO-8601 mas sem nenhuma outra transformação de domínio (nem eventos,
  * nem cálculo de valor devido, nem classificação de achados de qualidade —
- * isso é responsabilidade de TP-0020, que consome esta leitura).
+ * isso é responsabilidade de `fontes/vendas.ts`, que consome esta leitura).
  */
 export type PedidoVendas = {
   idPedido: string;
@@ -42,7 +42,7 @@ export type PedidoVendas = {
   dataEnvio: string | null;
   /** Data limite (RequiredDate) em ISO-8601. */
   dataLimite: string;
-  /** Código cru da transportadora (`ShipVia`), sem tradução para nome — isso é RN de TP-0020. */
+  /** Código cru da transportadora (`ShipVia`), sem tradução para nome — isso é RN de `fontes/vendas.ts`. */
   transportadora: string;
 };
 
@@ -110,7 +110,7 @@ function normalizarDataPedido(bruta: string): DataPedido {
  *
  * Esta função só lê e normaliza formato de data; NÃO cria eventos de domínio,
  * NÃO calcula valor devido e NÃO classifica achados de qualidade — isso é
- * responsabilidade de outra tarefa (TP-0020) que consome este retorno.
+ * responsabilidade de `fontes/vendas.ts`, que consome este retorno.
  */
 export function lerBaseDeVendas(caminhoArquivo: string): PedidoVendas[] {
   const db = new DatabaseSync(caminhoArquivo, { readOnly: true });

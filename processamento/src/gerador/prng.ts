@@ -1,9 +1,9 @@
 /**
- * PRNG determinístico (TP-0023), implementação própria do algoritmo
+ * PRNG determinístico, implementação própria do algoritmo
  * conhecido como `mulberry32`.
  *
  * Propositalmente não usa `Math.random()` em lugar nenhum: todo o gerador de
- * dados sintéticos (pedidos "limpos", pagamentos, e — em tarefas futuras —
+ * dados sintéticos (pedidos "limpos", pagamentos, rastreio e
  * plantio de problemas) precisa ser 100% reproduzível a partir de uma
  * semente, para que duas execuções com a mesma semente produzam arquivos
  * idênticos byte a byte.

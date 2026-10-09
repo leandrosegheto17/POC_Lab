@@ -15,7 +15,7 @@ function pedidoBase(sobrescritas: Partial<PedidoVendas> = {}): PedidoVendas {
   };
 }
 
-describe("processarVendas (TP-0020)", () => {
+describe("processarVendas", () => {
   it("pedido simples sem problema gera 1 vínculo, 1 evento venda v1 com valor devido e transportadora traduzida", () => {
     const pedidos = [pedidoBase()];
 

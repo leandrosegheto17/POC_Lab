@@ -9,8 +9,8 @@ import { FONTES, TIPOS_DIVERGENCIA } from "../dominio/modelo.js";
  * (achado de qualidade de dados, RN-08).
  *
  * Cada variante usa `z.object()` simples (sem `.strict()`) de propósito:
- * um campo desconhecido (ex.: `meio_pagamento` de uma v2 futura de
- * pagamento) é descartado silenciosamente no `.parse()`, em vez de
+ * um campo desconhecido (ex.: `meio_pagamento` de um pagamento v2,
+ * ver `linha-do-tempo-v2.ts`) é descartado silenciosamente no `.parse()`, em vez de
  * rejeitar a resposta — ver teste dedicado em
  * `test/contrato/respostas-v1.test.ts`.
  */

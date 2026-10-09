@@ -1,10 +1,11 @@
 /**
- * TP-0081 — Porta de sugestão de vínculo via IA (SDD §5, L-03).
+ * Porta de sugestão de vínculo via IA (SDD §5, L-03).
  *
  * Única porta do projeto para "perguntar a um modelo de IA qual pedido
  * corresponde a um pagamento sem identificação". Implementações reais (ex.:
- * chamada HTTP a um provedor externo) ficam fora de escopo desta tarefa —
- * aqui só a interface e um provedor falso (`provedor-falso.ts`) para testes.
+ * chamada HTTP a um provedor externo) vivem em outros módulos
+ * (`provedor-openai.ts`); aqui só a interface. O provedor falso
+ * (`provedor-falso.ts`) serve aos testes.
  */
 
 /**

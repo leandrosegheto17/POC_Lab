@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { ProvedorSugestao } from "./porta.js";
 
 /**
- * TP-0082 — Provedor de `ProvedorSugestao` (TP-0081) via chamada HTTP direta
+ * Provedor de `ProvedorSugestao` via chamada HTTP direta
  * à API da OpenAI (chat/completions), usando `fetch` nativo — proibido usar
  * SDK de IA (G-17).
  *
@@ -12,7 +12,7 @@ import type { ProvedorSugestao } from "./porta.js";
  *     dentro de `sugerir` (não no módulo), para refletir o ambiente no
  *     momento exato da chamada; sem chave, devolve `null` imediatamente, sem
  *     chamar `fetchFn` (defesa em profundidade — quem decide "chamar ou não"
- *     é o chamador desta porta, TP-0083).
+ *     é o chamador desta porta).
  *   - O texto da referência e a lista de candidatos vão SEMPRE dentro do
  *     corpo da requisição como DADO (`content` da mensagem `user`,
  *     serializado em JSON), nunca como instrução de sistema que mude o

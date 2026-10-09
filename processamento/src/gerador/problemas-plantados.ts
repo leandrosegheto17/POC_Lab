@@ -1,8 +1,7 @@
 /**
- * Entrada do gabarito: um problema plantado (tarefas futuras) associado a
- * um pedido. Nesta tarefa (TP-0023) nenhum problema ainda é plantado — quem
- * chama `escreverGabarito` passa lista vazia — mas a estrutura/escritor já
- * fica fixada para as tarefas futuras de plantio usarem.
+ * Entrada do gabarito: um problema plantado associado a um pedido. Quem
+ * chama `escreverGabarito` passa a lista de problemas plantados (pode ser
+ * vazia).
  */
 export type EntradaGabarito = {
   pedido_venda: string;
