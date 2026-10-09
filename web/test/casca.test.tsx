@@ -12,7 +12,7 @@ import { obrigatorio } from "./apoio/obrigatorio.ts";
 // Nota sobre o layout responsivo (menu lateral em >=1024px vs. barra de
 // abas inferior em <1024px, e a regra de altura <=480px): essa troca é
 // resolvida inteiramente por CSS (@media), nunca por JS — ver
-// src/estilos/casca.css. jsdom não calcula CSS real (não tem layout
+// src/estilos/casca-*.css. jsdom não calcula CSS real (não tem layout
 // engine), então os testes abaixo confirmam apenas a ESTRUTURA/classes
 // esperadas (ex. único <nav>, classes de item ativo), não o resultado
 // visual do layout em cada largura/altura.
