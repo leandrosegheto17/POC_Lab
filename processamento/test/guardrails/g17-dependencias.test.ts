@@ -32,12 +32,37 @@ const PERMITIDAS_POR_PACOTE: Record<string, string[]> = {
 const PERMITIDO_POR_PREFIXO = [/^@types\//];
 const SECOES = ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"] as const;
 
-type Pacote = Partial<Record<(typeof SECOES)[number], Record<string, string>>>;
+type Pacote = Partial<Record<(typeof SECOES)[number], Record<string, string>>> & {
+  overrides?: Record<string, string>;
+  resolutions?: Record<string, string>;
+  pnpm?: { overrides?: Record<string, string> };
+};
+
+// Especificador aceito: workspace:* ou faixa semver (sem protocolo nem caminho: npm:, git+, github:, http(s):, file:, link:).
+const ESPECIFICADOR_VALIDO = /^(workspace:[\w^~.*-]+|[\w\s.^~<>=|*+-]*)$/;
 
 function dependenciasNaoPermitidas(pacote: Pacote, arquivo: string): string[] {
   const permitidas = new Set([...COMUM, ...(PERMITIDAS_POR_PACOTE[arquivo] ?? [])]);
   const nomes = SECOES.flatMap((secao) => Object.keys(pacote[secao] ?? {}));
   return nomes.filter((n) => !permitidas.has(n) && !PERMITIDO_POR_PREFIXO.some((re) => re.test(n)));
+}
+
+function especificadoresInvalidos(pacote: Pacote): string[] {
+  return SECOES.flatMap((secao) => Object.entries(pacote[secao] ?? {}))
+    .filter(([, versao]) => !ESPECIFICADOR_VALIDO.test(versao))
+    .map(([nome, versao]) => `${nome}@${versao}`);
+}
+
+function overridesProibidos(pacote: Pacote): string[] {
+  const grupos = { overrides: pacote.overrides, "pnpm.overrides": pacote.pnpm?.overrides, resolutions: pacote.resolutions };
+  return Object.entries(grupos)
+    .filter(([, mapa]) => mapa !== undefined && Object.keys(mapa).length > 0)
+    .map(([campo]) => campo);
+}
+
+function pacotesDoWorkspaceSemLista(yaml: string): string[] {
+  const dirs = [...yaml.matchAll(/^\s*-\s*["']?([^"'\s#]+)["']?\s*$/gm)].map((m) => `${m[1] ?? ""}/package.json`);
+  return dirs.filter((arquivo) => !(arquivo in PERMITIDAS_POR_PACOTE));
 }
 
 const PACOTES = Object.keys(PERMITIDAS_POR_PACOTE);
@@ -91,6 +116,60 @@ describe("guardrail G-17 — dependências permitidas", () => {
     ["csv-parse", "package.json"],
   ])("acusa %s fora do seu pacote: %s (caso negativo)", (nome, arquivo) => {
     expect(dependenciasNaoPermitidas({ dependencies: { [nome]: "^1" } }, arquivo)).toEqual([nome]);
+  });
+
+  it.each(PACOTES)("%s usa só especificadores semver/workspace, sem overrides", (arquivo) => {
+    const pacote = JSON.parse(readFileSync(path.join(RAIZ, arquivo), "utf8")) as Pacote;
+    expect(especificadoresInvalidos(pacote), `G-17: especificador fora de semver/workspace em ${arquivo}`).toEqual([]);
+    expect(overridesProibidos(pacote), `G-17: overrides/resolutions não permitidos em ${arquivo}`).toEqual([]);
+  });
+
+  it("todo pacote do pnpm-workspace.yaml tem lista em PERMITIDAS_POR_PACOTE", () => {
+    const yaml = readFileSync(path.join(RAIZ, "pnpm-workspace.yaml"), "utf8");
+    expect(pacotesDoWorkspaceSemLista(yaml), "G-17: pacote novo no workspace exige ADR e entrada em PERMITIDAS_POR_PACOTE").toEqual(
+      [],
+    );
+  });
+
+  it.each([
+    ["npm:pacote-malicioso"],
+    ["npm:hono@4"],
+    ["github:x/y"],
+    ["x/y"],
+    ["git+https://example.com/x.git"],
+    ["git://example.com/x.git"],
+    ["https://example.com/x.tgz"],
+    ["http://example.com/x.tgz"],
+    ["file:../x"],
+    ["link:../x"],
+  ])("acusa especificador %s em nome permitido (caso negativo)", (versao) => {
+    expect(especificadoresInvalidos({ dependencies: { hono: versao } })).toEqual([`hono@${versao}`]);
+  });
+
+  it.each([["^4.0.0"], ["~1.2.3"], [">=1 <2"], ["1.x"], ["*"], ["workspace:*"], ["workspace:^"], ["1.0.0-rc.1"]])(
+    "aceita especificador %s",
+    (versao) => {
+      expect(especificadoresInvalidos({ devDependencies: { zod: versao } })).toEqual([]);
+    },
+  );
+
+  it.each([
+    ["overrides", { overrides: { zod: "1.0.0" } }],
+    ["pnpm.overrides", { pnpm: { overrides: { zod: "1.0.0" } } }],
+    ["resolutions", { resolutions: { zod: "1.0.0" } }],
+  ] as [string, Pacote][])("acusa %s no package.json (caso negativo)", (campo, pacote) => {
+    expect(overridesProibidos(pacote)).toEqual([campo]);
+  });
+
+  it("não acusa overrides vazios nem ausentes", () => {
+    expect(overridesProibidos({ overrides: {}, pnpm: {} })).toEqual([]);
+  });
+
+  it("acusa pacote do workspace sem lista (caso negativo) e aceita os listados", () => {
+    expect(pacotesDoWorkspaceSemLista('packages:\n  - "processamento"\n  - web\n  - "novo"\nallowBuilds:\n  esbuild: true\n')).toEqual([
+      "novo/package.json",
+    ]);
+    expect(pacotesDoWorkspaceSemLista('packages:\n  - "processamento"\n  - "web"\n')).toEqual([]);
   });
 
   it("aceita @types/* e as dependências do pacote", () => {
