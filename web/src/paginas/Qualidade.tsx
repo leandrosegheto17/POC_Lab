@@ -8,7 +8,7 @@ import {
 import type { TipoAchado } from "processamento/dominio/modelo.js";
 import { useFocoNoTitulo } from "../nav/useFocoNoTitulo.ts";
 import { useTituloDocumento } from "../nav/useTituloDocumento.ts";
-import { useConsulta } from "../dados/use-consulta.ts";
+import { comTentativa, useConsulta } from "../dados/use-consulta.ts";
 import {
   EsquemaSugestaoIA,
   type SugestaoIA,
@@ -50,14 +50,9 @@ const TIPOS_EM_ORDEM: ReadonlyArray<{ tipo: TipoAchado; titulo: string }> = [
   { tipo: "fora_de_ordem", titulo: "Eventos fora de ordem" },
 ];
 
-/**
- * Monta a URL de consulta. O sufixo `#tentativa` é um fragmento, nunca
- * enviado ao servidor — só força `useConsulta` a refazer a mesma chamada a
- * cada clique em "Tentar de novo" (mesmo padrão de `construirUrlConsulta`
- * em `Divergencias.tsx`, TP-0059).
- */
+/** Monta a URL de consulta; ver `comTentativa`. */
 function construirUrlConsulta(tentativa: number): string {
-  return `/api/v1/qualidade#${String(tentativa)}`;
+  return comTentativa("/api/v1/qualidade", tentativa);
 }
 
 /** Mensagem fixa exibida quando a IA não foi utilizada OU foi utilizada mas não sobrou nenhuma sugestão válida (dentro da caixa de regra, sem tabela). */

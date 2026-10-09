@@ -1,12 +1,14 @@
 import "./LinhaDoTempo.css";
-import { EtiquetaFonte, rotuloFonte, type Fonte } from "./EtiquetaFonte.tsx";
-import { EtiquetaEstado } from "./EtiquetaEstado.tsx";
-import { formatarData, formatarMoeda } from "../dados/formatacao.ts";
-import { FONTES, fonteDoEvento, rotuloEvento } from "../dados/rotulos.ts";
+import { FONTES, fonteDoEvento } from "../dados/rotulos.ts";
+import { Cabecalho } from "./linha-do-tempo/Cabecalho.tsx";
+import { CartaoEvento } from "./linha-do-tempo/CartaoEvento.tsx";
+import {
+  agruparPorData,
+  codigosDoCabecalho,
+} from "./linha-do-tempo/agrupamento.ts";
 import type { EventoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
 
-// TP-0061 / ajuste Modelo B (2026-10-08, mockup à risca) — `LinhaDoTempo`.
-// Puramente apresentacional: nenhuma chamada à API, nenhum estado próprio,
+// `LinhaDoTempo`: puramente apresentacional: nenhuma chamada à API, nenhum estado próprio,
 // nunca reordena os eventos (quem decide a ordem é a API).
 //
 // Estrutura: `<ol>` com UM `<li>` POR DATA (`AAAA-MM-DD`, na ordem em que a
@@ -27,14 +29,13 @@ import type { EventoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
 //   coleta/transporte/entrega: transportadora, codigo_rastreio.
 // O código mostrado para a transportadora é sempre `codigo_rastreio` (o
 // `codigoEvento` dela é interno, "EVT-RS-…", e não é exibido).
-const FONTES_EM_COLUNA: readonly Fonte[] = FONTES;
 
 type LinhaDoTempoProps = {
   eventos: EventoV1[];
-  // TP-0073 — quando presente (vindo do `SeletorData` em `Pedido.tsx`),
+  // Quando presente (vindo do `SeletorData` da página do pedido),
   // cada evento com `momentoFato > dataEscolhida` é atenuado e ganha o
   // texto "depois da data escolhida". Comparação simples de string, só para
-  // EXIBIÇÃO — o estado de verdade vem de `derivarEstado` (TP-0012).
+  // EXIBIÇÃO — o estado de verdade vem de `derivarEstado`.
   dataEscolhida?: string;
   /** Código do pedido no sistema de vendas (de `pedido.fontes`), mostrado
    * no cabeçalho da coluna Vendas como "#10248". */
@@ -47,214 +48,6 @@ type LinhaDoTempoProps = {
    * primeiro pagamento, que é o legítimo). */
   idsDuplicados?: readonly string[];
 };
-
-type GrupoPorData = {
-  data: string;
-  eventos: EventoV1[];
-};
-
-/** Agrupa por `AAAA-MM-DD`, na ordem de primeira aparição (sem reordenar). */
-function agruparPorData(eventos: EventoV1[]): GrupoPorData[] {
-  const grupos = new Map<string, EventoV1[]>();
-  for (const evento of eventos) {
-    const data = formatarData(evento.momentoFato);
-    const lista = grupos.get(data);
-    if (lista) {
-      lista.push(evento);
-    } else {
-      grupos.set(data, [evento]);
-    }
-  }
-  return Array.from(grupos, ([data, lista]) => ({ data, eventos: lista }));
-}
-
-/** Valores distintos, na ordem de primeira aparição. */
-function distintos(valores: string[]): string[] {
-  return Array.from(new Set(valores));
-}
-
-function codigosDoCabecalho(
-  eventos: EventoV1[],
-  codigoVendas: string | undefined,
-): Record<Fonte, string> {
-  const vendas = codigoVendas
-    ? [codigoVendas]
-    : distintos(
-        eventos
-          .filter((evento) => evento.tipo === "venda")
-          .map((evento) => evento.codigoEvento),
-      );
-  const pagamentos = distintos(
-    eventos
-      .filter((evento) => evento.tipo === "pagamento")
-      .map((evento) => evento.codigoEvento),
-  );
-  const rastreio = distintos(
-    eventos.flatMap((evento) =>
-      evento.tipo === "coleta" ||
-      evento.tipo === "transporte" ||
-      evento.tipo === "entrega"
-        ? [evento.codigo_rastreio]
-        : [],
-    ),
-  );
-
-  return {
-    vendas: vendas.map((codigo) => `#${codigo}`).join(" · "),
-    pagamentos: pagamentos.join(" · "),
-    rastreio: rastreio.join(" · "),
-  };
-}
-
-function Cabecalho({ codigos }: { codigos: Record<Fonte, string> }) {
-  return (
-    <div className="linha-do-tempo__cabecalho" aria-hidden="true">
-      <div className="linha-do-tempo__cabecalho-celula">Data</div>
-      {FONTES_EM_COLUNA.map((fonte) => (
-        <div key={fonte} className="linha-do-tempo__cabecalho-celula">
-          {rotuloFonte(fonte)}
-          {codigos[fonte] ? (
-            <span className="linha-do-tempo__cabecalho-codigo">
-              {codigos[fonte]}
-            </span>
-          ) : null}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-type MarcaEvento = { variante: "ok" | "alerta" | "ruim" | "neutra"; texto: string };
-
-function marcasDoEvento(
-  evento: EventoV1,
-  duplicado: boolean,
-  dataLimite: string | undefined,
-): MarcaEvento[] {
-  const marcas: MarcaEvento[] = [];
-  if (duplicado) {
-    marcas.push({ variante: "ruim", texto: "duplicado" });
-  }
-  if (evento.chegouForaDeOrdem) {
-    marcas.push({ variante: "alerta", texto: "chegou fora de ordem" });
-  }
-  if (evento.tipo === "entrega" && dataLimite !== undefined) {
-    marcas.push(
-      evento.momentoFato <= dataLimite
-        ? { variante: "ok", texto: "no prazo" }
-        : { variante: "neutra", texto: "atrasada" },
-    );
-  }
-  return marcas;
-}
-
-/** Linha de detalhe do PC: valor da venda; código + valor do pagamento;
- * nada para a transportadora (o código já está no cabeçalho). */
-function DetalhePc({ evento }: { evento: EventoV1 }) {
-  if (evento.tipo === "venda") {
-    return (
-      <span className="evento__linha evento__linha--pc">
-        <span className="mono">{formatarMoeda(evento.valor_devido)}</span>
-      </span>
-    );
-  }
-  if (evento.tipo === "pagamento") {
-    return (
-      <span className="evento__linha evento__linha--pc">
-        <span className="mono">{evento.codigoEvento}</span> ·{" "}
-        <span className="mono">{formatarMoeda(evento.valor)}</span>
-      </span>
-    );
-  }
-  return null;
-}
-
-/** Linha de código do celular: "#10248 · R$ 440,00", "TX-… · R$ 264,00",
- * "RS-000001". */
-function textoCodigoCelular(evento: EventoV1): string {
-  if (evento.tipo === "venda") {
-    return `#${evento.codigoEvento} · ${formatarMoeda(evento.valor_devido)}`;
-  }
-  if (evento.tipo === "pagamento") {
-    return `${evento.codigoEvento} · ${formatarMoeda(evento.valor)}`;
-  }
-  return evento.codigo_rastreio;
-}
-
-/** Texto oculto com a fonte (no PC a fonte é dada só pela coluna). Para
- * venda e transportadora inclui o código, que no PC só aparece no
- * cabeçalho `aria-hidden`. */
-function textoFonteOculta(evento: EventoV1, fonte: Fonte): string {
-  if (evento.tipo === "venda") {
-    return `fonte: ${rotuloFonte(fonte)}, #${evento.codigoEvento}`;
-  }
-  if (evento.tipo === "pagamento") {
-    return `fonte: ${rotuloFonte(fonte)}`;
-  }
-  return `fonte: ${rotuloFonte(fonte)}, ${evento.codigo_rastreio}`;
-}
-
-function CartaoEvento({
-  evento,
-  dataEscolhida,
-  dataLimite,
-  duplicado,
-}: {
-  evento: EventoV1;
-  dataEscolhida?: string;
-  dataLimite?: string;
-  duplicado: boolean;
-}) {
-  const fonte = fonteDoEvento(evento.tipo);
-  // Comparação de string simples (ver nota em `LinhaDoTempoProps`).
-  const depoisDaDataEscolhida =
-    dataEscolhida !== undefined &&
-    dataEscolhida !== "" &&
-    evento.momentoFato > `${dataEscolhida}T23:59:59.999Z`;
-  const marcas = marcasDoEvento(evento, duplicado, dataLimite);
-
-  const classes = ["evento"];
-  if (duplicado) {
-    classes.push("evento--ruim");
-  }
-  if (depoisDaDataEscolhida) {
-    classes.push("evento--depois");
-  }
-
-  return (
-    <li className={classes.join(" ")} data-fonte={fonte}>
-      <div className="evento__topo">
-        <EtiquetaFonte fonte={fonte} variante="selo" />
-        <span className="evento__data mono">
-          {formatarData(evento.momentoFato)}
-        </span>
-      </div>
-      <strong className="evento__titulo">
-        {rotuloEvento(evento.tipo)}
-        {marcas.map((marca) => (
-          <span key={marca.texto}>
-            {" "}
-            <EtiquetaEstado variante={marca.variante}>{marca.texto}</EtiquetaEstado>
-          </span>
-        ))}
-      </strong>
-      <span className="visualmente-oculto evento__fonte-oculta">
-        {textoFonteOculta(evento, fonte)}
-      </span>
-      {depoisDaDataEscolhida ? (
-        // G-14 — nunca só opacidade: o texto é visível no DOM.
-        <span className="evento__depois">depois da data escolhida</span>
-      ) : (
-        <>
-          <DetalhePc evento={evento} />
-          <span className="evento__linha evento__linha--celular mono">
-            {textoCodigoCelular(evento)}
-          </span>
-        </>
-      )}
-    </li>
-  );
-}
 
 export function LinhaDoTempo({
   eventos,
@@ -279,7 +72,7 @@ export function LinhaDoTempo({
           {grupos.map((grupo) => (
             <li key={grupo.data} className="linha-do-tempo__linha">
               <span className="linha-do-tempo__data mono">{grupo.data}</span>
-              {FONTES_EM_COLUNA.map((fonte) => {
+              {FONTES.map((fonte) => {
                 const doSistema = grupo.eventos.filter(
                   (evento) => fonteDoEvento(evento.tipo) === fonte,
                 );

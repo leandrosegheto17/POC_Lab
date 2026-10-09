@@ -5,7 +5,7 @@ import {
 } from "processamento/contrato/indicadores.js";
 import { useFocoNoTitulo } from "../nav/useFocoNoTitulo.ts";
 import { useTituloDocumento } from "../nav/useTituloDocumento.ts";
-import { useConsulta } from "../dados/use-consulta.ts";
+import { comTentativa, useConsulta } from "../dados/use-consulta.ts";
 import { BlocoDivergenciasPorTipo } from "../componentes/indicador/BlocoDivergenciasPorTipo.tsx";
 import { BlocoEntregasNoPrazo } from "../componentes/indicador/BlocoEntregasNoPrazo.tsx";
 import { BlocoPagoVsDevido } from "../componentes/indicador/BlocoPagoVsDevido.tsx";
@@ -44,13 +44,9 @@ function renderizarBloco(bloco: BlocoIndicador) {
   }
 }
 
-/**
- * Monta a URL de consulta. O sufixo `#tentativa` é um fragmento, nunca
- * enviado ao servidor — mesmo truque de `Divergencias.tsx` (TP-0059) para
- * forçar `useConsulta` a refazer a mesma chamada a cada "Tentar de novo".
- */
+/** Monta a URL de consulta; ver `comTentativa`. */
 function construirUrlConsulta(tentativa: number): string {
-  return `/api/v1/indicadores#${String(tentativa)}`;
+  return comTentativa("/api/v1/indicadores", tentativa);
 }
 
 export function Indicadores() {

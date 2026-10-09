@@ -6,7 +6,7 @@ import {
 } from "processamento/contrato/divergencias.js";
 import { useFocoNoTitulo } from "../nav/useFocoNoTitulo.ts";
 import { useTituloDocumento } from "../nav/useTituloDocumento.ts";
-import { useConsulta } from "../dados/use-consulta.ts";
+import { comTentativa, useConsulta } from "../dados/use-consulta.ts";
 import { CartoesResumo } from "../componentes/CartoesResumo.tsx";
 import { FiltroTipo, VALOR_TODOS } from "../componentes/FiltroTipo.tsx";
 import { TabelaDados } from "../componentes/TabelaDados.tsx";
@@ -65,16 +65,7 @@ function EventosDivergencia({ eventos }: { eventos: EventoDivergencia[] }) {
 // variável `vazioCorrigivel` e o mesmo bloco de renderização abaixo.
 //
 
-/**
- * Monta a URL de consulta. O sufixo `#tentativa` é um fragmento (`#...`),
- * nunca enviado ao servidor em uma requisição HTTP real (só a parte
- * path+query é transmitida) — serve apenas para dar ao `useConsulta` uma
- * string de URL diferente a cada tentativa de "Tentar de novo", forçando o
- * `useEffect` interno dele (que depende de `url`) a disparar de novo a
- * mesma chamada. Sem isso, clicar em "Tentar de novo" com o mesmo filtro
- * não mudaria `url` e a consulta não seria refeita — `useConsulta` (TP-0052)
- * não expõe um `refetch` próprio.
- */
+/** Monta a URL de consulta com filtro e página; ver `comTentativa`. */
 function construirUrlConsulta(
   tipo: TipoDivergencia | null,
   pagina: number,
@@ -86,7 +77,10 @@ function construirUrlConsulta(
   }
   parametros.set("pagina", String(pagina));
   parametros.set("tamanho", String(TAMANHO_PAGINA));
-  return `/api/v1/divergencias?${parametros.toString()}#${String(tentativa)}`;
+  return comTentativa(
+    `/api/v1/divergencias?${parametros.toString()}`,
+    tentativa,
+  );
 }
 
 /**

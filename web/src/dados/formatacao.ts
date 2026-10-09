@@ -46,6 +46,23 @@ export function formatarMoeda(n: number): string {
   return espacoComum(MOEDA.format(n));
 }
 
+/** Arredonda para centavos (evita "−R$ 0,00" por resíduo de ponto flutuante). */
+export function emCentavos(valor: number): number {
+  return Math.round(valor * 100);
+}
+
+/** Saldo em centavos com sinal: "+R$ 440,00", "−R$ 176,00", "R$ 0,00". */
+export function formatarSaldo(saldoEmCentavos: number): string {
+  const texto = formatarMoeda(Math.abs(saldoEmCentavos) / 100);
+  if (saldoEmCentavos > 0) {
+    return `+${texto}`;
+  }
+  if (saldoEmCentavos < 0) {
+    return `−${texto}`;
+  }
+  return texto;
+}
+
 /** 65379257.82 → "R$ 65,4 mi"; 412000 → "R$ 412 mil". */
 export function formatarMoedaCompacta(n: number): string {
   return espacoComum(MOEDA_COMPACTA.format(n));

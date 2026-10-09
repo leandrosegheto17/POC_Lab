@@ -5,6 +5,15 @@ import { useEffect, useState } from "react";
 import type { z } from "zod";
 import { consultarApi } from "./cliente-api.ts";
 
+/**
+ * Acrescenta à URL o fragmento `#tentativa`. O fragmento nunca vai ao
+ * servidor; só dá ao `useConsulta` uma URL diferente a cada "Tentar de
+ * novo", o que refaz a mesma chamada (o gancho não tem `refetch`).
+ */
+export function comTentativa(url: string, tentativa: number): string {
+  return `${url}#${String(tentativa)}`;
+}
+
 /** Estado exposto pelo gancho — união discriminada por `status`. */
 export type EstadoConsulta<T> =
   | { status: "carregando" }
