@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { criarRepositorio, type Repositorio } from "../../src/armazenamento/repositorio.js";
+import { criarRepositorio } from "../../src/armazenamento/repositorio.js";
 import { criarProvedorFalso } from "../../src/ia/provedor-falso.js";
 import { conferirSugestao } from "../../src/dominio/conferencia-sugestao.js";
 import type { ProvedorSugestao } from "../../src/ia/porta.js";

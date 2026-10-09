@@ -12,7 +12,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { criarRepositorio, type Repositorio } from "../../src/armazenamento/repositorio.ts";
+import { criarRepositorio } from "../../src/armazenamento/repositorio.ts";
 import { conferirSugestao } from "../../src/dominio/conferencia-sugestao.ts";
 import { criarProvedorFalso } from "../../src/ia/provedor-falso.ts";
 import { EsquemaRespostaQualidade } from "../../src/contrato/qualidade.ts";

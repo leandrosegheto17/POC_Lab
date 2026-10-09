@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { criarRepositorio, type Repositorio } from "../../src/armazenamento/repositorio.js";
+import { criarRepositorio } from "../../src/armazenamento/repositorio.js";
 import { montarPedidosEVinculos } from "../../src/publicacao/pedidos.js";
 import { eventoPagamento, eventoVenda, montarRepositorioComFixture } from "../apoio/publicacao.js";
 

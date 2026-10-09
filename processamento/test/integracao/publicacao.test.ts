@@ -12,7 +12,6 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { criarRepositorio, type Repositorio } from "../../src/armazenamento/repositorio.ts";
 import { montarSqlPublicacao } from "../../src/publicacao/publicar.ts";
 import {
   executarWrangler,

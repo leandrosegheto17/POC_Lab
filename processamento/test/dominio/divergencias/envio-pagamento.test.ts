@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import type { Evento } from "../../../src/dominio/evento.js";
 import { detectarEnvioPagamento } from "../../../src/dominio/divergencias/envio-pagamento.js";
 import { coleta, pagamento, venda } from "../../apoio/eventos.js";
 
