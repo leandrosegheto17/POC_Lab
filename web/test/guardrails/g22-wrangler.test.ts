@@ -1,11 +1,13 @@
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 
 // G-22: custo adicional zero. O wrangler.jsonc só pode ter o binding D1 `DB`
 // (mais as chaves de execução do Worker); nada de KV, R2, IA, vars etc.
 
-const WRANGLER = path.resolve(import.meta.dirname, "../../wrangler.jsonc");
+const PASTA_WEB = path.resolve(import.meta.dirname, "../..");
+const WRANGLER = path.join(PASTA_WEB, "wrangler.jsonc");
 
 const CHAVES_PERMITIDAS = new Set([
   "$schema",
@@ -54,6 +56,11 @@ function violacoesG22(textoJsonc: string): string[] {
   return problemas;
 }
 
+// Qualquer outro arquivo de configuração do wrangler (toml/json) escaparia da checagem.
+function outrosArquivosWrangler(pasta: string): string[] {
+  return readdirSync(pasta).filter((nome) => /^wrangler\./.test(nome) && nome !== "wrangler.jsonc");
+}
+
 describe("guardrail G-22 — custo adicional zero no wrangler.jsonc", () => {
   it("web/wrangler.jsonc só tem o binding DB e nenhum outro recurso", () => {
     expect(
@@ -78,5 +85,30 @@ describe("guardrail G-22 — custo adicional zero no wrangler.jsonc", () => {
   it("lê JSONC com comentários e vírgula final", () => {
     const texto = '{ // c\n "d1_databases": [{ "binding": "DB", /* x */ "u": "http://a//b", },], }';
     expect(violacoesG22(texto)).toEqual([]);
+  });
+
+  it("web/ não tem outro arquivo wrangler além do wrangler.jsonc", () => {
+    expect(outrosArquivosWrangler(PASTA_WEB), "G-22: só web/wrangler.jsonc é aceito").toEqual([]);
+  });
+
+  describe("arquivos wrangler extras (pasta temporária)", () => {
+    const pastas: string[] = [];
+    const criar = (arquivos: string[]) => {
+      const pasta = mkdtempSync(path.join(tmpdir(), "g22-"));
+      pastas.push(pasta);
+      for (const a of arquivos) writeFileSync(path.join(pasta, a), "");
+      return pasta;
+    };
+    afterAll(() => {
+      for (const p of pastas) rmSync(p, { recursive: true, force: true });
+    });
+
+    it.each(["wrangler.toml", "wrangler.json"])("acusa %s ao lado do wrangler.jsonc (caso negativo)", (extra) => {
+      expect(outrosArquivosWrangler(criar(["wrangler.jsonc", extra]))).toEqual([extra]);
+    });
+
+    it("aceita só o wrangler.jsonc", () => {
+      expect(outrosArquivosWrangler(criar(["wrangler.jsonc", "package.json"]))).toEqual([]);
+    });
   });
 });
