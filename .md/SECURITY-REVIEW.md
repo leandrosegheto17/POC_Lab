@@ -521,3 +521,9 @@ OK; 0 achados; checagem G-17 só mais estrita, g17 65 testes ok com repo real, s
 
 ## RTP-0097 — DevSecOps — 2026-10-09
 OK; 0 críticos, 0 não críticos; escâner linear mantém as violações da RTP-0093 (aspa ímpar, escapada com `;`, `;` em string) e as demais regras intactas; 102 testes de guardrail verdes.
+
+## RTP-0098 — DevSecOps — 2026-10-09
+APROVADA — só comentários mudaram, nenhum valor/binding/rota/flag alterado, G-22 com 13 testes OK, sem segredo em comentário; 0 achados.
+
+## RTP-0099 — DevSecOps — 2026-10-09
+APROVADA; 0 achados; teste só lê o event store via consultas, gabarito continua só em test/, guardrails G-04/G-05 verdes.
