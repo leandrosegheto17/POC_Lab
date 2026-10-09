@@ -11,7 +11,6 @@
  * abaixo são pulados em vez de falhar — mesmo padrão de
  * `test/integracao/leitura-vendas.test.ts`.
  */
-import type { DatabaseSync } from "node:sqlite";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
@@ -21,9 +20,10 @@ import { gerarConteudo } from "../../src/aplicacao/gerar.ts";
 import { construirCodigosConhecidos } from "../../src/aplicacao/importar.ts";
 import type { Repositorio } from "../../src/armazenamento/repositorio.ts";
 import { abrirRepositorioParaTeste } from "../../src/armazenamento/repositorio-teste.ts";
+import type { Evento } from "../../src/dominio/evento.ts";
 import { importar } from "../../src/importacao/importar.ts";
 import { calcularDivergencias } from "../../src/dominio/divergencias/index.ts";
-import type { Evento } from "../../src/dominio/evento.ts";
+import { agruparEventosPorPedido } from "../../src/publicacao/eventos-por-pedido.ts";
 import { SEMENTE_PADRAO } from "../../src/gerador/prng.ts";
 
 const CAMINHO_BASE = path.join("dados", "origem", "northwind.db");
@@ -46,55 +46,6 @@ const TIPOS_DIVERGENCIA = new Set([
   "entrega_atrasada",
 ]);
 
-type LinhaEvento = {
-  fonte: "vendas" | "pagamentos" | "rastreio";
-  codigo_evento: string;
-  id_pedido: string | null;
-  tipo: string;
-  momento_fato: string;
-  ordem_chegada: number | null;
-  versao_schema: number;
-  dados: string;
-};
-
-/**
- * Reconstrói um `Evento` de domínio a partir de uma linha da tabela
- * `evento`: o envelope comum (`fonte`, `codigoEvento`, `momentoFato`,
- * `ordemChegada`) vem das colunas próprias; o restante (`tipo`,
- * `versao_schema` e os campos específicos do payload) vem do JSON gravado em
- * `dados` por `serializarDados` (`importacao/importar.ts`), que já exclui o
- * envelope do que serializa — ou seja, `dados` cobre exatamente o
- * complemento do que falta para reconstruir o `Evento` original.
- */
-function linhaParaEvento(linha: LinhaEvento): Evento {
-  const payload = JSON.parse(linha.dados) as Record<string, unknown>;
-  const envelope: Record<string, unknown> = {
-    fonte: linha.fonte,
-    codigoEvento: linha.codigo_evento,
-    momentoFato: linha.momento_fato,
-  };
-  if (linha.ordem_chegada !== null) {
-    envelope.ordemChegada = linha.ordem_chegada;
-  }
-  return { ...envelope, ...payload } as Evento;
-}
-
-/** Busca todos os eventos vinculados a um `id_pedido`, reconstruídos como `Evento[]`. */
-function buscarEventosDoPedido(db: DatabaseSync, idPedido: string): Evento[] {
-  const linhas = db
-    .prepare(`SELECT * FROM evento WHERE id_pedido = ?`)
-    .all(idPedido) as unknown as LinhaEvento[];
-  return linhas.map(linhaParaEvento);
-}
-
-/** Resolve o `id_pedido` interno (`PED-nnnnnn`) a partir do código bruto de vendas (`pedido_venda` do gabarito). */
-function resolverIdPedido(db: DatabaseSync, codigoVenda: string): string | undefined {
-  const linha = db
-    .prepare(`SELECT id_pedido FROM vinculo_fonte WHERE fonte = 'vendas' AND codigo_externo = ?`)
-    .get(codigoVenda) as { id_pedido: string } | undefined;
-  return linha?.id_pedido;
-}
-
 describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → divergências) contra o gabarito", () => {
   // Timeout maior que o padrão (5s): pipeline completo (gerar → importar →
   // divergências) sobre a base real inteira (~16 mil pedidos) é pesado —
@@ -108,7 +59,7 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
   let pedidosVendas: ReturnType<typeof lerBaseDeVendas>;
   let gabaritoCompleto: Array<{ pedido_venda: string; tipo: string }>;
   let repositorio: Repositorio;
-  let db: DatabaseSync;
+  let eventosPorPedido: Map<string, Evento[]>;
   let dataCorte: string | null;
   let calculadoPorPedido: Map<string, Set<string>>;
 
@@ -129,7 +80,7 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
       pedidosVendas.map((pedido) => pedido.idPedido),
     );
 
-    ({ repositorio, db } = abrirRepositorioParaTeste(":memory:"));
+    ({ repositorio } = abrirRepositorioParaTeste(":memory:"));
     importar(repositorio, {
       vendas: pedidosVendas,
       pagamentosCsv,
@@ -141,25 +92,22 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
 
     // RN-14: dataCorte = maior momento_fato de TODOS os eventos de TODOS os
     // pedidos importados nesta chamada.
-    const linhaMaximo = db.prepare(`SELECT MAX(momento_fato) AS maximo FROM evento`).get() as {
-      maximo: string | null;
-    };
-    dataCorte = linhaMaximo.maximo;
+    dataCorte = repositorio.obterMaiorMomentoFato() ?? null;
     if (dataCorte === null) {
       return;
     }
 
-    const idsPedido = (
-      db
-        .prepare(`SELECT DISTINCT id_pedido FROM evento WHERE id_pedido IS NOT NULL`)
-        .all() as unknown as Array<{ id_pedido: string }>
-    ).map((linha) => linha.id_pedido);
+    eventosPorPedido = new Map(
+      [...agruparEventosPorPedido(repositorio.listarEventos())].map(([idPedido, armazenados]) => [
+        idPedido,
+        armazenados.map((armazenado) => armazenado.evento),
+      ]),
+    );
 
     // (idPedido interno, tipo) calculado, para todos os pedidos importados.
     calculadoPorPedido = new Map<string, Set<string>>();
     let contador = 0;
-    for (const idPedido of idsPedido) {
-      const eventos = buscarEventosDoPedido(db, idPedido);
+    for (const [idPedido, eventos] of eventosPorPedido) {
       const divergencias = calcularDivergencias(eventos, dataCorte);
       calculadoPorPedido.set(idPedido, new Set<string>(divergencias.map((d) => d.tipo)));
       contador += 1;
@@ -184,7 +132,7 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
       if (!TIPOS_DIVERGENCIA.has(entrada.tipo)) {
         continue;
       }
-      const idPedido = resolverIdPedido(db, entrada.pedido_venda);
+      const idPedido = repositorio.obterIdPedidoPorVinculo("vendas", entrada.pedido_venda);
       if (idPedido === undefined) {
         entradasNaoResolviveis.push(entrada);
         continue;
@@ -258,9 +206,9 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
 
 
       for (const [codigoVenda, tiposEsperados] of comDoisTipos) {
-        const idPedido = resolverIdPedido(db, codigoVenda);
+        const idPedido = repositorio.obterIdPedidoPorVinculo("vendas", codigoVenda);
         expect(idPedido).toBeDefined();
-        const eventos = buscarEventosDoPedido(db, idPedido as string);
+        const eventos = eventosPorPedido.get(idPedido as string) ?? [];
         const divergencias = calcularDivergencias(eventos, dataCorte as string);
         const tiposCalculados = new Set<string>(divergencias.map((d) => d.tipo));
 
