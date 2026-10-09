@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { EsquemaConsultaDivergencias } from "../../src/contrato/parametros.js";
 import { EsquemaEventoDivergencia } from "../../src/contrato/divergencias.js";
-import { EsquemaExemploAchado } from "../../src/contrato/qualidade.js";
+import { EsquemaAchado, EsquemaExemploAchado } from "../../src/contrato/qualidade.js";
 import { FONTES, TIPOS_ACHADO, TIPOS_DIVERGENCIA } from "../../src/dominio/modelo.js";
 
 describe("listas do domínio", () => {
@@ -30,6 +30,11 @@ describe("listas do domínio", () => {
 
   it("TIPOS_ACHADO tem os 7 valores e o contrato aceita cada fonte", () => {
     expect(TIPOS_ACHADO).toHaveLength(7);
+    const achado = (tipo: string) => ({ tipo, contagem: 0, regra: "r", exemplos: [] });
+    for (const tipo of TIPOS_ACHADO) {
+      expect(EsquemaAchado.safeParse(achado(tipo)).success).toBe(true);
+    }
+    expect(EsquemaAchado.safeParse(achado("outro")).success).toBe(false);
     for (const fonte of FONTES) {
       expect(
         EsquemaExemploAchado.safeParse({ fonte, referencia: "r", detalhe: "d" }).success,
