@@ -22,8 +22,12 @@ primeiro erro, citando o passo que falhou.
   `leitura.sql` local, consulta (só leitura) o `idPublicacao` do resumo no D1
   remoto e:
   - se for igual, **não** carrega e avisa "dados já publicados";
-  - se for diferente (ou o D1 remoto estiver vazio), roda
-    `wrangler d1 execute poc-lab --remote --file …/leitura.sql`.
+  - se for diferente (ou o D1 remoto estiver vazio), confere `version: production`
+    do banco, guarda o bookmark do Time Travel em
+    `processamento/dados/publicacao/ultimo-bookmark.txt` (e na saída) e roda
+    `wrangler d1 execute poc-lab --remote --file …/leitura.sql`. Se a carga
+    falhar, o script para sem `deploy` e mostra o comando de volta:
+    `wrangler d1 time-travel restore poc-lab --bookmark <valor>`.
 - `pnpm publicar` — `publicar:dados` e depois `publicar:site`.
 
 A ordem **D1 antes do Worker** é intencional (ADR-015): o código novo do
