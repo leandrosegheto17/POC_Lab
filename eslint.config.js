@@ -14,41 +14,26 @@ import {
   padraoGabarito,
 } from "./eslint/fronteiras.js";
 
-
 /**
  * ESLint 9 (flat config) com fronteiras de módulo e proibições.
  *
- * Fronteiras do SDD §2 (tabela de componentes + "Regra de dependência") e
- * GUARDRAILS G-02/G-03/G-04/G-12:
+ * Fronteiras do SDD §2 e GUARDRAILS G-02/G-03/G-04/G-12:
  *   - dominio    -> não importa nada do projeto, nem `zod`, nem `node:*`.
  *   - contrato   -> só `dominio` e `zod`.
- *   - web/worker -> só `dominio` e `contrato` do `processamento`;
- *                   `node:*` só em `test/`.
- *   - web/src    -> só `dominio` e `contrato` do `processamento`;
- *                   `node:*` só em `test/`; não importa `web/worker`.
+ *   - web/worker e web/src -> só `dominio` e `contrato` do `processamento`;
+ *                   `node:*` só em `test/`; web/src não importa `web/worker`.
  *   - gabarito   -> só pode ser citado (import ou string) em `test/`.
  *   - UI         -> `dangerouslySetInnerHTML` proibido (G-12).
  *   - SQL        -> `prepare(` nunca recebe template literal com expressão
- *                   nem concatenação (prevenção de SQL injection, G-08).
+ *                   nem concatenação (G-08).
  *
- * Glob sem arquivo correspondente simplesmente não ativa nenhuma regra.
+ * `test/` fica fora das fronteiras de `web/worker` e `web/src`
+ * (`ignores: ["**\/test/**"]`): testes de integração precisam de acesso mais
+ * amplo, como popular fixtures.
  *
- * Nota de interpretação (pequeno detalhe de implementação, não desvio de
- * escopo): o aceite diz "...importarem além de dominio e contrato ou
- * node:* fora de test/". Interpretamos que "fora de test/" qualifica a
- * frase inteira: dentro de qualquer pasta `test/` (de `web/worker` ou
- * `web/src`), nem a fronteira de módulo nem a proibição de `node:*` do
- * `no-restricted-imports` se aplicam — testes de integração costumam
- * precisar de acesso mais amplo (ex.: popular fixtures). Por isso os blocos
- * de `web/worker` e `web/src` abaixo usam `ignores: ["**\/test/**"]`.
- *
- * IMPORTANTE sobre ESLint flat config: quando dois blocos de configuração
- * combinam para o mesmo arquivo e definem a MESMA chave de regra (ex.:
- * `no-restricted-imports` duas vezes), o valor do bloco posterior
- * SUBSTITUI inteiramente o anterior (não há merge de arrays). Por isso
- * cada regra de fronteira abaixo é escrita em um único bloco por grupo de
- * arquivos mutuamente exclusivo — nunca dividida em blocos que se
- * sobrepõem para o mesmo arquivo.
+ * No flat config, a mesma chave de regra em dois blocos que valem para o mesmo
+ * arquivo é substituída, não mesclada; por isso cada regra de fronteira fica
+ * em um único bloco por grupo de arquivos mutuamente exclusivo.
  */
 
 export default tseslint.config(
