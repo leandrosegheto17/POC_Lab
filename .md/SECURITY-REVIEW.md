@@ -443,3 +443,48 @@ APROVADA, 0 críticos e 0 não críticos; execFileSync sem shell com alvo valida
 
 ## RTP-0070 — DevSecOps — 2026-10-09
 OK; 0 críticos/altos, lacunas médias/baixas já em RTP-0083 e RTP-0084; testes sem segredo, sem rede, sem enfraquecer o existente; texto do GUARDRAILS e leitura ampla do G-17 aguardam o usuário/Gestor.
+
+## RTP-0071 — DevSecOps — 2026-10-09
+OK; 0 críticos, 0 não críticos; diff só de comentário, nenhum comentário de segurança removido.
+
+## RTP-0072 — DevSecOps — 2026-10-09
+OK; 0 achados; mensagem do passo sugerir não expõe chave/env/dados de pedido e a lógica sem chave (não chama a IA) não mudou; verificação por leitura do diff e grep.
+
+## RTP-0073 — DevSecOps — 2026-10-09
+OK; 0 achados; sem Math.random/Date.now (PRNG com semente), sem escrita em disco, sem dado real, gabarito/G-04 intocado.
+
+## RTP-0074 — DevSecOps — 2026-10-09
+OK; diff de 1 linha de comentário (só o `*`), sem alteração de código, 0 achados.
+
+## RTP-0075 — DevSecOps — 2026-10-09
+OK; 0 achados; só teste, sem segredo/rede, contrato zod intacto; vitest do arquivo 3/3.
+
+## RTP-0076 — DevSecOps — 2026-10-09
+OK; 0 achados de segurança, só teste, foco/aria-disabled preservado, sem segredo/rede; RTP-0087 (falha rara) já aberta.
+
+## RTP-0077 — DevSecOps — 2026-10-09
+OK; 0 achados; validação do tipo da URL por lista fechada preservada, sem dangerouslySetInnerHTML, ESLint limpo.
+
+## RTP-0078 — DevSecOps — 2026-10-09
+OK; 0 achados; diff de 1 linha (espaço de formatação), sem mudança de comportamento nem de superfície de segurança.
+
+## RTP-0079 — DevSecOps — 2026-10-09
+OK; diff só de comentário, sem superfície de segurança, 0 achados.
+
+## RTP-0080 — DevSecOps — 2026-10-09
+OK; 0 achados de segurança; asserções do Worker preservadas, apoios sem segredo/rede e não importados por web/src nem web/worker; 64 testes dos arquivos tocados passando.
+
+## RTP-0081 — DevSecOps — 2026-10-09
+OK; 0 achados; diff só remove imports não usados, sem perda de cobertura de segurança/isolamento.
+
+## RTP-0082 — DevSecOps — 2026-10-09
+OK; 0 achados; diff só em comentário/linha em branco, nenhuma regra G-08/G-12/fronteira alterada e nenhum comentário de proibição apagado.
+
+## RTP-0083 — DevSecOps — 2026-10-09
+APROVADA; 0 altos/críticos, 1 baixo (RTP-0091); 24 testes passando e sonda de 20 amostras confirma aspas, schema, REPLACE, DO UPDATE e DROP; faltam ALTER TABLE, writable_schema e ';' em string.
+
+## RTP-0084 — DevSecOps — 2026-10-09
+OK; 0 críticos/altos, 1 RTP (RTP-0092: g17 não valida especificador de versão, overrides e pacotes novos do workspace); g17 13 e g22 13 passando, lista por pacote bate com os package.json, optional/peer e wrangler extras cobertos.
+
+## RTP-0085 — DevSecOps — 2026-10-09
+OK em segurança; 0 críticos/altos, 1 média de disponibilidade (`.parse` em `montarBlocoIa` aborta a publicação com referência de CSV > 600) já coberta pela RTP-0090; limite aplicado antes do documento/D1 e também no site.
