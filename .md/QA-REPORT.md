@@ -545,3 +545,6 @@ APROVADA — só comentários mudaram, JSONC válido, 0 IDs, tsc e 398 testes OK
 
 ## RTP-0099 — QA — 2026-10-09
 APROVADA; 0 críticos, 0 não críticos; gabarito.test.ts 3/3 verdes, asserções intactas, bloco consultas.ts × gabarito.test.ts sumiu do saude.py.
+
+## RTP-0100 — QA — 2026-10-09
+APROVADA; 0 críticos e 0 não críticos; regex exponencial antiga estoura 1000 ms a partir de 22 literais (2,5 s; 17,9 s com 24), g05+g17 20/20 verdes e paralelo verde, lint e tsc ok.

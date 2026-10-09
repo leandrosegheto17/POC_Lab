@@ -527,3 +527,6 @@ APROVADA — só comentários mudaram, nenhum valor/binding/rota/flag alterado, 
 
 ## RTP-0099 — DevSecOps — 2026-10-09
 APROVADA; 0 achados; teste só lê o event store via consultas, gabarito continua só em test/, guardrails G-04/G-05 verdes.
+
+## RTP-0100 — DevSecOps — 2026-10-09
+APROVADA; 0 críticos e 0 não críticos; só limites de tempo e um caso de razão mudaram, nenhuma regra de detecção afrouxada, sem segredo/rede; test/guardrails 103/103 verdes.

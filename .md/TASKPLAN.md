@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-09 06:06
+Atualizado: 2026-10-09 06:23
 
-Resumo: Não executada 5 · Aprovada 184 · Bloqueada 1 · total 190
+Resumo: Não executada 4 · Aprovada 185 · Bloqueada 1 · total 190
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -197,7 +197,7 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 182 | RTP-0097 | executor | ✔ | Regex DO UPDATE do G-05 volta a acusar aspa escapada por barra seguida de string com po... | Refatoração Revisão 2026-10-08 | RTP-0095 | Aprovada |
 | 183 | RTP-0098 | executor | ✔ | Tirar IDs de tarefa dos comentários de web/vite.config.ts e web/wrangler.jsonc | Refatoração Revisão 2026-10-09 | — | Aprovada |
 | 184 | RTP-0099 | executor | ✔ | gabarito.test.ts usa consultas.listarEventos em vez de recriar a leitura do event store | Refatoração Revisão 2026-10-09 | — | Aprovada |
-| 185 | RTP-0100 | executor | ✔ | Teste de desempenho do G-05 sem limite fixo de 50 ms (instável sob carga) | Refatoração Revisão 2026-10-09 | — | Não executada |
+| 185 | RTP-0100 | executor | ✔ | Teste de desempenho do G-05 sem limite fixo de 50 ms (instável sob carga) | Refatoração Revisão 2026-10-09 | — | Aprovada |
 | 186 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Não executada |
 | 187 | BK-0004 | coordenador | ✔ | Decidir onde roda a marcação de pagamentos duplicados (RN-03) da tela T2: hoje Pedido.tsx | — | — | Não executada |
 | 188 | BK-0005 | coordenador | ✔ | Decidir como o D1 é trocado em produção e escrever a subseção Troca de dados em produção d | — | — | Não executada |
