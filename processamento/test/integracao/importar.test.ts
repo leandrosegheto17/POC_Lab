@@ -1,7 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
 
-import { criarRepositorio } from "../../src/armazenamento/repositorio.js";
+import { abrirRepositorioParaTeste } from "../../src/armazenamento/repositorio-teste.js";
 import { importar } from "../../src/importacao/importar.js";
 import type { PedidoVendas } from "../../src/fontes/leitura-vendas.js";
 import { obrigatorio } from "../apoio/obrigatorio.js";
@@ -45,7 +45,7 @@ function contarEventos(db: DatabaseSync): number {
 describe("importar (TP-0027)", () => {
   describe("validação: idempotência", () => {
     it("importa vendas/pagamentos/rastreio, atribui PED-nnnnnn na ordem certa e repete as mesmas contagens numa 2ª chamada", () => {
-      const repositorio = criarRepositorio(":memory:");
+      const { repositorio, db } = abrirRepositorioParaTeste(":memory:");
 
       // Lista em ordem NÃO crescente de propósito: a atribuição de
       // PED-nnnnnn deve seguir o código de vendas crescente ("1" primeiro),
@@ -94,17 +94,17 @@ describe("importar (TP-0027)", () => {
 
       // PED-000001 atribuído ao 1º código de vendas em ordem crescente ("1"),
       // não ao 1º da lista ("2").
-      const vinculoCodigo1 = repositorio.db
+      const vinculoCodigo1 = db
         .prepare(
           `SELECT id_pedido FROM vinculo_fonte WHERE fonte = 'vendas' AND codigo_externo = '1'`,
         )
         .get() as { id_pedido: string };
-      const vinculoCodigo2 = repositorio.db
+      const vinculoCodigo2 = db
         .prepare(
           `SELECT id_pedido FROM vinculo_fonte WHERE fonte = 'vendas' AND codigo_externo = '2'`,
         )
         .get() as { id_pedido: string };
-      const vinculoCodigo3 = repositorio.db
+      const vinculoCodigo3 = db
         .prepare(
           `SELECT id_pedido FROM vinculo_fonte WHERE fonte = 'vendas' AND codigo_externo = '3'`,
         )
@@ -116,7 +116,7 @@ describe("importar (TP-0027)", () => {
 
       // Rastreio referenciando pedido_venda "2" aponta para o mesmo
       // id_pedido que vendas atribuiu ao código "2".
-      const vinculoRastreio = repositorio.db
+      const vinculoRastreio = db
         .prepare(
           `SELECT id_pedido FROM vinculo_fonte WHERE fonte = 'rastreio' AND codigo_externo = 'RS-1'`,
         )
@@ -125,15 +125,15 @@ describe("importar (TP-0027)", () => {
 
       // Pagamento sem identificação grava evento com id_pedido nulo, sem
       // travar a transação (a importação completou normalmente acima).
-      const eventoSemIdentificacao = repositorio.db
+      const eventoSemIdentificacao = db
         .prepare(`SELECT id_pedido FROM evento WHERE codigo_evento = 'TX-2'`)
         .get() as { id_pedido: string | null };
       expect(eventoSemIdentificacao.id_pedido).toBeNull();
 
       const totaisAntes = {
-        pedido: contarPedidos(repositorio.db),
-        vinculo_fonte: contarVinculosFonte(repositorio.db),
-        evento: contarEventos(repositorio.db),
+        pedido: contarPedidos(db),
+        vinculo_fonte: contarVinculosFonte(db),
+        evento: contarEventos(db),
       };
       expect(totaisAntes).toEqual({ pedido: 3, vinculo_fonte: 5, evento: 6 });
 
@@ -160,9 +160,9 @@ describe("importar (TP-0027)", () => {
       });
 
       const totaisDepois = {
-        pedido: contarPedidos(repositorio.db),
-        vinculo_fonte: contarVinculosFonte(repositorio.db),
-        evento: contarEventos(repositorio.db),
+        pedido: contarPedidos(db),
+        vinculo_fonte: contarVinculosFonte(db),
+        evento: contarEventos(db),
       };
       expect(totaisDepois).toEqual(totaisAntes);
     });
@@ -170,7 +170,7 @@ describe("importar (TP-0027)", () => {
 
   describe("convergência entre fontes", () => {
     it("rastreio/pagamentos chegando antes da venda convergem para o mesmo id_pedido quando a venda é importada depois", () => {
-      const repositorio = criarRepositorio(":memory:");
+      const { repositorio, db } = abrirRepositorioParaTeste(":memory:");
       const codigosConhecidos = new Set(["5"]);
 
       const pagamentosCsv = [CABECALHO_PAGAMENTOS, "TX-9,PV-000005,15,2026-01-05"].join("\n");
@@ -190,7 +190,7 @@ describe("importar (TP-0027)", () => {
       expect(relatorioSoFontesSecundarias.rastreio.novas).toBe(1);
       expect(relatorioSoFontesSecundarias.pagamentos.novas).toBe(1);
 
-      const vinculoVendasAntes = repositorio.db
+      const vinculoVendasAntes = db
         .prepare(
           `SELECT id_pedido FROM vinculo_fonte WHERE fonte = 'vendas' AND codigo_externo = '5'`,
         )
@@ -198,7 +198,7 @@ describe("importar (TP-0027)", () => {
       expect(vinculoVendasAntes).toBeDefined();
       const idPedidoCriadoAntecipadamente = obrigatorio(vinculoVendasAntes).id_pedido;
 
-      expect(contarPedidos(repositorio.db)).toBe(1);
+      expect(contarPedidos(db)).toBe(1);
 
       // 2ª chamada, mesmo repositório: agora a venda chega.
       const relatorioComVenda = importar(repositorio, {
@@ -216,14 +216,14 @@ describe("importar (TP-0027)", () => {
         rejeitadas: 0,
       });
 
-      const vinculoVendasDepois = repositorio.db
+      const vinculoVendasDepois = db
         .prepare(
           `SELECT id_pedido FROM vinculo_fonte WHERE fonte = 'vendas' AND codigo_externo = '5'`,
         )
         .get() as { id_pedido: string };
       expect(vinculoVendasDepois.id_pedido).toBe(idPedidoCriadoAntecipadamente);
 
-      const vinculoRastreioDepois = repositorio.db
+      const vinculoRastreioDepois = db
         .prepare(
           `SELECT id_pedido FROM vinculo_fonte WHERE fonte = 'rastreio' AND codigo_externo = 'RS-9'`,
         )
@@ -231,13 +231,13 @@ describe("importar (TP-0027)", () => {
       expect(vinculoRastreioDepois.id_pedido).toBe(idPedidoCriadoAntecipadamente);
 
       // Nenhum id_pedido duplicado foi criado para o mesmo código de vendas.
-      expect(contarPedidos(repositorio.db)).toBe(1);
+      expect(contarPedidos(db)).toBe(1);
     });
   });
 
   describe("atomicidade", () => {
     it("erro no meio da importação desfaz tudo: nenhuma linha gravada", () => {
-      const repositorio = criarRepositorio(":memory:");
+      const { repositorio, db } = abrirRepositorioParaTeste(":memory:");
       let eventosGravados = 0;
       const repositorioComFalha = {
         ...repositorio,
@@ -259,9 +259,9 @@ describe("importar (TP-0027)", () => {
         }),
       ).toThrow("falha simulada");
 
-      expect(contarPedidos(repositorio.db)).toBe(0);
-      expect(contarVinculosFonte(repositorio.db)).toBe(0);
-      expect(contarEventos(repositorio.db)).toBe(0);
+      expect(contarPedidos(db)).toBe(0);
+      expect(contarVinculosFonte(db)).toBe(0);
+      expect(contarEventos(db)).toBe(0);
     });
   });
 });

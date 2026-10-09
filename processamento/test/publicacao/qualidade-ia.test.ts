@@ -15,11 +15,17 @@ import { describe, expect, it } from "vitest";
 import { criarRepositorio, type Repositorio } from "../../src/armazenamento/repositorio.ts";
 import { conferirSugestao } from "../../src/dominio/conferencia-sugestao.ts";
 import { criarProvedorFalso } from "../../src/ia/provedor-falso.ts";
-import { sugerir } from "../../src/ia/sugerir.ts";
+import { sugerir as sugerirComResumo, type OpcoesSugerir } from "../../src/ia/sugerir.ts";
+import type { ProvedorSugestao } from "../../src/ia/porta.ts";
+import { montarPedidosEVinculos } from "../../src/publicacao/pedidos.ts";
 import { EsquemaRespostaQualidade } from "../../src/contrato/qualidade.ts";
 import { montarDocumentoQualidade } from "../../src/publicacao/qualidade.ts";
 
 const DATA_PAGAMENTO = "2026-03-01T00:00:00.000Z";
+
+function sugerir(repositorio: Repositorio, provedor: ProvedorSugestao | undefined, opcoes?: OpcoesSugerir) {
+  return sugerirComResumo(repositorio, montarPedidosEVinculos(repositorio).pedidoResumo, provedor, opcoes);
+}
 
 /** Mesmo helper de `test/ia/sugerir.test.ts`: pedido com evento de venda (valor_devido/data_limite). */
 function inserirPedidoComVenda(

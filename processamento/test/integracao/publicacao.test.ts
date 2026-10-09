@@ -124,10 +124,7 @@ describe("montarSqlPublicacao", () => {
 
     // Na fixture, o maior momento_fato é o do pagamento (2026-01-02), posterior ao da venda.
     expect(resumo.dataCorte).toBe("2026-01-02T10:00:00Z");
-    const maximo = repositorio.db.prepare("SELECT MAX(momento_fato) AS m FROM evento").get() as {
-      m: string;
-    };
-    expect(resumo.dataCorte).toBe(maximo.m);
+    expect(resumo.dataCorte).toBe(repositorio.obterMaiorMomentoFato());
   });
 
   it("o documento 'indicadores' no SQL final contém as 4 chaves de bloco, na ordem fixa", () => {

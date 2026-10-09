@@ -244,15 +244,12 @@ describe("executarSugerir (TP-0083)", () => {
     });
     expect(provedorFalso.chamadas).toBe(1);
 
-    const linhaCache = repositorioFixture.db
-      .prepare(`SELECT COUNT(*) AS total FROM cache_ia`)
-      .get() as { total: number };
-    expect(linhaCache.total).toBe(1);
+    expect(repositorioFixture.listarCacheIa()).toHaveLength(1);
 
     // Fecha a conexão da fixture (a de `executarSugerir` já se fecha
     // sozinha) — sem isso, o `rmSync` do `afterEach` falha com EPERM no
     // Windows por handle aberto no arquivo do banco.
-    repositorioFixture.db.close();
+    repositorioFixture.fechar();
   });
 });
 
@@ -319,12 +316,9 @@ describe("executarPreparar + passo 4 (TP-0083, pipeline completo, base real)", (
       await executarPreparar(opcoes);
 
       const repositorioVerificacao = criarRepositorio(opcoes.caminhoBanco);
-      const linhaCache = repositorioVerificacao.db
-        .prepare(`SELECT COUNT(*) AS total FROM cache_ia`)
-        .get() as { total: number };
-      expect(linhaCache.total).toBe(0);
+      expect(repositorioVerificacao.listarCacheIa()).toHaveLength(0);
 
-      repositorioVerificacao.db.close();
+      repositorioVerificacao.fechar();
     },
     300_000,
   );

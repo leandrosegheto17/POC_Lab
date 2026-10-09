@@ -4,6 +4,7 @@ import { criarRepositorio } from "../armazenamento/repositorio.js";
 import { criarProvedorOpenAI } from "../ia/provedor-openai.js";
 import { sugerir, type OpcoesSugerir, type ResultadoSugestao } from "../ia/sugerir.js";
 import type { ProvedorSugestao } from "../ia/porta.js";
+import { montarPedidosEVinculos } from "../publicacao/pedidos.js";
 import { CAMINHO_BANCO_PADRAO } from "./importar.js";
 
 /**
@@ -54,7 +55,8 @@ export async function executarSugerir(
 
   let resultados: ResultadoSugestao[];
   try {
-    resultados = await sugerir(repositorio, provedor, {
+    const { pedidoResumo } = montarPedidosEVinculos(repositorio);
+    resultados = await sugerir(repositorio, pedidoResumo, provedor, {
       ...opcoes.opcoesSugerir,
       modelo: opcoes.opcoesSugerir?.modelo ?? modelo,
     });
@@ -62,7 +64,7 @@ export async function executarSugerir(
     // Fecha a conexão aberta por esta função (nunca a de quem a chamou) —
     // em Windows, um handle aberto trava `rmSync` do diretório temporário
     // do banco (visto em teste de integração, TP-0083).
-    repositorio.db.close();
+    repositorio.fechar();
   }
 
   console.log(

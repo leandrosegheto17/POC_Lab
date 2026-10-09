@@ -2,10 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import { criarRepositorio, type Repositorio } from "../../src/armazenamento/repositorio.js";
 import { criarProvedorFalso } from "../../src/ia/provedor-falso.js";
-import { sugerir } from "../../src/ia/sugerir.js";
+import { sugerir as sugerirComResumo, type OpcoesSugerir } from "../../src/ia/sugerir.js";
+import { montarPedidosEVinculos } from "../../src/publicacao/pedidos.js";
 import { conferirSugestao } from "../../src/dominio/conferencia-sugestao.js";
 import type { ProvedorSugestao } from "../../src/ia/porta.js";
 import { obrigatorio } from "../apoio/obrigatorio.js";
+
+function sugerir(repositorio: Repositorio, provedor: ProvedorSugestao | undefined, opcoes?: OpcoesSugerir) {
+  return sugerirComResumo(repositorio, montarPedidosEVinculos(repositorio).pedidoResumo, provedor, opcoes);
+}
 
 /**
  * Insere um pedido com um evento de venda (`valor_devido`/`data_limite`) e,
@@ -227,10 +232,7 @@ describe("sugerir — sem provedor configurado", () => {
     expect(obrigatorio(resultados[0]).pedidoSugerido).toBeNull();
     expect(obrigatorio(resultados[0]).motivo).toContain("nenhum provedor de IA configurado");
 
-    const linhasCache = repositorio.db
-      .prepare(`SELECT COUNT(*) AS total FROM cache_ia`)
-      .get() as { total: number };
-    expect(linhasCache.total).toBe(0);
+    expect(repositorio.listarCacheIa()).toHaveLength(0);
   });
 });
 

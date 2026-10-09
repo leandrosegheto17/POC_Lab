@@ -19,7 +19,8 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { lerBaseDeVendas } from "../../src/fontes/leitura-vendas.ts";
 import { gerarConteudo } from "../../src/cli/gerar.ts";
 import { construirCodigosConhecidos } from "../../src/cli/importar.ts";
-import { criarRepositorio } from "../../src/armazenamento/repositorio.ts";
+import type { Repositorio } from "../../src/armazenamento/repositorio.ts";
+import { abrirRepositorioParaTeste } from "../../src/armazenamento/repositorio-teste.ts";
 import { importar } from "../../src/importacao/importar.ts";
 import { calcularDivergencias } from "../../src/dominio/divergencias/index.ts";
 import type { Evento } from "../../src/dominio/evento.ts";
@@ -106,7 +107,8 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
   // onTaskUpdate") e saía com código 1 mesmo com os testes passando.
   let pedidosVendas: ReturnType<typeof lerBaseDeVendas>;
   let gabaritoCompleto: Array<{ pedido_venda: string; tipo: string }>;
-  let repositorio: ReturnType<typeof criarRepositorio>;
+  let repositorio: Repositorio;
+  let db: DatabaseSync;
   let dataCorte: string | null;
   let calculadoPorPedido: Map<string, Set<string>>;
 
@@ -127,7 +129,7 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
       pedidosVendas.map((pedido) => pedido.idPedido),
     );
 
-    repositorio = criarRepositorio(":memory:");
+    ({ repositorio, db } = abrirRepositorioParaTeste(":memory:"));
     importar(repositorio, {
       vendas: pedidosVendas,
       pagamentosCsv,
@@ -136,7 +138,6 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
     });
     await ceder();
 
-    const db = repositorio.db;
 
     // RN-14: dataCorte = maior momento_fato de TODOS os eventos de TODOS os
     // pedidos importados nesta chamada.
@@ -174,7 +175,6 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
   });
 
   it("acha 100% dos casos plantados de RN-03 a RN-06 e nenhum falso positivo", { timeout: 300_000 }, () => {
-    const db = repositorio.db;
 
     // Gabarito filtrado aos 5 tipos de divergência (RN-03 a RN-06), com o
     // `pedido_venda` (código bruto) resolvido para o `id_pedido` interno.
@@ -256,7 +256,6 @@ describe.skipIf(!baseDisponivel)("pipeline completo (gerar → importar → dive
         return;
       }
 
-      const db = repositorio.db;
 
       for (const [codigoVenda, tiposEsperados] of comDoisTipos) {
         const idPedido = resolverIdPedido(db, codigoVenda);

@@ -132,7 +132,7 @@ export function publicarDados(
     // de `executarPreparar` (TP-0045/TP-0083, `test/integracao/preparar.test.ts`),
     // mesma convenção já aplicada ao passo 3 (`criarRepositorio`/`importar`)
     // e ao passo 4 (`executarSugerir`).
-    repositorio.db.close();
+    repositorio.fechar();
   }
 
   deps.criarDiretorio(args.diretorioPublicacao);

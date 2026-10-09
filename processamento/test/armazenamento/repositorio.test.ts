@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { criarRepositorio } from "../../src/armazenamento/repositorio.js";
+import { abrirRepositorioParaTeste } from "../../src/armazenamento/repositorio-teste.js";
 
 const CAMINHO_SCHEMA = join(
   import.meta.dirname,
@@ -13,11 +14,11 @@ const CAMINHO_SCHEMA = join(
 
 describe("schema.sql (DDL idempotente)", () => {
   it("pode ser aplicado 2x seguidas na mesma conexão sem erro", () => {
-    const repositorio = criarRepositorio(":memory:");
+    const { db } = abrirRepositorioParaTeste(":memory:");
     const sqlSchema = readFileSync(CAMINHO_SCHEMA, "utf8");
 
     expect(() => {
-      repositorio.db.exec(sqlSchema);
+      db.exec(sqlSchema);
     }).not.toThrow();
   });
 });
@@ -85,7 +86,7 @@ describe("inserirVinculoFonte", () => {
 
 describe("inserirEvento", () => {
   it("evento com (fonte, codigo_evento) repetido não duplica a linha", () => {
-    const repositorio = criarRepositorio(":memory:");
+    const { repositorio, db } = abrirRepositorioParaTeste(":memory:");
     const evento = {
       fonte: "vendas" as const,
       codigoEvento: "VENDA-001",
@@ -103,7 +104,7 @@ describe("inserirEvento", () => {
     expect(primeiro).toEqual({ nova: true });
     expect(segundo).toEqual({ nova: false });
 
-    const linha = repositorio.db
+    const linha = db
       .prepare(
         `SELECT COUNT(*) AS total FROM evento WHERE fonte = ? AND codigo_evento = ?`,
       )
@@ -113,7 +114,7 @@ describe("inserirEvento", () => {
   });
 
   it("aceita id_pedido nulo (pagamento sem identificação), sem erro", () => {
-    const repositorio = criarRepositorio(":memory:");
+    const { repositorio, db } = abrirRepositorioParaTeste(":memory:");
 
     const resultado = repositorio.inserirEvento({
       fonte: "pagamentos",
@@ -128,7 +129,7 @@ describe("inserirEvento", () => {
 
     expect(resultado).toEqual({ nova: true });
 
-    const linha = repositorio.db
+    const linha = db
       .prepare(`SELECT id_pedido FROM evento WHERE codigo_evento = ?`)
       .get("PAG-999") as { id_pedido: string | null };
 
@@ -138,7 +139,7 @@ describe("inserirEvento", () => {
 
 describe("inserirAchadoQualidade", () => {
   it("achado duplicado por (tipo, fonte, referencia) não duplica", () => {
-    const repositorio = criarRepositorio(":memory:");
+    const { repositorio, db } = abrirRepositorioParaTeste(":memory:");
     const achado = {
       tipo: "sem_identificacao" as const,
       fonte: "pagamentos" as const,
@@ -153,7 +154,7 @@ describe("inserirAchadoQualidade", () => {
     expect(primeiro).toEqual({ nova: true });
     expect(segundo).toEqual({ nova: false });
 
-    const linha = repositorio.db
+    const linha = db
       .prepare(
         `SELECT COUNT(*) AS total FROM achado_qualidade WHERE tipo = ? AND fonte = ? AND referencia = ?`,
       )
@@ -182,12 +183,12 @@ describe("cache_ia", () => {
   });
 
   it("RTP-0041: gravarCache persiste o modelo na coluna modelo (NULL quando omitido)", () => {
-    const repositorio = criarRepositorio(":memory:");
+    const { repositorio, db } = abrirRepositorioParaTeste(":memory:");
 
     repositorio.gravarCache("h1", "r", "2026-01-01T10:00:00Z", "meu-modelo");
     repositorio.gravarCache("h2", "r", "2026-01-01T10:00:00Z");
 
-    const linhas = repositorio.db
+    const linhas = db
       .prepare(`SELECT chave, modelo FROM cache_ia ORDER BY chave`)
       .all() as { chave: string; modelo: string | null }[];
     expect(linhas.map((l) => ({ ...l }))).toEqual([
@@ -231,14 +232,14 @@ describe("migração do cache_ia em banco legado (RTP-0047)", () => {
       .run("hash-antigo", "resposta-antiga", "2025-12-01T09:00:00Z");
     legado.close();
 
-    const repositorio = criarRepositorio(caminho);
-    const colunas = repositorio.db
+    const { repositorio, db } = abrirRepositorioParaTeste(caminho);
+    const colunas = db
       .prepare(`PRAGMA table_info(cache_ia)`)
       .all() as unknown as { name: string }[];
-    const linha = repositorio.db
+    const linha = db
       .prepare(`SELECT chave, resposta, criado_em, modelo FROM cache_ia`)
       .all();
-    repositorio.db.close();
+    repositorio.fechar();
 
     expect(colunas.map((c) => c.name)).toContain("modelo");
     expect(linha).toHaveLength(1);
@@ -257,6 +258,6 @@ describe("migração do cache_ia em banco legado (RTP-0047)", () => {
       resposta: "resposta-antiga",
       criadoEm: "2025-12-01T09:00:00Z",
     });
-    reaberto?.db.close();
+    reaberto?.fechar();
   });
 });

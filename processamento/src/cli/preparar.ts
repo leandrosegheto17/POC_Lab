@@ -237,7 +237,7 @@ export async function executarPreparar(opcoes: OpcoesPreparar = {}): Promise<Res
   // mesmo `caminhoBanco`. Sem isso, em Windows o handle aberto trava o
   // `rmSync` do diretório temporário do banco nos testes de integração
   // (visto em TP-0083, `test/integracao/preparar.test.ts`).
-  repositorio.db.close();
+  repositorio.fechar();
   console.log(`[3/5] Importação concluída em "${caminhoBanco}".`);
 
   // --- passo 4: sugerir (porta de IA, TP-0083) --------------------------------

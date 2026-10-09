@@ -11,8 +11,8 @@ import { criarConsultas, type Consultas } from "./consultas.js";
  * consultas de leitura (`consultas.ts`) e transação. Os comandos são preparados
  * uma vez, na criação. Só gera `INSERT ... ON CONFLICT DO NOTHING` e `SELECT`
  * — nunca `UPDATE`/`DELETE` nas tabelas do event store (GUARDRAILS G-05).
- * Enquanto os módulos de importação, publicação e IA ainda acessam `db`
- * diretamente, este não é o único ponto de acesso ao SQLite.
+ * A conexão não é exposta: os testes que precisam ler o banco direto usam
+ * `abrirRepositorioParaTeste` (`repositorio-teste.ts`).
  */
 
 const DIRETORIO_ATUAL = dirname(fileURLToPath(import.meta.url));
@@ -45,8 +45,6 @@ export type EventoParaInserir = {
 };
 
 export type Repositorio = {
-  /** Conexão SQLite aberta — exposta para os testes consultarem o estado diretamente. */
-  db: DatabaseSync;
   inserirPedido: (idPedido: string) => ResultadoInsercao;
   inserirVinculoFonte: (
     fonte: Fonte,
@@ -60,6 +58,8 @@ export type Repositorio = {
   /** Grava a cache de IA; se a chave já existir, a gravação é ignorada (ON CONFLICT DO NOTHING). */
   gravarCache: (chave: string, resposta: string, criadoEm: string, modelo?: string) => void;
   emTransacao: <T>(fn: () => T) => T;
+  /** Fecha a conexão com o banco. */
+  fechar: () => void;
 } & Consultas;
 
 /**
@@ -76,6 +76,11 @@ function foiLinhaNova(changes: number | bigint): boolean {
  * EXISTS`) e devolve as funções de inserção do event store.
  */
 export function criarRepositorio(caminhoArquivo: string): Repositorio {
+  return criarRepositorioSobre(abrirBanco(caminhoArquivo));
+}
+
+/** Abre o banco SQLite e aplica o schema (e a coluna aditiva `modelo` em bancos antigos). */
+export function abrirBanco(caminhoArquivo: string): DatabaseSync {
   const db = new DatabaseSync(caminhoArquivo);
   const sqlSchema = readFileSync(CAMINHO_SCHEMA, "utf8");
   db.exec(sqlSchema);
@@ -87,7 +92,11 @@ export function criarRepositorio(caminhoArquivo: string): Repositorio {
   if (!colunasCache.some((coluna) => coluna.name === "modelo")) {
     db.exec(`ALTER TABLE cache_ia ADD COLUMN modelo TEXT`);
   }
+  return db;
+}
 
+/** Monta o repositório sobre uma conexão já aberta por `abrirBanco`. */
+export function criarRepositorioSobre(db: DatabaseSync): Repositorio {
   const comandoInserirPedido = db.prepare(
     `INSERT INTO pedido (id_pedido) VALUES (?) ON CONFLICT DO NOTHING`,
   );
@@ -179,7 +188,9 @@ export function criarRepositorio(caminhoArquivo: string): Repositorio {
   }
 
   return {
-    db,
+    fechar: () => {
+      db.close();
+    },
     emTransacao,
     ...criarConsultas(db),
     inserirPedido,
