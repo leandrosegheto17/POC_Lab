@@ -488,3 +488,21 @@ OK; 0 críticos/altos, 1 RTP (RTP-0092: g17 não valida especificador de versão
 
 ## RTP-0085 — DevSecOps — 2026-10-09
 OK em segurança; 0 críticos/altos, 1 média de disponibilidade (`.parse` em `montarBlocoIa` aborta a publicação com referência de CSV > 600) já coberta pela RTP-0090; limite aplicado antes do documento/D1 e também no site.
+
+## RTP-0087 — DevSecOps — 2026-10-09
+OK; 0 achados; diff só de teste, sem segredo/rede/dependência, asserção de foco intacta.
+
+## RTP-0088 — DevSecOps — 2026-10-09
+OK; 0 achados; só testes/apoio, asserções de segurança do Worker (400, 404, RFC 9457) intactas, sem segredo/rede e sem importação de apoio por src/worker.
+
+## RTP-0089 — DevSecOps — 2026-10-09
+OK; 0 achados; só a mensagem do teste g17 mudou, lógica de detecção intacta (não ficou mais permissiva).
+
+## RTP-0090 — DevSecOps — 2026-10-09
+OK; 0 achados novos; safeParse só empilha item válido, sem log do texto bruto, RN-11 antes; texto longo em `exemplos` é risco baixo preexistente, sem RTP.
+
+## RTP-0091 — DevSecOps — 2026-10-09
+OK; 0 críticos, 1 baixo (RTP-0093: DO UPDATE do G-05 deixou de acusar aspas desbalanceadas/escapadas por barra); 34 testes G-05 passando, UPDATE/DELETE/REPLACE inalterados.
+
+## RTP-0092 — DevSecOps — 2026-10-09
+OK; 0 críticos/altos, 1 RTP (RTP-0094: tags tipo latest e overrides/catalog do pnpm-workspace.yaml fora do G-17); checagem mais estrita que antes e cobre npm:, github:, user/repo, git+, git://, http(s):, file:, link: e overrides; CI com --frozen-lockfile.
