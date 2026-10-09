@@ -18,16 +18,17 @@
 import "./CartoesResumo.css";
 import { useResumo } from "../dados/contexto-resumo.tsx";
 import { formatarNumero } from "../dados/formatacao.ts";
+import { OPCOES_TIPO_DIVERGENCIA } from "../dados/rotulos.ts";
 
 export const VALOR_TODOS = "todos";
 
 const OPCOES: ReadonlyArray<{ valor: string; rotulo: string; curto: string }> = [
   { valor: VALOR_TODOS, rotulo: "Todos", curto: "Todos" },
-  { valor: "duplicado", rotulo: "Pago duas vezes", curto: "Pago 2×" },
-  { valor: "parcial", rotulo: "Pagamento parcial", curto: "Parcial" },
-  { valor: "pago_nao_enviado", rotulo: "Pago e não enviado", curto: "Não enviado" },
-  { valor: "enviado_nao_pago", rotulo: "Enviado e não pago", curto: "Não pago" },
-  { valor: "entrega_atrasada", rotulo: "Entrega atrasada", curto: "Atrasada" },
+  ...OPCOES_TIPO_DIVERGENCIA.map(({ tipo, rotulo, curto }) => ({
+    valor: tipo,
+    rotulo,
+    curto,
+  })),
 ];
 
 type FiltroTipoProps = {

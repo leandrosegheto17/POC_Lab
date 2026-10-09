@@ -2,6 +2,7 @@ import "./LinhaDoTempo.css";
 import { EtiquetaFonte, rotuloFonte, type Fonte } from "./EtiquetaFonte.tsx";
 import { EtiquetaEstado } from "./EtiquetaEstado.tsx";
 import { formatarData, formatarMoeda } from "../dados/formatacao.ts";
+import { FONTES, fonteDoEvento, rotuloEvento } from "../dados/rotulos.ts";
 import type { EventoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
 
 // TP-0061 / ajuste Modelo B (2026-10-08, mockup à risca) — `LinhaDoTempo`.
@@ -26,23 +27,7 @@ import type { EventoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
 //   coleta/transporte/entrega: transportadora, codigo_rastreio.
 // O código mostrado para a transportadora é sempre `codigo_rastreio` (o
 // `codigoEvento` dela é interno, "EVT-RS-…", e não é exibido).
-const MAPA_FONTE: Record<EventoV1["tipo"], Fonte> = {
-  venda: "vendas",
-  pagamento: "pagamentos",
-  coleta: "rastreio",
-  transporte: "rastreio",
-  entrega: "rastreio",
-};
-
-const MAPA_TIPO_TEXTO: Record<EventoV1["tipo"], string> = {
-  venda: "Venda",
-  pagamento: "Pagamento",
-  coleta: "Coleta",
-  transporte: "Em trânsito",
-  entrega: "Entrega",
-};
-
-const FONTES_EM_COLUNA: Fonte[] = ["vendas", "pagamentos", "rastreio"];
+const FONTES_EM_COLUNA: readonly Fonte[] = FONTES;
 
 type LinhaDoTempoProps = {
   eventos: EventoV1[];
@@ -220,7 +205,7 @@ function CartaoEvento({
   dataLimite?: string;
   duplicado: boolean;
 }) {
-  const fonte = MAPA_FONTE[evento.tipo];
+  const fonte = fonteDoEvento(evento.tipo);
   // Comparação de string simples (ver nota em `LinhaDoTempoProps`).
   const depoisDaDataEscolhida =
     dataEscolhida !== undefined &&
@@ -245,7 +230,7 @@ function CartaoEvento({
         </span>
       </div>
       <strong className="evento__titulo">
-        {MAPA_TIPO_TEXTO[evento.tipo]}
+        {rotuloEvento(evento.tipo)}
         {marcas.map((marca) => (
           <span key={marca.texto}>
             {" "}
@@ -296,7 +281,7 @@ export function LinhaDoTempo({
               <span className="linha-do-tempo__data mono">{grupo.data}</span>
               {FONTES_EM_COLUNA.map((fonte) => {
                 const doSistema = grupo.eventos.filter(
-                  (evento) => MAPA_FONTE[evento.tipo] === fonte,
+                  (evento) => fonteDoEvento(evento.tipo) === fonte,
                 );
                 return (
                   <div

@@ -12,30 +12,21 @@ import { FiltroTipo, VALOR_TODOS } from "../componentes/FiltroTipo.tsx";
 import { TabelaDados } from "../componentes/TabelaDados.tsx";
 import { Paginacao } from "../componentes/Paginacao.tsx";
 import { EtiquetaTipo } from "../componentes/EtiquetaTipo.tsx";
-import { rotuloFonte } from "../componentes/EtiquetaFonte.tsx";
 import { EstadoCarregando } from "../componentes/EstadoCarregando.tsx";
 import { EstadoVazio } from "../componentes/EstadoVazio.tsx";
 import { EstadoErro } from "../componentes/EstadoErro.tsx";
 import { formatarData, formatarNumero } from "../dados/formatacao.ts";
+import {
+  ehTipoDivergencia,
+  rotuloEvento,
+  rotuloFonte,
+  rotuloTipo,
+  type TipoDivergencia,
+} from "../dados/rotulos.ts";
 import type { EventoDivergencia } from "processamento/contrato/divergencias.js";
 import "./Divergencias.css";
 
 const TAMANHO_PAGINA = 50;
-
-// Ajuste Modelo B (2026-10-08) — nome em português do tipo de evento que a
-// API manda (`tipo` é texto livre no contrato v1). Tipo desconhecido aparece
-// como veio, sem quebrar a tela.
-const ROTULOS_EVENTO: Record<string, string> = {
-  venda: "Venda",
-  pagamento: "Pagamento",
-  coleta: "Coleta",
-  transporte: "Em trânsito",
-  entrega: "Entrega",
-};
-
-function rotuloEvento(tipo: string): string {
-  return ROTULOS_EVENTO[tipo] ?? tipo;
-}
 
 /**
  * Eventos de uma divergência dentro de `<details>` (requisito mantido): o
@@ -73,34 +64,6 @@ function EventosDivergencia({ eventos }: { eventos: EventoDivergencia[] }) {
 // por `useConsulta`/`consultarApi`. Os dois casos convergem para a mesma
 // variável `vazioCorrigivel` e o mesmo bloco de renderização abaixo.
 //
-// Mesmos 5 valores de `TipoDivergencia`
-// (processamento/src/dominio/modelo.ts) repetidos aqui só como lista para
-// validar o `tipo` da URL — mesmo padrão de `processamento/contrato/*.ts`.
-const TIPOS_VALIDOS = [
-  "duplicado",
-  "parcial",
-  "pago_nao_enviado",
-  "enviado_nao_pago",
-  "entrega_atrasada",
-] as const;
-
-type TipoValido = (typeof TIPOS_VALIDOS)[number];
-
-function ehTipoValido(valor: string): valor is TipoValido {
-  return (TIPOS_VALIDOS as readonly string[]).includes(valor);
-}
-
-// Rótulos dos chips de filtro — mesmos textos de `FiltroTipo.tsx` (que não
-// exporta a lista, só o componente), repetidos aqui apenas para compor o
-// `<caption>`/mensagem de "vazio" com o nome do filtro ativo.
-const ROTULOS_FILTRO: Record<string, string> = {
-  [VALOR_TODOS]: "Todos",
-  duplicado: "Pago duas vezes",
-  parcial: "Pagamento parcial",
-  pago_nao_enviado: "Pago e não enviado",
-  enviado_nao_pago: "Enviado e não pago",
-  entrega_atrasada: "Entrega atrasada",
-};
 
 /**
  * Monta a URL de consulta. O sufixo `#tentativa` é um fragmento (`#...`),
@@ -113,7 +76,7 @@ const ROTULOS_FILTRO: Record<string, string> = {
  * não expõe um `refetch` próprio.
  */
 function construirUrlConsulta(
-  tipo: TipoValido | null,
+  tipo: TipoDivergencia | null,
   pagina: number,
   tentativa: number,
 ): string {
@@ -151,8 +114,8 @@ export function Divergencias() {
     useState<RespostaDivergencias | null>(null);
 
   const tipoNaUrl = searchParams.get("tipo");
-  const tipoInvalidoNaUrl = tipoNaUrl !== null && !ehTipoValido(tipoNaUrl);
-  const tipoValido: TipoValido | null = tipoInvalidoNaUrl
+  const tipoInvalidoNaUrl = tipoNaUrl !== null && !ehTipoDivergencia(tipoNaUrl);
+  const tipoValido: TipoDivergencia | null = tipoInvalidoNaUrl
     ? null
     : (tipoNaUrl);
 
@@ -241,7 +204,7 @@ export function Divergencias() {
     setTentativa((atual) => atual + 1);
   }
 
-  const rotuloFiltroAtual = ROTULOS_FILTRO[tipoValido ?? VALOR_TODOS] ?? "Todos";
+  const rotuloFiltroAtual = tipoValido === null ? "Todos" : rotuloTipo(tipoValido);
 
   // Ajuste Modelo B (2026-10-08): o total fica dentro do h1, numa <span>
   // própria — oculta visualmente no PC (só leitor de tela) e visível no

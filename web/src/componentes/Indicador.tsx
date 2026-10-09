@@ -5,7 +5,8 @@ import type {
   LinhaIndicador,
 } from "processamento/contrato/indicadores.js";
 import { TabelaDados } from "./TabelaDados.tsx";
-import { EtiquetaTipo, type TipoDivergencia } from "./EtiquetaTipo.tsx";
+import { EtiquetaTipo } from "./EtiquetaTipo.tsx";
+import { ehTipoDivergencia, rotuloSituacaoPagamento } from "../dados/rotulos.ts";
 import {
   formatarDias,
   formatarMoeda,
@@ -235,29 +236,21 @@ export function BlocoEntregasNoPrazo({ bloco }: { bloco: BlocoIndicador }) {
 // Divergências por tipo
 // ---------------------------------------------------------------------------
 
-const TIPOS_CONHECIDOS: readonly string[] = [
-  "duplicado",
-  "parcial",
-  "pago_nao_enviado",
-  "enviado_nao_pago",
-  "entrega_atrasada",
-];
-
 /**
  * `linha.rotulo` já chega como o literal do tipo (ex. `"duplicado"`): o
  * domínio preenche `rotulos: [tipo]`, e o `join(" / ")` de 1 elemento
  * devolve o próprio elemento.
  */
 function EtiquetaOuTexto({ rotulo }: { rotulo: string }) {
-  return TIPOS_CONHECIDOS.includes(rotulo) ? (
-    <EtiquetaTipo tipo={rotulo as TipoDivergencia} />
+  return ehTipoDivergencia(rotulo) ? (
+    <EtiquetaTipo tipo={rotulo} />
   ) : (
     <>{rotulo}</>
   );
 }
 
 function linkDoTipo(rotulo: string): string | null {
-  return TIPOS_CONHECIDOS.includes(rotulo)
+  return ehTipoDivergencia(rotulo)
     ? `/?tipo=${encodeURIComponent(rotulo)}`
     : null;
 }
@@ -392,13 +385,6 @@ export function BlocoTempoMedio({ bloco }: { bloco: BlocoIndicador }) {
 // Pago × devido
 // ---------------------------------------------------------------------------
 
-const ROTULOS_SITUACAO: Record<string, string> = {
-  sem_pagamento: "Sem pagamento",
-  parcial: "Parcial",
-  quitado: "Quitado",
-  excedente: "Pago a mais",
-};
-
 /**
  * Bloco "Pago × devido" (`valorPagoVsDevido`). A linha "Total" dá os dois
  * valores em destaque e o % da fórmula (numerador ÷ denominador, não o
@@ -470,7 +456,7 @@ export function BlocoPagoVsDevido({ bloco }: { bloco: BlocoIndicador }) {
           >
             {situacoes.map((linha) => (
               <tr key={linha.rotulo}>
-                <td>{ROTULOS_SITUACAO[linha.rotulo] ?? linha.rotulo}</td>
+                <td>{rotuloSituacaoPagamento(linha.rotulo)}</td>
                 <td className="num">{formatarMoedaCompacta(linha.numerador)}</td>
                 <td className="num">
                   {formatarMoedaCompacta(linha.denominador)}

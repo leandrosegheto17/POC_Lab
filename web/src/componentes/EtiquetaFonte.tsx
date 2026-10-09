@@ -1,6 +1,9 @@
 import "./Etiquetas.css";
 
-export type Fonte = "vendas" | "pagamentos" | "rastreio";
+import { rotuloFonte, type Fonte } from "../dados/rotulos.ts";
+
+export { rotuloFonte };
+export type { Fonte };
 
 type EtiquetaFonteProps = {
   fonte: Fonte;
@@ -12,25 +15,11 @@ type EtiquetaFonteProps = {
   variante?: "selo";
 };
 
-// TP-0054 — rótulo em português para cada fonte de dados. "rastreio" nunca
-// é exibido literalmente ao usuário: a fonte de rastreio é apresentada pelo
-// nome do papel de negócio ("Transportadora").
-const ROTULOS: Record<Fonte, string> = {
-  vendas: "Vendas",
-  pagamentos: "Pagamentos",
-  rastreio: "Transportadora",
-};
-
-/** Texto da fonte, para quem só precisa do rótulo (sem a etiqueta). */
-export function rotuloFonte(fonte: Fonte): string {
-  return ROTULOS[fonte];
-}
-
 export function EtiquetaFonte({ fonte, variante }: EtiquetaFonteProps) {
   const classe =
     variante === "selo"
       ? `etiqueta-fonte etiqueta-fonte--selo etiqueta-fonte--${fonte}`
       : "etiqueta-fonte";
 
-  return <span className={classe}>{ROTULOS[fonte]}</span>;
+  return <span className={classe}>{rotuloFonte(fonte)}</span>;
 }
