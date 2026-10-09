@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-09 04:21
+Atualizado: 2026-10-09 04:32
 
-Resumo: Não executada 5 · Executada (aguarda teste) 8 · Em teste 1 · Testada (aguarda segurança) 6 · Aprovada 156 · total 176
+Resumo: Não executada 8 · Testada (aguarda segurança) 15 · Aprovada 156 · total 179
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -175,17 +175,20 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 160 | RTP-0074 | executor | ✔ | Comentário de plantarCasosPagamento sem a linha quebrada | Refatoração Revisão 2026-10-08 | RTP-0055 | Testada (aguarda segurança) |
 | 161 | RTP-0075 | executor | ✔ | Teste das listas do domínio cobre também o z.enum de TIPOS_ACHADO | Refatoração Revisão 2026-10-08 | RTP-0056 | Testada (aguarda segurança) |
 | 162 | RTP-0076 | executor | ✔ | Teste de foco após erro de paginação sem falha intermitente | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
-| 163 | RTP-0077 | executor | ✔ | Mover VALOR_TODOS para dados/rotulos e tirar a importacao nav para componentes | Refatoração Revisão 2026-10-08 | RTP-0061 | Em teste |
-| 164 | RTP-0078 | executor | ✔ | Corrigir espaco perdido em SITUACOES_PAGAMENTO em dados/rotulos.ts | Refatoração Revisão 2026-10-08 | — | Executada (aguarda teste) |
-| 165 | RTP-0079 | executor | ✔ | Atualizar comentário de test/casca.test.tsx que cita o casca.css removido | Refatoração Revisão 2026-10-08 | — | Executada (aguarda teste) |
-| 166 | RTP-0080 | executor | ✔ | Extrair para fábricas os trechos de teste ainda repetidos em web/test (linha-do-tempo W... | Refatoração Revisão 2026-10-08 | — | Executada (aguarda teste) |
-| 167 | RTP-0081 | executor | ✔ | Remover imports não usados deixados nos testes do processamento após extração das fábricas | Refatoração Revisão 2026-10-08 | — | Executada (aguarda teste) |
-| 168 | RTP-0082 | executor | ✔ | Enxugar o cabeçalho de eslint.config.js (nota de interpretação longa) e a linha em bran... | Refatoração Revisão 2026-10-08 | — | Executada (aguarda teste) |
-| 169 | RTP-0083 | executor | ✔ | Fechar brechas da checagem G-05: identificador entre aspas, REPLACE e ON CONFLICT DO UP... | Refatoração Revisão 2026-10-08 | — | Executada (aguarda teste) |
-| 170 | RTP-0084 | executor | ✔ | Apertar checagens G-17 e G-22: lista permitida por pacote, optional/peer deps e outros... | Refatoração Revisão 2026-10-08 | — | Executada (aguarda teste) |
-| 171 | RTP-0085 | executor | ✔ | Limitar tamanho dos textos de EsquemaSugestaoIA (contrato) e testar descarte de item gr... | Refatoração Revisão 2026-10-08 | — | Executada (aguarda teste) |
+| 163 | RTP-0077 | executor | ✔ | Mover VALOR_TODOS para dados/rotulos e tirar a importacao nav para componentes | Refatoração Revisão 2026-10-08 | RTP-0061 | Testada (aguarda segurança) |
+| 164 | RTP-0078 | executor | ✔ | Corrigir espaco perdido em SITUACOES_PAGAMENTO em dados/rotulos.ts | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 165 | RTP-0079 | executor | ✔ | Atualizar comentário de test/casca.test.tsx que cita o casca.css removido | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 166 | RTP-0080 | executor | ✔ | Extrair para fábricas os trechos de teste ainda repetidos em web/test (linha-do-tempo W... | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 167 | RTP-0081 | executor | ✔ | Remover imports não usados deixados nos testes do processamento após extração das fábricas | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 168 | RTP-0082 | executor | ✔ | Enxugar o cabeçalho de eslint.config.js (nota de interpretação longa) e a linha em bran... | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 169 | RTP-0083 | executor | ✔ | Fechar brechas da checagem G-05: identificador entre aspas, REPLACE e ON CONFLICT DO UP... | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 170 | RTP-0084 | executor | ✔ | Apertar checagens G-17 e G-22: lista permitida por pacote, optional/peer deps e outros... | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
+| 171 | RTP-0085 | executor | ✔ | Limitar tamanho dos textos de EsquemaSugestaoIA (contrato) e testar descarte de item gr... | Refatoração Revisão 2026-10-08 | — | Testada (aguarda segurança) |
 | 172 | RTP-0086 | executor | ✔ | Registrar no ADR-004 a regra de convergência de identidade de pedido | Refatoração Revisão 2026-10-08 | RTP-0071 | Não executada |
 | 173 | RTP-0087 | executor | ✔ | Investigar falha rara do teste de foco após erro de paginação (1 em 80 execuções) | Refatoração Revisão 2026-10-08 | RTP-0076 | Não executada |
-| 174 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Não executada |
-| 175 | BK-0004 | coordenador | ✔ | Decidir onde roda a marcação de pagamentos duplicados (RN-03) da tela T2: hoje Pedido.tsx | — | — | Não executada |
-| 176 | BK-0005 | coordenador | ✔ | Decidir como o D1 é trocado em produção e escrever a subseção Troca de dados em produção d | — | — | Não executada |
+| 174 | RTP-0088 | executor | ✔ | Extrair os pares de 10 linhas que restam em linha-do-tempo v1/v2 e nos testes de acessi... | Refatoração Revisão 2026-10-08 | RTP-0080 | Não executada |
+| 175 | RTP-0089 | executor | ✔ | Mensagem do teste g17 indicar a lista do pacote certo | Refatoração Revisão 2026-10-08 | RTP-0084 | Não executada |
+| 176 | RTP-0090 | executor | ✔ | Publicação da qualidade não pode abortar por texto de sugestão acima do limite | Refatoração Revisão 2026-10-08 | RTP-0085 | Não executada |
+| 177 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Não executada |
+| 178 | BK-0004 | coordenador | ✔ | Decidir onde roda a marcação de pagamentos duplicados (RN-03) da tela T2: hoje Pedido.tsx | — | — | Não executada |
+| 179 | BK-0005 | coordenador | ✔ | Decidir como o D1 é trocado em produção e escrever a subseção Troca de dados em produção d | — | — | Não executada |

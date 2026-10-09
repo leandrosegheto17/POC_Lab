@@ -464,3 +464,48 @@ APROVADA, 0 críticos e 0 não críticos; 8 testes do script e eslint ok, regex 
 
 ## RTP-0070 — QA — 2026-10-09
 APROVADA; 0 críticos, 2 não críticos (RTP-0083 brechas do G-05, RTP-0084 G-17/G-22 mais estritos); 20 testes novos passando, casos negativos acusam de fato; texto do GUARDRAILS e lista ampliada do G-17 aguardam o usuário.
+
+## RTP-0071 — QA — 2026-10-09
+APROVADA; 0 críticos, 1 não crítico (RTP-0086: ADR-004 não contém a regra citada no cabeçalho); importar.ts 290 linhas, 3/3 testes e tsc ok.
+
+## RTP-0072 — QA — 2026-10-09
+APROVADA; 0 críticos, 0 não críticos; preparar imprime a mensagem do passo 4 uma vez, CLI sugerir ainda imprime; 46 testes e tsc OK.
+
+## RTP-0073 — QA — 2026-10-09
+APROVADA; 0 críticos, 0 não críticos; saída com a mesma semente (12345 e 7) idêntica antes/depois por `cmp` nos 3 arquivos, 19 testes passando.
+
+## RTP-0074 — QA — 2026-10-09
+APROVADA; diff de 1 linha de comentário, tsc ok, 0 achados.
+
+## RTP-0075 — QA — 2026-10-09
+APROVADA; 0 achados; teste novo falha se o z.enum divergir da lista (valor faltando ou tipo aberto); vitest do arquivo 3/3.
+
+## RTP-0076 — QA — 2026-10-09
+APROVADA; 0 críticos, 1 não crítico (RTP-0087, falha rara 1/80); isolado 79/80, suíte web 398/398, asserção de foco preservada.
+
+## RTP-0077 — QA — 2026-10-09
+APROVADA; 0 críticos, 0 não críticos; tsc limpo e 398 testes do web passando, nav sem importação de componentes.
+
+## RTP-0078 — QA — 2026-10-09
+APROVADA; 0 críticos, 0 não críticos; diff de 1 linha (espaço), textos da tela inalterados, testes de rótulos e tsc passam.
+
+## RTP-0079 — QA — 2026-10-09
+APROVADA; diff só de comentário, 31 testes passando, 0 achados.
+
+## RTP-0080 — QA — 2026-10-09
+APROVADA; 0 críticos, 1 não crítico (RTP-0088: pares de 10 linhas restantes fora do aceite); 398 testes passando, contagem de casos por arquivo inalterada, tsc/eslint limpos.
+
+## RTP-0081 — QA — 2026-10-09
+APROVADA; 0 achados; pnpm lint global verde, tsc ok, 35 testes dos 5 arquivos passando, diff só remove imports.
+
+## RTP-0082 — QA — 2026-10-09
+APROVADA; 0 críticos, 0 não críticos; print-config idêntico antes/depois em 3 arquivos, pnpm lint e test/lint (6/6) passam.
+
+## RTP-0083 — QA — 2026-10-09
+APROVADA; 0 críticos, 0 não críticos; 24 testes passando, cada brecha do G-05 tem caso negativo e o repositório real passa; leitor de strings com regex gera só falso-positivo plausível.
+
+## RTP-0084 — QA — 2026-10-09
+APROVADA; 0 críticos, 1 não crítico (mensagem do g17 não orienta a lista do pacote, RTP-0089); g17 13 e g22 13 testes passando, lint limpo, listas batem com os package.json.
+
+## RTP-0085 — QA — 2026-10-09
+APROVADA; 0 críticos, 1 não crítico (RTP-0090: `parse` em `montarBlocoIa` aborta a publicação se `textoReferencia` > 600); web 398 verdes, tsc e vitest afetados verdes; limites cobrem os maiores textos reais (motivo ≤ ~400).
