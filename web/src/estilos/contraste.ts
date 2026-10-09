@@ -1,6 +1,5 @@
-// TP-0051 — Utilitário puro de contraste WCAG 2.x, extraído para reuso
-// (usado pelo teste em web/test/contraste.test.ts e, se necessário no
-// futuro, por qualquer código que precise validar contraste em runtime).
+// Utilitário puro de contraste WCAG 2.x, usado pelo teste em
+// web/test/contraste.test.ts.
 
 /** Converte uma cor hex (#rgb ou #rrggbb) em componentes [r, g, b] 0-255. */
 export function hexParaRgb(hex: string): [number, number, number] {

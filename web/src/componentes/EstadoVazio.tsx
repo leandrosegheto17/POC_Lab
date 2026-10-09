@@ -8,7 +8,7 @@ type EstadoVazioProps = {
   };
 };
 
-// TP-0053 — estado vazio (sem resultados/sem itens). Sem `aria-live`/`role`
+// Estado vazio (sem resultados/sem itens). Sem `aria-live`/`role`
 // próprio: não há nada "ocorrendo" a anunciar, é um estado estático de tela.
 export function EstadoVazio({ mensagem, acao }: EstadoVazioProps) {
   return (

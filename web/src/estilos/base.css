@@ -1,4 +1,4 @@
-/* TP-0051 — CSS base do Modelo B: reset mínimo, fundo/texto, links
+/* CSS base do Modelo B: reset mínimo, fundo/texto, links
  * sublinhados, foco visível de 3px com afastamento, utilitário de números
  * tabulares. */
 
@@ -55,7 +55,7 @@ a:hover {
   font-variant-numeric: tabular-nums;
 }
 
-/* UX-SPEC §3 (mockup à risca, 2026-10-08) — títulos do Modelo B. */
+/* UX-SPEC §3 — títulos do Modelo B. */
 h1 {
   font-family: var(--fonte-texto);
   font-weight: 800;

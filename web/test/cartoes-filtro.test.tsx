@@ -1,7 +1,7 @@
 // `CartoesResumo`/`FiltroTipo`: 4 cartões (percentual/moeda) com
 // "—"/"indisponível agora" sem resumo; chips em `<fieldset>`/`<legend>`
 // com contagem vinda de `porTipo` só em sucesso (e soma em "Todos"),
-// seleção via `checked` + classe (sem "✓", ajuste Modelo B 2026-10-08), e
+// seleção via `checked` + classe (sem "✓"), e
 // `onChange` chamando `aoMudar` com o tipo certo.
 //
 // Nota: jsdom não aplica o CSS, então o nome acessível dos rádios inclui os

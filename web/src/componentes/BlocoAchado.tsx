@@ -44,7 +44,7 @@ function Referencia({ exemplo }: { exemplo: ExemploAchado }) {
   );
 }
 
-// TP-0064 (ajuste Modelo B, 2026-10-08) — cartão de um tipo de achado de
+// Cartão de um tipo de achado de
 // qualidade na forma PC da T4: h2 + contagem à direita, regra na caixa de
 // fórmula e, quando há casos (`contagem > 0`), os exemplos que a API mandar
 // (até 10) numa tabela compacta Fonte | Referência | Detalhe. `contagem ===
@@ -94,7 +94,7 @@ type BlocoAchadoCelularProps = BlocoAchadoProps & {
   aberto?: boolean;
 };
 
-// Ajuste Modelo B (2026-10-08) — o mesmo achado na forma do celular: um
+// O mesmo achado na forma do celular: um
 // <details> com o <h2> dentro do <summary> (mantém a hierarquia de títulos)
 // e a contagem à direita; no corpo, a regra e os exemplos em linhas
 // (referência à esquerda, detalhe à direita).

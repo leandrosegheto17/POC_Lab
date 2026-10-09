@@ -1,6 +1,5 @@
-// TP-0058 — Cartões de resumo: 4 indicadores agregados vindos de
-// `useResumo()` (mesmo contexto da TP-0056/FaixaResumo, sem chamada de rede
-// própria). Enquanto a consulta carrega ou falha, cada cartão mostra "—"
+// Cartões de resumo: 4 indicadores agregados vindos de `useResumo()` (mesmo
+// contexto da FaixaResumo, sem chamada de rede própria). Enquanto a consulta carrega ou falha, cada cartão mostra "—"
 // + "indisponível agora" — nunca `role="alert"`/`aria-live`, nunca a
 // mensagem técnica do erro, mesmo padrão de silêncio de `FaixaResumo`.
 //
@@ -8,7 +7,7 @@
 // (processamento/contrato/resumo.ts) por `formatarPercentual`; com
 // denominador 0 o cartão mostra "—"/"indisponível agora", nunca "NaN%".
 //
-// Ajuste Modelo B (2026-10-08, mockup à risca): cartões `.kpi` dentro de
+// Cartões `.kpi` dentro de
 // `.kpis` (painel.css). Moeda em destaque compacta ("R$ 65,4 mi") com o
 // valor exato na linha de base. No celular só ficam "Em aberto" e "Pago a
 // mais", com rótulo curto e sem linha de base (CartoesResumo.css).

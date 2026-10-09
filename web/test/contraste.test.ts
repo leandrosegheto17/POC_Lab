@@ -57,7 +57,7 @@ describe("contraste WCAG dos tokens do Modelo B", () => {
 
   // cor-borda-controle (#39434f, ~1,9:1) e cor-borda-chip (#263040,
   // ~1,4:1) SAEM do laço ">= 3:1": desvio aceito pelo usuário em
-  // 2026-10-08 (mockup à risca). O teste abaixo só registra os valores
+  // 2026-10-08 para seguir o mockup. O teste abaixo só registra os valores
   // aprovados, para que uma troca acidental seja percebida.
   it("cor-borda-controle e cor-borda-chip têm os valores do mockup (desvio aceito)", () => {
     expect(obterToken("cor-borda-controle")).toBe("#39434f");

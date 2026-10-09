@@ -1,9 +1,9 @@
-// TP-0056 — Contexto do resumo: consulta `/api/v1/resumo` UMA ÚNICA VEZ por
+// Contexto do resumo: consulta `/api/v1/resumo` UMA ÚNICA VEZ por
 // carga do app (a URL passada a `useConsulta` é a constante `URL_RESUMO`,
 // que nunca muda, então o efeito interno de `useConsulta` dispara só na
 // montagem) e compartilha o resultado entre todos os consumidores via
 // `ProvedorResumo`/`useResumo` — evita que cada componente que precise do
-// resumo (faixa, busca, cartões futuros) dispare sua própria chamada.
+// resumo (faixa, busca, cartões) dispare sua própria chamada.
 import { createContext, useContext, type ReactNode } from "react";
 import { EsquemaResumo, type Resumo } from "processamento/contrato/resumo.js";
 import { useConsulta, type EstadoConsulta } from "./use-consulta.ts";

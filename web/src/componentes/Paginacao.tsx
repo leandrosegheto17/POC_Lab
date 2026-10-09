@@ -5,19 +5,18 @@ type PaginacaoProps = {
   totalPaginas: number;
   aoMudarPagina: (pagina: number) => void;
   carregando?: boolean;
-  /** Ajuste Modelo B (2026-10-08): texto à esquerda no PC, ex. "1–50 de 8.856". */
+  /** Texto à esquerda no PC, ex. "1–50 de 8.856". */
   resumo?: string;
 };
 
 type ItemPagina = number | "reticencias";
 
-// TP-0054 — heurística de truncamento da lista de páginas: com até 7
+// Heurística de truncamento da lista de páginas: com até 7
 // páginas, lista todas (1..totalPaginas). Acima disso, mostra sempre a
 // primeira e a última página, mais a página atual e suas vizinhas
 // imediatas (atual-1, atual, atual+1), inserindo "…" nos saltos — evita uma
 // lista longa demais sem esconder o início/fim nem a posição atual.
-// Ajuste Modelo B (2026-10-08): na página 1 mostra também a 3 ("1 2 3 … 40",
-// como o mockup).
+// Na página 1 mostra também a 3 ("1 2 3 … 40", como o mockup).
 function gerarItensDePagina(
   pagina: number,
   totalPaginas: number,
@@ -53,7 +52,7 @@ function gerarItensDePagina(
   return itens;
 }
 
-// TP-0054 — navegação de paginação acessível, com duas formas de
+// Navegação de paginação acessível, com duas formas de
 // apresentação alternadas por CSS (sem JS/matchMedia):
 //   - `.paginacao-completa`: lista numerada de páginas, visível >= 640px.
 //   - `.paginacao-compacta`: "Página N de M" + Anterior/Próxima, < 640px.

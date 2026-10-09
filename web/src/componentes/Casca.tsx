@@ -4,24 +4,23 @@ import { NavegacaoPrincipal } from "./NavegacaoPrincipal.tsx";
 import { LogoMarca } from "./LogoMarca.tsx";
 
 type CascaProps = {
-  // TP-0056 — a FaixaResumo entra aqui, dentro de `.casca__barra`.
+  // A FaixaResumo entra aqui, dentro de `.casca__barra`.
   slotResumo?: ReactNode;
-  // TP-0057 — o CampoBusca entra aqui, dentro de `.casca__barra`, entre a
-  // logo e a navegação.
+  // O CampoBusca entra aqui, dentro de `.casca__barra`, entre a logo e a
+  // navegação.
   slotBusca?: ReactNode;
-  // Ajuste Modelo B (2026-10-08) — "simples" é a casca da T5 (página não
+  // "simples" é a casca da T5 (página não
   // encontrada): sem busca, sem faixa e navegação sem ícones (quem decide
   // não passar os slots é Rotas.tsx). No celular continua com a barra de
   // abas.
   variante?: "completa" | "simples";
 };
 
-// TP-0055 (reestruturado para bater com o mockup/Modelo B) — casca do app:
-// link "Pular para o conteúdo", a barra única (`.casca__barra`, logo +
-// busca + navegação + faixa de resumo) e a área principal onde cada rota
-// renderiza via <Outlet/>.
+// Casca do app: link "Pular para o conteúdo", a barra única
+// (`.casca__barra`, logo + busca + navegação + faixa de resumo) e a área
+// principal onde cada rota renderiza via <Outlet/>.
 //
-// Não há mais um <header> de largura cheia acima do conteúdo: logo, busca,
+// Não há <header> de largura cheia acima do conteúdo: logo, busca,
 // NavegacaoPrincipal (único <nav> do DOM) e FaixaResumo são os MESMOS 4
 // elementos em qualquer largura de tela, só reagrupados visualmente por
 // CSS (ver casca-*.css):

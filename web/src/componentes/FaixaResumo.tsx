@@ -1,10 +1,10 @@
-// TP-0056 — Faixa de resumo: texto estático na barra lateral/cabeçalho da
+// Faixa de resumo: texto estático na barra lateral/cabeçalho da
 // Casca (via slotResumo). Enquanto carrega ou se a consulta falhar, mostra
 // só "Dados sintéticos" — sem aria-live, sem role="alert", sem expor
 // nenhum detalhe técnico do erro. Em sucesso, acrescenta a data de corte e
 // o total de pedidos.
 //
-// Ajuste Modelo B (2026-10-08): três <span> separados por "·" (aria-hidden).
+// Três <span> separados por "·" (aria-hidden).
 // PC: três linhas encostadas embaixo, separadores ocultos. Celular: uma
 // linha "dados sintéticos · 1998-05-06" à direita do logo, total oculto
 // (ver casca-*.css).

@@ -1,8 +1,8 @@
-// TP-0052 — Cliente de API do frontend: `fetch` com tempo limite, validação
+// Cliente de API do frontend: `fetch` com tempo limite, validação
 // do corpo pelo esquema do contrato e tradução para um resultado que nunca
 // expõe `detail`/status/corpo bruto ao usuário.
 //
-// `EsquemaErro` vem de `processamento/src/contrato/erro.ts` (TP-0029),
+// `EsquemaErro` vem de `processamento/src/contrato/erro.ts`,
 // importado via especificador de pacote (`processamento/contrato/erro.js`),
 // resolvido pelo campo `exports` de `processamento/package.json` através do
 // symlink do workspace (`web/package.json` declara

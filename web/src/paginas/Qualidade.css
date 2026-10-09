@@ -1,4 +1,4 @@
-/* T4 — Qualidade dos dados (ajuste Modelo B, mockup à risca, 2026-10-08).
+/* T4 — Qualidade dos dados.
  * A página renderiza duas formas e alterna por CSS (breakpoint 1024px):
  * - PC: mini-cartões-âncora + um cartão por achado com tabela de exemplos;
  * - celular: um <details> por achado (o primeiro aberto), exemplos em linhas.

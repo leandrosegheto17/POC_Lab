@@ -1,4 +1,4 @@
-// Ajuste Modelo B (2026-10-08) — formatação pt-BR do web (dados/formatacao.ts).
+// Formatação pt-BR do web (dados/formatacao.ts).
 import { describe, expect, it } from "vitest";
 import {
   formatarData,

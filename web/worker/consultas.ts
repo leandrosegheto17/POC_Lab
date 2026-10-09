@@ -1,7 +1,7 @@
-// Lote 9 — Consultas ao D1 (tabelas de leitura publicadas pelo processamento,
+// Consultas ao D1 (tabelas de leitura publicadas pelo processamento,
 // SDD §5). Todas usam `prepare(CONSTANTE).bind(...)` com parâmetros
 // posicionais — nunca concatenação/interpolação de valor em string SQL
-// (G-08). Este arquivo é compartilhado pelas rotas TP-0046 a TP-0050.
+// (G-08). Este arquivo é compartilhado pelas rotas da API.
 
 type LinhaDocumento = { conteudo: string };
 
@@ -35,7 +35,7 @@ type LinhaDivergenciaDb = {
 
 /**
  * Documento publicado por chave (`resumo` | `indicadores` | `qualidade`,
- * TP-0039/TP-0038). `chave` é sempre um literal fixo no código de quem
+ * publicados pelo processamento). `chave` é sempre um literal fixo no código de quem
  * chama, nunca vem da requisição — sem superfície de injeção aqui.
  */
 export async function buscarDocumento(
@@ -51,8 +51,8 @@ export async function buscarDocumento(
 
 /**
  * Resolve um código (já normalizado) + o resumo do pedido numa única
- * consulta (`JOIN` de `vinculo_codigo` com `pedido_resumo`) — TP-0048 exige
- * "≤ 2 consultas" no total para a rota de linha do tempo; esta função cobre
+ * consulta (`JOIN` de `vinculo_codigo` com `pedido_resumo`) — a rota de
+ * linha do tempo usa no máximo 2 consultas no total; esta função cobre
  * a 1ª (resolução + resumo juntos).
  */
 export async function resolverPedidoComResumo(
@@ -84,7 +84,7 @@ export async function listarLinhaDoTempo(
   return resultado.results;
 }
 
-/** Divergências de um pedido (usadas pela rota de linha do tempo, TP-0048). */
+/** Divergências de um pedido (usadas pela rota de linha do tempo). */
 export async function listarDivergenciasDoPedido(
   db: D1Database,
   idPedido: string,
@@ -96,7 +96,7 @@ export async function listarDivergenciasDoPedido(
   return resultado.results;
 }
 
-/** Total de divergências, opcionalmente filtrado por tipo (TP-0047). */
+/** Total de divergências, opcionalmente filtrado por tipo. */
 export async function contarDivergencias(
   db: D1Database,
   tipo?: string,
@@ -115,7 +115,7 @@ export async function contarDivergencias(
 /**
  * Página de divergências, ordenada por `(id_pedido, tipo)` — mesma ordem
  * tanto filtrada por tipo quanto em "Todos" (L-11), usa o índice
- * `(id_pedido, tipo)` da tabela `divergencia` (TP-0032).
+ * `(id_pedido, tipo)` da tabela `divergencia`.
  */
 export async function listarDivergencias(
   db: D1Database,

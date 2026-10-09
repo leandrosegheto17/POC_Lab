@@ -1,5 +1,4 @@
-/* TP-0054 / ajuste Modelo B (2026-10-08, mockup à risca) — estilos de
- * EtiquetaTipo, EtiquetaEstado e EtiquetaFonte. Só tokens de tokens.css. */
+/* Estilos de EtiquetaTipo, EtiquetaEstado e EtiquetaFonte. Só tokens de tokens.css. */
 
 .etiqueta {
   display: inline-block;
@@ -54,8 +53,7 @@
   border-color: var(--etq-sem-divergencia-borda);
 }
 
-/* Classes antigas (TP-0054), ainda usadas por telas que não migraram para
- * EtiquetaEstado; apontam para as paletas novas. */
+/* Classes com nomes antigos; apontam para as paletas atuais. */
 .etiqueta--quitado {
   color: var(--etq-quitado-texto);
   background: var(--etq-quitado-fundo);

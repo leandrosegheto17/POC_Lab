@@ -128,7 +128,7 @@ function escolherData(valor: string) {
   fireEvent.change(campo, { target: { value: valor } });
 }
 
-// Ajuste Modelo B (2026-10-08): a frase fica dentro do cartão do
+// A frase fica dentro do cartão do
 // `SeletorData`, com a data em `<span class="mono">` — por isso o texto é
 // conferido no parágrafo inteiro, não com `getByText` (que só olha o texto
 // próprio de cada elemento).

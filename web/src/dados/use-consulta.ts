@@ -1,4 +1,4 @@
-// TP-0052 — Gancho `useConsulta`: dispara `consultarApi` quando a URL muda,
+// Gancho `useConsulta`: dispara `consultarApi` quando a URL muda,
 // cancelando a chamada anterior (troca de URL ou desmonte) e nunca
 // deixando uma resposta cancelada atualizar o estado.
 import { useEffect, useState } from "react";

@@ -1,5 +1,4 @@
-/* TP-0054 / ajuste Modelo B (2026-10-08, mockup à risca) — estilos da
- * Paginacao. Alternância entre forma completa e compacta é feita só por
+/* Estilos da Paginacao. Alternância entre forma completa e compacta é feita só por
  * CSS (@media), nunca via JS/matchMedia. */
 
 .paginacao {

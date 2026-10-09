@@ -1,4 +1,4 @@
-// Ajuste Modelo B (2026-10-08) — formatação pura, pt-BR, usada pelas telas
+// Formatação pura, pt-BR, usada pelas telas
 // do web. Não importa de `processamento/src/dominio/formatacao.ts` (o web
 // formata só o que exibe; o texto gerado no processamento chega pronto).
 

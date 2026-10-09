@@ -8,9 +8,8 @@ export type { Fonte };
 type EtiquetaFonteProps = {
   fonte: Fonte;
   /**
-   * Ajuste Modelo B (2026-10-08): "selo" é o selo colorido em caixa alta
-   * do celular (T2), com as cores `--fonte-<fonte>-*`. Sem variante, mantém
-   * a etiqueta neutra de antes.
+   * "selo" é o selo colorido em caixa alta do celular (T2), com as cores
+   * `--fonte-<fonte>-*`. Sem variante, é a etiqueta neutra.
    */
   variante?: "selo";
 };

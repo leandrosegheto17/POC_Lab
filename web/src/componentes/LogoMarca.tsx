@@ -1,4 +1,4 @@
-// TP-0055 (ajuste pós-mockup) — marca do produto: selo "P" decorativo
+// Marca do produto: selo "P" decorativo
 // (aria-hidden) + nome "POC_Lab" + subtítulo "conciliação de pedidos", como
 // no topo da barra lateral do mockup (Modelo B). Elemento puramente
 // apresentacional — sem link, sem campo focável —, então a posição dele no

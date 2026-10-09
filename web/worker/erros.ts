@@ -1,7 +1,7 @@
-// TP-0042 — Erros centrais da API (RFC 9457 / application/problem+json).
+// Erros centrais da API (RFC 9457 / application/problem+json).
 //
-// `EsquemaErro`/`CodigoErro` vêm de `processamento/src/contrato/erro.ts`
-// (TP-0029), importados via especificador de pacote
+// `EsquemaErro`/`CodigoErro` vêm de `processamento/src/contrato/erro.ts`,
+// importados via especificador de pacote
 // (`processamento/contrato/erro.js`), resolvido pelo campo `exports` de
 // `processamento/package.json` através do symlink do workspace
 // (`web/package.json` declara `"processamento": "workspace:*"`). Isso NÃO
@@ -89,8 +89,7 @@ interface ResultadoValidacaoZod {
  * (campo + mensagem) extraído dos issues do zod. Em caso de sucesso, não
  * devolve nada (deixa o Hono seguir o fluxo normal).
  *
- * Nenhuma rota real usa este hook ainda — rotas de negócio são escopo do
- * Lote 9 (TP-0042 só prepara o auxiliar). Uso esperado futuro:
+ * Uso:
  *
  * ```ts
  * app.get('/api/pedidos', zValidator('query', esquema, hookValidacaoZod), (c) => { ... })

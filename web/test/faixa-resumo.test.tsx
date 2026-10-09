@@ -56,7 +56,7 @@ describe("FaixaResumo — estado de sucesso", () => {
       </ProvedorResumo>,
     );
 
-    // Ajuste Modelo B (2026-10-08): o texto fica dividido em <span> (data em
+    // O texto fica dividido em <span> (data em
     // mono, separadores aria-hidden), então conferimos o texto do <p>.
     await waitFor(() => {
       expect(document.querySelector(".faixa-resumo")?.textContent).toBe(

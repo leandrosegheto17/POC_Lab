@@ -1,7 +1,6 @@
 // Testes do handler `GET /api/v1/resumo`. Monta uma instância
-// `Hono()` LOCAL (não a `app` de `web/worker/index.ts`, que ainda não
-// registra esta rota — isso é feito pelo orquestrador junto com as demais
-// rotas paralelas).
+// `Hono()` LOCAL (não a `app` de `web/worker/index.ts`), para isolar o
+// handler.
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 

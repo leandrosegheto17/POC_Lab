@@ -8,7 +8,7 @@ type EtiquetaEstadoProps = {
   children: ReactNode;
 };
 
-// Ajuste Modelo B (2026-10-08) — etiqueta de estado com texto livre
+// Etiqueta de estado com texto livre
 // ("duplicado", "fora de ordem", "no prazo", "atrasada", "Aceita",
 // "Rejeitada"...). Reaproveita as paletas das etiquetas de tipo:
 //   ok     -> sem divergência (verde)

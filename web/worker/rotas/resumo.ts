@@ -1,8 +1,6 @@
-// TP-0046 — Rota pretendida: `GET /api/v1/resumo` (e `HEAD`, derivado
-// automaticamente pelo Hono a partir do GET). Este arquivo só exporta o
-// handler — o registro em `web/worker/index.ts` (`app.get('/api/v1/resumo',
-// handlerResumo)`) é feito pelo orquestrador junto com as demais rotas do
-// Lote 9 (TP-0046 a TP-0050), numa única edição sequencial.
+// Rota `GET /api/v1/resumo` (e `HEAD`, derivado automaticamente pelo Hono a
+// partir do GET). Este arquivo só exporta o handler — o registro fica em
+// `web/worker/index.ts` (`app.get('/api/v1/resumo', handlerResumo)`).
 import type { Context } from "hono";
 import { EsquemaResumo } from "processamento/contrato/resumo.js";
 
@@ -10,7 +8,7 @@ import { buscarDocumento } from "../consultas.js";
 import { problema } from "../erros.js";
 
 /**
- * `GET /api/v1/resumo`: lê o documento `resumo` publicado (TP-0039) via
+ * `GET /api/v1/resumo`: lê o documento `resumo` publicado via
  * `buscarDocumento` e devolve após validar contra `EsquemaResumo`.
  *
  * Documento ausente (`null`) → 500 `erro_interno` (publicação nunca correu

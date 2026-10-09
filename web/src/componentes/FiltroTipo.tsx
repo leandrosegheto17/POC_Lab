@@ -1,16 +1,16 @@
-// TP-0058 — Filtro de tipo de divergência em chips: rádio nativo dentro de
+// Filtro de tipo de divergência em chips: rádio nativo dentro de
 // `<fieldset>`/`<legend>`, controlado via props (não lê/escreve a URL —
-// isso é responsabilidade de outra tarefa que vai compor este componente).
+// isso é responsabilidade da página que compõe este componente).
 // Usa `useResumo()` só para exibir a contagem de cada tipo
 // (`resumo.totais.porTipo`); nenhuma chamada de API própria.
 //
 // Decisão sobre o valor de "Todos": usamos a string `"todos"` (não `""`),
 // documentada aqui — evita ambiguidade entre "nenhum filtro selecionado" e
-// "string vazia" quando este componente for ligado a um estado de URL por
-// outra tarefa; `"todos"` é um valor explícito e autoexplicativo tanto no
+// "string vazia" quando este componente é ligado a um estado de URL;
+// `"todos"` é um valor explícito e autoexplicativo tanto no
 // código quanto numa eventual querystring.
 //
-// Ajuste Modelo B (2026-10-08, mockup à risca): rádio nativo visível no PC
+// Rádio nativo visível no PC
 // (oculto no celular, onde o chip vira pílula com rolagem horizontal);
 // contagem em <b> com milhar, separada por espaço, inclusive em "Todos"
 // (soma de `porTipo`); sem "✓". Rótulo longo (PC) e curto (celular) em

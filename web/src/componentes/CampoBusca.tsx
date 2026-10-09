@@ -1,17 +1,16 @@
 import { useState, type SyntheticEvent } from "react";
 import { useNavigate } from "react-router";
 
-// TP-0057 — campo de busca de pedido. Montado UMA ÚNICA VEZ no DOM, dentro
-// do slot `slotBusca` de Casca.tsx (ver TP-0055); a disposição visual
+// Campo de busca de pedido. Montado UMA ÚNICA VEZ no DOM, dentro do slot
+// `slotBusca` de Casca.tsx; a disposição visual
 // diferente entre o menu lateral (>=1024px) e o cabeçalho do celular
 // (<1024px) é resolvida inteiramente por CSS/@media sobre este MESMO
 // elemento — nunca duas instâncias.
 //
-// Fora de escopo aqui: resolver o código do pedido contra a API — isso é
-// da tela T2 (Lote 13), que lê o parâmetro `:codigo` da rota
-// `/pedido/:codigo` depois da navegação feita neste componente.
+// Este componente não resolve o código do pedido contra a API — isso é da
+// tela T2, que lê o parâmetro `:codigo` da rota `/pedido/:codigo` depois da
+// navegação feita aqui.
 //
-// Ajuste Modelo B (2026-10-08):
 // - variante "barra" (padrão, casca): no PC rótulo visível + input mono +
 //   botão quadrado só com a lupa (`aria-label="Buscar"`); no celular o
 //   rótulo fica `.visualmente-oculto` por CSS (mesmo elemento <label>).

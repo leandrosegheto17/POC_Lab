@@ -4,7 +4,7 @@ import tseslint from "typescript-eslint";
 import reactPlugin from "eslint-plugin-react";
 
 /**
- * TP-0002 — ESLint 9 (flat config) com fronteiras de módulo e proibições.
+ * ESLint 9 (flat config) com fronteiras de módulo e proibições.
  *
  * Fronteiras do SDD §2 (tabela de componentes + "Regra de dependência") e
  * GUARDRAILS G-02/G-03/G-04/G-12:
@@ -19,9 +19,7 @@ import reactPlugin from "eslint-plugin-react";
  *   - SQL        -> `prepare(` nunca recebe template literal com expressão
  *                   nem concatenação (prevenção de SQL injection, G-08).
  *
- * `web/` ainda não tem conteúdo real (TP-0003 cria o esqueleto em paralelo);
- * as regras abaixo são escritas contra os caminhos esperados mesmo vazios —
- * glob sem arquivo correspondente simplesmente não ativa nenhuma regra.
+ * Glob sem arquivo correspondente simplesmente não ativa nenhuma regra.
  *
  * Nota de interpretação (pequeno detalhe de implementação, não desvio de
  * escopo): o aceite diz "...importarem além de dominio e contrato ou
@@ -44,7 +42,7 @@ import reactPlugin from "eslint-plugin-react";
 const SELETOR_PREPARE =
   ':matches(CallExpression[callee.name="prepare"], CallExpression[callee.property.name="prepare"])';
 
-// RTP-0046: o gabarito se chama `problemas-plantados.json` (o nome antigo
+// O gabarito se chama `problemas-plantados.json` (o nome antigo
 // `gabarito*` continua barrado). A regra trata de LER/CITAR o gabarito fora de
 // test/; o gerador, o caso de uso `gerar` e a configuração de caminhos, que o
 // ESCREVEM/nomeiam (GERACAO abaixo)
@@ -218,17 +216,16 @@ export default tseslint.config(
               message: "web/worker não importa node:* fora de test/ (G-03).",
             },
             {
-              // Nota (verificação 2026-10-08): o pacote `ignore` (usado pelo
-              // ESLint para `no-restricted-imports`/`group`) segue a mesma
-              // semântica do .gitignore: um padrão sem barra como
-              // "processamento" trata o nome como um ancestral inteiramente
-              // ignorado, e um ancestral ignorado não pode ser
-              // "reincluído" por negação de um filho (mesma regra do
-              // .gitignore: "it is not possible to re-include a file if a
-              // parent directory of that file is excluded"). Isso fazia a
-              // negação de `processamento/contrato/**` nunca valer para
-              // imports reais como `processamento/contrato/erro.js` — a
-              // entrada bare "processamento" foi removida por isso.
+              // O pacote `ignore` (usado pelo ESLint para
+              // `no-restricted-imports`/`group`) segue a semântica do
+              // .gitignore: um padrão sem barra como "processamento" trata
+              // o nome como um ancestral inteiramente ignorado, e um
+              // ancestral ignorado não pode ser "reincluído" por negação de
+              // um filho ("it is not possible to re-include a file if a
+              // parent directory of that file is excluded"). Por isso a
+              // entrada bare "processamento" não entra no grupo: ela
+              // impediria a negação de `processamento/contrato/**` de
+              // valer para imports como `processamento/contrato/erro.js`.
               group: [
                 "**/processamento/src/*",
                 "!**/processamento/src/dominio",

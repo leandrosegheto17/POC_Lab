@@ -56,7 +56,7 @@ describe("CampoBusca — estrutura", () => {
   });
 });
 
-describe("CampoBusca — variantes (ajuste Modelo B, 2026-10-08)", () => {
+describe("CampoBusca — variantes", () => {
   it('variante "barra" (padrão): input type="search" e botão só com a lupa, nome "Buscar"', () => {
     const { getByRole, container } = renderCampo();
 

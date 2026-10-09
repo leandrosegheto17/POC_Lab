@@ -1,4 +1,4 @@
-// TP-0042 — Cabeçalhos de segurança/cache aplicados a toda resposta da API.
+// Cabeçalhos de segurança/cache aplicados a toda resposta da API.
 import type { MiddlewareHandler } from "hono";
 
 /**

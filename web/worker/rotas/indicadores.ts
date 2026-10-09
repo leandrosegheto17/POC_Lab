@@ -1,9 +1,7 @@
-// TP-0049 — Rota `GET /api/v1/indicadores`.
+// Rota `GET /api/v1/indicadores`.
 //
 // Este arquivo SÓ exporta o handler (`handlerIndicadores`) — o registro da
-// rota em `worker/index.ts` é feito pelo orquestrador depois, junto com as
-// demais rotas do lote (TP-0046 a TP-0050), para evitar conflito de edição
-// concorrente neste arquivo compartilhado.
+// rota fica em `worker/index.ts`.
 import type { Context } from "hono";
 
 import { EsquemaRespostaIndicadores } from "processamento/contrato/indicadores.js";
@@ -18,7 +16,7 @@ interface BindingsIndicadores {
 
 /**
  * Handler Hono de `GET /api/v1/indicadores`: lê o documento publicado
- * `indicadores` (TP-0039) e devolve a lista de blocos já validada contra
+ * `indicadores` e devolve a lista de blocos já validada contra
  * `EsquemaRespostaIndicadores`.
  *
  * Qualquer falha (documento ausente, JSON inválido, ou conteúdo fora do

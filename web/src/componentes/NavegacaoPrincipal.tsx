@@ -4,7 +4,7 @@ import { IconeIndicadores } from "./icones/IconeIndicadores.tsx";
 import { IconeQualidade } from "./icones/IconeQualidade.tsx";
 import { IconeExterno } from "./icones/IconeExterno.tsx";
 
-// TP-0055 — navegação principal do app: ÚNICO <nav> no DOM, em qualquer
+// Navegação principal do app: ÚNICO <nav> no DOM, em qualquer
 // rota. O CSS (estilos/casca-*.css) reposiciona este mesmo elemento como
 // menu lateral fixo em >=1024px ou como barra de abas inferior em
 // <1024px — a troca de layout é inteiramente via @media, nunca via JS.

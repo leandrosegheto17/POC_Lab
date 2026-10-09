@@ -2,8 +2,8 @@ import type { ReactNode, Ref } from "react";
 import "./TabelaDados.css";
 
 /**
- * Cabeçalho de coluna: texto simples ou objeto com opções (ajuste Modelo B,
- * 2026-10-08). `numerico` alinha à direita com números tabulares (`.num`);
+ * Cabeçalho de coluna: texto simples ou objeto com opções.
+ * `numerico` alinha à direita com números tabulares (`.num`);
  * `oculto` deixa o texto do `<th>` só para leitor de tela.
  */
 export type CabecalhoTabela =
@@ -22,7 +22,7 @@ type TabelaDadosProps = {
    * horizontal em telas estreitas. */
   rotuloRegiao?: string;
   /**
-   * Ref opcional para o `<caption>` (TP-0060) — usada por telas que
+   * Ref opcional para o `<caption>` — usada por telas que
    * precisam mover o foco de teclado para ele programaticamente (ex.: ao
    * trocar de página). Quando fornecida, o `<caption>` recebe
    * `tabIndex={-1}` (focável só via `.focus()`, não pelo Tab).
@@ -40,7 +40,7 @@ function normalizar(cabecalho: CabecalhoTabela) {
   return typeof cabecalho === "string" ? { texto: cabecalho } : cabecalho;
 }
 
-// TP-0054 — tabela de dados genérica e acessível.
+// Tabela de dados genérica e acessível.
 //
 // O contêiner externo com `role="region"` + `aria-label` + `tabIndex={0}`
 // torna a área rolável alcançável via teclado (sem isso, um `overflow:

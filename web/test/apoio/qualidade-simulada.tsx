@@ -161,7 +161,7 @@ export function instalarQualidadeFixa(corpo: unknown) {
 }
 
 /**
- * Ajuste Modelo B (2026-10-08): a página renderiza a forma PC e a forma do
+ * A página renderiza a forma PC e a forma do
  * celular e alterna só por CSS (jsdom não aplica o CSS, então as duas estão
  * no DOM). Os testes consultam cada forma pelo seu contêiner.
  */

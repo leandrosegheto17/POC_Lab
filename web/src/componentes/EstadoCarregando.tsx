@@ -12,7 +12,7 @@ type EstadoCarregandoProps = {
   semAriaLiveProprio?: boolean;
 };
 
-// TP-0053 — estado de carregamento: `aria-busy` sinaliza que a região está
+// Estado de carregamento: `aria-busy` sinaliza que a região está
 // ocupada; `aria-live="polite"` (quando não suprimido por `semAriaLiveProprio`)
 // garante que a mensagem seja anunciada por leitores de tela sem interromper
 // o que estiver sendo lido no momento. O texto da mensagem é sempre visível

@@ -4,11 +4,11 @@ import { useFocoNoTitulo } from "../nav/useFocoNoTitulo.ts";
 import { useTituloDocumento } from "../nav/useTituloDocumento.ts";
 import "./NaoEncontrada.css";
 
-// TP-0055 — T5: página de rota não encontrada. Puramente apresentacional —
+// T5: página de rota não encontrada. Puramente apresentacional —
 // não importa `cliente-api` nem faz qualquer chamada de rede, só monta a
 // partir da rota corrente (`path="*"` em Rotas.tsx).
 //
-// Ajuste Modelo B (2026-10-08, mockup à risca): fica na casca simples (sem
+// Fica na casca simples (sem
 // busca na barra, sem faixa, navegação sem ícones — ver Rotas.tsx), então a
 // página tem a própria busca (`CampoBusca variante="pagina"`, id próprio) e
 // o link "Ir para Divergências →".

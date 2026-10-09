@@ -1,5 +1,4 @@
-/* TP-0072 / ajuste Modelo B (2026-10-08, mockup à risca) — cartão "Ver
- * estado em". Campo e botões vêm de painel.css (`.campo`, `.botao*`,
+/* Cartão "Ver estado em". Campo e botões vêm de painel.css (`.campo`, `.botao*`,
  * `.rotulo-campo`), inclusive a altura de 44px e o raio 10 no celular.
  * Foco visível herdado do `:focus-visible` global (base.css). */
 

@@ -15,7 +15,7 @@ import { EstadoCarregando } from "../componentes/EstadoCarregando.tsx";
 import { EstadoErro } from "../componentes/EstadoErro.tsx";
 import "./Indicadores.css";
 
-// TP-0063 / ajuste Modelo B (2026-10-08, mockup à risca) — T3 Indicadores:
+// T3 Indicadores:
 // consulta real a `/api/v1/indicadores` (lista de blocos do contrato,
 // `EsquemaRespostaIndicadores`). "Entregas no prazo" ocupa a largura toda;
 // abaixo, numa grade, os demais blocos na ordem recebida. Não há estado

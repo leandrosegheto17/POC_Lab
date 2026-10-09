@@ -1,12 +1,9 @@
-// TP-0047 — GET /api/v1/divergencias.
+// GET /api/v1/divergencias.
 //
-// NÃO registrado em `web/worker/index.ts` por este arquivo — outra etapa do
-// orquestrador liga todas as rotas do Lote 9 (TP-0046 a TP-0050) numa única
-// edição sequencial, para evitar conflito de edição concorrente em
-// `index.ts`. Este arquivo só exporta o sub-app Hono já com a rota
-// registrada (caminho completo, `/api/v1/divergencias`), pronto para ser
-// composto via `app.route('/', rotaDivergencias)` em `index.ts` — mesma
-// convenção de `./linha-do-tempo.ts` (TP-0048), que também precisa de um
+// Este arquivo só exporta o sub-app Hono já com a rota registrada (caminho
+// completo, `/api/v1/divergencias`), composto via
+// `app.route('/', rotaDivergencias)` em `web/worker/index.ts` — mesma
+// convenção de `./linha-do-tempo.ts`, que também precisa de um
 // `zValidator` como middleware (aqui, de `query`, não de `param`) e por
 // isso não pode ser só uma função `handler` solta como em `./resumo.ts`,
 // `./qualidade.ts` ou `./indicadores.ts` (essas não validam parâmetro
@@ -40,7 +37,7 @@ rotaDivergencias.get(
     // via `hookValidacaoZod`, antes de chegar neste handler.
     const { tipo, pagina, tamanho } = c.req.valid("query");
 
-    // `contarDivergencias`/`listarDivergencias` (TP-0047, `../consultas.ts`)
+    // `contarDivergencias`/`listarDivergencias` (`../consultas.ts`)
     // não dependem uma da outra — disparam em paralelo. O `offset` é
     // calculado internamente por `listarDivergencias` a partir de
     // `pagina`/`tamanho`.

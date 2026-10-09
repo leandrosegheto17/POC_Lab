@@ -1,8 +1,6 @@
-// TP-0050 — Rota pretendida: `GET /api/v1/qualidade` (e `HEAD`, derivado
-// automaticamente pelo Hono a partir do GET). Este arquivo só exporta o
-// handler — o registro em `web/worker/index.ts` (`app.get('/api/v1/qualidade',
-// handlerQualidade)`) é feito pelo orquestrador junto com as demais rotas do
-// Lote 9 (TP-0046 a TP-0050), numa única edição sequencial.
+// Rota `GET /api/v1/qualidade` (e `HEAD`, derivado automaticamente pelo Hono
+// a partir do GET). Este arquivo só exporta o handler — o registro fica em
+// `web/worker/index.ts` (`app.get('/api/v1/qualidade', handlerQualidade)`).
 import type { Context } from "hono";
 import { EsquemaRespostaQualidade } from "processamento/contrato/qualidade.js";
 
@@ -17,7 +15,7 @@ interface AmbienteWorker {
 }
 
 /**
- * `GET /api/v1/qualidade`: lê o documento `qualidade` publicado (TP-0038) via
+ * `GET /api/v1/qualidade`: lê o documento `qualidade` publicado via
  * `buscarDocumento` e devolve após validar contra `EsquemaRespostaQualidade`.
  *
  * Documento ausente (`null`) → 500 `erro_interno` (publicação nunca correu

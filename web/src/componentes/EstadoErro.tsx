@@ -16,7 +16,7 @@ type EstadoErroProps = {
   regiaoFoco?: RefObject<HTMLElement | null>;
 };
 
-// TP-0053 — estado de erro.
+// Estado de erro.
 //
 // "Tentar de novo" devolve o foco à região de conteúdo (a externa, se a
 // tela-mãe passar `regiaoFoco`; senão o próprio container, com tabIndex=-1) e

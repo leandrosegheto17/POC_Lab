@@ -131,7 +131,7 @@ describe("Casca/Rotas — aria-current no item ativo", () => {
   });
 });
 
-describe("Casca/Rotas — ajuste Modelo B (2026-10-08)", () => {
+describe("Casca/Rotas — item ativo da navegação e casca simples", () => {
   it('em "/pedido/X", Divergências tem a classe de ativo mas não aria-current', () => {
     const { getByRole } = renderEm("/pedido/ABC");
 

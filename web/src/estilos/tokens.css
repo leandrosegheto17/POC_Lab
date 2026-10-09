@@ -1,4 +1,4 @@
-/* TP-0051 — Tokens do Modelo B e fontes auto-hospedadas.
+/* Tokens do Modelo B e fontes auto-hospedadas.
  *
  * Fontes: Manrope (400/500/600/700/800) e JetBrains Mono (400/500/600),
  * subconjunto latino (arquivos do fontsource, mesma origem para todos os
@@ -6,9 +6,8 @@
  * OFL-Manrope.txt e OFL-JetBrainsMono.txt na mesma pasta). Nenhum CDN
  * externo é usado — tudo auto-hospedado (CSP default-src 'self').
  *
- * Ajuste 2026-10-08 (mockup à risca, UX-SPEC §0/§3): pesos Manrope 500/800
- * e JetBrains Mono 500, paleta de etiquetas por tipo, raios do mockup e
- * cores de menu/seleção/evento.
+ * Valores copiados do mockup (UX-SPEC §0/§3): pesos das fontes, paleta de
+ * etiquetas por tipo, raios e cores de menu/seleção/evento.
  */
 
 @font-face {
@@ -86,9 +85,9 @@
   --cor-lateral: #11161c;
   --cor-borda: #263040;
   --cor-divisoria: #1d2530;
-  /* Ajuste 2026-10-08 (mockup à risca): bordas de campo, data, select e
-   * botão secundário. ~1,9:1 sobre o fundo — abaixo de 3:1, desvio aceito
-   * pelo usuário em 2026-10-08 (mockup à risca). */
+  /* Bordas de campo, data, select e botão secundário. ~1,9:1 sobre o
+   * fundo — abaixo de 3:1, desvio aceito pelo usuário em 2026-10-08 para
+   * seguir o mockup. */
   --cor-borda-controle: #39434f;
   /* Chips e botões de paginação (~1,4:1, mesmo desvio aceito). */
   --cor-borda-chip: #263040;
@@ -104,7 +103,7 @@
    * de asserção de contraste do teste. */
   --cor-desabilitado: #6b7a89;
 
-  /* Ajuste 2026-10-08 (mockup à risca) — menu, seleção, eventos e textos. */
+  /* Menu, seleção, eventos e textos. */
   --cor-texto-menu: #c9d4de;
   --cor-menu-ativo: #18232b;
   --cor-selecionado-fundo: #0f2422;
@@ -151,8 +150,8 @@
   --etq-sem-divergencia-fundo: #0f2417;
   --etq-sem-divergencia-borda: #1f5133;
 
-  /* Nomes antigos (TP-0051), mantidos como apelidos da paleta nova para
-   * CSS de telas que ainda não migrou (Qualidade/LinhaDoTempo). */
+  /* Nomes antigos, mantidos como apelidos da paleta atual para as classes
+   * antigas de Etiquetas.css. */
   --etq-quitado-texto: var(--etq-sem-divergencia-texto);
   --etq-quitado-fundo: var(--etq-sem-divergencia-fundo);
   --etq-quitado-borda: var(--etq-sem-divergencia-borda);
