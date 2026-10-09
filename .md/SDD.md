@@ -11,7 +11,7 @@ A POC_Lab é **um único serviço em TypeScript**, separado em dois lados que nu
 1. **Escrita (processamento local ou no CI, Node 24 + SQLite).** Um comando Node gera as fontes sintéticas, importa as 3 fontes para um *event store* em SQLite (`pedido`, `vinculo_fonte`, `evento`, `achado_qualidade`), aplica as regras de domínio e **materializa as visões de leitura** num arquivo SQL determinístico. A ingestão nunca roda na nuvem.
 2. **Leitura (Cloudflare, Workers Paid).** O arquivo SQL é carregado no **D1**. Um **Worker** em TypeScript (Hono) expõe uma **API REST somente leitura** (`/api/v1`, `/api/v2`) e serve o **site Vite + React** como static assets. O site consome a API.
 
-Padrão: **monólito modular com núcleo de domínio puro** (hexagonal leve) + **CQRS no sentido mínimo**: o modelo de escrita é o log de eventos local; o de leitura é o D1, uma projeção descartável recriada a cada publicação. O domínio e o contrato são escritos uma vez e rodam nos três lugares: processamento (regras, projeções), Worker (normalização de código, forma v1/v2 dos eventos) e navegador (estado em uma data, RF-06).
+Padrão: **monólito modular com núcleo de domínio puro** (hexagonal leve) + **CQRS no sentido mínimo**: o modelo de escrita é o log de eventos local; o de leitura é o D1, uma projeção descartável recriada a cada publicação. O domínio e o contrato são escritos uma vez e rodam nos três lugares: processamento (regras, projeções), Worker (normalização de código, forma v1/v2 dos eventos) e navegador (estado em uma data, RF-06; e, como única outra exceção, a marcação de quais pagamentos são os duplicados dentro de um pedido que o processamento já declarou `duplicado`, ADR-019).
 
 Em relação à preferência "SQLite + Node no backend": o Node e o `node:sqlite` ficam no processamento; na nuvem o banco também é SQLite (D1), mas só com o resultado. O Worker não é um Node completo e não precisa ser: só lê.
 
@@ -43,12 +43,12 @@ flowchart LR
 
 ## 2. Componentes e Fluxo de Dados
 
-Repositório em **pnpm workspace com 2 pacotes** (ADR-008). O Worker fica no pacote `web` porque site e API são publicados juntos.
+Repositório em **pnpm workspace com 3 pacotes**: `nucleo`, `processamento` e `web` (ADR-008 em parte substituído pelo ADR-018). O Worker fica no pacote `web` porque site e API são publicados juntos. Estado alvo: até a tarefa de migração do BK-0003 rodar, `dominio/` e `contrato/` ainda estão em `processamento/src/`.
 
 | Pacote / módulo | Responsabilidade | Depende de |
 |---|---|---|
-| `processamento/src/dominio/` | Tipos do modelo comum e regras puras: RN-01 a RN-14 (valor devido, quitação, ordenação canônica, derivação de estado, divergências, achados, indicadores, conferência RN-11). **Sem I/O, sem `node:*`, sem zod** — roda no Node, no Worker e no navegador | nada |
-| `processamento/src/contrato/` | **Contrato da API** (ADR-016): esquemas zod de parâmetros e respostas (v1 e v2 da linha do tempo), formato de erro RFC 9457, paginação, normalização do código buscado. Sem `node:*` | `dominio`, `zod` |
+| `nucleo/src/dominio/` | Tipos do modelo comum e regras puras: RN-01 a RN-14 (valor devido, quitação, ordenação canônica, derivação de estado, divergências, achados, indicadores, conferência RN-11). **Sem I/O, sem `node:*`, sem zod** — roda no Node, no Worker e no navegador | nada |
+| `nucleo/src/contrato/` | **Contrato da API** (ADR-016): esquemas zod de parâmetros e respostas (v1 e v2 da linha do tempo), formato de erro RFC 9457, paginação, normalização do código buscado. Sem `node:*` | `dominio`, `zod` |
 | `processamento/src/fontes/vendas.ts` | Adaptador da base de vendas (lê o `.db` somente leitura, normaliza os 2 formatos de data, calcula valor devido RN-01, produz vínculos, eventos `venda` e achados) | `dominio` |
 | `processamento/src/fontes/pagamentos.ts` | Adaptador de `pagamentos.csv` (normaliza referência RN-09, valida RN-10, detecta registro repetido no arquivo) | `dominio` |
 | `processamento/src/fontes/rastreio.ts` | Adaptador de `rastreio.csv` (eventos `coleta`, `transporte`, `entrega`; guarda a ordem de chegada) | `dominio` |
@@ -61,7 +61,7 @@ Repositório em **pnpm workspace com 2 pacotes** (ADR-008). O Worker fica no pac
 | `web/worker/` | **API de leitura** (Hono): rotas GET, validação de entrada por zod, consultas D1 parametrizadas, erros RFC 9457, cabeçalhos de segurança. Serve os static assets do site | `dominio`, `contrato`, binding `DB` (D1) |
 | `web/src/` | SPA Vite + React: Divergências, Linha do tempo, Indicadores, Qualidade. Lê só a API (`/api/v1`) e valida as respostas com o mesmo contrato zod | `dominio`, `contrato` |
 
-Regra de dependência (ESLint `no-restricted-imports`): `dominio` não importa nada; `contrato` só `dominio` e `zod`; `web/worker` e `web/src` só `dominio` e `contrato` (nunca `armazenamento`, `fontes`, `importacao`, `gerador`, `ia`, `cli`, `publicacao`, nem `node:*` fora de `test/`); `web/src` não importa `web/worker`; **nenhum código fora de `test/` lê o gabarito (`problemas-plantados.json`)** (RN-13).
+Regra de dependência (ESLint `no-restricted-imports` e dependências do `package.json`): `dominio` não importa nada; `contrato` só `dominio` e `zod`; `nucleo` não depende de nenhum outro pacote; `web/worker` e `web/src` dependem só de `nucleo` (nunca de `processamento`, nem `node:*` fora de `test/`); `processamento` depende de `nucleo`. `web/src` não importa `web/worker`; a direção de import dentro do `processamento` está na subseção abaixo; **nenhum código fora de `test/` lê o gabarito (`problemas-plantados.json`)** (RN-13).
 
 **Fluxo de preparação** (`pnpm preparar`, determinístico, estimado em 1–2 min, RNF-07 ≤ 5 min):
 1. `baixar-base`: baixa o `.db` de URL fixada em commit e confere SHA-256. Fica em `dados/origem/` (fora do git).
@@ -73,6 +73,52 @@ Regra de dependência (ESLint `no-restricted-imports`): `dominio` não importa n
 **Publicação** (`pnpm publicar`, autor, com `wrangler login`): `preparar` → `vite build` → `wrangler d1 execute poc-lab --remote --file dados/publicacao/leitura.sql` → `wrangler deploy` (ADR-015). D1 primeiro, Worker depois.
 
 **Configuração do Worker** (`web/wrangler.jsonc`): `main: worker/index.ts`; `assets` com `not_found_handling: "single-page-application"` e `run_worker_first: ["/api/*"]` (só `/api/*` invoca o Worker; o resto é asset, gratuito e sem CPU); `d1_databases` com binding `DB`; `compatibility_date` fixa. Sem segredos, sem outros bindings.
+
+### Pacotes, pastas e fronteiras
+
+Estado alvo do ADR-018. A migração do código é a tarefa mecânica descrita no BK-0003; até lá, `dominio/` e `contrato/` seguem em `processamento/src/`.
+
+**Pacotes e quem depende de quem**
+
+| Pacote | Contém | Depende de | Nunca depende de |
+|---|---|---|---|
+| `nucleo` | `dominio/`, `contrato/` (código que roda no Node, no Worker e no navegador) | `zod` (só `contrato/`) | `processamento`, `web`, `node:*` |
+| `processamento` | CLI, casos de uso, fontes, armazenamento, publicação, gerador, IA (Node + `node:sqlite`) | `nucleo` | `web` |
+| `web` | Worker (`worker/`) e site (`src/`) | `nucleo` | `processamento`, `node:*` fora de `test/` |
+
+Código usado por mais de uma aplicação mora em `nucleo`, nunca em `processamento` nem copiado no `web`.
+
+**Camadas e direção de import (dentro do `processamento`)**: `cli` → `aplicacao` → `fontes` / `armazenamento` / `publicacao` / `ia` → `nucleo`. `gerador` lê `fontes/vendas`. Camada de baixo nunca importa camada de cima. `config/` (caminhos e constantes padrão) pode ser importada por `cli` e `aplicacao`. `aplicacao/` guarda os casos de uso (importar, publicar, sugerir) e passa a abrigar o que hoje está em `importacao/`.
+
+**Módulo único de dados**
+- Event store local: só `armazenamento/` acessa `node:sqlite`; os demais módulos chamam suas funções.
+- D1 (leitura): só `web/worker/consultas.ts` executa SQL; as rotas chamam suas funções.
+
+**Onde a regra de negócio roda**: no `nucleo/dominio` (RN-01 a RN-14), chamado pelo processamento (projeções e achados), pelo Worker (normalização de código e forma v1/v2) e, só para o estado em uma data, pelo navegador (RF-06). Adaptadores, CLI e rotas não têm regra de negócio própria.
+
+**Árvore de pastas alvo**
+
+```
+nucleo/
+  src/dominio/          regras puras RN-01 a RN-14
+  src/contrato/         esquemas zod da API (ADR-016)
+  test/
+processamento/
+  src/cli/              comandos
+  src/aplicacao/        casos de uso: importar, publicar, sugerir
+  src/config/           caminhos e constantes padrão
+  src/fontes/           vendas, pagamentos, rastreio
+  src/armazenamento/    único acesso a node:sqlite; schema.sql
+  src/publicacao/       leitura.sql e leitura-d1.sql
+  src/gerador/          fontes sintéticas e gabarito
+  src/ia/               porta e provedores (opcional)
+  test/
+web/
+  worker/               Hono; consultas.ts é o único acesso ao D1
+  src/                  SPA React
+  wrangler.jsonc
+  test/
+```
 
 ### API de leitura (ADR-016)
 
@@ -99,7 +145,7 @@ Coluna "Mudou?" em relação à versão aprovada antes (ADR-011 → ADR-014).
 | Banco de escrita | **SQLite via `node:sqlite`** (event store local) | Não | É SQLite, como pedido; sem binário nativo no Windows nem no CI | `better-sqlite3` (plano B); ingestão no D1 (proibido: ingestão nunca na nuvem) |
 | Banco de leitura | **Cloudflare D1** com as visões de leitura (~150 mil linhas) | **Sim** (antes: JSON estáticos) | Pedido do usuário; cabe com folga no plano pago (ver limites abaixo); é SQLite, mesmo dialeto do teste local | JSON estáticos (ADR-007, substituído); D1 com a base bruta (desnecessário, ADR-013) |
 | API | **Worker em TypeScript com Hono 4** | **Sim** (antes: sem script) | Padrão de fato no Workers; roteamento, 404/405 e erro central em poucas linhas; testável com `app.request()` | Roteamento manual (reimplementa o que o Hono já dá); itty-router (menos idiomático hoje) |
-| Contrato | **zod 4** + `@hono/zod-validator`, em `processamento/src/contrato/` | **Sim** (novo) | Um esquema valida a entrada no Worker, gera os tipos e valida a resposta no site | Validação manual (duplica tipos); JSON Schema + Ajv (mais peças) |
+| Contrato | **zod 4** + `@hono/zod-validator`, em `nucleo/src/contrato/` | **Sim** (novo) | Um esquema valida a entrada no Worker, gera os tipos e valida a resposta no site | Validação manual (duplica tipos); JSON Schema + Ajv (mais peças) |
 | Erros | **RFC 9457** (`application/problem+json`) + `codigo` estável | **Sim** (novo) | Padrão conhecido | Formato próprio |
 | Leitura de CSV | `csv-parse` / `csv-stringify` (síncrono) | Não | CSV com texto livre exige parser correto | `split(',')` |
 | Datas | Funções próprias sobre ISO-8601 UTC | Não | 2 formatos conhecidos | Bibliotecas de datas |
@@ -107,7 +153,7 @@ Coluna "Mudou?" em relação à versão aprovada antes (ADR-011 → ADR-014).
 | Dev local site + API | **`@cloudflare/vite-plugin`** + `wrangler` (D1 local, sem conta) | **Sim** (novo) | `pnpm dev` sobe tudo num processo; caminho oficial SPA + Worker | `vite build` + `wrangler dev` (plano B); 2 processos com *proxy* |
 | Testes | **Vitest** nos 2 pacotes; Worker testado com `app.request()` + D1 de teste sobre `node:sqlite`; **Testing Library + vitest-axe** no site | **Sim, parcial** (testes da API) | Mesmo executor; SQL testado é o mesmo do D1 | `@cloudflare/vitest-pool-workers` (configuração extra); Playwright E2E (prazo) |
 | Qualidade | ESLint 9 (flat) + typescript-eslint (`strictTypeChecked`), `tsc --noEmit` | Não (regras de fronteira ampliadas) | `no-restricted-imports` garante fronteiras e RN-13 | Prettier |
-| Monorepo | pnpm workspace (`processamento`, `web`) | Não | Worker vai no `web` (mesma unidade de deploy) | 3º pacote `api`; pacote `shared` |
+| Monorepo | pnpm workspace (`nucleo`, `processamento`, `web`) | **Sim** (antes: 2 pacotes; ADR-018) | Worker vai no `web` (mesma unidade de deploy); `nucleo` guarda só o que roda nos três lugares | Pacote `api` separado; pacote `shared` genérico; manter `dominio`/`contrato` em `processamento` |
 | CI | GitHub Actions, `ubuntu-latest`, ações fixadas por SHA | Não | Gratuito em repo público; RF-13 | Deploy automático (ADR-015) |
 | Hospedagem | **Um Worker** (Workers Paid): API em `/api/*` + site como static assets; `wrangler deploy` manual | **Sim** (antes: só assets) | Mesmo domínio, sem CORS; assets continuam gratuitos | Pages + Worker separado (2 deploys) |
 | IA (Could) | OpenAI via `fetch` atrás de uma porta, só no processamento local | Não | Nunca chamada por visitante (RF-10); o Worker não tem chave nem binding de IA | SDK oficial; IA no Worker |
@@ -150,6 +196,9 @@ Os itens 1 a 10 do RF-12 estão cobertos; o item 11 (Should/Could cortados) vai 
 | [014](adr/014-stack-node-sqlite-d1-worker-hono-react.md) | Stack: Node/`node:sqlite`; Worker com Hono e zod sobre D1; Vite/React | Aceito | — |
 | [015](adr/015-ci-e-publicacao-d1-worker.md) | CI no GitHub Actions e publicação manual de D1 + Worker | Aceito | — |
 | [016](adr/016-contrato-da-api-de-leitura.md) | Contrato da API: rotas, validação, erros RFC 9457, paginação e versão | Aceito | 6 (demonstração na API) |
+| [017](adr/017-convergencia-de-identidade-de-pedido.md) | Convergência de identidade de pedido pelo código bruto de vendas (complementa ADR-002 e ADR-004) | Aceito | 2, 3 |
+| [018](adr/018-pacote-nucleo-dominio-e-contrato.md) | Pacote `nucleo` com `dominio` e `contrato` (substitui em parte o ADR-008) | Aceito | 8 |
+| [019](adr/019-marcacao-de-pagamento-duplicado-no-navegador.md) | Marcação de pagamento duplicado (RN-03) no navegador, ao lado do estado em uma data (complementa ADR-013 e ADR-016) | Aceito | 3 |
 
 ## 5. Modelo de Dados de Alto Nível
 
@@ -178,7 +227,7 @@ Contrato do evento (`dominio/evento.ts`, união discriminada por `tipo` + `versa
 - `pagamento` v1: `valor`, `referencia_original`. **v2** (aditiva): + `meio_pagamento`. Consumidor v1 (saldo/quitação) ignora o campo novo (RF-09, ADR-006). Na API, `/api/v1` sempre devolve a forma v1; `/api/v2` devolve `versao_schema` e os campos v2 (ADR-016).
 - `coleta` / `transporte` / `entrega` v1: `transportadora`, `codigo_rastreio`.
 
-Derivados (calculados pelo domínio na publicação, gravados nas visões): estado do pedido, divergências, achados "fora de ordem", indicadores. "Envio" (RN-05) = evento `coleta`. "Pedidos sem envio" (RF-04) = sem data de envio na base de vendas (21). O "estado em uma data" (RF-06) não é gravado: o navegador calcula com o domínio sobre os eventos da API.
+Derivados (calculados pelo domínio na publicação, gravados nas visões): estado do pedido, divergências, achados "fora de ordem", indicadores. "Envio" (RN-05) = evento `coleta`. "Pedidos sem envio" (RF-04) = sem data de envio na base de vendas (21). O "estado em uma data" (RF-06) não é gravado: o navegador calcula com o domínio sobre os eventos da API. Exceção (ADR-019): na tela T2 o navegador chama `detectarDuplicado` só para marcar quais pagamentos são os repetidos, e só em pedido que a API já listou com a divergência `duplicado`; não decide divergência. Se a T2 ganhar v2, a marcação passa para a API.
 
 ## 6. Riscos Técnicos
 
@@ -188,7 +237,7 @@ Derivados (calculados pelo domínio na publicação, gravados nas visões): esta
 | **Custo por uso abusivo da API** (RNF-01): requisições ao Worker acima de 10 milhões/mês são cobradas; o link é público e sem autenticação | Média (impacto) / Baixa (probabilidade) | Só `/api/*` invoca o Worker (`run_worker_first`); páginas e arquivos do site continuam gratuitos; respostas pequenas e por índice (pouca CPU); o autor configura alerta de uso no painel do Cloudflare e pode tirar a API do ar com `wrangler delete` ou removendo a rota. Limite de taxa não ajuda aqui (a requisição barrada também é cobrada) |
 | Diferença de comportamento entre o D1 e o `node:sqlite` dos testes | Baixa | SQL simples (SELECT por chave/índice, `COUNT`, `LIMIT/OFFSET`), sem extensão; o D1 é SQLite; conferência manual pós-publicação (`curl` nas 6 rotas) |
 | Arquivo SQL grande ou instrução > 100 KB falhar na importação | Baixa | `INSERT` em lotes com teto de bytes por instrução; sem `BEGIN`/`COMMIT` (D1 não aceita no arquivo); teste do gerador do SQL verifica o teto |
-| Janela de erro na API durante a republicação (tabelas recriadas) | Baixa | Publicar fora do horário de avaliação; o site mostra erro com "Tentar de novo"; troca azul/verde fica de fora |
+| Janela de erro na API durante a republicação (tabelas recriadas) ou carga que falha no meio | Baixa | Publicar fora do horário de avaliação; o site mostra erro com "Tentar de novo"; bookmark do Time Travel guardado antes da carga e restore documentado (ver `### Troca de dados em produção`); troca azul/verde fica de fora |
 | Plugin do Vite e `wrangler d1 execute --local` usarem pastas de estado diferentes (D1 local vazio no `pnpm dev`) | Baixa | Ambos usam `.wrangler/state` do pacote `web`; plano B `vite build` + `wrangler dev` |
 | Carga do D1 local deixar `pnpm preparar` lento (RNF-07 ≤ 5 min) | Baixa | ~150 mil linhas em `INSERT` multi-linha; medir no primeiro uso; se passar, reduzir índices na carga |
 | Latência do D1 (região única) somada à do Worker passar de 2 s (RNF-07) | Baixa | 1–2 consultas por índice por requisição; réplicas de leitura ficam de fora |
@@ -198,11 +247,22 @@ Derivados (calculados pelo domínio na publicação, gravados nas visões): esta
 | URL da base de vendas sair do ar | Média | URL fixada + SHA-256; download manual no README; cache no CI |
 | D1 publicado desatualizado em relação ao Worker publicado | Baixa | `pnpm publicar` sempre roda `preparar`, carrega o D1 e só então faz o deploy; `resumo` traz versão do contrato e identificador da publicação |
 
+### Troca de dados em produção
+
+Vale para o único fluxo que substitui dados publicados: `pnpm publicar` carrega `leitura.sql` no D1 remoto (`DROP`/`CREATE` + `INSERT`). Decisão do BK-0005, dentro do ADR-013 e do ADR-015 (nenhum ADR novo: não muda a decisão, só acrescenta um passo ao script).
+
+- **Janela de inconsistência.** Existe: o arquivo é executado sem `BEGIN`/`COMMIT` (o D1 não aceita no arquivo), então, entre o `DROP` e o último `INSERT`, a API pode responder com tabelas vazias ou parciais. Duração esperada: segundos a poucos minutos (dezenas de MB). Aceita para a POC; publicar fora do horário de avaliação. O Worker antigo continua no ar durante a carga (D1 primeiro, Worker depois), e a API responde 500 `erro_interno` sem detalhe, nunca dado errado calculado.
+- **Atomicidade.** Não há. Alternativa descartada: tabelas de staging com troca por renomeação. Motivo: dobra as escritas (~400 mil linhas por publicação, ~125 publicações/mês sem custo), exige que o `leitura-d1.sql` crie e renomeie tabelas e índices (muda a regra G-05 e o teste do gerador) e o ganho é só encurtar uma janela que a POC aceita.
+- **Volta atrás.** Time Travel do D1: sempre ligado, sem custo adicional (confere com G-22), restaura até 30 dias no Workers Paid. O script de publicação, **antes** de carregar o arquivo, roda `wrangler d1 time-travel info poc-lab` e grava o bookmark em `dados/publicacao/ultimo-bookmark.txt` (fora do git) e na saída do comando. Se a carga falhar ou a conferência pós-publicação (`curl` nas 6 rotas) reprovar, o autor roda `wrangler d1 time-travel restore poc-lab --bookmark <valor>`. O restore sobrescreve o banco no lugar e cancela consultas em andamento; o próprio comando devolve o bookmark anterior, então o restore também é desfazível.
+- **Ordem com o Worker.** Se o restore for necessário depois do `wrangler deploy`, o Worker novo precisa ser compatível com os dados antigos; por isso o contrato muda só por versão (`/api/v1`, `/api/v2`) e `resumo` traz o identificador da publicação. Voltar o Worker: `wrangler rollback`.
+- **Falha no meio da carga:** o script para (sem `deploy`), imprime o bookmark e a instrução de restore. Rodar `pnpm publicar` de novo também resolve, porque a carga recria tudo (idempotente).
+- **A conferir na implementação:** o `database` precisa estar em `version: production` (`wrangler d1 info poc-lab`) para o Time Travel funcionar; se não estiver, a tarefa de publicação registra o desvio em BLOCKERS.
+
 Dívidas técnicas aceitas conscientemente:
 - **Sem E2E com navegador real.** Motivo: prazo; componentes com axe, API com `app.request()` e domínio no Node cobrem o essencial.
 - **Deploy manual, não pelo CI** (ADR-015). Motivo: sem token do Cloudflare como segredo hoje.
 - **Busca só por código exato.** Motivo: suficiente para M2; `LIKE` no D1 tem padrão de até 50 bytes e varreria a tabela.
-- **Republicação sem troca atômica.** Motivo: projeção recriada; janela curta de erro aceitável numa POC.
+- **Republicação sem troca atômica.** Motivo: projeção recriada; janela curta de erro aceitável numa POC. A volta atrás existe (Time Travel do D1, ver `### Troca de dados em produção`); só a atomicidade fica de fora.
 - **Sem limite de taxa nem cache de borda programado.** Motivo: não reduziriam o custo de requisição; volume esperado é baixo.
 - **Arredondamento em ponto flutuante** com arredondamento só no fim (RN-01). Motivo: valores pequenos e tolerância de R$ 0,01.
 
