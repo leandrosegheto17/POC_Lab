@@ -566,3 +566,6 @@ APROVADA (reteste) — crítico corrigido (web sem import nem dependência de pr
 
 ## RTP-0105 — QA — 2026-10-09
 APROVADA; 0 críticos e 0 não críticos; vitest do arquivo com 4/4 passando e `pnpm lint` na raiz sem erros, diff com só 2 linhas.
+
+## RTP-0107 — QA — 2026-10-09
+APROVADA; 0 críticos, 0 não críticos; teste passa (5) e a mutação de coluna extra no DDL do web o faz falhar, desfeita; lint limpo.
