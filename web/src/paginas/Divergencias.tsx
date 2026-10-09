@@ -1,147 +1,57 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router";
 import {
   EsquemaRespostaDivergencias,
   type RespostaDivergencias,
 } from "processamento/contrato/divergencias.js";
 import { useFocoNoTitulo } from "../nav/useFocoNoTitulo.ts";
 import { useTituloDocumento } from "../nav/useTituloDocumento.ts";
-import { comTentativa, useConsulta } from "../dados/use-consulta.ts";
+import {
+  construirUrlConsulta,
+  useFiltroDivergencias,
+} from "../nav/useFiltroDivergencias.ts";
+import { useConsulta } from "../dados/use-consulta.ts";
 import { CartoesResumo } from "../componentes/CartoesResumo.tsx";
 import { FiltroTipo, VALOR_TODOS } from "../componentes/FiltroTipo.tsx";
-import { TabelaDados } from "../componentes/TabelaDados.tsx";
 import { Paginacao } from "../componentes/Paginacao.tsx";
-import { EtiquetaTipo } from "../componentes/EtiquetaTipo.tsx";
 import { EstadoCarregando } from "../componentes/EstadoCarregando.tsx";
 import { EstadoVazio } from "../componentes/EstadoVazio.tsx";
 import { EstadoErro } from "../componentes/EstadoErro.tsx";
-import { formatarData, formatarNumero } from "../dados/formatacao.ts";
-import {
-  ehTipoDivergencia,
-  rotuloEvento,
-  rotuloFonte,
-  rotuloTipo,
-  type TipoDivergencia,
-} from "../dados/rotulos.ts";
-import type { EventoDivergencia } from "processamento/contrato/divergencias.js";
+import { TabelaDivergencias } from "../componentes/divergencias/TabelaDivergencias.tsx";
+import { ListaDivergencias } from "../componentes/divergencias/ListaDivergencias.tsx";
+import { formatarNumero, resumirPaginacao } from "../dados/formatacao.ts";
+import { rotuloTipo } from "../dados/rotulos.ts";
 import "./Divergencias.css";
 
-const TAMANHO_PAGINA = 50;
-
-/**
- * Eventos de uma divergência dentro de `<details>` (requisito mantido): o
- * `<summary>` tem cara de link ("3 eventos ▸") e a lista aberta mostra data,
- * sistema, tipo e código. Usado na tabela (PC) e no cartão (celular).
- */
-function EventosDivergencia({ eventos }: { eventos: EventoDivergencia[] }) {
-  const quantidade = eventos.length;
-  const texto = quantidade === 1 ? "1 evento ▸" : `${String(quantidade)} eventos ▸`;
-
-  return (
-    <details className="divergencias__eventos">
-      <summary>{texto}</summary>
-      <ul>
-        {eventos.map((evento, indice) => (
-          <li key={indice}>
-            {formatarData(evento.data)} · {rotuloFonte(evento.fonte)} ·{" "}
-            {rotuloEvento(evento.tipo)} ·{" "}
-            <span className="mono">{evento.codigo}</span>
-          </li>
-        ))}
-      </ul>
-    </details>
-  );
-}
-
-// TP-0059 — T1 Divergências: consulta real a `/api/v1/divergencias`,
-// filtrada por `?tipo=` da URL, com tabela acessível e os 4 estados.
-//
-// Mensagem/link de "filtro do endereço não é válido" trata DOIS casos com
-// a MESMA lógica (nenhuma duplicação de verificação): (1) `tipo` presente
-// na URL mas fora dos 5 valores aceitos — detectado client-side, sem
-// chamar a API; (2) a API devolver 400 `parametro_invalido` mesmo assim
-// (ex. combinação inesperada) — detectado a partir do `codigo` devolvido
-// por `useConsulta`/`consultarApi`. Os dois casos convergem para a mesma
-// variável `vazioCorrigivel` e o mesmo bloco de renderização abaixo.
-//
-
-/** Monta a URL de consulta com filtro e página; ver `comTentativa`. */
-function construirUrlConsulta(
-  tipo: TipoDivergencia | null,
-  pagina: number,
-  tentativa: number,
-): string {
-  const parametros = new URLSearchParams();
-  if (tipo !== null) {
-    parametros.set("tipo", tipo);
-  }
-  parametros.set("pagina", String(pagina));
-  parametros.set("tamanho", String(TAMANHO_PAGINA));
-  return comTentativa(
-    `/api/v1/divergencias?${parametros.toString()}`,
-    tentativa,
-  );
-}
-
-/**
- * Valida o `?pagina=` da URL: deve ser um inteiro >= 1, sem sinal nem zero à
- * esquerda (regex evita `Number("abc") -> NaN` passar por acidente e evita
- * `Number("1e2")` ser aceito como inteiro válido). Ausente é válido (default
- * página 1) — só o valor presente e fora do formato é tratado como inválido.
- */
-const PADRAO_PAGINA_VALIDA = /^[1-9]\d*$/;
-
+// Consulta `/api/v1/divergencias` filtrada por `?tipo=`/`?pagina=` da URL.
+// "Filtro do endereço não é válido" cobre três casos com o mesmo bloco de
+// renderização (`vazioCorrigivel`): `tipo` inválido e `pagina` inválida (a
+// API nem é chamada) e o 400 `parametro_invalido` devolvido pela API.
 export function Divergencias() {
   const refTitulo = useFocoNoTitulo();
   const refCaption = useRef<HTMLTableCaptionElement>(null);
   const focoPendente = useRef(false);
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const filtro = useFiltroDivergencias();
+  const { tipoNaUrl, tipoValido, tipoInvalidoNaUrl, pagina, paginaInvalidaNaUrl } =
+    filtro;
   const [tentativa, setTentativa] = useState(0);
 
-  // Última resposta bem-sucedida, mantida em estado próprio (TP-0060): ao
-  // trocar de página, a tabela/paginação da página anterior continua
-  // visível (com os botões em `aria-disabled`) enquanto a nova chamada está
-  // em andamento, em vez de esconder tudo atrás de `EstadoCarregando` — só o
-  // CARREGAMENTO INICIAL (sem nenhuma resposta ainda) usa o spinner cheio.
+  // Última resposta bem-sucedida: ao trocar de página, a tabela anterior
+  // continua visível (botões em `aria-disabled`) enquanto a nova chamada está
+  // em andamento; só o carregamento inicial usa o spinner cheio.
   const [ultimaResposta, setUltimaResposta] =
     useState<RespostaDivergencias | null>(null);
 
-  const tipoNaUrl = searchParams.get("tipo");
-  const tipoInvalidoNaUrl = tipoNaUrl !== null && !ehTipoDivergencia(tipoNaUrl);
-  const tipoValido: TipoDivergencia | null = tipoInvalidoNaUrl
-    ? null
-    : (tipoNaUrl);
-
-  const paginaNaUrlTexto = searchParams.get("pagina");
-  const paginaInvalidaNaUrl =
-    paginaNaUrlTexto !== null && !PADRAO_PAGINA_VALIDA.test(paginaNaUrlTexto);
-  const pagina = paginaInvalidaNaUrl
-    ? 1
-    : paginaNaUrlTexto === null
-      ? 1
-      : Number(paginaNaUrlTexto);
-
-  // Enquanto `tipoInvalidoNaUrl`/`paginaInvalidaNaUrl` for `true`, a URL
-  // passada é `null` — `useConsulta` nunca dispara a chamada (ver comentário
-  // do próprio gancho); o estado que ele devolveria (`carregando`
-  // indefinido) é simplesmente ignorado abaixo, porque o ramo de
-  // renderização do "filtro do endereço inválido" nem chega a consultá-lo.
+  // URL `null` nunca dispara a chamada (ver `useConsulta`).
   const urlConsulta =
     tipoInvalidoNaUrl || paginaInvalidaNaUrl
       ? null
       : construirUrlConsulta(tipoValido, pagina, tentativa);
-
   const estadoConsulta = useConsulta(urlConsulta, EsquemaRespostaDivergencias);
 
   const erro400DaApi =
     estadoConsulta.status === "erro" &&
     estadoConsulta.codigo === "parametro_invalido";
-
-  // Mesma mensagem/link de "filtro do endereço não é válido" (TP-0059)
-  // cobre agora TRÊS casos convergindo para a mesma variável: `tipo`
-  // inválido, `pagina` inválida (nenhum dos dois chega a chamar a API) e o
-  // 400 real da API.
   const vazioCorrigivel = tipoInvalidoNaUrl || paginaInvalidaNaUrl || erro400DaApi;
 
   useEffect(() => {
@@ -150,9 +60,9 @@ export function Divergencias() {
     }
   }, [estadoConsulta]);
 
-  // Foco no `<caption>` ao trocar de PÁGINA (RTP-0015, UX-SPEC T1): só depois
-  // que o usuário pede outra página (`focoPendente`) e a nova resposta já
-  // está na tela — nunca no carregamento inicial nem na troca de filtro.
+  // Foco no `<caption>` ao trocar de PÁGINA: só depois que o usuário pede
+  // outra página e a nova resposta já está na tela — nunca no carregamento
+  // inicial nem na troca de filtro.
   useEffect(() => {
     if (focoPendente.current && ultimaResposta !== null) {
       focoPendente.current = false;
@@ -161,7 +71,7 @@ export function Divergencias() {
   }, [ultimaResposta]);
 
   // Erro na consulta cancela o pedido de foco: a próxima resposta de sucesso
-  // (retry ou outro filtro) não deve mover o foco ao `<caption>` (RTP-0044).
+  // (retry ou outro filtro) não deve mover o foco ao `<caption>`.
   useEffect(() => {
     if (estadoConsulta.status === "erro") {
       focoPendente.current = false;
@@ -170,58 +80,24 @@ export function Divergencias() {
 
   function aoMudarFiltro(tipo: string) {
     focoPendente.current = false;
-    const novosParametros = new URLSearchParams(searchParams);
-    if (tipo === VALOR_TODOS) {
-      novosParametros.delete("tipo");
-    } else {
-      novosParametros.set("tipo", tipo);
-    }
-    // Troca de filtro sempre volta à página 1 — removido (não
-    // `set("pagina", "1")`) para manter a URL limpa quando já é o default,
-    // numa ÚNICA chamada de `setSearchParams` (uma navegação só).
-    novosParametros.delete("pagina");
-    setSearchParams(novosParametros);
+    filtro.aoMudarFiltro(tipo);
   }
 
   function aoMudarPagina(novaPagina: number) {
     focoPendente.current = true;
-    const novosParametros = new URLSearchParams(searchParams);
-    if (novaPagina <= 1) {
-      novosParametros.delete("pagina");
-    } else {
-      novosParametros.set("pagina", String(novaPagina));
-    }
-    setSearchParams(novosParametros);
-  }
-
-  function aoTentarDeNovo() {
-    setTentativa((atual) => atual + 1);
+    filtro.aoMudarPagina(novaPagina);
   }
 
   const rotuloFiltroAtual = tipoValido === null ? "Todos" : rotuloTipo(tipoValido);
 
-  // Ajuste Modelo B (2026-10-08): o total fica dentro do h1, numa <span>
-  // própria — oculta visualmente no PC (só leitor de tela) e visível no
-  // celular como o número à direita do título (Divergencias.css). Conta
-  // divergências, não pedidos (1 pedido pode ter 2 divergências).
+  // O total fica dentro do h1, numa <span> própria: oculta visualmente no PC
+  // (só leitor de tela) e visível no celular como o número à direita do
+  // título. Conta divergências, não pedidos.
   const totalDivergencias =
     !vazioCorrigivel && ultimaResposta ? ultimaResposta.paginacao.total : null;
 
-  // `<title>` reflete a página pedida na URL (não depende da resposta da
-  // API ainda ter chegado) — só menciona "página N" quando N > 1.
-  const tituloDocumento = pagina > 1 ? `Divergências, página ${String(pagina)}` : "Divergências";
-  useTituloDocumento(tituloDocumento);
-
-  // Link de "Ir para a página 1" mantém o `tipo` (quando válido), nunca
-  // inclui `pagina` (página 1 é o default, sem parâmetro na URL).
-  function construirHrefPaginaUm(): string {
-    const parametros = new URLSearchParams();
-    if (tipoValido !== null) {
-      parametros.set("tipo", tipoValido);
-    }
-    const consulta = parametros.toString();
-    return consulta ? `/?${consulta}` : "/";
-  }
+  // `<title>` reflete a página pedida na URL, não a resposta da API.
+  useTituloDocumento(pagina > 1 ? `Divergências, página ${String(pagina)}` : "Divergências");
 
   const carregandoInicial =
     ultimaResposta === null && estadoConsulta.status === "carregando";
@@ -233,16 +109,6 @@ export function Divergencias() {
     ultimaResposta !== null &&
     ultimaResposta.dados.length === 0 &&
     ultimaResposta.paginacao.total === 0;
-
-  // Resumo da paginação ("1–50 de 8.856"): início/fim da página atual. Fica
-  // dentro da região `aria-live` (a `<nav>` da paginação está nela), então
-  // substitui o antigo `<p>` solto "50 de 8856 divergências…".
-  function textoResumoPaginacao(resposta: RespostaDivergencias): string {
-    const { pagina: paginaAtual, tamanho, total } = resposta.paginacao;
-    const inicio = (paginaAtual - 1) * tamanho + 1;
-    const fim = Math.min(paginaAtual * tamanho, total);
-    return `${formatarNumero(inicio)}–${formatarNumero(fim)} de ${formatarNumero(total)}`;
-  }
 
   return (
     <>
@@ -282,13 +148,18 @@ export function Divergencias() {
         ) : ultimaResposta === null && estadoConsulta.status === "erro" ? (
           <EstadoErro
             mensagem={estadoConsulta.mensagem}
-            onTentarDeNovo={aoTentarDeNovo}
+            onTentarDeNovo={() => {
+              setTentativa((atual) => atual + 1);
+            }}
             interrompe={false}
           />
         ) : paginaAlemDaUltima ? (
           <EstadoVazio
             mensagem="Esta página não existe."
-            acao={{ texto: "Ir para a página 1", href: construirHrefPaginaUm() }}
+            acao={{
+              texto: "Ir para a página 1",
+              href: filtro.construirHrefPaginaUm(),
+            }}
           />
         ) : semResultadosParaFiltro ? (
           <EstadoVazio
@@ -296,75 +167,24 @@ export function Divergencias() {
           />
         ) : ultimaResposta ? (
           <div className="divergencias__resultado">
-            {/* Anúncio da região aria-live ao trocar de página (RTP-0015). */}
+            {/* Anúncio da região aria-live ao trocar de página. */}
             <p className="visualmente-oculto">
               {`${formatarNumero(ultimaResposta.dados.length)} de ${formatarNumero(
                 ultimaResposta.paginacao.total,
               )} divergências, página ${String(ultimaResposta.paginacao.pagina)} de ${String(ultimaResposta.paginacao.totalPaginas)}`}
             </p>
-            {/* PC: tabela. Colunas Devido/Pago do mockup ficam de fora: a
-                API v1 não entrega esses valores (ADR-016). */}
-            <div className="divergencias__tabela">
-              <TabelaDados
-                caption={`Filtro: ${rotuloFiltroAtual} · página ${String(ultimaResposta.paginacao.pagina)} de ${String(ultimaResposta.paginacao.totalPaginas)}`}
-                refCaption={refCaption}
-                rotuloRegiao="Tabela de divergências"
-                cabecalhos={["Pedido", "Tipo", "Motivo", "Eventos"]}
-              >
-                {ultimaResposta.dados.map((linha) => (
-                  <tr key={`${linha.pedido}-${linha.tipo}`}>
-                    <td>
-                      <Link
-                        to={`/pedido/${encodeURIComponent(linha.pedido)}`}
-                        className="mono"
-                      >
-                        {linha.pedido}
-                      </Link>
-                    </td>
-                    <td>
-                      <EtiquetaTipo tipo={linha.tipo} />
-                    </td>
-                    <td>{linha.motivo}</td>
-                    <td>
-                      <EventosDivergencia eventos={linha.eventos} />
-                    </td>
-                  </tr>
-                ))}
-              </TabelaDados>
-            </div>
-
-            {/* Celular: lista de cartões no lugar da tabela. O cartão não é
-                um link inteiro — o link fica só no código do pedido (evita
-                interativo aninhado com o <details>). */}
-            <ul className="divergencias__lista" aria-label="Lista de divergências">
-              {ultimaResposta.dados.map((linha) => (
-                <li
-                  key={`${linha.pedido}-${linha.tipo}`}
-                  className="divergencias__cartao"
-                >
-                  <div className="divergencias__cartao-topo">
-                    <Link
-                      to={`/pedido/${encodeURIComponent(linha.pedido)}`}
-                      className="mono divergencias__cartao-pedido"
-                    >
-                      {linha.pedido}
-                    </Link>
-                    <EtiquetaTipo tipo={linha.tipo} />
-                  </div>
-                  <p className="divergencias__cartao-motivo">{linha.motivo}</p>
-                  <div className="divergencias__cartao-eventos">
-                    <EventosDivergencia eventos={linha.eventos} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-
+            <TabelaDivergencias
+              resposta={ultimaResposta}
+              rotuloFiltro={rotuloFiltroAtual}
+              refCaption={refCaption}
+            />
+            <ListaDivergencias resposta={ultimaResposta} />
             <Paginacao
               pagina={ultimaResposta.paginacao.pagina}
               totalPaginas={ultimaResposta.paginacao.totalPaginas}
               carregando={estadoConsulta.status === "carregando"}
               aoMudarPagina={aoMudarPagina}
-              resumo={textoResumoPaginacao(ultimaResposta)}
+              resumo={resumirPaginacao(ultimaResposta.paginacao)}
             />
           </div>
         ) : null}

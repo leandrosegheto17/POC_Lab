@@ -41,6 +41,17 @@ export function formatarNumero(n: number): string {
   return NUMERO.format(n);
 }
 
+/** Página 1, tamanho 50, total 8856 → "1–50 de 8.856". */
+export function resumirPaginacao(p: {
+  pagina: number;
+  tamanho: number;
+  total: number;
+}): string {
+  const inicio = (p.pagina - 1) * p.tamanho + 1;
+  const fim = Math.min(p.pagina * p.tamanho, p.total);
+  return `${formatarNumero(inicio)}–${formatarNumero(fim)} de ${formatarNumero(p.total)}`;
+}
+
 /** 1234.56 → "R$ 1.234,56". */
 export function formatarMoeda(n: number): string {
   return espacoComum(MOEDA.format(n));
