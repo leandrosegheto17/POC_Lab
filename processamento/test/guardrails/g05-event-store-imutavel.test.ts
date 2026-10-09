@@ -14,13 +14,17 @@ const ESCRITA_PROIBIDA = [
   new RegExp(`\\bUPDATE\\s+(?:OR\\s+\\w+\\s+)?${TABELA}`, "i"),
   new RegExp(`\\bDELETE\\s+FROM\\s+${TABELA}`, "i"),
   new RegExp(`\\b(?:INSERT\\s+OR\\s+REPLACE|REPLACE)\\s+INTO\\s+${TABELA}`, "i"),
-  new RegExp(`\\bINSERT\\s+(?:OR\\s+\\w+\\s+)?INTO\\s+${TABELA}[^;]*?\\bDO\\s+UPDATE\\b`, "i"),
+  new RegExp(`\\bINSERT\\s+(?:OR\\s+\\w+\\s+)?INTO\\s+${TABELA}(?:[^;'"]|'[^']*'|"[^"]*")*?\\bDO\\s+UPDATE\\b`, "i"),
 ];
 // DDL de tabela só no DDL de leitura do D1 (recriado a cada publicação); no armazenamento local
-// só `CREATE TABLE IF NOT EXISTS`.
+// só `CREATE TABLE IF NOT EXISTS`. ALTER TABLE (inclui RENAME) nas tabelas do event store e
+// PRAGMA writable_schema também são proibidos.
+// Limitação: a checagem é textual; SQL montado por template/concatenação não é visto.
 const DDL_PROIBIDO = [
   /\bDROP\s+TABLE\b/i,
   /\bCREATE\s+(?:TEMP(?:ORARY)?\s+)?TABLE\s+(?!IF\s+NOT\s+EXISTS\b)/i,
+  new RegExp(`\\bALTER\\s+TABLE\\s+${TABELA}`, "i"),
+  /\bPRAGMA\s+(?:\w+\s*\.\s*)?writable_schema\b/i,
 ];
 
 // Remove comentários de linha (`//`, `--`) e de bloco que ficam fora de strings ('', "", ``).
@@ -132,6 +136,36 @@ describe("guardrail G-05 — event store imutável", () => {
     expect(violacoesG05("CREATE TABLE IF NOT EXISTS pedido (id INT);", "src/armazenamento/schema.sql")).toEqual([]);
     const ddl = "DROP TABLE IF EXISTS pedido_resumo;\nCREATE TABLE pedido_resumo (id INT);";
     expect(violacoesG05(ddl, "src/publicacao/leitura-d1.sql")).toEqual([]);
+  });
+
+  it.each([
+    "ALTER TABLE pedido ADD COLUMN x TEXT",
+    "alter table evento rename to evento_old",
+    'ALTER TABLE "main"."vinculo_fonte" RENAME COLUMN a TO b',
+    "ALTER TABLE [pedido] DROP COLUMN x",
+  ])("detecta ALTER TABLE: %s (caso negativo)", (sql) => {
+    expect(violacoesG05(sql, "src/armazenamento/schema.sql")).not.toEqual([]);
+  });
+
+  it.each(["PRAGMA writable_schema = 1", "pragma main.writable_schema=ON", "PRAGMA writable_schema;"])(
+    "detecta PRAGMA writable_schema: %s (caso negativo)",
+    (sql) => {
+      expect(violacoesG05(sql, "src/a.ts")).not.toEqual([]);
+    },
+  );
+
+  it("não acusa ALTER TABLE em tabela de leitura nem PRAGMA comum", () => {
+    expect(violacoesG05("ALTER TABLE pedido_resumo ADD COLUMN x TEXT", "src/a.ts")).toEqual([]);
+    expect(violacoesG05("PRAGMA foreign_keys = ON", "src/a.ts")).toEqual([]);
+  });
+
+  it("detecta DO UPDATE mesmo com ponto e vírgula em string do VALUES (caso negativo)", () => {
+    expect(violacoesG05(`INSERT INTO pedido (a) VALUES ('x;y') ON CONFLICT(a) DO UPDATE SET a = 2`)).not.toEqual([]);
+    expect(violacoesG05(`db.run("INSERT INTO evento (a) VALUES ('x;y') ON CONFLICT DO UPDATE SET a = 2")`)).not.toEqual([]);
+  });
+
+  it("não atravessa instrução: DO UPDATE em outra tabela não acusa", () => {
+    expect(violacoesG05("INSERT INTO pedido (a) VALUES ('x;y'); INSERT INTO cache_ia (a) VALUES (1) ON CONFLICT DO UPDATE SET a = 2")).toEqual([]);
   });
 
   it("detecta violação após // ou -- dentro de string na mesma linha (caso negativo)", () => {
