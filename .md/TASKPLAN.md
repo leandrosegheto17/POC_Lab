@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-09 11:03
+Atualizado: 2026-10-09 11:05
 
-Resumo: Não executada 3 · Executada (aguarda teste) 1 · Em teste 1 · Aprovada 192 · total 197
+Resumo: Não executada 3 · Testada (aguarda segurança) 1 · Em validação de segurança 1 · Aprovada 192 · total 197
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -200,11 +200,11 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 185 | RTP-0098 | executor | ✔ | Tirar IDs de tarefa dos comentários de web/vite.config.ts e web/wrangler.jsonc | Refatoração Revisão 2026-10-09 | — | Aprovada |
 | 186 | RTP-0099 | executor | ✔ | gabarito.test.ts usa consultas.listarEventos em vez de recriar a leitura do event store | Refatoração Revisão 2026-10-09 | — | Aprovada |
 | 187 | RTP-0100 | executor | ✔ | Teste de desempenho do G-05 sem limite fixo de 50 ms (instável sob carga) | Refatoração Revisão 2026-10-09 | — | Aprovada |
-| 188 | RTP-0101 | executor | ✔ | Migrar dominio e contrato para o novo pacote nucleo | Refatoração Revisão 2026-10-09 | RTP-0056, RTP-0057, RTP-0058, RTP-0062 | Em teste |
+| 188 | RTP-0101 | executor | ✔ | Migrar dominio e contrato para o novo pacote nucleo | Refatoração Revisão 2026-10-09 | RTP-0056, RTP-0057, RTP-0058, RTP-0062 | Em validação de segurança |
 | 189 | RTP-0102 | executor | ✔ | Teste: T2 só marca pagamento duplicado quando a API declarou a divergência duplicado | Refatoração Revisão 2026-10-09 | — | Aprovada |
 | 190 | RTP-0103 | executor | ✔ | Publicar: guardar bookmark do Time Travel antes da carga do D1 e conferir version produ... | Refatoração Revisão 2026-10-09 | — | Aprovada |
 | 191 | RTP-0104 | executor | ✔ | Tirar os helpers de teste do exports do nucleo (apoio/*) | Refatoração Revisão 2026-10-09 | RTP-0101 | Não executada |
-| 192 | RTP-0105 | executor | ✔ | Lint: tirar o ?. desnecessário no teste de duplicado só com divergência | Refatoração Revisão 2026-10-09 | RTP-0102 | Executada (aguarda teste) |
+| 192 | RTP-0105 | executor | ✔ | Lint: tirar o ?. desnecessário no teste de duplicado só com divergência | Refatoração Revisão 2026-10-09 | RTP-0102 | Testada (aguarda segurança) |
 | 193 | RTP-0106 | executor | ✔ | Testes pesados de integração do processamento: Unhandled Error de timeout do Vitest (on... | Refatoração Revisão 2026-10-09 | RTP-0101 | Não executada |
 | 194 | RTP-0107 | executor | ✔ | Teste: colunas de INSERCOES na fixture do web conferidas contra o DDL copiado | Refatoração Revisão 2026-10-09 | RTP-0101 | Não executada |
 | 195 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Aprovada |
