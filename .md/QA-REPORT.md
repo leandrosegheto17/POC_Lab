@@ -569,3 +569,9 @@ APROVADA; 0 críticos e 0 não críticos; vitest do arquivo com 4/4 passando e `
 
 ## RTP-0107 — QA — 2026-10-09
 APROVADA; 0 críticos, 0 não críticos; teste passa (5) e a mutação de coluna extra no DDL do web o faz falhar, desfeita; lint limpo.
+
+## RTP-0109 — QA — 2026-10-09
+APROVADA, 0 críticos e 0 não críticos; pnpm lint passa e import de prova em src/worker dos 3 pacotes é acusado com G-03, depois desfeito.
+
+## RTP-0110 — QA — 2026-10-09
+APROVADA — cópia de obrigatorio removida, 14 testes importam apoio-teste/obrigatorio.js; install congelado, 407 testes web, lint e typecheck passam; 0 críticos, 0 não críticos.

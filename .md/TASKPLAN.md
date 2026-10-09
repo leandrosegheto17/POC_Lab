@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-09 15:32
+Atualizado: 2026-10-09 15:38
 
-Resumo: Não executada 2 · Em execução 1 · Aprovada 196 · total 199
+Resumo: Em execução 1 · Testada (aguarda segurança) 2 · Aprovada 196 · total 199
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -207,8 +207,8 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 192 | RTP-0105 | executor | ✔ | Lint: tirar o ?. desnecessário no teste de duplicado só com divergência | Refatoração Revisão 2026-10-09 | RTP-0102 | Aprovada |
 | 193 | RTP-0106 | executor | ✔ | Testes pesados de integração do processamento: Unhandled Error de timeout do Vitest (on... | Refatoração Revisão 2026-10-09 | RTP-0101 | Em execução |
 | 194 | RTP-0107 | executor | ✔ | Teste: colunas de INSERCOES na fixture do web conferidas contra o DDL copiado | Refatoração Revisão 2026-10-09 | RTP-0101 | Aprovada |
-| 195 | RTP-0109 | executor | ✔ | Lint: barrar import de apoio-teste fora de test/ (nucleo, processamento e web) | Refatoração Revisão 2026-10-09 | RTP-0104 | Não executada |
-| 196 | RTP-0110 | executor | ✔ | web/test/apoio/obrigatorio.ts duplica apoio-teste/obrigatorio.ts: usar o comum | Refatoração Revisão 2026-10-09 | RTP-0104 | Não executada |
+| 195 | RTP-0109 | executor | ✔ | Lint: barrar import de apoio-teste fora de test/ (nucleo, processamento e web) | Refatoração Revisão 2026-10-09 | RTP-0104 | Testada (aguarda segurança) |
+| 196 | RTP-0110 | executor | ✔ | web/test/apoio/obrigatorio.ts duplica apoio-teste/obrigatorio.ts: usar o comum | Refatoração Revisão 2026-10-09 | RTP-0104 | Testada (aguarda segurança) |
 | 197 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Aprovada |
 | 198 | BK-0004 | coordenador | ✔ | Decidir onde roda a marcação de pagamentos duplicados (RN-03) da tela T2: hoje Pedido.tsx | — | — | Aprovada |
 | 199 | BK-0005 | coordenador | ✔ | Decidir como o D1 é trocado em produção e escrever a subseção Troca de dados em produção d | — | — | Aprovada |
