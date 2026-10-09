@@ -2,6 +2,18 @@
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 import reactPlugin from "eslint-plugin-react";
+import {
+  GERACAO,
+  GRUPO_GABARITO_ANTIGO,
+  GRUPO_SO_DOMINIO_E_CONTRATO,
+  MSG_GABARITO,
+  SELETOR_LITERAL_GABARITO,
+  SELETOR_LITERAL_GABARITO_ANTIGO,
+  bloqueioImports,
+  bloqueioSintaxe,
+  padraoGabarito,
+} from "./eslint/fronteiras.js";
+
 
 /**
  * ESLint 9 (flat config) com fronteiras de módulo e proibições.
@@ -39,47 +51,6 @@ import reactPlugin from "eslint-plugin-react";
  * sobrepõem para o mesmo arquivo.
  */
 
-const SELETOR_PREPARE =
-  ':matches(CallExpression[callee.name="prepare"], CallExpression[callee.property.name="prepare"])';
-
-// O gabarito se chama `problemas-plantados.json` (o nome antigo
-// `gabarito*` continua barrado). A regra trata de LER/CITAR o gabarito fora de
-// test/; o gerador, o caso de uso `gerar` e a configuração de caminhos, que o
-// ESCREVEM/nomeiam (GERACAO abaixo)
-// são exceção só para o nome novo — o nome antigo segue proibido neles.
-const GRUPO_GABARITO_ANTIGO = ["**/gabarito*", "*gabarito*"];
-const GRUPO_PLANTADOS = ["**/problemas-plantados*", "*problemas-plantados*"];
-const GRUPO_GABARITO = [...GRUPO_GABARITO_ANTIGO, ...GRUPO_PLANTADOS];
-
-const GERACAO = [
-  "processamento/src/gerador/**",
-  "processamento/src/aplicacao/gerar.ts",
-  "processamento/src/config/caminhos.ts",
-];
-
-const SELETOR_LITERAL_GABARITO = "Literal[value=/gabarito|problemas-plantados/i]";
-const SELETOR_LITERAL_GABARITO_ANTIGO = "Literal[value=/gabarito/i]";
-
-const SELETORES_PREPARE = [
-  {
-    selector: `${SELETOR_PREPARE} > TemplateLiteral.arguments[expressions.length > 0]`,
-    message:
-      "prepare() não pode receber template literal com expressão interpolada (risco de SQL injection).",
-  },
-  {
-    selector: `${SELETOR_PREPARE} > BinaryExpression.arguments[operator="+"]`,
-    message:
-      "prepare() não pode receber concatenação de string (risco de SQL injection).",
-  },
-];
-
-// G-12 — `react/no-danger` só vê elementos DOM nativos; este seletor pega a
-// prop também em componente JSX customizado (`<Foo dangerouslySetInnerHTML />`).
-const SELETOR_DANGER = {
-  selector: 'JSXAttribute[name.name="dangerouslySetInnerHTML"]',
-  message: "dangerouslySetInnerHTML é proibido, mesmo em componente customizado (G-12).",
-};
-
 export default tseslint.config(
   {
     ignores: [
@@ -93,6 +64,7 @@ export default tseslint.config(
       "**/.next/**",
       "**/.turbo/**",
       "**/out/**",
+      "eslint/**",
       ".claude/**",
       ".md/**",
       ".git/**",
@@ -116,205 +88,113 @@ export default tseslint.config(
     },
   },
 
-  // ---------------------------------------------------------------------
   // G-02 — processamento/src/dominio: camada mais interna, sem dependência
-  // nenhuma de infraestrutura, validação externa, runtime Node, ou do
-  // gabarito.
-  // ---------------------------------------------------------------------
+  // de infraestrutura, validação externa, runtime Node ou gabarito.
   {
     files: ["processamento/src/dominio/**/*.{ts,tsx}"],
     ignores: ["**/test/**"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
+    rules: bloqueioImports(
+      [
         {
-          paths: [
-            { name: "zod", message: "dominio não pode depender de zod (G-02)." },
-          ],
-          patterns: [
-            {
-              group: ["node:*"],
-              message: "dominio não pode importar módulos node:* (G-02).",
-            },
-            {
-              group: [
-                "**/contrato/**",
-                "**/fontes/**",
-                "**/armazenamento/**",
-                "**/importacao/**",
-                "**/gerador/**",
-                "**/ia/**",
-                "**/cli/**",
-                "**/publicacao/**",
-                "**/web/**",
-              ],
-              message:
-                "dominio não importa nenhum outro módulo do projeto (G-02).",
-            },
-            {
-              group: GRUPO_GABARITO,
-              message: "só código em test/ pode citar o gabarito (G-04/RN-13).",
-            },
-          ],
+          group: ["node:*"],
+          message: "dominio não pode importar módulos node:* (G-02).",
         },
+        {
+          group: [
+            "**/contrato/**",
+            "**/fontes/**",
+            "**/armazenamento/**",
+            "**/importacao/**",
+            "**/gerador/**",
+            "**/ia/**",
+            "**/cli/**",
+            "**/publicacao/**",
+            "**/web/**",
+          ],
+          message: "dominio não importa nenhum outro módulo do projeto (G-02).",
+        },
+        padraoGabarito(),
       ],
-    },
+      [{ name: "zod", message: "dominio não pode depender de zod (G-02)." }],
+    ),
   },
 
-  // ---------------------------------------------------------------------
   // G-03 — processamento/src/contrato: só dominio e zod.
-  // ---------------------------------------------------------------------
   {
     files: ["processamento/src/contrato/**/*.{ts,tsx}"],
     ignores: ["**/test/**"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            {
-              group: ["node:*"],
-              message: "contrato não pode importar módulos node:* (G-03).",
-            },
-            {
-              group: [
-                "**/fontes/**",
-                "**/armazenamento/**",
-                "**/importacao/**",
-                "**/gerador/**",
-                "**/ia/**",
-                "**/cli/**",
-                "**/publicacao/**",
-                "**/web/**",
-              ],
-              message: "contrato só pode importar dominio e zod (G-03).",
-            },
-            {
-              group: GRUPO_GABARITO,
-              message: "só código em test/ pode citar o gabarito (G-04/RN-13).",
-            },
-          ],
-        },
-      ],
-    },
+    rules: bloqueioImports([
+      {
+        group: ["node:*"],
+        message: "contrato não pode importar módulos node:* (G-03).",
+      },
+      {
+        group: [
+          "**/fontes/**",
+          "**/armazenamento/**",
+          "**/importacao/**",
+          "**/gerador/**",
+          "**/ia/**",
+          "**/cli/**",
+          "**/publicacao/**",
+          "**/web/**",
+        ],
+        message: "contrato só pode importar dominio e zod (G-03).",
+      },
+      padraoGabarito(),
+    ]),
   },
 
-  // ---------------------------------------------------------------------
   // G-03 — web/worker: do `processamento` só dominio e contrato; node:*
   // proibido (fora de test/, ver nota de interpretação acima).
-  // ---------------------------------------------------------------------
   {
     files: ["web/worker/**/*.{ts,tsx}"],
     ignores: ["**/test/**"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            {
-              group: ["node:*"],
-              message: "web/worker não importa node:* fora de test/ (G-03).",
-            },
-            {
-              // O pacote `ignore` (usado pelo ESLint para
-              // `no-restricted-imports`/`group`) segue a semântica do
-              // .gitignore: um padrão sem barra como "processamento" trata
-              // o nome como um ancestral inteiramente ignorado, e um
-              // ancestral ignorado não pode ser "reincluído" por negação de
-              // um filho ("it is not possible to re-include a file if a
-              // parent directory of that file is excluded"). Por isso a
-              // entrada bare "processamento" não entra no grupo: ela
-              // impediria a negação de `processamento/contrato/**` de
-              // valer para imports como `processamento/contrato/erro.js`.
-              group: [
-                "**/processamento/src/*",
-                "!**/processamento/src/dominio",
-                "!**/processamento/src/dominio/**",
-                "!**/processamento/src/contrato",
-                "!**/processamento/src/contrato/**",
-                "processamento/*",
-                "!processamento/dominio",
-                "!processamento/dominio/**",
-                "!processamento/contrato",
-                "!processamento/contrato/**",
-              ],
-              message:
-                "web/worker só importa dominio e contrato do processamento (G-03).",
-            },
-            {
-              group: GRUPO_GABARITO,
-              message: "só código em test/ pode citar o gabarito (G-04/RN-13).",
-            },
-          ],
-        },
-      ],
-    },
+    rules: bloqueioImports([
+      {
+        group: ["node:*"],
+        message: "web/worker não importa node:* fora de test/ (G-03).",
+      },
+      {
+        group: GRUPO_SO_DOMINIO_E_CONTRATO,
+        message: "web/worker só importa dominio e contrato do processamento (G-03).",
+      },
+      padraoGabarito(),
+    ]),
   },
 
-  // ---------------------------------------------------------------------
   // G-03 — web/src: do `processamento` só dominio e contrato; node:*
   // proibido (fora de test/); não importa web/worker.
-  // ---------------------------------------------------------------------
   {
     files: ["web/src/**/*.{ts,tsx}"],
     ignores: ["**/test/**"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            {
-              group: ["node:*"],
-              message: "web/src não importa node:* fora de test/ (G-03).",
-            },
-            {
-              // Mesma nota de 2026-10-08 do bloco web/worker acima: a
-              // entrada bare "processamento" foi removida porque quebrava
-              // as negações de `processamento/contrato/**` e
-              // `processamento/dominio/**` (quirk de ancestral ignorado do
-              // pacote `ignore`/semântica .gitignore).
-              group: [
-                "**/processamento/src/*",
-                "!**/processamento/src/dominio",
-                "!**/processamento/src/dominio/**",
-                "!**/processamento/src/contrato",
-                "!**/processamento/src/contrato/**",
-                "processamento/*",
-                "!processamento/dominio",
-                "!processamento/dominio/**",
-                "!processamento/contrato",
-                "!processamento/contrato/**",
-              ],
-              message:
-                "web/src só importa dominio e contrato do processamento (G-03).",
-            },
-            {
-              // Imports relativos reais (`../worker/x.js`, `../../worker/x.js`)
-              // não contêm "web/worker" no texto; por isso o padrão `**/worker`.
-              group: [
-                "**/web/worker/**",
-                "web/worker",
-                "web/worker/*",
-                "**/worker",
-                "**/worker/**",
-              ],
-              message: "web/src não importa web/worker (G-03).",
-            },
-            {
-              group: GRUPO_GABARITO,
-              message: "só código em test/ pode citar o gabarito (G-04/RN-13).",
-            },
-          ],
-        },
-      ],
-    },
+    rules: bloqueioImports([
+      {
+        group: ["node:*"],
+        message: "web/src não importa node:* fora de test/ (G-03).",
+      },
+      {
+        group: GRUPO_SO_DOMINIO_E_CONTRATO,
+        message: "web/src só importa dominio e contrato do processamento (G-03).",
+      },
+      {
+        // Imports relativos reais (`../worker/x.js`) não contêm "web/worker"
+        // no texto; por isso o padrão `**/worker`.
+        group: [
+          "**/web/worker/**",
+          "web/worker",
+          "web/worker/*",
+          "**/worker",
+          "**/worker/**",
+        ],
+        message: "web/src não importa web/worker (G-03).",
+      },
+      padraoGabarito(),
+    ]),
   },
 
-  // ---------------------------------------------------------------------
-  // G-04 (RN-13) — qualquer outro arquivo fora de test/ (ex.: fontes,
-  // armazenamento, importacao, gerador, ia, cli, publicacao) também não
-  // pode citar o gabarito por import.
-  // ---------------------------------------------------------------------
+  // G-04 (RN-13) — qualquer outro arquivo fora de test/ também não pode
+  // citar o gabarito por import.
   {
     files: ["**/*.{ts,tsx,js,jsx}"],
     ignores: [
@@ -327,94 +207,48 @@ export default tseslint.config(
       "**/*.test.*",
       "**/*.spec.*",
     ],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            {
-              group: GRUPO_GABARITO,
-              message: "só código em test/ pode citar o gabarito (G-04/RN-13).",
-            },
-          ],
-        },
-      ],
-    },
+    rules: bloqueioImports([padraoGabarito()]),
   },
 
   // G-04 (RN-13) — arquivos de GERAÇÃO (escrevem o problemas-plantados.json;
-  // não o leem): podem importar o módulo `problemas-plantados`, mas o nome
-  // antigo `gabarito*` segue barrado.
+  // não o leem): podem importar `problemas-plantados`, mas o nome antigo
+  // `gabarito*` segue barrado.
   {
     files: GERACAO,
     ignores: ["**/test/**", "**/*.test.*", "**/*.spec.*"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            {
-              group: GRUPO_GABARITO_ANTIGO,
-              message: "só código em test/ pode citar o gabarito (G-04/RN-13).",
-            },
-          ],
-        },
-      ],
-    },
+    rules: bloqueioImports([{ group: GRUPO_GABARITO_ANTIGO, message: MSG_GABARITO }]),
   },
 
-  // ---------------------------------------------------------------------
-  // G-04 (RN-13) + G-08 — fora de test/: nem citação ao gabarito por
-  // string literal, nem prepare() inseguro.
-  // ---------------------------------------------------------------------
+  // G-04 + G-08 — fora de test/: nem citação ao gabarito por string literal,
+  // nem prepare() inseguro.
   {
     files: ["**/*.{ts,tsx,js,jsx}"],
     ignores: [...GERACAO, "**/test/**", "**/*.test.*", "**/*.spec.*"],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        {
-          selector: SELETOR_LITERAL_GABARITO,
-          message: "só código em test/ pode citar o gabarito (G-04/RN-13).",
-        },
-        ...SELETORES_PREPARE,
-        SELETOR_DANGER,
-      ],
-    },
+    rules: bloqueioSintaxe({
+      selector: SELETOR_LITERAL_GABARITO,
+      message: MSG_GABARITO,
+    }),
   },
 
   // G-04 + G-08 — arquivos de geração: o literal "problemas-plantados.json"
-  // (nome do arquivo que escrevem) é permitido; o literal antigo não.
+  // é permitido; o literal antigo não.
   {
     files: GERACAO,
     ignores: ["**/test/**", "**/*.test.*", "**/*.spec.*"],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        {
-          selector: SELETOR_LITERAL_GABARITO_ANTIGO,
-          message: "só código em test/ pode citar o gabarito (G-04/RN-13).",
-        },
-        ...SELETORES_PREPARE,
-        SELETOR_DANGER,
-      ],
-    },
+    rules: bloqueioSintaxe({
+      selector: SELETOR_LITERAL_GABARITO_ANTIGO,
+      message: MSG_GABARITO,
+    }),
   },
 
-  // ---------------------------------------------------------------------
   // G-08 — dentro de test/: prepare() inseguro continua proibido (citar o
-  // gabarito, por sua vez, é permitido aqui).
-  // ---------------------------------------------------------------------
+  // gabarito é permitido aqui).
   {
     files: ["**/test/**/*.{ts,tsx,js,jsx}", "**/*.test.*", "**/*.spec.*"],
-    rules: {
-      "no-restricted-syntax": ["error", ...SELETORES_PREPARE, SELETOR_DANGER],
-    },
+    rules: bloqueioSintaxe(),
   },
 
-  // ---------------------------------------------------------------------
   // G-12 — dangerouslySetInnerHTML proibido em qualquer elemento JSX.
-  // ---------------------------------------------------------------------
   {
     files: ["**/*.{jsx,tsx}"],
     plugins: { react: reactPlugin },
