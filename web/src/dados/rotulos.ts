@@ -2,7 +2,11 @@
 // mostra. As listas vêm do domínio (e do contrato, no caso do evento); aqui
 // só entra o texto. Os `Record` obrigam a cobrir todo valor novo do enum.
 import { FONTES, TIPOS_DIVERGENCIA } from "processamento/dominio/modelo.js";
-import type { Fonte, TipoDivergencia } from "processamento/dominio/modelo.js";
+import type {
+  Fonte,
+  TipoAchado,
+  TipoDivergencia,
+} from "processamento/dominio/modelo.js";
 import type { EventoV1 } from "processamento/contrato/linha-do-tempo-v1.js";
 
 export type { Fonte, TipoDivergencia };
@@ -87,7 +91,34 @@ export function rotuloEvento(tipo: string): string {
   return (EVENTOS as Record<string, { rotulo: string } | undefined>)[tipo]?.rotulo ?? tipo;
 }
 
-const SITUACOES_PAGAMENTO: Record<string, string> = {
+const TITULOS_ACHADO: Record<TipoAchado, string> = {
+  formato_data: "Datas em dois formatos",
+  pedido_sem_envio: "Pedidos sem envio",
+  valor_fora_do_padrao: "Valores fora do padrão",
+  linha_invalida: "Linhas rejeitadas",
+  registro_repetido: "Registros repetidos",
+  sem_identificacao: "Pagamentos sem identificação",
+  fora_de_ordem: "Eventos fora de ordem",
+};
+
+/** Ordem de exibição dos achados de qualidade (definida pelo wireframe). */
+const ORDEM_ACHADOS: readonly TipoAchado[] = [
+  "formato_data",
+  "pedido_sem_envio",
+  "valor_fora_do_padrao",
+  "linha_invalida",
+  "registro_repetido",
+  "sem_identificacao",
+  "fora_de_ordem",
+];
+
+/** Tipos de achado na ordem de exibição, com o título de cada um. */
+export const TIPOS_ACHADO_EM_ORDEM: ReadonlyArray<{
+  tipo: TipoAchado;
+  titulo: string;
+}> = ORDEM_ACHADOS.map((tipo) => ({ tipo, titulo: TITULOS_ACHADO[tipo] }));
+
+const SITUACOES_PAGAMENTO:Record<string, string> = {
   sem_pagamento: "Sem pagamento",
   parcial: "Parcial",
   quitado: "Quitado",
