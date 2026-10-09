@@ -42,13 +42,26 @@ function dependenciasNaoPermitidas(pacote: Pacote, arquivo: string): string[] {
 
 const PACOTES = Object.keys(PERMITIDAS_POR_PACOTE);
 
+function mensagemDeFalha(arquivo: string): string {
+  return (
+    `G-17: dependência fora da lista em ${arquivo}. Dependência nova exige ADR e atualização do SDD §3; ` +
+    `inclua o nome na lista de PERMITIDAS_POR_PACOTE["${arquivo}"] (ou em COMUM, se for de todos os pacotes).`
+  );
+}
+
 describe("guardrail G-17 — dependências permitidas", () => {
   it.each(PACOTES)("%s só usa dependências da lista do SDD §3", (arquivo) => {
     const pacote = JSON.parse(readFileSync(path.join(RAIZ, arquivo), "utf8")) as Pacote;
-    expect(
-      dependenciasNaoPermitidas(pacote, arquivo),
-      "G-17: dependência nova exige ADR e atualização da lista do SDD §3",
-    ).toEqual([]);
+    expect(dependenciasNaoPermitidas(pacote, arquivo), mensagemDeFalha(arquivo)).toEqual([]);
+  });
+
+  it("a mensagem de falha cita o pacote, a lista a editar, o ADR e o SDD §3", () => {
+    const mensagem = mensagemDeFalha("web/package.json");
+    expect(mensagem).toContain("web/package.json");
+    expect(mensagem).toContain('PERMITIDAS_POR_PACOTE["web/package.json"]');
+    expect(mensagem).toContain("COMUM");
+    expect(mensagem).toContain("ADR");
+    expect(mensagem).toContain("SDD §3");
   });
 
   it("acusa dependência fora da lista em dependencies (caso negativo)", () => {
