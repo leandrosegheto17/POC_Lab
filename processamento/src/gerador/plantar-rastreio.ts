@@ -1,4 +1,5 @@
 import type { PedidoVendas } from "../fontes/leitura-vendas.js";
+import { particionarPorProporcao } from "./particao-pagamentos.js";
 import type { EntradaGabarito } from "./problemas-plantados.js";
 
 /**
@@ -9,9 +10,8 @@ import type { EntradaGabarito } from "./problemas-plantados.js";
  * módulo planta a ausência/inconsistência DELIBERADA sobre pedidos que, sem
  * o plantio, teriam rastreio normal.
  *
- * Mesma técnica de particionamento disjunto por PRNG usada em
- * `plantar-pagamentos.ts`: embaralha o pool de pedidos elegíveis
- * (Fisher-Yates determinístico) e retira, por tipo e em ordem fixa
+ * Particionamento disjunto por PRNG (`particionarPorProporcao`): embaralha o
+ * pool de pedidos elegíveis e retira, por tipo e em ordem fixa
  * (`ORDEM_TIPOS_PARTICAO`), a fração correspondente — nenhum pedido recebe
  * mais de 1 tipo de caso de rastreio.
  *
@@ -59,18 +59,6 @@ export type ResultadoPlantioRastreio = {
   gabarito: EntradaGabarito[];
 };
 
-/** Embaralha uma lista de forma determinística (Fisher-Yates) a partir do PRNG recebido, sem mutar a lista original. Mesma implementação de `plantar-pagamentos.ts`. */
-function embaralhar<T>(itens: T[], prng: () => number): T[] {
-  const copia = itens.slice();
-  for (let indice = copia.length - 1; indice > 0; indice -= 1) {
-    const sorteado = Math.floor(prng() * (indice + 1));
-    const temporario = copia[indice] as T;
-    copia[indice] = copia[sorteado] as T;
-    copia[sorteado] = temporario;
-  }
-  return copia;
-}
-
 /**
  * Pedidos elegíveis a receber caso de rastreio: só os que têm `dataEnvio`
  * (e, portanto, linhas em `rastreio.csv`) e que NÃO foram usados por
@@ -89,29 +77,6 @@ function pedidosElegiveis(
   return pedidos.filter(
     (pedido) => pedido.dataEnvio !== null && !pedidosExcluidos.has(pedido.idPedido),
   );
-}
-
-/**
- * Particiona os pedidos elegíveis em subconjuntos DISJUNTOS, um por tipo de
- * caso, sempre na mesma ordem fixa (`ORDEM_TIPOS_PARTICAO`) — mesmo algoritmo
- * de `particionarPedidos` em `plantar-pagamentos.ts`.
- */
-function particionarPedidos(
-  pedidosElegiveisLista: PedidoVendas[],
-  prng: () => number,
-): Record<TipoParticao, PedidoVendas[]> {
-  const total = pedidosElegiveisLista.length;
-  let pool = pedidosElegiveisLista.slice();
-  const grupos = {} as Record<TipoParticao, PedidoVendas[]>;
-
-  for (const tipo of ORDEM_TIPOS_PARTICAO) {
-    const quantidade = Math.floor(PROPORCOES_POR_TIPO[tipo] * total);
-    const embaralhado = embaralhar(pool, prng);
-    grupos[tipo] = embaralhado.slice(0, quantidade);
-    pool = embaralhado.slice(quantidade);
-  }
-
-  return grupos;
 }
 
 /** Devolve o índice, em `linhas`, da primeira linha do pedido que satisfaz o predicado sobre as partes da linha (ou -1). */
@@ -147,7 +112,7 @@ export function plantarCasosRastreio(
   pedidosExcluidos: Set<string> = new Set(),
 ): ResultadoPlantioRastreio {
   const elegiveis = pedidosElegiveis(pedidos, pedidosExcluidos);
-  const grupos = particionarPedidos(elegiveis, prng);
+  const grupos = particionarPorProporcao(elegiveis, prng, ORDEM_TIPOS_PARTICAO, PROPORCOES_POR_TIPO);
   let linhas = linhasCsvBase.slice();
   const gabarito: EntradaGabarito[] = [];
 

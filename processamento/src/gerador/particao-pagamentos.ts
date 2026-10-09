@@ -58,27 +58,37 @@ function embaralhar<T>(itens: T[], prng: () => number): T[] {
 
 /**
  * Particiona os pedidos recebidos em subconjuntos DISJUNTOS, um por tipo de
- * caso, sempre na mesma ordem fixa (`ORDEM_TIPOS_PARTICAO`): a cada tipo,
- * embaralha o que resta do "pool" (via PRNG) e retira do início a
- * quantidade correspondente à proporção daquele tipo (sobre o total
- * original de pedidos recebidos); o restante do pool segue para o próximo
- * tipo. Como cada pedido só pode ser retirado do pool uma vez, nenhum
- * pedido recebe mais de 1 tipo de caso.
+ * caso, sempre na ordem fixa recebida em `ordem`: a cada tipo, embaralha o
+ * que resta do "pool" (via PRNG) e retira do início a quantidade
+ * correspondente à proporção daquele tipo (sobre o total original de
+ * pedidos recebidos); o restante do pool segue para o próximo tipo. Como
+ * cada pedido só pode ser retirado do pool uma vez, nenhum pedido recebe
+ * mais de 1 tipo de caso.
  */
-export function particionarPedidos(
+export function particionarPorProporcao<Tipo extends string>(
   pedidos: PedidoVendas[],
   prng: () => number,
-): Record<TipoParticao, PedidoVendas[]> {
+  ordem: readonly Tipo[],
+  proporcoes: Record<Tipo, number>,
+): Record<Tipo, PedidoVendas[]> {
   const total = pedidos.length;
   let pool = pedidos.slice();
-  const grupos = {} as Record<TipoParticao, PedidoVendas[]>;
+  const grupos = {} as Record<Tipo, PedidoVendas[]>;
 
-  for (const tipo of ORDEM_TIPOS_PARTICAO) {
-    const quantidade = Math.floor(PROPORCOES_POR_TIPO[tipo] * total);
+  for (const tipo of ordem) {
+    const quantidade = Math.floor(proporcoes[tipo] * total);
     const embaralhado = embaralhar(pool, prng);
     grupos[tipo] = embaralhado.slice(0, quantidade);
     pool = embaralhado.slice(quantidade);
   }
 
   return grupos;
+}
+
+/** Partição dos casos de pagamento: ordem e proporções de `ORDEM_TIPOS_PARTICAO`. */
+export function particionarPedidos(
+  pedidos: PedidoVendas[],
+  prng: () => number,
+): Record<TipoParticao, PedidoVendas[]> {
+  return particionarPorProporcao(pedidos, prng, ORDEM_TIPOS_PARTICAO, PROPORCOES_POR_TIPO);
 }
