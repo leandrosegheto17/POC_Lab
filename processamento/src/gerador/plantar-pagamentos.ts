@@ -123,7 +123,7 @@ function calcularProximoTransacaoSeq(linhasCsvBase: string[]): number {
  * para outros tipos de problema (plantio de rastreio).
  *
  * Recebe as linhas de `pagamentos.csv` já geradas por `gerarPagamentos`
- e devolve uma nova lista de linhas (substituindo/acrescentando
+ * e devolve uma nova lista de linhas (substituindo/acrescentando
  * conforme o caso) junto com as entradas de gabarito correspondentes.
  *
  * Função pura: não lê nem escreve nada em disco.
