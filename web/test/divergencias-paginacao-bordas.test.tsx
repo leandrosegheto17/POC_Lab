@@ -3,7 +3,7 @@
 // inválida na URL.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, useNavigate } from "react-router";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import { ProvedorResumo } from "../src/dados/contexto-resumo.tsx";
 import { Divergencias } from "../src/paginas/Divergencias.tsx";
@@ -80,6 +80,10 @@ describe("Divergencias — paginação via URL: casos de borda", () => {
     await waitFor(() => {
       expect(screen.getByText("Filtro: Todos · página 1 de 2")).toBeInTheDocument();
     });
+    // A tabela aparece um render antes de o efeito do foco rodar; sem esvaziar
+    // os efeitos pendentes, o clique abaixo arma o pedido de foco e o efeito
+    // atrasado da carga inicial o consome (foco no caption fora do cenário).
+    await act(async () => {});
 
     fireEvent.click(
       formaCompleta(container).getByRole("button", { name: "Próxima" }),
