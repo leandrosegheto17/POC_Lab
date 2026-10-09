@@ -529,3 +529,4 @@ Nenhuma lacuna estrutural: nada exige novo ADR nem muda o SDD. O UX-SPEC recebeu
 - [x] Nenhuma lacuna estrutural em aberto; as de detalhe estão na tabela acima
 - [x] Ordem do PRD §5: Must (Lotes 1–14) → indicadores complementares (15) → estado numa data (16) → contrato v2 (17) → IA (18)
 - [x] Rascunho do `GUARDRAILS.md` refeito junto
+| RTP-0087 | Refatoração Revisão 2026-10-08 | Investigar falha rara do teste de foco após erro de paginação (1 em 80 execuções) | Frontend | G-14 | o caso "após erro ao trocar de página..." de web/test/divergencias-paginacao-bordas.test.tsx tem a causa da falha rara identificada (QA da RTP-0076: 1 falha em 80 execuções isoladas, saída não capturada) e corrigida sem mudar código de produção; 50 execuções seguidas passam | 1h | RTP-0076 | Não | web/test/divergencias-paginacao-bordas.test.tsx | pnpm --filter web exec vitest run test/divergencias-paginacao-bordas.test.tsx (50x) | Pendente |
