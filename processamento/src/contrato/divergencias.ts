@@ -1,25 +1,6 @@
 import { z } from "zod";
-import type { Fonte, TipoDivergencia } from "../dominio/modelo.js";
+import { FONTES, TIPOS_DIVERGENCIA } from "../dominio/modelo.js";
 import { EsquemaPaginacao } from "./paginacao.js";
-
-/**
- * Literais de `TipoDivergencia`/`Fonte` (../dominio/modelo.ts), repetidos
- * aqui apenas como lista de valores para `z.enum` — o tipo nunca é
- * redeclarado, só os literais usados para validação em runtime.
- */
-const TIPOS_DIVERGENCIA = [
-  "duplicado",
-  "parcial",
-  "pago_nao_enviado",
-  "enviado_nao_pago",
-  "entrega_atrasada",
-] as const satisfies readonly TipoDivergencia[];
-
-const FONTES = [
-  "vendas",
-  "pagamentos",
-  "rastreio",
-] as const satisfies readonly Fonte[];
 
 /**
  * Evento (resumido) associado a uma divergência, na listagem v1.

@@ -1,26 +1,5 @@
 import { z } from "zod";
-import type { Fonte, TipoAchado } from "../dominio/modelo.js";
-
-/**
- * Literais de `Fonte`/`TipoAchado` (../dominio/modelo.ts), repetidos aqui
- * apenas como lista de valores para `z.enum` — o tipo nunca é redeclarado,
- * só os literais usados para validação em runtime.
- */
-const FONTES = [
-  "vendas",
-  "pagamentos",
-  "rastreio",
-] as const satisfies readonly Fonte[];
-
-const TIPOS_ACHADO = [
-  "fora_de_ordem",
-  "sem_identificacao",
-  "registro_repetido",
-  "linha_invalida",
-  "valor_fora_do_padrao",
-  "formato_data",
-  "pedido_sem_envio",
-] as const satisfies readonly TipoAchado[];
+import { FONTES, TIPOS_ACHADO } from "../dominio/modelo.js";
 
 /**
  * Exemplo concreto de um achado de qualidade: a fonte de origem, a

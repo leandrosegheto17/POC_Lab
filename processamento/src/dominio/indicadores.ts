@@ -1,4 +1,4 @@
-import type { TipoDivergencia } from "./modelo.js";
+import { TIPOS_DIVERGENCIA, type TipoDivergencia } from "./modelo.js";
 import type { SituacaoPagamento } from "./quitacao.js";
 
 /**
@@ -99,14 +99,6 @@ export function indicadorEntregasNoPrazo(
   };
 }
 
-const ORDEM_TIPOS_DIVERGENCIA: readonly TipoDivergencia[] = [
-  "duplicado",
-  "parcial",
-  "pago_nao_enviado",
-  "enviado_nao_pago",
-  "entrega_atrasada",
-];
-
 /**
  * Bloco "divergências por tipo". Sempre contém uma linha por tipo declarado
  * em `TipoDivergencia`, na ordem em que o tipo os declara, mesmo quando a
@@ -116,7 +108,7 @@ export function indicadorDivergenciasPorTipo(
   divergencias: { tipo: TipoDivergencia }[],
 ): BlocoIndicador {
   const contagens = new Map<TipoDivergencia, number>(
-    ORDEM_TIPOS_DIVERGENCIA.map((tipo) => [tipo, 0]),
+    TIPOS_DIVERGENCIA.map((tipo) => [tipo, 0]),
   );
 
   for (const divergencia of divergencias) {
@@ -125,7 +117,7 @@ export function indicadorDivergenciasPorTipo(
 
   const total = divergencias.length;
 
-  const linhas: LinhaIndicador[] = ORDEM_TIPOS_DIVERGENCIA.map((tipo) => {
+  const linhas: LinhaIndicador[] = TIPOS_DIVERGENCIA.map((tipo) => {
     const numerador = contagens.get(tipo) ?? 0;
     return {
       rotulos: [tipo],

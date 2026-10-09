@@ -1,7 +1,7 @@
 import type { Consultas, EventoArmazenado, VinculoFonte } from "../armazenamento/consultas.js";
 import { calcularQuitacao, type SituacaoPagamento } from "../dominio/quitacao.js";
 import { normalizarCodigo } from "../contrato/codigo.js";
-import type { Fonte } from "../dominio/modelo.js";
+import { FONTES, type Fonte } from "../dominio/modelo.js";
 import { agruparEventosPorPedido } from "./eventos-por-pedido.js";
 
 /**
@@ -13,9 +13,6 @@ import { agruparEventosPorPedido } from "./eventos-por-pedido.js";
  * vínculo por código normalizado (de cada fonte + da própria identidade
  * `id_pedido`). Só lê; nunca grava.
  */
-
-/** Ordem fixa das chaves do JSON de `fontes` em `pedido_resumo`. */
-const ORDEM_FONTES: readonly Fonte[] = ["vendas", "pagamentos", "rastreio"];
 
 /** Linha de `pedido_resumo`, mesma forma de colunas do DDL em `leitura-d1.sql`. */
 export type LinhaPedidoResumo = {
@@ -72,7 +69,7 @@ function montarResumoPedido(
   }
 
   const fontesOrdenadas: Partial<Record<Fonte, string>> = {};
-  for (const fonte of ORDEM_FONTES) {
+  for (const fonte of FONTES) {
     const codigoExterno = fontesPedido[fonte];
     if (codigoExterno !== undefined) {
       fontesOrdenadas[fonte] = codigoExterno;

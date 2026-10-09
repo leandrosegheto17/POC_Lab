@@ -1,24 +1,5 @@
 import { z } from "zod";
-import type { Fonte, TipoDivergencia } from "../dominio/modelo.js";
-
-/**
- * Literais de `TipoDivergencia`/`Fonte` (../dominio/modelo.ts), repetidos
- * aqui apenas como lista de valores para `z.enum` — o tipo nunca é
- * redeclarado, só os literais usados para validação em runtime.
- */
-const TIPOS_DIVERGENCIA = [
-  "duplicado",
-  "parcial",
-  "pago_nao_enviado",
-  "enviado_nao_pago",
-  "entrega_atrasada",
-] as const satisfies readonly TipoDivergencia[];
-
-const FONTES = [
-  "vendas",
-  "pagamentos",
-  "rastreio",
-] as const satisfies readonly Fonte[];
+import { FONTES, TIPOS_DIVERGENCIA } from "../dominio/modelo.js";
 
 /**
  * Evento v1 da linha do tempo de um pedido.
@@ -33,7 +14,7 @@ const FONTES = [
  * rejeitar a resposta — ver teste dedicado em
  * `test/contrato/respostas-v1.test.ts`.
  */
-const EsquemaEventoVendaV1 = z.object({
+export const EsquemaEventoVendaV1 = z.object({
   fonte: z.enum(FONTES),
   codigoEvento: z.string(),
   momentoFato: z.string(),
@@ -44,7 +25,7 @@ const EsquemaEventoVendaV1 = z.object({
   chegouForaDeOrdem: z.boolean(),
 });
 
-const EsquemaEventoPagamentoV1 = z.object({
+export const EsquemaEventoPagamentoV1 = z.object({
   fonte: z.enum(FONTES),
   codigoEvento: z.string(),
   momentoFato: z.string(),
@@ -54,7 +35,7 @@ const EsquemaEventoPagamentoV1 = z.object({
   chegouForaDeOrdem: z.boolean(),
 });
 
-const EsquemaEventoColetaV1 = z.object({
+export const EsquemaEventoColetaV1 = z.object({
   fonte: z.enum(FONTES),
   codigoEvento: z.string(),
   momentoFato: z.string(),
@@ -64,7 +45,7 @@ const EsquemaEventoColetaV1 = z.object({
   chegouForaDeOrdem: z.boolean(),
 });
 
-const EsquemaEventoTransporteV1 = z.object({
+export const EsquemaEventoTransporteV1 = z.object({
   fonte: z.enum(FONTES),
   codigoEvento: z.string(),
   momentoFato: z.string(),
@@ -74,7 +55,7 @@ const EsquemaEventoTransporteV1 = z.object({
   chegouForaDeOrdem: z.boolean(),
 });
 
-const EsquemaEventoEntregaV1 = z.object({
+export const EsquemaEventoEntregaV1 = z.object({
   fonte: z.enum(FONTES),
   codigoEvento: z.string(),
   momentoFato: z.string(),

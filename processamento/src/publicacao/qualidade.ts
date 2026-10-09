@@ -23,24 +23,14 @@ import { conferirSugestao } from "../dominio/conferencia-sugestao.js";
 import { montarCandidatos } from "../ia/candidatos.js";
 import { calcularChaveCache, RESPOSTA_CACHE_SEM_SUGESTAO } from "../ia/chave-cache.js";
 import { detectarForaDeOrdem } from "../dominio/fora-de-ordem.js";
-import type { AchadoQualidade, TipoAchado } from "../dominio/modelo.js";
+import { TIPOS_ACHADO, type AchadoQualidade, type TipoAchado } from "../dominio/modelo.js";
 import {
   EsquemaRespostaQualidade,
   type RespostaQualidade,
 } from "../contrato/qualidade.js";
+import { EsquemaSugestaoIA, type SugestaoIA } from "../contrato/sugestao-ia.js";
 import { agruparEventosPorPedido } from "./eventos-por-pedido.js";
 import { montarPedidosEVinculos } from "./pedidos.js";
-
-/** Ordem fixa dos 7 tipos no documento final — sempre os mesmos 7, nessa ordem. */
-const ORDEM_TIPOS: readonly TipoAchado[] = [
-  "fora_de_ordem",
-  "sem_identificacao",
-  "registro_repetido",
-  "linha_invalida",
-  "valor_fora_do_padrao",
-  "formato_data",
-  "pedido_sem_envio",
-];
 
 /**
  * Texto fixo da regra por tipo de achado — um por tipo, o mesmo para todas as
@@ -148,15 +138,6 @@ function montarExemplos(
  */
 const MODELOS_RECONSTITUICAO: readonly string[] = ["falso", "gpt-4o-mini"];
 
-/** Item de `ia.sugestoes`. */
-type SugestaoQualidade = {
-  pagamento: string;
-  textoReferencia: string;
-  pedidoSugerido: string;
-  conferida: boolean;
-  motivo: string;
-};
-
 /**
  * Monta `ia.utilizada`/`ia.sugestoes`: `cache_ia` vazia → `{ utilizada:
  * false, sugestoes: [] }`. Com 1+ entradas, `utilizada` é sempre `true`;
@@ -179,7 +160,7 @@ function montarBlocoIa(repositorio: Repositorio): RespostaQualidade["ia"] {
   const { completos: pagamentos } = repositorio.listarPagamentosSemIdentificacao();
   const { pedidoResumo } = montarPedidosEVinculos(repositorio);
 
-  const sugestoes: SugestaoQualidade[] = [];
+  const sugestoes: SugestaoIA[] = [];
 
   for (const pagamento of pagamentos) {
     const candidatos = montarCandidatos(pedidoResumo, pagamento);
@@ -218,13 +199,15 @@ function montarBlocoIa(repositorio: Repositorio): RespostaQualidade["ia"] {
       { valor: pagamento.valor, dataPagamento: pagamento.momentoFato },
     );
 
-    sugestoes.push({
-      pagamento: pagamento.codigoTransacao,
-      textoReferencia: pagamento.textoReferencia,
-      pedidoSugerido: entradaCache.resposta,
-      conferida,
-      motivo,
-    });
+    sugestoes.push(
+      EsquemaSugestaoIA.parse({
+        pagamento: pagamento.codigoTransacao,
+        textoReferencia: pagamento.textoReferencia,
+        pedidoSugerido: entradaCache.resposta,
+        conferida,
+        motivo,
+      }),
+    );
   }
 
   return { utilizada: true, sugestoes };
@@ -244,7 +227,7 @@ export function montarDocumentoQualidade(repositorio: Repositorio): RespostaQual
   const achadosForaDeOrdem = recalcularForaDeOrdem(repositorio);
   const pedidoPorVinculo = lerPedidoPorVinculo(repositorio);
 
-  const achados = ORDEM_TIPOS.map((tipo) => {
+  const achados = TIPOS_ACHADO.map((tipo) => {
     const achadosDoTipo =
       tipo === "fora_de_ordem"
         ? achadosForaDeOrdem

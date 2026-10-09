@@ -1,18 +1,5 @@
 import { z } from "zod";
-import type { TipoDivergencia } from "../dominio/modelo.js";
-
-/**
- * Literais de `TipoDivergencia` (../dominio/modelo.ts), repetidos aqui
- * apenas como lista de valores para `z.enum` — o tipo nunca é
- * redeclarado, só os literais usados para validação em runtime.
- */
-const TIPOS_DIVERGENCIA = [
-  "duplicado",
-  "parcial",
-  "pago_nao_enviado",
-  "enviado_nao_pago",
-  "entrega_atrasada",
-] as const satisfies readonly TipoDivergencia[];
+import { TIPOS_DIVERGENCIA } from "../dominio/modelo.js";
 
 /**
  * Parâmetros de consulta aceitos pela listagem de divergências.
