@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-09 05:53
+Atualizado: 2026-10-09 05:54
 
-Resumo: Não executada 5 · Testada (aguarda segurança) 2 · Aprovada 179 · Bloqueada 1 · total 187
+Resumo: Não executada 5 · Aprovada 181 · Bloqueada 1 · total 187
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -192,8 +192,8 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 177 | RTP-0092 | executor | ✔ | G-17 checar especificadores de versão, overrides e pacotes novos do workspace | Refatoração Revisão 2026-10-08 | RTP-0084 | Aprovada |
 | 178 | RTP-0093 | executor | ✔ | Regra DO UPDATE do G-05 voltar a acusar SQL com aspas desbalanceadas ou escapadas por b... | Refatoração Revisão 2026-10-08 | RTP-0091 | Aprovada |
 | 179 | RTP-0094 | executor | ✔ | G-17 cobrir overrides/catalog do pnpm-workspace.yaml e tags de texto como especificador | Refatoração Revisão 2026-10-08 | RTP-0092 | Aprovada |
-| 180 | RTP-0095 | executor | ✔ | Regex DO UPDATE do G-05 sem backtracking exponencial | Refatoração Revisão 2026-10-08 | RTP-0093 | Testada (aguarda segurança) |
-| 181 | RTP-0096 | executor | ✔ | G-17 rejeitar tag de texto dentro de faixa com // e ler pnpm-workspace.yaml com BOM | Refatoração Revisão 2026-10-08 | RTP-0094 | Testada (aguarda segurança) |
+| 180 | RTP-0095 | executor | ✔ | Regex DO UPDATE do G-05 sem backtracking exponencial | Refatoração Revisão 2026-10-08 | RTP-0093 | Aprovada |
+| 181 | RTP-0096 | executor | ✔ | G-17 rejeitar tag de texto dentro de faixa com // e ler pnpm-workspace.yaml com BOM | Refatoração Revisão 2026-10-08 | RTP-0094 | Aprovada |
 | 182 | RTP-0097 | executor | ✔ | Regex DO UPDATE do G-05 volta a acusar aspa escapada por barra seguida de string com po... | Refatoração Revisão 2026-10-08 | RTP-0095 | Não executada |
 | 183 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Não executada |
 | 184 | BK-0004 | coordenador | ✔ | Decidir onde roda a marcação de pagamentos duplicados (RN-03) da tela T2: hoje Pedido.tsx | — | — | Não executada |

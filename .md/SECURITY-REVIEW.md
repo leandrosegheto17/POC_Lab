@@ -512,3 +512,9 @@ OK; 0 críticos/altos, 0 RTP nova (ReDoS segue na RTP-0095, média/baixa: pior c
 
 ## RTP-0094 — DevSecOps — 2026-10-09
 OK; 0 alto/crítico, 1 baixo já aberto (RTP-0096); G-17 mais estrito, 53 testes passando, sem dependência/lockfile alterados.
+
+## RTP-0095 — DevSecOps — 2026-10-09
+OK; 0 críticos, 0 novos não críticos (perda de cobertura já rastreada na RTP-0097, baixa/média); suíte guardrails 101/101, src sem DO UPDATE.
+
+## RTP-0096 — DevSecOps — 2026-10-09
+OK; 0 achados; checagem G-17 só mais estrita, g17 65 testes ok com repo real, sem dependência/lockfile novo.
