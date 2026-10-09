@@ -167,7 +167,7 @@ describe("decidirSugerir (passo 4 isolado)", () => {
  * `criarProvedorFalso`, injetado via `opcoes.provedor`.
  */
 describe("executarSugerir", () => {
-  it("sem OPENAI_API_KEY: não lança, imprime a mensagem esperada e não abre nenhuma conexão de escrita", async () => {
+  it("sem OPENAI_API_KEY: não lança, não imprime nada e não abre nenhuma conexão de escrita", async () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
     // Caminho de banco deliberadamente inválido (diretório inexistente): se
@@ -185,7 +185,7 @@ describe("executarSugerir", () => {
     });
 
     expect(resultado).toEqual([]);
-    expect(logSpy).toHaveBeenCalledWith("sem chave, nenhuma sugestão gerada");
+    expect(logSpy).not.toHaveBeenCalled();
 
     logSpy.mockRestore();
   });

@@ -48,7 +48,8 @@ export type OpcoesExecutarSugerir = {
  * Executa o caso de uso `sugerir` contra o event store em `caminhoBanco`, só
  * quando há `OPENAI_API_KEY` no ambiente. Sem chave, NUNCA abre conexão com o
  * banco (determinismo do pipeline). `sugerir` já persiste as respostas em
- * `cache_ia`; esta função não grava nada por conta própria.
+ * `cache_ia`; esta função não grava nada por conta própria nem imprime: quem
+ * chama mostra `decidirSugerir(...).mensagem`.
  */
 export async function executarSugerir(
   caminhoBanco: string,
@@ -57,7 +58,6 @@ export async function executarSugerir(
   const ambiente = opcoes.ambiente ?? process.env;
 
   if (!ambiente.OPENAI_API_KEY) {
-    console.log("sem chave, nenhuma sugestão gerada");
     return [];
   }
 
@@ -77,8 +77,6 @@ export async function executarSugerir(
     // `rmSync` do diretório temporário do banco nos testes.
     repositorio.fechar();
   }
-
-  console.log(decidirSugerir(ambiente, resultados.length).mensagem);
 
   return resultados;
 }
