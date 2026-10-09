@@ -2,6 +2,27 @@
 
 Uma entrada por revisão (`/revisar`, skill `architecture-health-review`), a mais recente no topo.
 
+## Revisão 2026-10-09 — sob demanda (projeto inteiro)
+
+Números do saude.py (comparado com 2026-10-08): 0 arquivos acima do limite (era 20) · 1 bloco duplicado no código, 24 com testes (era 23 e 98) · 2 IDs de tarefa no código, em 1 arquivo (era 409 em 147) · acesso a dados só nas pastas esperadas (`armazenamento`, `web/worker`, `fontes`; `publicacao` e `scripts` só geram/rodam texto SQL) · imports `web` → `processamento` só em `contrato` e `dominio` (BK-0003 aberto) · 9 `as unknown as` (era 14), todos na fronteira do `node:sqlite`.
+
+Conferência das RTP-0050 a 0070: resolvidas de fato. `publicacao/`, `importacao/` e `ia/` não fazem mais SQL (só `armazenamento/consultas.ts` e `repositorio.ts`); arquivos grandes, rótulos/listas repetidos, cópia da rota v2, CLI importando CLI, cache do CI e publicação em scripts dedicados, e testes de guardrail estão fechados. Sobras: as duas abaixo. BK-0003, BK-0004, BK-0005 e BK-0006 continuam abertos e não são repetidos aqui.
+
+| # | Achado | Item do checklist | Severidade | Onde | Destino |
+|---|---|---|---|---|---|
+| 1 | Sobra de IDs de tarefa (`TP-0003`, `TP-0041`, `TP-0065`) nos comentários dos arquivos de configuração do site, contra a convenção | 10 | Baixa | `web/vite.config.ts:5-6`; `web/wrangler.jsonc:5,17` | RTP-0098 |
+| 2 | `gabarito.test.ts` reescreve `LinhaEvento`/`linhaParaEvento`/`SELECT * FROM evento` copiados de `armazenamento/consultas.ts` (13 linhas iguais); a cópia já diverge (sem `tipo` no envelope), então o teste não exercita a leitura real | 4 | Baixa | `processamento/test/integracao/gabarito.test.ts:49-88`; `processamento/src/armazenamento/consultas.ts:44-68` | RTP-0099 |
+
+Descartados (falso positivo):
+- §2 `eslint.config.js:90-98` × `118-126`: lista de pastas proibidas em duas regras com mensagens e exceções diferentes (G-02 e G-03); extrair acopla duas regras que podem divergir.
+- §2 demais blocos só em testes (`escritor-sql`, `baixar-base`, `divergencias-paginacao`, etc.): preparação de cenário dentro de testes pequenos, abaixo do limite de tamanho; sem risco de divergência de regra.
+- §4: as 35 ocorrências são o termo de domínio "duplicado" (RN-03), tokens CSS e escape de aspas; nenhuma admite cópia.
+- §5: `fontes` lê a base de vendas externa, `web/worker` é o módulo de dados do Worker, `publicacao` e `scripts` só geram/rodam texto SQL.
+- §6a: 34+5+1 imports `web` → `processamento` (`contrato`, `dominio`) são o assunto do BK-0003 já aberto.
+- §7: 9 `as unknown as` tipam linhas do `node:sqlite` na fronteira do banco, dentro de `armazenamento` e `fontes`.
+
+Sem achado nos itens: 1 (além do BK-0003), 2, 3, 5, 6, 7, 8, 9, 11-17.
+
 ## Revisão 2026-10-08 — sob demanda (projeto inteiro)
 
 Números do saude.py: 20 arquivos acima do limite (6 código, 5 componentes, 8 testes, 1 estilo) · 23 blocos duplicados no código (98 com testes, 24 dentro do mesmo arquivo) · 409 IDs de tarefa no código, em 147 arquivos · 6 pastas com acesso a dados (só 1 permitida para o event store) · 3 imports entre aplicações (`web` → `processamento`: `contrato` em 17 arquivos, `dominio` em 3)

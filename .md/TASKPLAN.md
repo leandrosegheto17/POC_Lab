@@ -5,9 +5,9 @@ que troca o estado da linha a cada etapa. O Status oficial continua no `TASK.md`
 arquivo do bloqueio); o detalhe de cada tarefa está em `.md/.taskplan/<ID>.md`. A ordem respeita as
 dependências. Agente: `executor` (TP/RTP) ou `coordenador` (BK/SPK, com o usuário).
 
-Atualizado: 2026-10-09 05:57
+Atualizado: 2026-10-09 05:59
 
-Resumo: Não executada 4 · Aprovada 182 · Bloqueada 1 · total 187
+Resumo: Não executada 6 · Aprovada 182 · Bloqueada 1 · total 189
 
 Estados: Não executada → Em execução → Executada (aguarda teste) → Em teste → Testada (aguarda segurança) → Em validação de segurança → Aprovada (e, à parte, Bloqueada, Dividida e Despriorizada — esta fica sempre no fim da lista e é ignorada por /executar, /testar e /validar). `Aprovada` = QA ✔ e Sec ✔ (tarefas antigas só `Concluída` aparecem como Aprovada).
 
@@ -195,8 +195,10 @@ Estados: Não executada → Em execução → Executada (aguarda teste) → Em t
 | 180 | RTP-0095 | executor | ✔ | Regex DO UPDATE do G-05 sem backtracking exponencial | Refatoração Revisão 2026-10-08 | RTP-0093 | Aprovada |
 | 181 | RTP-0096 | executor | ✔ | G-17 rejeitar tag de texto dentro de faixa com // e ler pnpm-workspace.yaml com BOM | Refatoração Revisão 2026-10-08 | RTP-0094 | Aprovada |
 | 182 | RTP-0097 | executor | ✔ | Regex DO UPDATE do G-05 volta a acusar aspa escapada por barra seguida de string com po... | Refatoração Revisão 2026-10-08 | RTP-0095 | Aprovada |
-| 183 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Não executada |
-| 184 | BK-0004 | coordenador | ✔ | Decidir onde roda a marcação de pagamentos duplicados (RN-03) da tela T2: hoje Pedido.tsx | — | — | Não executada |
-| 185 | BK-0005 | coordenador | ✔ | Decidir como o D1 é trocado em produção e escrever a subseção Troca de dados em produção d | — | — | Não executada |
-| 186 | BK-0006 | coordenador | ✔ | Decidir como registrar a regra de convergência de identidade de pedido: a skill adr-drafti | — | — | Não executada |
-| 187 | RTP-0086 | executor | ✔ | Registrar no ADR-004 a regra de convergência de identidade de pedido | Refatoração Revisão 2026-10-08 | BK-0006, RTP-0071 | Bloqueada |
+| 183 | RTP-0098 | executor | ✔ | Tirar IDs de tarefa dos comentários de web/vite.config.ts e web/wrangler.jsonc | Refatoração Revisão 2026-10-09 | — | Não executada |
+| 184 | RTP-0099 | executor | ✔ | gabarito.test.ts usa consultas.listarEventos em vez de recriar a leitura do event store | Refatoração Revisão 2026-10-09 | — | Não executada |
+| 185 | BK-0003 | coordenador | ✔ | Decidir se dominio e contrato saem do pacote processamento para um pacote compartilhado pr | — | — | Não executada |
+| 186 | BK-0004 | coordenador | ✔ | Decidir onde roda a marcação de pagamentos duplicados (RN-03) da tela T2: hoje Pedido.tsx | — | — | Não executada |
+| 187 | BK-0005 | coordenador | ✔ | Decidir como o D1 é trocado em produção e escrever a subseção Troca de dados em produção d | — | — | Não executada |
+| 188 | BK-0006 | coordenador | ✔ | Decidir como registrar a regra de convergência de identidade de pedido: a skill adr-drafti | — | — | Não executada |
+| 189 | RTP-0086 | executor | ✔ | Registrar no ADR-004 a regra de convergência de identidade de pedido | Refatoração Revisão 2026-10-08 | BK-0006, RTP-0071 | Bloqueada |
