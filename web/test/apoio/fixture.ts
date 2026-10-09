@@ -21,10 +21,10 @@ import type { TabelasParaPublicacao } from "nucleo/contrato/tabelas-publicacao.j
 import { D1Teste } from "./d1-teste.js";
 import { DADOS_EXEMPLO } from "./dados-exemplo.js";
 
-const DDL = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "leitura-d1.sql"), "utf8");
+export const DDL = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "leitura-d1.sql"), "utf8");
 
 /** INSERT por tabela, com as colunas na ordem do DDL de `./leitura-d1.sql`. */
-const INSERCOES: Record<keyof TabelasParaPublicacao, { sql: string; colunas: string[] }> = {
+export const INSERCOES: Record<keyof TabelasParaPublicacao, { sql: string; colunas: string[] }> = {
   pedido_resumo: {
     sql: "INSERT INTO pedido_resumo (id_pedido, valor_devido, valor_pago, data_limite, situacao_pagamento, fontes) VALUES (?, ?, ?, ?, ?, ?)",
     colunas: ["id_pedido", "valor_devido", "valor_pago", "data_limite", "situacao_pagamento", "fontes"],
