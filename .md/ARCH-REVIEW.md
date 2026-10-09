@@ -2,6 +2,20 @@
 
 Uma entrada por revisão (`/revisar`, skill `architecture-health-review`), a mais recente no topo.
 
+## Revisão 2026-10-09 (segunda) — sob demanda (projeto inteiro)
+
+Números do saude.py (comparado com a primeira revisão do dia): 0 arquivos acima do limite (igual) · 1 bloco duplicado no código, 23 com testes (era 1 e 24) · 0 IDs de tarefa no código (era 2 em 1 arquivo) · acesso a dados nas mesmas pastas esperadas · imports `web` → `processamento` só em `contrato` e `dominio` (BK-0003 aberto) · 9 `as unknown as`, todos na fronteira do `node:sqlite`.
+
+Conferência das RTP-0098, 0099 e 0100: resolvidas de fato (IDs de tarefa zerados; teste do gabarito usa a leitura real; sem os 13 trechos iguais). Nenhum achado novo que valha corrigir. BK-0003, BK-0004, BK-0005 e BK-0006 continuam abertos e não são repetidos aqui. Projeto saudável: zero RTP é o resultado correto.
+
+Descartados (falso positivo):
+- §2 `eslint.config.js:90-98` × `118-126`: já descartado na revisão anterior do dia (duas regras, G-02 e G-03, com mensagens e exceções próprias).
+- §2 com testes: preparação de cenário em testes pequenos, abaixo do limite; sem risco de divergência de regra.
+- §4: as 35 ocorrências são o termo de domínio "duplicado" (RN-03), tokens CSS e escape de aspas; nenhuma admite cópia.
+- §5, §6a, §7: mesmos casos já descartados ou cobertos pelo BK-0003 na revisão anterior; sem mudança.
+
+Sem achado nos itens: todos os 18 itens do checklist.
+
 ## Revisão 2026-10-09 — sob demanda (projeto inteiro)
 
 Números do saude.py (comparado com 2026-10-08): 0 arquivos acima do limite (era 20) · 1 bloco duplicado no código, 24 com testes (era 23 e 98) · 2 IDs de tarefa no código, em 1 arquivo (era 409 em 147) · acesso a dados só nas pastas esperadas (`armazenamento`, `web/worker`, `fontes`; `publicacao` e `scripts` só geram/rodam texto SQL) · imports `web` → `processamento` só em `contrato` e `dominio` (BK-0003 aberto) · 9 `as unknown as` (era 14), todos na fronteira do `node:sqlite`.
