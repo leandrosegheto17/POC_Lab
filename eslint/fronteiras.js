@@ -48,6 +48,12 @@ export const GRUPO_SEM_PROCESSAMENTO = ["processamento", "processamento/**", "**
 
 export const padraoGabarito = () => ({ group: GRUPO_GABARITO, message: MSG_GABARITO });
 
+// `apoio-teste` é devDependency: código de produção (src/, worker/) não o importa (G-03).
+export const padraoApoioTeste = () => ({
+  group: ["apoio-teste", "apoio-teste/**", "**/apoio-teste", "**/apoio-teste/**"],
+  message: "apoio-teste é só para test/; não entra em src/ nem worker/ (G-03).",
+});
+
 /** Bloco de `no-restricted-imports` com os padrões (e paths) dados. */
 export function bloqueioImports(patterns, paths) {
   return {

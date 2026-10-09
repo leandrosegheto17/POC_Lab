@@ -11,6 +11,7 @@ import {
   SELETOR_LITERAL_GABARITO_ANTIGO,
   bloqueioImports,
   bloqueioSintaxe,
+  padraoApoioTeste,
   padraoGabarito,
 } from "./eslint/fronteiras.js";
 
@@ -100,6 +101,7 @@ export default tseslint.config(
           message: "dominio não importa nenhum outro módulo do projeto (G-02).",
         },
         padraoGabarito(),
+        padraoApoioTeste(),
       ],
       [{ name: "zod", message: "dominio não pode depender de zod (G-02)." }],
     ),
@@ -129,6 +131,7 @@ export default tseslint.config(
         message: "contrato só pode importar dominio e zod (G-03).",
       },
       padraoGabarito(),
+      padraoApoioTeste(),
     ]),
   },
 
@@ -147,6 +150,7 @@ export default tseslint.config(
         message: "web/worker não importa processamento; só nucleo (G-03).",
       },
       padraoGabarito(),
+      padraoApoioTeste(),
     ]),
   },
 
@@ -177,6 +181,7 @@ export default tseslint.config(
         message: "web/src não importa web/worker (G-03).",
       },
       padraoGabarito(),
+      padraoApoioTeste(),
     ]),
   },
 
@@ -205,7 +210,7 @@ export default tseslint.config(
       "**/*.test.*",
       "**/*.spec.*",
     ],
-    rules: bloqueioImports([padraoGabarito()]),
+    rules: bloqueioImports([padraoGabarito(), padraoApoioTeste()]),
   },
 
   // G-04 (RN-13) — arquivos de GERAÇÃO (escrevem o problemas-plantados.json;
@@ -214,7 +219,10 @@ export default tseslint.config(
   {
     files: GERACAO,
     ignores: ["**/test/**", "**/*.test.*", "**/*.spec.*"],
-    rules: bloqueioImports([{ group: GRUPO_GABARITO_ANTIGO, message: MSG_GABARITO }]),
+    rules: bloqueioImports([
+      { group: GRUPO_GABARITO_ANTIGO, message: MSG_GABARITO },
+      padraoApoioTeste(),
+    ]),
   },
 
   // G-04 + G-08 — fora de test/: nem citação ao gabarito por string literal,
