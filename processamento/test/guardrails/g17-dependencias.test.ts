@@ -38,8 +38,12 @@ type Pacote = Partial<Record<(typeof SECOES)[number], Record<string, string>>> &
   pnpm?: { overrides?: Record<string, string> };
 };
 
-// Especificador aceito: workspace:* ou faixa semver (sem protocolo nem caminho: npm:, git+, github:, http(s):, file:, link:).
-const ESPECIFICADOR_VALIDO = /^(workspace:[\w^~.*-]+|[\w\s.^~<>=|*+-]*)$/;
+// Especificador aceito: workspace:* ou faixa semver iniciada por dígito ou operador (sem protocolo, caminho nem tag
+// de texto: npm:, git+, github:, http(s):, file:, link:, latest, next).
+const ESPECIFICADOR_VALIDO = /^(workspace:[\w^~.*-]+|[\d^~<>=*][\w\s.^~<>=|*+-]*)$/;
+
+// Chaves de topo do pnpm-workspace.yaml que trocam versões ou aplicam patches fora do package.json.
+const CHAVES_PROIBIDAS_NO_WORKSPACE = ["overrides", "catalog", "catalogs", "packageExtensions", "patchedDependencies"];
 
 function dependenciasNaoPermitidas(pacote: Pacote, arquivo: string): string[] {
   const permitidas = new Set([...COMUM, ...(PERMITIDAS_POR_PACOTE[arquivo] ?? [])]);
@@ -63,6 +67,11 @@ function overridesProibidos(pacote: Pacote): string[] {
 function pacotesDoWorkspaceSemLista(yaml: string): string[] {
   const dirs = [...yaml.matchAll(/^\s*-\s*["']?([^"'\s#]+)["']?\s*$/gm)].map((m) => `${m[1] ?? ""}/package.json`);
   return dirs.filter((arquivo) => !(arquivo in PERMITIDAS_POR_PACOTE));
+}
+
+function chavesProibidasDoWorkspace(yaml: string): string[] {
+  const chaves = [...yaml.matchAll(/^["']?([A-Za-z][\w-]*)["']?\s*:/gm)].map((m) => m[1] ?? "");
+  return chaves.filter((chave) => CHAVES_PROIBIDAS_NO_WORKSPACE.includes(chave));
 }
 
 const PACOTES = Object.keys(PERMITIDAS_POR_PACOTE);
@@ -129,6 +138,24 @@ describe("guardrail G-17 — dependências permitidas", () => {
     expect(pacotesDoWorkspaceSemLista(yaml), "G-17: pacote novo no workspace exige ADR e entrada em PERMITIDAS_POR_PACOTE").toEqual(
       [],
     );
+  });
+
+  it("o pnpm-workspace.yaml real não tem overrides/catalog/patches", () => {
+    const yaml = readFileSync(path.join(RAIZ, "pnpm-workspace.yaml"), "utf8");
+    expect(chavesProibidasDoWorkspace(yaml), "G-17: substituição de versão no workspace exige ADR").toEqual([]);
+  });
+
+  it.each(CHAVES_PROIBIDAS_NO_WORKSPACE)("acusa %s de topo no pnpm-workspace.yaml (caso negativo)", (chave) => {
+    const yaml = `packages:\n  - "web"\n${chave}:\n  zod: 1.0.0\nallowBuilds:\n  esbuild: true\n`;
+    expect(chavesProibidasDoWorkspace(yaml)).toEqual([chave]);
+  });
+
+  it("não acusa chave aninhada nem allowBuilds no pnpm-workspace.yaml", () => {
+    expect(chavesProibidasDoWorkspace('packages:\n  - "web"\nallowBuilds:\n  overrides: true\n')).toEqual([]);
+  });
+
+  it.each([["latest"], ["next"], ["beta"], [""], ["x"]])("acusa tag de texto '%s' como especificador (caso negativo)", (versao) => {
+    expect(especificadoresInvalidos({ dependencies: { zod: versao } })).toEqual([`zod@${versao}`]);
   });
 
   it.each([
