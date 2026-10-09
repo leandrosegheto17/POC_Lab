@@ -3,7 +3,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { screen, within } from "@testing-library/react";
 import { axe } from "vitest-axe";
-import { obrigatorio } from "./apoio/obrigatorio.ts";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 import {
   blocoTempoMedio,
   instalarIndicadoresFixos,

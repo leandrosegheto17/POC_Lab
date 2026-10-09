@@ -21,7 +21,7 @@ import {
   pedirLinhaDoTempoComErro,
   type CorpoErroTeste,
 } from "../apoio/linha-do-tempo-worker.ts";
-import { obrigatorio } from "../apoio/obrigatorio.ts";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 import { rotaLinhaDoTempoV2 } from "../../worker/rotas/linha-do-tempo-v2.ts";
 import appReal from "../../worker/index.ts";
 

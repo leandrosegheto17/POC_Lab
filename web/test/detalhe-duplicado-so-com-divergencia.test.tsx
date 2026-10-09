@@ -3,7 +3,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import type { LinhaDoTempoV1 } from "nucleo/contrato/linha-do-tempo-v1.js";
-import { obrigatorio } from "./apoio/obrigatorio.js";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 import { DetalheLinhaDoTempo } from "../src/componentes/pedido/DetalheLinhaDoTempo.tsx";
 import {
   cartoes,

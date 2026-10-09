@@ -23,7 +23,7 @@ import {
   divergenciaParcial,
   pedirLinhaDoTempoComErro,
 } from "../apoio/linha-do-tempo-worker.ts";
-import { obrigatorio } from "../apoio/obrigatorio.ts";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 import { rotaLinhaDoTempo } from "../../worker/rotas/linha-do-tempo.ts";
 
 const ID_PEDIDO = "PED-100001";

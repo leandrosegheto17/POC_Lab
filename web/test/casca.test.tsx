@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router";
 import { axe } from "vitest-axe";
 import { Rotas } from "../src/Rotas.tsx";
 import { NaoEncontrada } from "../src/paginas/NaoEncontrada.tsx";
-import { obrigatorio } from "./apoio/obrigatorio.ts";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 
 // casca do app: nav única, rotas T1-T5, <title> por rota, foco no
 // <h1> ao navegar, aria-current no item ativo e página "não encontrada".

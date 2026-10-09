@@ -122,6 +122,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.3.0
         version: 4.7.0(supports-color@10.2.2)(vite@6.4.4(@types/node@24.19.1)(tsx@4.23.15))
+      apoio-teste:
+        specifier: workspace:*
+        version: link:../apoio-teste
       jsdom:
         specifier: ^25.0.0
         version: 25.0.1(supports-color@10.2.2)

@@ -1,5 +1,5 @@
 // Erros centrais e cabeçalhos da API.
-import { obrigatorio } from "../apoio/obrigatorio.ts";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 import app from "../../worker/index.ts";

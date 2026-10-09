@@ -34,7 +34,7 @@ import { EsquemaLinhaDoTempoV2 } from "nucleo/contrato/linha-do-tempo-v2.js";
 
 import { criarD1TesteComTabelas } from "../apoio/fixture.ts";
 import type { CorpoLinhaDoTempoSolto } from "../apoio/corpo-teste.ts";
-import { obrigatorio } from "../apoio/obrigatorio.ts";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 import { rotaLinhaDoTempo } from "../../worker/rotas/linha-do-tempo.ts";
 import { rotaLinhaDoTempoV2 } from "../../worker/rotas/linha-do-tempo-v2.ts";
 

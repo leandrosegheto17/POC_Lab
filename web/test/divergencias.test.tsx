@@ -3,7 +3,7 @@
 // e a acessibilidade ficam em `divergencias-estados.test.tsx`.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
-import { obrigatorio } from "./apoio/obrigatorio.ts";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 import {
   chamadasDeDivergencias,
   divergenciaValida,

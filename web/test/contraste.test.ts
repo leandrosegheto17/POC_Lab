@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { obrigatorio } from "./apoio/obrigatorio.ts";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 import { razaoDeContraste } from "../src/estilos/contraste.ts";
 
 const diretorioAtual = dirname(fileURLToPath(import.meta.url));

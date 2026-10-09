@@ -3,7 +3,7 @@
 // há sugestões, descarte silencioso de item malformado e acessibilidade.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
-import { obrigatorio } from "./apoio/obrigatorio.ts";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 import {
   DUAS_SUGESTOES,
   detalhesCelular,

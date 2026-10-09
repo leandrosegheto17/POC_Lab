@@ -3,7 +3,7 @@
 // carregando e acessibilidade em `indicadores-estados.test.tsx`.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, within } from "@testing-library/react";
-import { obrigatorio } from "./apoio/obrigatorio.ts";
+import { obrigatorio } from "apoio-teste/obrigatorio.js";
 import {
   blocoDivergenciasPorTipo,
   blocoEntregasNoPrazo,
