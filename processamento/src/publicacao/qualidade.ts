@@ -199,15 +199,18 @@ function montarBlocoIa(repositorio: Repositorio): RespostaQualidade["ia"] {
       { valor: pagamento.valor, dataPagamento: pagamento.momentoFato },
     );
 
-    sugestoes.push(
-      EsquemaSugestaoIA.parse({
-        pagamento: pagamento.codigoTransacao,
-        textoReferencia: pagamento.textoReferencia,
-        pedidoSugerido: entradaCache.resposta,
-        conferida,
-        motivo,
-      }),
-    );
+    // Texto de entrada (CSV/provedor) acima dos limites do esquema: descarta só
+    // este item, sem derrubar a publicação nem copiar o texto bruto.
+    const sugestao = EsquemaSugestaoIA.safeParse({
+      pagamento: pagamento.codigoTransacao,
+      textoReferencia: pagamento.textoReferencia,
+      pedidoSugerido: entradaCache.resposta,
+      conferida,
+      motivo,
+    });
+    if (sugestao.success) {
+      sugestoes.push(sugestao.data);
+    }
   }
 
   return { utilizada: true, sugestoes };

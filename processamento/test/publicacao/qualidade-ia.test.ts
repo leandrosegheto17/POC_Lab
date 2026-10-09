@@ -151,6 +151,26 @@ describe("montarDocumentoQualidade — bloco ia", () => {
     expect(EsquemaRespostaQualidade.safeParse(documento).success).toBe(true);
   });
 
+  it("referência acima do limite do esquema: o item é descartado, as demais sugestões ficam e o documento é gerado", async () => {
+    const repositorio = criarRepositorio(":memory:");
+    inserirPedidoComVenda(repositorio, "PED-F", 100, "2026-01-01T00:00:00.000Z");
+    inserirPedidoComVenda(repositorio, "PED-G", 100, "2026-01-01T00:00:00.000Z");
+    const referenciaLonga = "X".repeat(601);
+    inserirPagamentoSemIdentificacao(repositorio, "TRANS-050", 100, DATA_PAGAMENTO, referenciaLonga);
+    inserirPagamentoSemIdentificacao(repositorio, "TRANS-051", 100, DATA_PAGAMENTO, "REF-CURTA");
+
+    const provedorFalso = criarProvedorFalso({ [referenciaLonga]: "PED-F", "REF-CURTA": "PED-G" });
+    await sugerir(repositorio, provedorFalso, { modelo: "falso" });
+
+    const documento = montarDocumentoQualidade(repositorio);
+
+    expect(documento.ia.utilizada).toBe(true);
+    expect(documento.ia.sugestoes).toHaveLength(1);
+    expect(documento.ia.sugestoes[0]).toMatchObject({ pagamento: "TRANS-051" });
+    expect(JSON.stringify(documento.ia)).not.toContain(referenciaLonga);
+    expect(EsquemaRespostaQualidade.safeParse(documento).success).toBe(true);
+  });
+
   it("cache_ia com entrada 'sem sugestão' (resposta vazia): ia.utilizada true, mas sugestoes não inclui essa entrada", async () => {
     const repositorio = criarRepositorio(":memory:");
     inserirPedidoComVenda(repositorio, "PED-C", 100, "2026-01-01T00:00:00.000Z");
