@@ -536,3 +536,6 @@ APROVADA; 0 críticos, 1 não crítico (RTP-0096: tag após `||` e BOM); 53 test
 
 ## RTP-0095 — QA — 2026-10-09
 APROVADA; 0 críticos, 1 não crítico (RTP-0097: aspa escapada + string com `;` deixou de ser acusada); regex sem backtracking exponencial (30 literais em ~0,2 ms), suíte 101/101.
+
+## RTP-0097 — QA — 2026-10-09
+APROVADA; 0 críticos, 0 não críticos; escâner linear (300 mil caracteres em ~20 ms), casos 0093/0095/0097 e repositório real passam, 102 testes de guardrail verdes.

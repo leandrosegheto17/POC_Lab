@@ -518,3 +518,6 @@ OK; 0 críticos, 0 novos não críticos (perda de cobertura já rastreada na RTP
 
 ## RTP-0096 — DevSecOps — 2026-10-09
 OK; 0 achados; checagem G-17 só mais estrita, g17 65 testes ok com repo real, sem dependência/lockfile novo.
+
+## RTP-0097 — DevSecOps — 2026-10-09
+OK; 0 críticos, 0 não críticos; escâner linear mantém as violações da RTP-0093 (aspa ímpar, escapada com `;`, `;` em string) e as demais regras intactas; 102 testes de guardrail verdes.
