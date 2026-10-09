@@ -539,3 +539,9 @@ APROVADA; 0 críticos, 1 não crítico (RTP-0097: aspa escapada + string com `;`
 
 ## RTP-0097 — QA — 2026-10-09
 APROVADA; 0 críticos, 0 não críticos; escâner linear (300 mil caracteres em ~20 ms), casos 0093/0095/0097 e repositório real passam, 102 testes de guardrail verdes.
+
+## RTP-0098 — QA — 2026-10-09
+APROVADA — só comentários mudaram, JSONC válido, 0 IDs, tsc e 398 testes OK; 0 achados.
+
+## RTP-0099 — QA — 2026-10-09
+APROVADA; 0 críticos, 0 não críticos; gabarito.test.ts 3/3 verdes, asserções intactas, bloco consultas.ts × gabarito.test.ts sumiu do saude.py.
