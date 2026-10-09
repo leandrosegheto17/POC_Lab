@@ -4,13 +4,15 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import type { AchadoQualidade, Fonte } from "../dominio/modelo.js";
+import { criarConsultas, type Consultas } from "./consultas.js";
 
 /**
- * TP-0018 — Repositório SQLite do event store (SDD §5, ADR-004).
- *
- * Este módulo é o único lugar do projeto com acesso ao SQLite local
- * (GUARDRAILS G-05). Só gera `INSERT ... ON CONFLICT DO NOTHING` — nunca
- * `UPDATE`/`DELETE` nas tabelas do event store.
+ * Repositório SQLite do event store (SDD §5, ADR-004): inserções idempotentes,
+ * consultas de leitura (`consultas.ts`) e transação. Os comandos são preparados
+ * uma vez, na criação. Só gera `INSERT ... ON CONFLICT DO NOTHING` e `SELECT`
+ * — nunca `UPDATE`/`DELETE` nas tabelas do event store (GUARDRAILS G-05).
+ * Enquanto os módulos de importação, publicação e IA ainda acessam `db`
+ * diretamente, este não é o único ponto de acesso ao SQLite.
  */
 
 const DIRETORIO_ATUAL = dirname(fileURLToPath(import.meta.url));
@@ -53,11 +55,12 @@ export type Repositorio = {
   ) => ResultadoInsercao;
   inserirEvento: (evento: EventoParaInserir) => ResultadoInsercao;
   inserirAchadoQualidade: (achado: AchadoQualidade) => ResultadoInsercao;
-  /** TP-0079 — Lê a cache de IA pela chave (hash SHA-256); `undefined` se não houver. */
+  /** Lê a cache de IA pela chave (hash SHA-256); `undefined` se não houver. */
   obterCache: (chave: string) => { resposta: string; criadoEm: string } | undefined;
-  /** TP-0079 — Grava a cache de IA; se a chave já existir, a gravação é ignorada (ON CONFLICT DO NOTHING). */
+  /** Grava a cache de IA; se a chave já existir, a gravação é ignorada (ON CONFLICT DO NOTHING). */
   gravarCache: (chave: string, resposta: string, criadoEm: string, modelo?: string) => void;
-};
+  emTransacao: <T>(fn: () => T) => T;
+} & Consultas;
 
 /**
  * `changes` do resultado de `run()` vem como `number | bigint` dependendo do
@@ -76,8 +79,8 @@ export function criarRepositorio(caminhoArquivo: string): Repositorio {
   const db = new DatabaseSync(caminhoArquivo);
   const sqlSchema = readFileSync(CAMINHO_SCHEMA, "utf8");
   db.exec(sqlSchema);
-  // RTP-0041: bancos criados antes da coluna `modelo` em `cache_ia` (TP-0079)
-  // recebem a coluna aditiva (nullable); nenhum dado é alterado.
+  // Bancos criados antes da coluna `modelo` em `cache_ia` recebem a coluna
+  // aditiva (nullable); nenhum dado é alterado.
   const colunasCache = db.prepare(`PRAGMA table_info(cache_ia)`).all() as unknown as {
     name: string;
   }[];
@@ -85,11 +88,27 @@ export function criarRepositorio(caminhoArquivo: string): Repositorio {
     db.exec(`ALTER TABLE cache_ia ADD COLUMN modelo TEXT`);
   }
 
+  const comandoInserirPedido = db.prepare(
+    `INSERT INTO pedido (id_pedido) VALUES (?) ON CONFLICT DO NOTHING`,
+  );
+  const comandoInserirVinculo = db.prepare(
+    `INSERT INTO vinculo_fonte (fonte, codigo_externo, id_pedido) VALUES (?, ?, ?) ON CONFLICT DO NOTHING`,
+  );
+  const comandoInserirEvento = db.prepare(
+    `INSERT INTO evento (fonte, codigo_evento, id_pedido, tipo, momento_fato, ordem_chegada, versao_schema, dados) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING`,
+  );
+  const comandoInserirAchado = db.prepare(
+    `INSERT INTO achado_qualidade (tipo, fonte, referencia, regra, detalhe) VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING`,
+  );
+  const comandoObterCache = db.prepare(
+    `SELECT resposta, criado_em FROM cache_ia WHERE chave = ?`,
+  );
+  const comandoGravarCache = db.prepare(
+    `INSERT INTO cache_ia (chave, resposta, criado_em, modelo) VALUES (?, ?, ?, ?) ON CONFLICT(chave) DO NOTHING`,
+  );
+
   function inserirPedido(idPedido: string): ResultadoInsercao {
-    const resultado = db
-      .prepare(`INSERT INTO pedido (id_pedido) VALUES (?) ON CONFLICT DO NOTHING`)
-      .run(idPedido);
-    return { nova: foiLinhaNova(resultado.changes) };
+    return { nova: foiLinhaNova(comandoInserirPedido.run(idPedido).changes) };
   }
 
   function inserirVinculoFonte(
@@ -97,45 +116,40 @@ export function criarRepositorio(caminhoArquivo: string): Repositorio {
     codigoExterno: string,
     idPedido: string,
   ): ResultadoInsercao {
-    const resultado = db
-      .prepare(
-        `INSERT INTO vinculo_fonte (fonte, codigo_externo, id_pedido) VALUES (?, ?, ?) ON CONFLICT DO NOTHING`,
-      )
-      .run(fonte, codigoExterno, idPedido);
-    return { nova: foiLinhaNova(resultado.changes) };
+    return {
+      nova: foiLinhaNova(comandoInserirVinculo.run(fonte, codigoExterno, idPedido).changes),
+    };
   }
 
   function inserirEvento(evento: EventoParaInserir): ResultadoInsercao {
-    const resultado = db
-      .prepare(
-        `INSERT INTO evento (fonte, codigo_evento, id_pedido, tipo, momento_fato, ordem_chegada, versao_schema, dados) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING`,
-      )
-      .run(
-        evento.fonte,
-        evento.codigoEvento,
-        evento.idPedido,
-        evento.tipo,
-        evento.momentoFato,
-        evento.ordemChegada,
-        evento.versaoSchema,
-        evento.dados,
-      );
+    const resultado = comandoInserirEvento.run(
+      evento.fonte,
+      evento.codigoEvento,
+      evento.idPedido,
+      evento.tipo,
+      evento.momentoFato,
+      evento.ordemChegada,
+      evento.versaoSchema,
+      evento.dados,
+    );
     return { nova: foiLinhaNova(resultado.changes) };
   }
 
   function inserirAchadoQualidade(achado: AchadoQualidade): ResultadoInsercao {
-    const resultado = db
-      .prepare(
-        `INSERT INTO achado_qualidade (tipo, fonte, referencia, regra, detalhe) VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING`,
-      )
-      .run(achado.tipo, achado.fonte, achado.referencia, achado.regra, achado.detalhe);
+    const resultado = comandoInserirAchado.run(
+      achado.tipo,
+      achado.fonte,
+      achado.referencia,
+      achado.regra,
+      achado.detalhe,
+    );
     return { nova: foiLinhaNova(resultado.changes) };
   }
 
   function obterCache(chave: string): { resposta: string; criadoEm: string } | undefined {
-    const linha = db
-      .prepare(`SELECT resposta, criado_em FROM cache_ia WHERE chave = ?`)
-      .get(chave) as { resposta: string; criado_em: string } | undefined;
+    const linha = comandoObterCache.get(chave) as
+      | { resposta: string; criado_em: string }
+      | undefined;
     if (linha === undefined) {
       return undefined;
     }
@@ -148,13 +162,26 @@ export function criarRepositorio(caminhoArquivo: string): Repositorio {
     criadoEm: string,
     modelo?: string,
   ): void {
-    db.prepare(
-      `INSERT INTO cache_ia (chave, resposta, criado_em, modelo) VALUES (?, ?, ?, ?) ON CONFLICT(chave) DO NOTHING`,
-    ).run(chave, resposta, criadoEm, modelo ?? null);
+    comandoGravarCache.run(chave, resposta, criadoEm, modelo ?? null);
+  }
+
+  /** Executa `fn` numa transação: `COMMIT` ao terminar, `ROLLBACK` (e relança o erro) se lançar. */
+  function emTransacao<T>(fn: () => T): T {
+    db.exec("BEGIN");
+    try {
+      const resultado = fn();
+      db.exec("COMMIT");
+      return resultado;
+    } catch (erro) {
+      db.exec("ROLLBACK");
+      throw erro;
+    }
   }
 
   return {
     db,
+    emTransacao,
+    ...criarConsultas(db),
     inserirPedido,
     inserirVinculoFonte,
     inserirEvento,
